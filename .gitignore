@@ -1,0 +1,11 @@
+.venv
+__init__.py
+__pycache__
+local.py
+package-lock.json
+.idea
+fabric.yml
+*.log
+/django_cache/
+db.sqlite3
+uploads
