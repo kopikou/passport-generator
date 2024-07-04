@@ -9,13 +9,7 @@ import json
 import django.middleware.csrf
 import requests
 from rest_framework import serializers
-from rest_framework.decorators import action
-from rest_framework.mixins import ListModelMixin
 from rest_framework.views import APIView
-from rest_framework.viewsets import GenericViewSet
-
-from auths.models import UserProfile
-from auths.serializer import UserSerializer
 
 
 # Create your views here.
@@ -57,10 +51,6 @@ class BitrixAuthView(APIView):
         auth_login(self.request, user)
         return redirect("/")
 
-    def visit_auth_processor(self, state, user):
-        auth_login(self.request, user)
-        return redirect(f"/view/visit-confirmed/{state['data']}")
-
     def get(self, request, *args, **kwargs):
         serializer = self.InnerSerializer(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
@@ -82,7 +72,7 @@ class BitrixAuthView(APIView):
 
         data = r.json()
         r = requests.get(data['client_endpoint'] + 'user.info.json', {
-            "auths": data['access_token'],
+            "auth": data['access_token'],
         })
         if r.status_code != 200:
             response_data['result'] = 'Failed'
@@ -116,39 +106,10 @@ class BitrixAuthView(APIView):
             user.userprofile.mira_id = mira_id
 
         user.userprofile.save()
+        auth_login(self.request, user)
 
         return redirect("/")
 
 
-class UserApiViewSet(ListModelMixin, GenericViewSet):
-    queryset = UserProfile.objects.all()
-    serializer_class = UserSerializer
 
-    def filter_queryset(self, queryset):
-        queryset = super().filter_queryset(queryset)
-        queryset = queryset.filter(is_teacher=True)
-
-        return queryset
-
-    @action(['GET'], url_path="checkLogin", detail=False, permission_classes=[])
-    def check_login(self, request, *args, **kwargs):
-        data = {
-            "authenticated": bool(self.request.user and self.request.user.is_authenticated),
-            'csrf': django.middleware.csrf.get_token(request),
-            'BITRIX_CLIENT_ID': settings.BITRIX_CLIENT_ID,
-        }
-
-        if self.request.user.is_authenticated:
-            data.update({
-                "user_id": self.request.user.id,
-                "username": self.request.user.username,
-                "first_name": self.request.user.first_name,
-                "last_name": self.request.user.last_name,
-                'is_superuser': self.request.user.is_superuser,
-                'is_staff': self.request.user.is_staff,
-                'is_student': self.request.user.userprofile.is_student,
-                'is_teacher': self.request.user.userprofile.is_teacher,
-            })
-
-        return JsonResponse(data)
 

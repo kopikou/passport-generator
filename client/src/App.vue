@@ -4,7 +4,10 @@ import {storeToRefs} from "pinia";
 
 const mainStore = useMainStore();
 const {
-  username
+  isAuthenticated,
+  isStaff,
+  lastName,
+  firstName,
 } = storeToRefs(mainStore)
 
 </script>
@@ -12,6 +15,6 @@ const {
 
 
 <template>
-  {{username}}
+  {{ firstName }}
   <router-view />
 </template>

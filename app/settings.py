@@ -138,6 +138,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 BITRIX_SECRET_KEY = ""
 BITRIX_CLIENT_ID = ""
 
+LOGINAS_REDIRECT_URL = '/'
+
 ARIM_URL = "http://arim.istu.edu"
 
 try:
