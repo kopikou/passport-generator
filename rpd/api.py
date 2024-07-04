@@ -38,3 +38,24 @@ class UploadViewSet(
             data={"success": "False"},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+    @action(methods=['GET'], url_path="get_files", detail=False)
+    def get_files(self, request, *args, **kwargs):
+        user = request.user
+
+        data = RPDFile.objects.filter(user=user, is_deleted=False)
+        serializer = RpdFileSerializer(data, many=True)
+
+        return JsonResponse({
+            "items": [i for i in serializer.data],
+        })
+
+    @action(methods=['DELETE'], url_path="remove_files", detail=False)
+    def remove_file(self, request, *args, **kwargs):
+        id = request.data['id']
+
+        RPDFile.objects.filter(id=id, is_deleted=False)[0].soft_delete()
+
+        return JsonResponse({
+            "success": "True",
+        })
