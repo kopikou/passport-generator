@@ -24,12 +24,18 @@ function onRejected(rejectedEntries) {
 
 <template>
 <div>
-  <div class="q-pa-md">
+  <div class="q-pa-md row justify-center">
     <q-uploader
+      class="text-center"
       label="Загрузка файлов"
+      bordered
+      flat
+        color="amber"
+        text-color="black"
       auto-upload
       url="/api/upload/insert_file/"
       multiple
+      accept=".plx"
       :filter="filefilter"
       :headers="[{name: 'X-CSRFToken', value: csrf}]"
       @rejected="onRejected"

@@ -32,6 +32,8 @@ const {
         </q-toolbar-title>
 
         <q-tabs inline-label dense shrink stretch v-if="isAuthenticated">
+          <q-route-tab icon="mdi-format-list-checks" label="Список файлов" to="/" />
+          <q-route-tab icon="mdi-upload" label="Загрузка файлов" to="/upload" />
           <q-btn-dropdown auto-close stretch flat :label="`${lastName} ${firstName}`">
             <q-list>
               <q-item clickable href="/admin/" v-if="isStaff">

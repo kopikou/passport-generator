@@ -1,11 +1,17 @@
 import { RouteRecordRaw } from 'vue-router';
 import PlxUploadedView from "pages/PlxUploadedView.vue";
+import listRpdView from "pages/listRpdView.vue";
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
-    component: PlxUploadedView
+    component: listRpdView,
+  },
+  {
+    path: '/upload',
+    name: 'uploadFile',
+    component: PlxUploadedView,
   },
 
   // Always leave this as last one,
