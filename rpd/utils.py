@@ -6,5 +6,12 @@ class TimestampsModel(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False, null=True)
     is_deleted = models.BooleanField(default=False)
 
+
     class Meta:
         abstract = True
+
+
+    def delete(self):
+        self.is_deleted = True
+        self.save()
+

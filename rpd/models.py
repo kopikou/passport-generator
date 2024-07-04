@@ -1,15 +1,13 @@
+from django.contrib.auth.models import User
 from django.db import models
 from rpd.utils import TimestampsModel
 
 
 # Create your models here.
 class RPDFiles(TimestampsModel):
+    user = models.ForeignKey(User, verbose_name="Пользователь", on_delete=models.PROTECT)
     title = models.CharField(max_length=100, verbose_name="Наименование файла")
     file = models.FileField(upload_to="uploads/%Y-%m-%d/", verbose_name="Файл РПД")
-
-    def delete(self):
-        self.is_deleted = True
-        self.save()
 
 
 class Competence(models.Model):
