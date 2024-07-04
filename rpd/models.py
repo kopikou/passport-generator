@@ -4,10 +4,10 @@ from rpd.utils import TimestampsModel
 
 
 # Create your models here.
-class RPDFiles(TimestampsModel):
+class RPDFile(TimestampsModel):
     user = models.ForeignKey(User, verbose_name="Пользователь", on_delete=models.PROTECT)
     title = models.CharField(max_length=100, verbose_name="Наименование файла")
-    file = models.FileField(upload_to="uploads/%Y-%m-%d/", verbose_name="Файл РПД")
+    file = models.FileField(upload_to="uploads/rpd_plan/%Y-%m-%d/", verbose_name="Файл РПД")
 
 
 class Competence(models.Model):

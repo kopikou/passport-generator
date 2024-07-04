@@ -1,16 +1,17 @@
 from rest_framework import serializers
 
-from rpd.models import RPDFiles
+from rpd.models import RPDFile
 
-class RpdFilesSerializer(serializers.ModelSerializer):
-    user = serializers.IntegerField(read_only=True)
+
+class RpdFileSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField()
     title = serializers.CharField()
     file = serializers.FileField()
 
     class Meta:
-        model = RPDFiles
+        model = RPDFile
         fields = [
-            'user',
+            'user_id',
             'title',
             'file',
         ]

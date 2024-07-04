@@ -94,7 +94,7 @@ module.exports = configure(function (/* ctx */) {
         },
          "/static/admin": {
           target: 'http://localhost:8000',
-        }
+        },
       }
     },
 

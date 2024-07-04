@@ -12,6 +12,7 @@ const useMainStore = defineStore("MainStore", () => {
   const isStaff = ref(false);
   const BITRIX_CLIENT_ID = ref("");
   const VISIT_TOKEN_TIMEOUT = ref(30);
+  const csrf = ref('');
 
   async function checkLogin() {
     let r = await api.get('/api/user/checkLogin/')
@@ -26,7 +27,8 @@ const useMainStore = defineStore("MainStore", () => {
     lastName.value = data.last_name;
     BITRIX_CLIENT_ID.value = r.data.BITRIX_CLIENT_ID
     VISIT_TOKEN_TIMEOUT.value = r.data.VISIT_TOKEN_TIMEOUT
-    api.defaults.headers.common['X-CSRFToken'] = r.data.csrf;
+    csrf.value = r.data.csrf
+    api.defaults.headers.common['X-CSRFToken'] = r.data.csrf
 
     if (!isAuthenticated.value) {
       document.location.href = `https://int.istu.edu/oauth/authorize/?client_id=${BITRIX_CLIENT_ID.value}`;
@@ -47,6 +49,7 @@ const useMainStore = defineStore("MainStore", () => {
     userId,
     BITRIX_CLIENT_ID,
     VISIT_TOKEN_TIMEOUT,
+    csrf,
   }
 })
 

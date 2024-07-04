@@ -1,11 +1,11 @@
 import { RouteRecordRaw } from 'vue-router';
-import MainView from "pages/MainView.vue";
+import PlxUploadedView from "pages/PlxUploadedView.vue";
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
-    component: MainView
+    component: PlxUploadedView
   },
 
   // Always leave this as last one,
