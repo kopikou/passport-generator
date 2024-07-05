@@ -70,12 +70,12 @@ onBeforeMount(() => {
         </q-item-section>
 
         <q-item-section top class="qt-sm">
-          <q-item-label class="q-mt-sm text-grey-8">Статус файла</q-item-label>
+          <q-item-label class="q-mt-sm text-grey-8">{{ file.status }}</q-item-label>
         </q-item-section>
 
         <q-item-section top side>
           <div class="q-gutter-xs">
-            <q-btn class="gt-xs" flat dense round icon="mdi-play" color="green" />
+            <q-btn class="gt-xs" flat dense round icon="mdi-play" color="green" :to='`/view/${file.id}`' />
             <q-btn class="gt-xs" flat dense round icon="mdi-delete" color="red" @click="removeFile(file.id)"/>
           </div>
         </q-item-section>

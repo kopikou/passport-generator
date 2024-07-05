@@ -7,7 +7,7 @@ class RpdFileSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     user_id = serializers.IntegerField()
     title = serializers.CharField()
-    file = serializers.FileField()
+    file = serializers.FileField(allow_null=True)
 
     class Meta:
         model = RPDFile
@@ -16,4 +16,5 @@ class RpdFileSerializer(serializers.ModelSerializer):
             'user_id',
             'title',
             'file',
+            'status',
         ]

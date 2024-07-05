@@ -7,6 +7,8 @@ from rest_framework.viewsets import GenericViewSet
 from rpd.models import RPDFile
 from rpd.serializer import RpdFileSerializer
 
+from app.dictionaries import FILE_STATUS
+
 class UploadViewSet(
     CreateModelMixin,
     GenericViewSet,
@@ -45,6 +47,9 @@ class UploadViewSet(
 
         data = RPDFile.objects.filter(user=user, is_deleted=False)
         serializer = RpdFileSerializer(data, many=True)
+
+        for items in serializer.data:
+            items['status'] = FILE_STATUS[items['status']][1]
 
         return JsonResponse({
             "items": [i for i in serializer.data],
