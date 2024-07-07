@@ -18,6 +18,7 @@ const routes: RouteRecordRaw[] = [
     path: '/view/:id',
     name: 'viewFile',
     component: PlxFileView,
+    props: true,
   },
 
   // Always leave this as last one,

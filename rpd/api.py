@@ -45,7 +45,7 @@ class UploadViewSet(
     def get_files(self, request, *args, **kwargs):
         user = request.user
 
-        data = RPDFile.objects.filter(user=user, is_deleted=False)
+        data = RPDFile.objects.filter(user=user)
         serializer = RpdFileSerializer(data, many=True)
 
         for items in serializer.data:
@@ -59,8 +59,23 @@ class UploadViewSet(
     def remove_file(self, request, *args, **kwargs):
         id = request.data['id']
 
-        RPDFile.objects.filter(id=id, is_deleted=False)[0].soft_delete()
+        RPDFile.objects.filter(id=id)[0].soft_delete()
 
         return JsonResponse({
             "success": "True",
         })
+
+    @action(methods=['GET'], url_path="get_file_by_id", detail=False)
+    def get_file_by_id(self, request, *args, **kwargs):
+        id = request.GET['id']
+
+        data = RPDFile.objects.filter(id=id)
+
+        data.update(status=FILE_STATUS[2][0])
+
+        serializer_data = RpdFileSerializer(data, many=True)
+
+        return JsonResponse({
+            "items": [i for i in serializer_data.data],
+        })
+
