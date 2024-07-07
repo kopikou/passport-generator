@@ -6,6 +6,8 @@ from rest_framework.viewsets import GenericViewSet
 
 from rpd.models import RPDFile
 from rpd.serializer import RpdFileSerializer
+from rpd.services import PLXParser
+
 
 from app.dictionaries import FILE_STATUS
 
@@ -74,6 +76,8 @@ class UploadViewSet(
         data.update(status=FILE_STATUS[2][0])
 
         serializer_data = RpdFileSerializer(data, many=True)
+
+        parser = PLXParser(serializer_data.data[0]['file'], serializer_data.data[0]['id'])
 
         return JsonResponse({
             "items": [i for i in serializer_data.data],
