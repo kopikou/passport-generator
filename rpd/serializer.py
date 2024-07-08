@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from rpd.models import RPDFile, PlanData
+from rpd.models import RPDFile, PlanData, Disciplines, LinesData
 
 
 class RpdFileSerializer(serializers.ModelSerializer):
@@ -79,3 +79,52 @@ class PlanDataSerializer(serializers.ModelSerializer):
             'head',
             'faculty',
         ]
+
+
+class LinesDataSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    plan_id = serializers.IntegerField()
+    disid = serializers.IntegerField()
+    dis = serializers.CharField()
+    newdisid = serializers.CharField(allow_null=True, allow_blank=True)
+    mustbesdudied = serializers.IntegerField(allow_null=True)
+    hoursinzet = serializers.IntegerField(allow_null=True)
+    caf = serializers.IntegerField(allow_null=True)
+    nocalccontrol = serializers.BooleanField(allow_null=True)
+    type = serializers.IntegerField(allow_null=True)
+    viewpract = serializers.IntegerField(allow_null=True)
+    viewobject = serializers.IntegerField(allow_null=True)
+    kompetences = serializers.CharField(allow_null=True, allow_blank=True)
+
+    class Meta:
+        model = LinesData
+        fields = [
+            'id',
+            'disid',
+            'dis',
+            'newdisid',
+            'iddis',
+            'mustbesdudied',
+            'hoursinzet',
+            'caf',
+            'nocalccontrol',
+            'type',
+            'viewpract',
+            'viewobject',
+            'kompetences',
+        ]
+
+
+
+
+class DisciplinesSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField()
+
+    class Meta:
+        model = Disciplines
+        fields = [
+            'id',
+            'name',
+        ]
+

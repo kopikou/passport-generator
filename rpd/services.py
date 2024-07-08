@@ -6,8 +6,8 @@ from urllib.parse import unquote
 from lxml import etree
 import re
 
-from rpd.models import PlanData
-from rpd.serializer import PlanDataSerializer
+from rpd.models import PlanData, LinesData, Disciplines
+from rpd.serializer import PlanDataSerializer, DisciplinesSerializer, LinesDataSerializer
 
 
 class PLXParser:
@@ -43,13 +43,21 @@ class PLXParser:
         plnData = self.get_plan_data(root)
         planData = self.insert_plan_data(plnData)
 
-        print(planData)
         self.data.append(planData)
 
-        indikators_data = self.get_indicators_data(root)
-        competences_data = self.get_competences_data(root)
+        for i in range(1):
+            pass
 
-        # lines_data = self.get_lines_data(root)
+        if self.studylevel not in [4,5]:
+            competences_data = self.get_competences_data(root)
+
+        indikators_data = self.get_indicators_data(root)
+
+        lnsdata = self.get_lines_data(root, planData['id'], indikators_data)
+        lines_data = self.insert_lines_data(lnsdata)
+
+        self.data.append(lines_data)
+        pass
 
     study_prog = {
         1: 'подготовка специалистов',
@@ -135,10 +143,69 @@ class PLXParser:
             obj.is_valid(raise_exception=True)
             obj.save()
 
+        data['id'] = obj.id
+
         return data
 
     def get_lines_data(self, root, plan_id, indicators):
-        pass
+
+        lines_data = {}
+
+        for child in root.findall(self.path + 'ПланыСтроки'):
+            if not child.attrib.get('ВидПрактики'):
+                temp_dict = {}
+                temp_dict['plan_id'] = plan_id
+
+                temp_dict['dis'] = child.attrib.get('Дисциплина')
+                temp_dict['newdisid'] = child.attrib.get('ДисциплинаКод')
+                temp_dict['mustbesdudied'] = int(child.attrib.get('ПодлежитИзучениюЧасов')) if child.attrib.get('ПодлежитИзучениюЧасов') else None
+                temp_dict['hoursinzet'] = int(child.attrib.get('ЧасовВЗЕТ')) if child.attrib.get('ЧасовВЗЕТ') else None
+                temp_dict['caf'] = int(child.attrib.get('КодКафедры')) if child.attrib.get('КодКафедры') else None
+                temp_dict['nocalccontrol'] = True if child.attrib.get('НеСчитатьКонтроль') == 'true' else False
+                temp_dict['type'] = int(child.attrib.get('ТипОбъекта')) if child.attrib.get('ТипОбъекта') else None
+                temp_dict['viewpract'] = int(child.attrib.get('ВидПрактики')) if child.attrib.get('ВидПрактики') else None
+                temp_dict['viewobject'] = int(child.attrib.get('ВидОбъекта')) if child.attrib.get('ВидОбъекта') else None
+
+                lines_code = int(child.attrib.get('Код'))
+
+                tmp = []
+                for deep in root.findall(self.path + 'ПланыКомпетенцииДисциплины'):
+                    indicators_code = abs(int(deep.attrib.get('КодКомпетенции')))
+
+                    if lines_code == int(deep.attrib.get('КодСтроки')):
+                        tmp.append(indicators[indicators_code]['index'])
+
+                temp_dict['kompetences'] = ','.join(tmp)
+
+                lines_data[abs(lines_code)] = {}
+                lines_data[abs(lines_code)].update(temp_dict)
+
+        return lines_data
+
+    def insert_lines_data(self, data):
+
+        for key, items in data.items():
+            try:
+                obj = Disciplines.objects.get(name=items['dis'])
+            except:
+                obj = DisciplinesSerializer(data={'name': items['dis']})
+
+                obj.is_valid(raise_exception=True)
+                obj.save()
+
+            items['disid'] = obj.id
+
+            try:
+                obj = LinesData.objects.get(plan_id=items['plan_id'], disid=items['disid'])
+            except:
+                obj = LinesDataSerializer(data=items)
+
+                obj.is_valid(raise_exception=True)
+                obj.save()
+
+            items['id'] = obj.id
+
+        return data
 
     def get_competences_data(self, root):
         competences_data = {}

@@ -41,6 +41,25 @@ class PlanData(TimestampsModel):
     faculty = models.CharField(max_length=256, verbose_name='', null=True, blank=True)
 
 
+
+class Disciplines(TimestampsModel):
+    name = models.CharField(max_length=256, verbose_name='')
+
+
+class LinesData(TimestampsModel):
+    plan = models.ForeignKey(PlanData, verbose_name='', on_delete=models.PROTECT)
+    disid = models.ForeignKey(Disciplines, verbose_name='', on_delete=models.PROTECT, db_column='disid')
+    dis = models.CharField(max_length=256, verbose_name='')
+    newdisid = models.CharField(max_length=128, verbose_name='', null=True, blank=True)
+    mustbesdudied = models.IntegerField(verbose_name='', null=True)
+    hoursinzet = models.IntegerField(verbose_name='', null=True)
+    caf = models.IntegerField(verbose_name='', null=True)
+    nocalccontrol = models.BooleanField(verbose_name='', null=True)
+    type = models.IntegerField(verbose_name='', null=True)
+    viewpract = models.IntegerField(verbose_name='', null=True)
+    viewobject = models.IntegerField(verbose_name='', null=True)
+    kompetences = models.CharField(max_length=256, verbose_name='', null=True, blank=True)
+
 class Competence(models.Model):
     code = models.IntegerField()
     index = models.CharField(max_length=32)
