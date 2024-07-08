@@ -23,10 +23,15 @@ class PLXParser:
 
     fileId = None
 
+    data = []
+
     def __init__(self, filePath, file_id):
+        self.data = []
         with open((os.path.join(settings.BASE_DIR)) + unquote(filePath), "r", encoding="utf-16") as f:
             self.parseXML(etree.parse(f, parser=self.parser), file_id)
 
+    def get_result_data(self):
+        return self.data
     def parseXML(self, tree, file_id):
         self.fileId = file_id
         root = tree.getroot()
@@ -39,6 +44,7 @@ class PLXParser:
         planData = self.insert_plan_data(plnData)
 
         print(planData)
+        self.data.append(planData)
 
         indikators_data = self.get_indicators_data(root)
         competences_data = self.get_competences_data(root)

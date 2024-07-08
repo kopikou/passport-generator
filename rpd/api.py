@@ -81,5 +81,6 @@ class UploadViewSet(
 
         return JsonResponse({
             "items": [i for i in serializer_data.data],
+            "parser": parser.get_result_data(),
         })
 
