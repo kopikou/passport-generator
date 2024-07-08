@@ -84,7 +84,7 @@ class PlanDataSerializer(serializers.ModelSerializer):
 class LinesDataSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     plan_id = serializers.IntegerField()
-    disid = serializers.IntegerField()
+    disid_id = serializers.IntegerField()
     dis = serializers.CharField()
     newdisid = serializers.CharField(allow_null=True, allow_blank=True)
     mustbesdudied = serializers.IntegerField(allow_null=True)
@@ -100,10 +100,10 @@ class LinesDataSerializer(serializers.ModelSerializer):
         model = LinesData
         fields = [
             'id',
-            'disid',
+            'plan_id',
+            'disid_id',
             'dis',
             'newdisid',
-            'iddis',
             'mustbesdudied',
             'hoursinzet',
             'caf',

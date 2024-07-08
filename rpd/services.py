@@ -137,13 +137,14 @@ class PLXParser:
         data['file_id'] = self.fileId
         try:
             obj = PlanData.objects.get(file_id=self.fileId)
+            data['id'] = obj.id
         except:
             obj = PlanDataSerializer(data=data)
 
             obj.is_valid(raise_exception=True)
             obj.save()
 
-        data['id'] = obj.id
+            data['id'] = obj.data['id']
 
         return data
 
@@ -187,23 +188,25 @@ class PLXParser:
         for key, items in data.items():
             try:
                 obj = Disciplines.objects.get(name=items['dis'])
+                items['disid_id'] = obj.id
             except:
                 obj = DisciplinesSerializer(data={'name': items['dis']})
 
                 obj.is_valid(raise_exception=True)
                 obj.save()
 
-            items['disid'] = obj.id
+                items['disid_id'] = obj.data['id']
 
             try:
-                obj = LinesData.objects.get(plan_id=items['plan_id'], disid=items['disid'])
+                obj = LinesData.objects.get(plan_id=items['plan_id'], disid=items['disid_id'])
+                items['id'] = obj.id
             except:
                 obj = LinesDataSerializer(data=items)
 
                 obj.is_valid(raise_exception=True)
                 obj.save()
 
-            items['id'] = obj.id
+                items['id'] = obj.data['id']
 
         return data
 
