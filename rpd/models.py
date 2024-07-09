@@ -41,7 +41,6 @@ class PlanData(TimestampsModel):
     faculty = models.CharField(max_length=256, verbose_name='', null=True, blank=True)
 
 
-
 class Disciplines(TimestampsModel):
     name = models.CharField(max_length=256, verbose_name='')
 
@@ -59,6 +58,26 @@ class LinesData(TimestampsModel):
     viewpract = models.IntegerField(verbose_name='', null=True)
     viewobject = models.IntegerField(verbose_name='', null=True)
     kompetences = models.CharField(max_length=256, verbose_name='', null=True, blank=True)
+
+
+class SemesterData(TimestampsModel):
+    planlineid = models.ForeignKey(LinesData, verbose_name='', on_delete=models.PROTECT, db_column="planlineid")
+    num = models.IntegerField(verbose_name='')
+    lekc = models.IntegerField(verbose_name='', null=True)
+    lab = models.IntegerField(verbose_name='', null=True)
+    pr = models.IntegerField(verbose_name='', null=True)
+    srs = models.IntegerField(verbose_name='', null=True)
+    ekzhour = models.IntegerField(verbose_name='', null=True)
+    zet = models.IntegerField(verbose_name='', null=True)
+    ekz = models.BooleanField(verbose_name='', null=True)
+    zach = models.BooleanField(verbose_name='', null=True)
+    kp_hour = models.IntegerField(verbose_name='', null=True)
+    kp = models.BooleanField(verbose_name='', null=True)
+    kr_hour = models.IntegerField(verbose_name='', null=True)
+    kr = models.BooleanField(verbose_name='', null=True)
+    zacho = models.IntegerField(verbose_name='', null=True)
+    eios = models.IntegerField(verbose_name='', null=True)
+
 
 class Competence(models.Model):
     code = models.IntegerField()

@@ -1,13 +1,14 @@
 import os.path
 from datetime import datetime
+from itertools import groupby
 
 from django.conf import settings
 from urllib.parse import unquote
 from lxml import etree
 import re
 
-from rpd.models import PlanData, LinesData, Disciplines
-from rpd.serializer import PlanDataSerializer, DisciplinesSerializer, LinesDataSerializer
+from rpd.models import PlanData, LinesData, Disciplines, SemesterData
+from rpd.serializer import PlanDataSerializer, DisciplinesSerializer, LinesDataSerializer, SemesterDataSerializer
 
 
 class PLXParser:
@@ -57,6 +58,40 @@ class PLXParser:
         lines_data = self.insert_lines_data(lnsdata)
 
         self.data.append(lines_data)
+
+        lines_indikators = self.get_lines_ind_comp_bind_data(root)
+        semester_data = self.get_semester_data(root)
+
+        for key, items in lines_data.items():
+            for v, value in lines_indikators.items():
+                if value['КодСтроки'] == key:
+                    value['planlineid_id'] = items['id']
+                    value['find'] = True
+
+            for v, value in semester_data.items():
+                if value['planlineid_id'] == key:
+                    value['planlineid_id'] = items['id']
+                    value['find'] = True
+
+        lines_indikators = {key: item for key, item in lines_indikators.items() if item['find']}
+        semester_data = {key: item for key, item in semester_data.items() if item['find']}
+
+        sorted_lines_indikators = sorted(lines_indikators.items(), key=lambda item: item[1]['КодСтроки'])
+        group_lines_indikators = {key: list(items) for key, items in groupby(sorted_lines_indikators, key=lambda item: item[1]['КодСтроки'])}
+
+        sorted_semester_data = sorted(semester_data.items(), key=lambda item: (item[1]['planlineid_id'], item[1]['num']))
+        group_semester_data = {key: list(items) for key, items in groupby(sorted_semester_data, key=lambda  item: (item[1]['planlineid_id'], item[1]['num']))}
+
+        semester_data_res = []
+        for key, items in group_semester_data.items():
+            temp = {**items[0][1]}
+            for item in items:
+                temp.update({k: v for k, v in item[1].items() if v is not None})
+            semester_data_res.append(temp)
+
+        semester_data_result = self.insert_semester_data(semester_data_res)
+        self.data.append(semester_data_result)
+
         pass
 
     study_prog = {
@@ -99,7 +134,7 @@ class PLXParser:
             self.semesteroncource = int(child.attrib.get('СеместровНаКурсе'))
             planData['gosdate'] = datetime.fromisoformat((child.attrib.get('ДатаГОСа'))).strftime(
                 "%Y-%m-%d") if child.attrib.get('ДатаГОСа') else None
-            planData['gostype'] = int(child.attrib.get('ТипГОСа'))
+            planData['gostype'] = float(child.attrib.get('ТипГОСа'))
             planData['napr_t'] = child.attrib.get('Титул').rstrip().replace("\r\n", " ")
             planData['abbrprofile'] = re.search(self.fileNameRegex, child.attrib.get('ИмяФайла').replace("_", "-"))[1]
 
@@ -210,6 +245,62 @@ class PLXParser:
 
         return data
 
+    def get_semester_data(self, root):
+
+        data = {}
+
+        for child in root.findall(self.path + 'ПланыНовыеЧасы'):
+            num = 0
+
+            if int(child.attrib.get('Семестр')) == 0:
+                continue
+            if int(child.attrib.get('Курс')) == 0:
+                continue
+
+            if abs(int(child.attrib.get('КодТипаЧасов'))) != 3:
+                num = 0
+                if int(child.attrib.get('Семестр')) > 0:
+                    num = (int(child.attrib.get('Курс')) - 1) * self.semesteroncource + int(child.attrib.get('Семестр'))
+
+                data[abs(int(child.attrib.get('Код')))] = {
+                    'planlineid_id': abs(int(child.attrib.get('КодОбъекта'))),
+                    'find': False,
+                    'code': abs(int(child.attrib.get('Код'))),
+                    'num': num,
+                    'lekc': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '101' else None,
+                    'lab': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '102' else None,
+                    'pr': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '103' else None,
+                    'srs': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '107' else None,
+                    'ekzhour': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '108' else None,
+                    'zet': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '50' else None,
+                    'ekz': True if child.attrib.get('КодВидаРаботы') == '1' else None,
+                    'zach': True if child.attrib.get('КодВидаРаботы') == '2' else None,
+                    'kp_hour': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '4' else None,
+                    'kp': True if child.attrib.get('КодВидаРаботы') == '4' else None,
+                    'kr_hour': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '5' else None,
+                    'kr': True if child.attrib.get('КодВидаРаботы') == '5' else None,
+                    'zacho': 1 if child.attrib.get('КодВидаРаботы') == '3' else None,
+                    'eios': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '143' else None,
+                }
+
+        return data
+
+    def insert_semester_data(self, data):
+
+        for items in data:
+            try:
+                obj = SemesterData.objects.get(planlineid=items['planlineid'], num=items['num'])
+                items['id'] = obj.id
+            except:
+                obj = SemesterDataSerializer(data=items)
+
+                obj.is_valid(raise_exception=True)
+                obj.save()
+
+                items['id'] = obj.data['id']
+
+        return data
+
     def get_competences_data(self, root):
         competences_data = {}
 
@@ -248,3 +339,13 @@ class PLXParser:
 
         return indicators_data
 
+    def get_lines_ind_comp_bind_data(self, root):
+        ind_comp_bind_data = {}
+
+        for child in root.findall(self.path + 'ПланыКомпетенцииДисциплины'):
+            ind_comp_bind_data[abs(int(child.attrib.get('Код')))] = {
+                "КодКомпетенции": abs(int(child.attrib.get('КодКомпетенции'))),
+                "КодСтроки": abs(int(child.attrib.get('КодСтроки'))),
+                "find": False}
+
+        return ind_comp_bind_data

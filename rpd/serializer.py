@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from rpd.models import RPDFile, PlanData, Disciplines, LinesData
+from rpd.models import RPDFile, PlanData, Disciplines, LinesData, SemesterData
 
 
 class RpdFileSerializer(serializers.ModelSerializer):
@@ -18,6 +18,48 @@ class RpdFileSerializer(serializers.ModelSerializer):
             'title',
             'file',
             'status',
+        ]
+
+
+class SemesterDataSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    planlineid_id = serializers.IntegerField()
+    num = serializers.IntegerField()
+    lekc = serializers.IntegerField(allow_null=True)
+    lab = serializers.IntegerField(allow_null=True)
+    pr = serializers.IntegerField(allow_null=True)
+    srs = serializers.IntegerField(allow_null=True)
+    ekzhour = serializers.IntegerField(allow_null=True)
+    zet = serializers.IntegerField(allow_null=True)
+    ekz = serializers.BooleanField(allow_null=True)
+    zach = serializers.BooleanField(allow_null=True)
+    kp_hour = serializers.IntegerField(allow_null=True)
+    kp = serializers.BooleanField(allow_null=True)
+    kr_hour = serializers.IntegerField(allow_null=True)
+    kr = serializers.BooleanField(allow_null=True)
+    zacho = serializers.IntegerField(allow_null=True)
+    eios = serializers.IntegerField(allow_null=True)
+
+    class Meta:
+        model = SemesterData
+        fields = [
+            'id',
+            'planlineid_id',
+            'num',
+            'lekc',
+            'lab',
+            'pr',
+            'srs',
+            'ekzhour',
+            'zet',
+            'ekz',
+            'zach',
+            'kp_hour',
+            'kp',
+            'kr_hour',
+            'kr',
+            'zacho',
+            'eios',
         ]
 
 
