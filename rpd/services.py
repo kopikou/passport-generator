@@ -56,11 +56,11 @@ class PLXParser:
 
         self.data.append(lines_data)
 
-        lines_indikators = self.get_lines_ind_comp_bind_data(root)
+        lines_indicators = self.get_lines_ind_comp_bind_data(root)
         semester_data = self.get_semester_data(root)
 
         for key, items in lines_data.items():
-            for v, value in lines_indikators.items():
+            for v, value in lines_indicators.items():
                 if value['КодСтроки'] == key:
                     value['planlineid_id'] = items['id']
                     value['find'] = True
@@ -70,11 +70,11 @@ class PLXParser:
                     value['planlineid_id'] = items['id']
                     value['find'] = True
 
-        lines_indikators = {key: item for key, item in lines_indikators.items() if item['find']}
+        lines_indicators = {key: item for key, item in lines_indicators.items() if item['find']}
         semester_data = {key: item for key, item in semester_data.items() if item['find']}
 
-        sorted_lines_indikators = sorted(lines_indikators.items(), key=lambda item: item[1]['КодСтроки'])
-        group_lines_indikators = {key: list(items) for key, items in groupby(sorted_lines_indikators, key=lambda item: item[1]['КодСтроки'])}
+        sorted_lines_indicators = sorted(lines_indicators.items(), key=lambda item: item[1]['КодСтроки'])
+        group_lines_indicators = {key: list(items) for key, items in groupby(sorted_lines_indicators, key=lambda item: item[1]['КодСтроки'])}
 
         sorted_semester_data = sorted(semester_data.items(), key=lambda item: (item[1]['planlineid_id'], item[1]['num']))
         group_semester_data = {key: list(items) for key, items in groupby(sorted_semester_data, key=lambda  item: (item[1]['planlineid_id'], item[1]['num']))}
@@ -88,6 +88,25 @@ class PLXParser:
 
         semester_data_result = self.insert_semester_data(semester_data_res)
         self.data.append(semester_data_result)
+
+
+        lines_indicators_result = []
+        for key, items in group_lines_indicators.items():
+            for item in items:
+                tmp_obj = {}
+                for v, value in indikators_data.items():
+                    if item[1]['КодКомпетенции'] == v:
+                        tmp_obj = {
+                            'planlineid': item[1]['planlineid_id'],
+                            'indicator_index': value['index'],
+                            'indicator': value['content'],
+                            'competences_index': competences_data[value['КодРодителя']]['index'],
+                            'competence': competences_data[value['КодРодителя']]['content'],
+                        }
+                        break
+                lines_indicators_result.append(tmp_obj)
+
+        self.data.append(lines_indicators_result)
 
         for i in range(1):
             pass
@@ -328,14 +347,13 @@ class PLXParser:
                 indicators_data[abs(int(child.attrib.get('Код')))] = {"code": child.attrib.get('Код'),
                                                                       "content": child.attrib.get('Наименование'),
                                                                       "index": child.attrib.get('ШифрКомпетенции'),
-                                                                      "КодРодителя": child.attrib.get('КодРодителя')}
+                                                                      "КодРодителя": abs(int(child.attrib.get('КодРодителя')))}
             else:
                 if child.attrib.get('КодРодителя'):
                     indicators_data[abs(int(child.attrib.get('Код')))] = {"code": child.attrib.get('Код'),
                                                                           "content": child.attrib.get('Наименование'),
                                                                           "index": child.attrib.get('ШифрКомпетенции'),
-                                                                          "КодРодителя": child.attrib.get(
-                                                                              'КодРодителя')}
+                                                                          "КодРодителя": abs(int(child.attrib.get('КодРодителя')))}
 
         return indicators_data
 
