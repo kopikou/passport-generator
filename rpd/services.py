@@ -4,11 +4,14 @@ from itertools import groupby
 
 from django.conf import settings
 from urllib.parse import unquote
+
 from lxml import etree
 import re
 
-from rpd.models import PlanData, LinesData, Disciplines, SemesterData
-from rpd.serializer import PlanDataSerializer, DisciplinesSerializer, LinesDataSerializer, SemesterDataSerializer
+from rpd.models import PlanData, LinesData, Disciplines, SemesterData, LinesIndicators, ExceptionNames, AllowedNames, \
+    PlanDocuments
+from rpd.serializer import PlanDataSerializer, DisciplinesSerializer, LinesDataSerializer, SemesterDataSerializer, \
+    LinesIndicatorsSerializer, PlanDocumentsSerializer
 
 
 class PLXParser:
@@ -52,7 +55,18 @@ class PLXParser:
         indikators_data = self.get_indicators_data(root)
 
         lnsdata = self.get_lines_data(root, planData['id'], indikators_data)
-        lines_data = self.insert_lines_data(lnsdata)
+        tmp = self.insert_lines_data(lnsdata)
+
+        list_id = []
+        list_keys = []
+        for key, items in tmp.items():
+            if items['id'] not in list_id:
+                list_id.append(items['id'])
+                list_keys.append(key)
+
+        lines_data = {}
+        for i in list_keys:
+            lines_data[i] = tmp[i]
 
         self.data.append(lines_data)
 
@@ -90,23 +104,36 @@ class PLXParser:
         self.data.append(semester_data_result)
 
 
-        lines_indicators_result = []
+        lines_indicators_res = []
         for key, items in group_lines_indicators.items():
             for item in items:
                 tmp_obj = {}
                 for v, value in indikators_data.items():
                     if item[1]['КодКомпетенции'] == v:
-                        tmp_obj = {
-                            'planlineid': item[1]['planlineid_id'],
-                            'indicator_index': value['index'],
-                            'indicator': value['content'],
-                            'competences_index': competences_data[value['КодРодителя']]['index'],
-                            'competence': competences_data[value['КодРодителя']]['content'],
-                        }
-                        break
-                lines_indicators_result.append(tmp_obj)
+                        if self.studylevel in [4, 5]:
+                            tmp_obj = {
+                                'planlineid_id': item[1]['planlineid_id'],
+                                'indicator_index': value['index'],
+                                'indicator': value['content'],
+                            }
+                        else:
+                            tmp_obj = {
+                                'planlineid_id': item[1]['planlineid_id'],
+                                'indicator_index': value['index'],
+                                'indicator': value['content'],
+                                'competence_index': competences_data[value['КодРодителя']]['index'],
+                                'competence': competences_data[value['КодРодителя']]['content'],
+                            }
 
+                        break
+                lines_indicators_res.append(tmp_obj)
+
+
+        lines_indicators_result = self.insert_lines_indicators(lines_indicators_res)
         self.data.append(lines_indicators_result)
+
+        plan_files = self.get_documents_plan(lines_data, planData['id'])
+        self.data.append(plan_files)
 
         for i in range(1):
             pass
@@ -207,33 +234,32 @@ class PLXParser:
         lines_data = {}
 
         for child in root.findall(self.path + 'ПланыСтроки'):
-            if not child.attrib.get('ВидПрактики'):
-                temp_dict = {}
-                temp_dict['plan_id'] = plan_id
+            temp_dict = {}
+            temp_dict['plan_id'] = plan_id
 
-                temp_dict['dis'] = child.attrib.get('Дисциплина')
-                temp_dict['newdisid'] = child.attrib.get('ДисциплинаКод')
-                temp_dict['mustbesdudied'] = int(child.attrib.get('ПодлежитИзучениюЧасов')) if child.attrib.get('ПодлежитИзучениюЧасов') else None
-                temp_dict['hoursinzet'] = int(child.attrib.get('ЧасовВЗЕТ')) if child.attrib.get('ЧасовВЗЕТ') else None
-                temp_dict['caf'] = int(child.attrib.get('КодКафедры')) if child.attrib.get('КодКафедры') else None
-                temp_dict['nocalccontrol'] = True if child.attrib.get('НеСчитатьКонтроль') == 'true' else False
-                temp_dict['type'] = int(child.attrib.get('ТипОбъекта')) if child.attrib.get('ТипОбъекта') else None
-                temp_dict['viewpract'] = int(child.attrib.get('ВидПрактики')) if child.attrib.get('ВидПрактики') else None
-                temp_dict['viewobject'] = int(child.attrib.get('ВидОбъекта')) if child.attrib.get('ВидОбъекта') else None
+            temp_dict['dis'] = child.attrib.get('Дисциплина')
+            temp_dict['newdisid'] = child.attrib.get('ДисциплинаКод')
+            temp_dict['mustbesdudied'] = int(child.attrib.get('ПодлежитИзучениюЧасов')) if child.attrib.get('ПодлежитИзучениюЧасов') else None
+            temp_dict['hoursinzet'] = int(child.attrib.get('ЧасовВЗЕТ')) if child.attrib.get('ЧасовВЗЕТ') else None
+            temp_dict['caf'] = int(child.attrib.get('КодКафедры')) if child.attrib.get('КодКафедры') else None
+            temp_dict['nocalccontrol'] = True if child.attrib.get('НеСчитатьКонтроль') == 'true' else False
+            temp_dict['type'] = int(child.attrib.get('ТипОбъекта')) if child.attrib.get('ТипОбъекта') else None
+            temp_dict['viewpract'] = int(child.attrib.get('ВидПрактики')) if child.attrib.get('ВидПрактики') else None
+            temp_dict['viewobject'] = int(child.attrib.get('ВидОбъекта')) if child.attrib.get('ВидОбъекта') else None
 
-                lines_code = int(child.attrib.get('Код'))
+            lines_code = int(child.attrib.get('Код'))
 
-                tmp = []
-                for deep in root.findall(self.path + 'ПланыКомпетенцииДисциплины'):
-                    indicators_code = abs(int(deep.attrib.get('КодКомпетенции')))
+            tmp = []
+            for deep in root.findall(self.path + 'ПланыКомпетенцииДисциплины'):
+                indicators_code = abs(int(deep.attrib.get('КодКомпетенции')))
 
-                    if lines_code == int(deep.attrib.get('КодСтроки')):
-                        tmp.append(indicators[indicators_code]['index'])
+                if lines_code == int(deep.attrib.get('КодСтроки')):
+                    tmp.append(indicators[indicators_code]['index'])
 
-                temp_dict['kompetences'] = ','.join(tmp)
+            temp_dict['kompetences'] = ','.join(tmp)
 
-                lines_data[abs(lines_code)] = {}
-                lines_data[abs(lines_code)].update(temp_dict)
+            lines_data[abs(lines_code)] = {}
+            lines_data[abs(lines_code)].update(temp_dict)
 
         return lines_data
 
@@ -308,7 +334,7 @@ class PLXParser:
 
         for items in data:
             try:
-                obj = SemesterData.objects.get(planlineid=items['planlineid'], num=items['num'])
+                obj = SemesterData.objects.get(planlineid_id=items['planlineid_id'], num=items['num'])
                 items['id'] = obj.id
             except:
                 obj = SemesterDataSerializer(data=items)
@@ -343,11 +369,11 @@ class PLXParser:
         indicators_data = {}
 
         for child in root.findall(self.path + 'ПланыКомпетенции'):
-            if self.studylevel in [4,5]:
+            if self.studylevel in [4, 5]:
                 indicators_data[abs(int(child.attrib.get('Код')))] = {"code": child.attrib.get('Код'),
                                                                       "content": child.attrib.get('Наименование'),
                                                                       "index": child.attrib.get('ШифрКомпетенции'),
-                                                                      "КодРодителя": abs(int(child.attrib.get('КодРодителя')))}
+                                                                      }
             else:
                 if child.attrib.get('КодРодителя'):
                     indicators_data[abs(int(child.attrib.get('Код')))] = {"code": child.attrib.get('Код'),
@@ -367,3 +393,115 @@ class PLXParser:
                 "find": False}
 
         return ind_comp_bind_data
+
+    def insert_lines_indicators(self, data):
+
+        for items in data:
+            try:
+                if self.studylevel in [4, 5]:
+                    obj = LinesIndicators.objects.get(planlineid_id=items['planlineid_id'], indicator=items['indicator'])
+                else:
+                    obj = LinesIndicators.objects.get(planlineid_id=items['planlineid_id'], indicator=items['indicator'], competence=items['competence'])
+                items['id'] = obj.id
+            except:
+                obj = LinesIndicatorsSerializer(data=items)
+
+                obj.is_valid(raise_exception=True)
+                obj.save()
+
+                items['id'] = obj.data['id']
+
+        return data
+
+    def get_documents_plan(self, data, plan_id):
+        allwd_names = AllowedNames.objects.values_list('name', flat=True)
+        allowed_names = [i.lower() for i in allwd_names]
+
+        documents_data = []
+        for key, items in data.items():
+            for name in allowed_names:
+                if items['dis'].lower().find(name) != -1:
+                    continue
+
+            if items['dis'].lower().find('практика') != -1:
+                documents_data.append({
+                    'name': items['dis'].capitalize(),
+                    'type': items['type'],
+                })
+
+        documents_data.append({
+            'name': 'Учебный план',
+            'type': 5,
+        })
+        documents_data.append({
+            'name': 'Адаптивный учебный план',
+            'type': 8,
+        })
+        documents_data.append({
+            'name': 'Календарный учебный план',
+            'type': 6,
+        })
+        documents_data.append({
+            'name': 'Программа ГИА',
+            'type': 1,
+        })
+        documents_data.append({
+            'name': 'ФОС ГИА',
+            'type': 2,
+        })
+        documents_data.append({
+            'name': 'ООП',
+            'type': 7,
+        })
+
+        if self.studylevel in [1, 2, 4, 5]:
+            documents_data.append({
+                'name': 'Рабочая программа воспитания',
+                'type': 7,
+            })
+            documents_data.append({
+                'name': 'Образовательный стандарт ФГОС',
+                'type': 10,
+            })
+            documents_data.append({
+                'name': 'Календарный план воспитательной работы',
+                'type': 7,
+            })
+
+        if self.studylevel in [3]:
+            documents_data.append({
+                'name': 'Образовательный стандарт ФГОС',
+                'type': 10,
+            })
+
+        if self.studylevel in [4, 5]:
+            documents_data.append({
+                'name': 'АОП',
+                'type': 7,
+            })
+
+        if self.studylevel in [7]:
+            documents_data.append({
+                'name': 'Федеральные государственные требования ФГТ',
+                'type': 21,
+            })
+            documents_data.append({
+                'name': 'План научной деятельности',
+                'type': 19,
+            })
+
+        for item in documents_data:
+            item['plan_id'] = plan_id
+            try:
+                obj = PlanDocuments.objects.get(plan_id=item['plan_id'], name=item['name'])
+                item['id'] = obj.id
+            except:
+                obj = PlanDocumentsSerializer(data=item)
+
+                obj.is_valid(raise_exception=True)
+                obj.save()
+
+                item['id'] = obj.data['id']
+
+
+        return documents_data

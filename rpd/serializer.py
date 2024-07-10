@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from rpd.models import RPDFile, PlanData, Disciplines, LinesData, SemesterData
+from rpd.models import RPDFile, PlanData, Disciplines, LinesData, SemesterData, LinesIndicators, PlanDocuments
 
 
 class RpdFileSerializer(serializers.ModelSerializer):
@@ -157,6 +157,40 @@ class LinesDataSerializer(serializers.ModelSerializer):
         ]
 
 
+class LinesIndicatorsSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    planlineid_id = serializers.IntegerField()
+    competence_index = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    competence = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    indicator_index = serializers.CharField()
+    indicator = serializers.CharField()
+
+    class Meta:
+        model = LinesIndicators
+        fields = [
+            'id',
+            'planlineid_id',
+            'competence_index',
+            'competence',
+            'indicator_index',
+            'indicator',
+        ]
+
+
+class PlanDocumentsSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    plan_id = serializers.IntegerField()
+    name = serializers.CharField()
+    type = serializers.IntegerField()
+
+    class Meta:
+        model = PlanDocuments
+        fields = [
+            'id',
+            'plan_id',
+            'name',
+            'type',
+        ]
 
 
 class DisciplinesSerializer(serializers.ModelSerializer):

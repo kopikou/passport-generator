@@ -79,6 +79,34 @@ class SemesterData(TimestampsModel):
     eios = models.IntegerField(verbose_name='', null=True)
 
 
+class LinesIndicators(TimestampsModel):
+    planlineid = models.ForeignKey(LinesData, verbose_name='', on_delete=models.PROTECT, db_column="planlineid")
+    competence_index = models.CharField(max_length=32, verbose_name='', null=True, blank=True)
+    competence = models.CharField(max_length=2048, verbose_name='', null=True, blank=True)
+    indicator_index = models.CharField(max_length=32, verbose_name='')
+    indicator = models.CharField(max_length=2048, verbose_name='')
+
+
+class PlanDocuments(TimestampsModel):
+    plan = models.ForeignKey(PlanData, verbose_name='', on_delete=models.PROTECT)
+    name = models.CharField(max_length=256, verbose_name='')
+    type = models.IntegerField(verbose_name='')
+
+
+class ExceptionNames(TimestampsModel):
+    name = models.CharField(max_length=256, verbose_name='')
+
+    def __str__(self):
+        return f"{self.name}"
+
+
+class AllowedNames(TimestampsModel):
+    name = models.CharField(max_length=256, verbose_name='')
+
+    def __str__(self):
+        return f"{self.name}"
+
+
 class Competence(models.Model):
     code = models.IntegerField()
     index = models.CharField(max_length=32)

@@ -79,7 +79,7 @@ onBeforeMount(() => {
           <q-icon name="mdi-file-document-outline" />
         </q-item-section>
 
-        <q-item-section>Практика ГИА</q-item-section>
+        <q-item-section>Документы</q-item-section>
 
         </q-item>
         <q-item
