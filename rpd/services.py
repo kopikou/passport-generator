@@ -46,9 +46,6 @@ class PLXParser:
 
         self.data.append(planData)
 
-        for i in range(1):
-            pass
-
         if self.studylevel not in [4,5]:
             competences_data = self.get_competences_data(root)
 
@@ -91,6 +88,9 @@ class PLXParser:
 
         semester_data_result = self.insert_semester_data(semester_data_res)
         self.data.append(semester_data_result)
+
+        for i in range(1):
+            pass
 
         pass
 
