@@ -17,7 +17,7 @@ const useMainStore = defineStore("MainStore", () => {
   async function checkLogin() {
     let r = await api.get('/api/user/checkLogin/')
     let data = r.data;
-    console.log(data)
+    // console.log(data)
     isAuthenticated.value = data.authenticated;
     isSuperuser.value = data.is_superuser;
     isStaff.value = data.is_staff;

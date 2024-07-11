@@ -1,9 +1,8 @@
 <script setup lang="ts">
 
 const props = defineProps({
-  id: {
+  data: {
     require: true,
-    type: Number,
   }
 })
 
@@ -11,7 +10,7 @@ const props = defineProps({
 
 <template>
 <div>
-  hello world! competences view {{ props.id }}
+  {{ props.data }}
 </div>
 </template>
 

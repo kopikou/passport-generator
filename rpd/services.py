@@ -44,10 +44,12 @@ class PLXParser:
         self.XMLNS = "{%s}" % XHTML_NAMESPACE
         self.path = ".//%s" % self.XMLNS
 
+        planData_result = []
         plnData = self.get_plan_data(root)
         planData = self.insert_plan_data(plnData)
+        planData_result.append(planData)
 
-        self.data.append(planData)
+        self.data.append(planData_result)
 
         if self.studylevel not in [4,5]:
             competences_data = self.get_competences_data(root)
@@ -68,7 +70,10 @@ class PLXParser:
         for i in list_keys:
             lines_data[i] = tmp[i]
 
-        self.data.append(lines_data)
+        lines_data_result = []
+        for key, items in lines_data.items():
+            lines_data_result.append(items)
+        self.data.append(lines_data_result)
 
         lines_indicators = self.get_lines_ind_comp_bind_data(root)
         semester_data = self.get_semester_data(root)
@@ -170,7 +175,7 @@ class PLXParser:
             planData['whoratif'] = child.attrib.get('ПланОдобрен')
 
             planData['planname'] = child.attrib.get('ИмяФайла')
-            planData['kafcode'] = int(child.attrib.get('КодПрофКафедры'))
+            planData['kafcode'] = int(child.attrib.get('КодПрофКафедры')) if child.attrib.get('КодПрофКафедры') else None
             planData['startyear'] = int(child.attrib.get('ГодНачалаПодготовки'))
             planData['dviga'] = True if child.attrib.get('ДвИГА') == 'true' else False
             planData['gviga'] = True if child.attrib.get('ГвИГА') == 'true' else False

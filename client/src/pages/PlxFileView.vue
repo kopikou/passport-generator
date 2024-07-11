@@ -4,10 +4,13 @@ import axios from "axios";
 import {onBeforeMount, ref} from "vue";
 import PlanView from "components/PlanView.vue";
 import DisciplineView from "components/DisciplineView.vue";
-import FilesView from "components/FilesView.vue";
+import DocumentsView from "components/DocumentsView.vue";
 import CompetencesView from "components/CompetencesView.vue";
 import IndicatorsView from "components/IndicatorsView.vue";
 import SemesterView from "components/SemesterView.vue";
+import {useQuasar} from "quasar";
+
+const $q = useQuasar()
 
 const props = defineProps( {
     id: {
@@ -17,11 +20,32 @@ const props = defineProps( {
 })
 
 const link = ref('plan')
-
+const plan_data = ref([])
+const lines_data = ref([])
+const documents_data = ref([])
+const semester_data = ref([])
+const indicators_data = ref([])
 async function getFileData() {
-  console.log(props.id)
-  let r = await axios.get("api/upload/get_file_by_id/", {params: {id: props.id} })
-  console.log(r.data.items)
+  $q.loading.show()
+
+  let r = await axios.get("api/upload/get_file_by_id/", {params: {id: props.id}})
+    .catch((response) => {
+      $q.notify({
+        color: 'negative',
+        message: 'Ошибка получения данных, перезагрузите страницу',
+        icon: 'mdi-alert-box',
+        position: 'top',
+      })
+      $q.loading.hide()
+    })
+
+  plan_data.value = r.data.parser[0]
+  lines_data.value = r.data.parser[1]
+  semester_data.value = r.data.parser[2]
+  indicators_data.value = r.data.parser[3]
+  documents_data.value = r.data.parser[4]
+
+  $q.loading.hide()
 }
 
 onBeforeMount(() => {
@@ -70,8 +94,8 @@ onBeforeMount(() => {
         <q-item
           clickable
           v-ripple
-          :active="link === 'files'"
-          @click="link = 'files'"
+          :active="link === 'documents'"
+          @click="link = 'documents'"
           active-class="my-menu-link"
         >
 
@@ -131,12 +155,12 @@ onBeforeMount(() => {
     </div>
     <div class="col-10">
       <div class="q-pl-lg">
-        <plan-view v-if="link === 'plan'" :id="props.id"/>
-        <discipline-view v-if="link === 'disciple'" :id="props.id"/>
-        <files-view v-if="link === 'files'" :id="props.id"/>
-        <semester-view v-if="link === 'semester'" :id="props.id"/>
-        <competences-view v-if="link === 'competences'" :id="props.id"/>
-        <indicators-view v-if="link === 'indicators'" :id="props.id"/>
+        <plan-view v-if="link === 'plan'" :data="plan_data"/>
+        <discipline-view v-if="link === 'disciple'" :data="lines_data"/>
+        <documents-view v-if="link === 'documents'" :data="documents_data"/>
+        <semester-view v-if="link === 'semester'" :data="semester_data"/>
+        <competences-view v-if="link === 'competences'" :data="indicators_data"/>
+        <indicators-view v-if="link === 'indicators'" :data="indicators_data"/>
       </div>
     </div>
   </div>
