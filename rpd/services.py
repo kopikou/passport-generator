@@ -474,7 +474,7 @@ class PLXParser:
                 'type': 10,
             })
 
-        if self.studylevel in [4, 5]:
+        if self.studylevel not in [4, 5]:
             documents_data.append({
                 'name': 'АОП',
                 'type': 7,
