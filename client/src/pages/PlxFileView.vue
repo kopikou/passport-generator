@@ -15,7 +15,6 @@ const $q = useQuasar()
 const props = defineProps( {
     id: {
     required: true,
-    type: Number
   }
 })
 

@@ -2,6 +2,7 @@ import os.path
 from datetime import datetime
 from itertools import groupby
 
+import requests
 from django.conf import settings
 from urllib.parse import unquote
 
@@ -510,3 +511,24 @@ class PLXParser:
 
 
         return documents_data
+
+
+class AISServices(object):
+
+    @staticmethod
+    @cache_function(timeout=60 * 1)
+    def get_kaf_codes():
+        q = """
+	        SELECT ckaf2rpgen, name2rpgen FROM dbo.uchplan_kaf
+	        """
+
+        r = requests.get(f"{settings.ARIM_URL}/wizard.sql", {
+            "q": q
+        }, proxies={
+            "http": "",
+            "https": "",
+        })
+
+        data = r.json()['RecordSet']
+
+        return data

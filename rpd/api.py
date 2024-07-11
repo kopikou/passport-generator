@@ -6,8 +6,7 @@ from rest_framework.viewsets import GenericViewSet
 
 from rpd.models import RPDFile
 from rpd.serializer import RpdFileSerializer
-from rpd.services import PLXParser
-
+from rpd.services import PLXParser, AISServices
 
 from app.dictionaries import FILE_STATUS
 
@@ -84,3 +83,10 @@ class UploadViewSet(
             "parser": parser.get_result_data(),
         })
 
+    @action(methods=['GET'], url_path="get_kafcodes", detail=True)
+    def get_kaf_codes(self, request, *args, **kwargs):
+        data = AISServices.get_kaf_codes()
+
+        return JsonResponse({
+            "items": [i for i in data],
+        })
