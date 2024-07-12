@@ -1,6 +1,5 @@
 <script setup lang="ts">
 
-import axios from "axios";
 import {onBeforeMount, ref} from "vue";
 import PlanView from "components/PlanView.vue";
 import DisciplineView from "components/DisciplineView.vue";
@@ -10,6 +9,7 @@ import IndicatorsView from "components/IndicatorsView.vue";
 import SemesterView from "components/SemesterView.vue";
 import {useQuasar} from "quasar";
 import _ from "lodash";
+import {api} from "boot/axios";
 
 const $q = useQuasar()
 
@@ -28,7 +28,7 @@ const semesterData = ref([])
 const indicatorsData = ref([])
 async function getFileData() {
 
-  let r = await axios.get("api/upload/get-file-by-id/", {params: {id: props.id}})
+  let r = await api.get("api/upload/get-file-by-id/", {params: {id: props.id}})
     .catch((response) => {
       $q.notify({
         color: 'negative',

@@ -1,4 +1,5 @@
 import os.path
+from builtins import enumerate
 from datetime import datetime
 from itertools import groupby
 
@@ -6,6 +7,7 @@ import requests
 from django.conf import settings
 from urllib.parse import unquote
 
+from django.db.models import Q
 from lxml import etree
 import re
 
@@ -141,11 +143,6 @@ class PLXParser:
         plan_files = self.get_documents_plan(lines_data, planData['id'])
         self.data['documents'] = plan_files
 
-        for i in range(1):
-            pass
-
-        pass
-
     study_prog = {
         1: 'подготовка специалистов',
         2: 'подготовка бакалавров',
@@ -223,8 +220,8 @@ class PLXParser:
     def insert_plan_data(self, data):
         data['file_id'] = self.fileId
         try:
-            obj = PlanData.objects.get(file_id=self.fileId)
-            data['id'] = obj.id
+            obj = PlanData.objects.values().get(file_id=self.fileId)
+            data = obj
         except:
             obj = PlanDataSerializer(data=data)
 
@@ -270,29 +267,36 @@ class PLXParser:
         return lines_data
 
     def insert_lines_data(self, data):
+        disciplines = Disciplines.objects.filter(name__in=[i['dis'] for i in data.values()])
+        disciplines = {i.name: i.id for i in disciplines}
 
-        for key, items in data.items():
-            try:
-                obj = Disciplines.objects.get(name=items['dis'])
-                items['disid_id'] = obj.id
-            except:
-                obj = DisciplinesSerializer(data={'name': items['dis']})
+        query = Q()
+        for i in data.values():
+            query |= Q(plan_id=i['plan_id'], dis=i['dis'])
 
-                obj.is_valid(raise_exception=True)
-                obj.save()
+        lines = LinesData.objects.filter(query)
+        lines = {f"{i['plan_id']}_{i['dis']}": i for i in lines.values()}
 
-                items['disid_id'] = obj.data['id']
-
-            try:
-                obj = LinesData.objects.get(plan_id=items['plan_id'], disid=items['disid_id'])
-                items['id'] = obj.id
-            except:
-                obj = LinesDataSerializer(data=items)
+        for key, item in data.items():
+            if not disciplines.get(item['dis']):
+                obj = DisciplinesSerializer(data={'name': item['dis']})
 
                 obj.is_valid(raise_exception=True)
                 obj.save()
 
-                items['id'] = obj.data['id']
+                item['disid_id'] = obj.data['id']
+            else:
+                item['disid_id'] = disciplines.get(item['dis'])
+
+            if not lines.get(f"{item['plan_id']}_{item['dis']}"):
+                obj = LinesDataSerializer(data=item)
+
+                obj.is_valid(raise_exception=True)
+                obj.save()
+
+                item['id'] = obj.data['id']
+            else:
+                data[key] = lines.get(f"{item['plan_id']}_{item['dis']}")
 
         return data
 
@@ -338,19 +342,26 @@ class PLXParser:
 
     def insert_semester_data(self, data):
 
-        for items in data:
-            try:
-                obj = SemesterData.objects.get(planlineid_id=items['planlineid_id'], num=items['num'])
-                items['id'] = obj.id
-            except:
-                obj = SemesterDataSerializer(data=items)
+        query = Q()
+        for item in data:
+            query |= Q(planlineid_id=item['planlineid_id'], num=item['num'])
+
+        semester = SemesterData.objects.filter(query)
+        semester = {f"{i['planlineid_id']}_{i['num']}": i for i in semester.values()}
+
+        result = []
+        for item in data:
+            if not semester.get(f"{item['planlineid_id']}_{item['num']}"):
+                obj = SemesterDataSerializer(data=item)
 
                 obj.is_valid(raise_exception=True)
                 obj.save()
 
-                items['id'] = obj.data['id']
+                result.append(obj.data)
+            else:
+                result.append(semester.get(f"{item['planlineid_id']}_{item['num']}"))
 
-        return data
+        return result
 
     def get_competences_data(self, root):
         competences_data = {}
@@ -402,22 +413,30 @@ class PLXParser:
 
     def insert_lines_indicators(self, data):
 
-        for items in data:
-            try:
-                if self.studylevel in [4, 5]:
-                    obj = LinesIndicators.objects.get(planlineid_id=items['planlineid_id'], indicator=items['indicator'])
-                else:
-                    obj = LinesIndicators.objects.get(planlineid_id=items['planlineid_id'], indicator=items['indicator'], competence=items['competence'])
-                items['id'] = obj.id
-            except:
-                obj = LinesIndicatorsSerializer(data=items)
+        query = Q()
+
+        for item in data:
+            if self.studylevel in [4, 5]:
+                query |= Q(planlineid_id=item['planlineid_id'], indicator_index=item['indicator_index'])
+            else:
+                query |= Q(planlineid_id=item['planlineid_id'], indicator_index=item['indicator_index'], competence_index=item['competence_index'])
+
+        indicators = LinesIndicators.objects.filter(query)
+        indicators = {f"{i['planlineid_id']}_{i['indicator_index']}": i for i in indicators.values()}
+
+        result = []
+        for item in data:
+            if not indicators.get(f"{item['planlineid_id']}_{item['indicator_index']}"):
+                obj = LinesIndicatorsSerializer(data=item)
 
                 obj.is_valid(raise_exception=True)
                 obj.save()
 
-                items['id'] = obj.data['id']
+                result.append(obj.data)
+            else:
+                result.append(indicators.get(f"{item['planlineid_id']}_{item['indicator_index']}"))
 
-        return data
+        return result
 
     def get_documents_plan(self, data, plan_id):
         allwd_names = AllowedNames.objects.values_list('name', flat=True)
@@ -496,21 +515,29 @@ class PLXParser:
                 'type': 19,
             })
 
+
+        query = Q()
+
+        result = []
+        for item in documents_data:
+            query |= Q(plan_id=plan_id, name=item['name'])
+
+        documents = PlanDocuments.objects.filter(query)
+        documents = {f"{plan_id}_{i['name']}": i for i in documents.values()}
+
         for item in documents_data:
             item['plan_id'] = plan_id
-            try:
-                obj = PlanDocuments.objects.get(plan_id=item['plan_id'], name=item['name'])
-                item['id'] = obj.id
-            except:
+            if not documents.get(f"{item['plan_id']}_{item['name']}"):
                 obj = PlanDocumentsSerializer(data=item)
 
                 obj.is_valid(raise_exception=True)
                 obj.save()
 
-                item['id'] = obj.data['id']
+                result.append(obj.data)
+            else:
+                result.append(documents.get(f"{item['plan_id']}_{item['name']}"))
 
-
-        return documents_data
+        return result
 
 
 class AISServices(object):

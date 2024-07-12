@@ -1,9 +1,9 @@
 <script setup lang="ts">
 
 import {computed, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onMounted, onUnmounted, ref} from "vue";
-import axios from "axios";
 import {useQuasar} from "quasar";
 import _ from "lodash";
+import {api} from "boot/axios";
 
 const $q = useQuasar()
 
@@ -30,12 +30,15 @@ const columns = [
 ]
 
 
-function updatePlan(value) {
-  console.log(value)
+async function updatePlan(values) {
+  $q.loading.show()
+  let r = await api.post("api/upload/update-plan-data/", values)
+  console.log(r.data)
+  $q.loading.hide()
 }
 
 async function getCafData() {
-  let r = await axios.get("api/upload/get-caf-codes/")
+  let r = await api.get("api/upload/get-caf-codes/")
   cafData.value = r.data.items
 }
 
@@ -44,9 +47,7 @@ const cafDataById = computed(() => {
 })
 
 onBeforeMount(async () => {
-  $q.loading.show()
   await getCafData()
-  $q.loading.hide()
 })
 
 </script>
@@ -94,14 +95,13 @@ onBeforeMount(async () => {
 
           <q-td key="kafcode" :props="props" class="bg-grey-4">
             {{ cafDataById[props.row.kafcode]?.label }}
-            <q-popup-edit v-model="props.row.kafcode" v-slot="scope">
+            <q-popup-edit v-model="props.row.kafcode" v-slot="scope" @update:modelValue="updatePlan(props.row)">
               <q-select
               v-model="scope.value"
               emit-value
               map-options
               :options="cafData"
               @popup-hide="scope.set"
-              @update:modelValue="updatePlan(props.row)"
               filled
               behavior="dialog"
               >

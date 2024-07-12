@@ -3,9 +3,10 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, CreateModelMixin
 from rest_framework.viewsets import GenericViewSet
+from urllib3 import request
 
-from rpd.models import RPDFile
-from rpd.serializer import RpdFileSerializer
+from rpd.models import RPDFile, PlanData
+from rpd.serializer import RpdFileSerializer, PlanDataSerializer
 from rpd.services import PLXParser, AISServices
 
 from app.dictionaries import FILE_STATUS
@@ -89,4 +90,18 @@ class PlxUploadViewSet(
 
         return JsonResponse({
             "items": [i for i in data],
+        })
+
+    @action(methods=['POST'], url_path='update-plan-data', detail=False)
+    def update_plan_data(self, request, *args, **kwargs):
+        data = request.data
+
+        instance = PlanData.objects.get(id=data['id'])
+
+        serializer = PlanDataSerializer(instance, data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return JsonResponse({
+            "success": "True",
         })

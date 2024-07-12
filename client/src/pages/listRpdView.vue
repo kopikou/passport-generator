@@ -1,10 +1,10 @@
 <script setup lang="ts">
 
 import {onBeforeMount, ref} from "vue";
-import axios from "axios";
 import {useQuasar} from "quasar";
 import useMainStore from "stores/mainStore";
 import {storeToRefs} from "pinia";
+import {api} from "boot/axios";
 
 const mainStore = useMainStore();
 const {csrf} = storeToRefs(mainStore)
@@ -12,7 +12,7 @@ const files = ref([])
 
 const $q = useQuasar()
 async function getFiles() {
-  let r = await axios.get("api/upload/get-files/")
+  let r = await api.get("api/upload/get-files/")
   files.value = r.data.items
 }
 
@@ -32,7 +32,7 @@ function removeFile(file_id) {
         },
         persistent: true
       }).onOk(async() => {
-        let r = await axios.delete("api/upload/remove_files/", {headers: {'X-CSRFToken': csrf.value}, data: {id: file_id}})
+        let r = await api.delete("api/upload/remove_files/", {headers: {'X-CSRFToken': csrf.value}, data: {id: file_id}})
         if (!r.data.success) {
           $q.notify({
             type: 'negative',
