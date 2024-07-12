@@ -14,6 +14,8 @@ from rpd.models import PlanData, LinesData, Disciplines, SemesterData, LinesIndi
 from rpd.serializer import PlanDataSerializer, DisciplinesSerializer, LinesDataSerializer, SemesterDataSerializer, \
     LinesIndicatorsSerializer, PlanDocumentsSerializer
 
+from app.utils import cache_function
+
 
 class PLXParser:
 
@@ -28,10 +30,8 @@ class PLXParser:
 
     fileId = None
 
-    data = []
-
     def __init__(self, filePath, file_id):
-        self.data = []
+        self.data = {}
         with open((os.path.join(settings.BASE_DIR)) + unquote(filePath), "r", encoding="utf-16") as f:
             self.parseXML(etree.parse(f, parser=self.parser), file_id)
 
@@ -50,7 +50,7 @@ class PLXParser:
         planData = self.insert_plan_data(plnData)
         planData_result.append(planData)
 
-        self.data.append(planData_result)
+        self.data['plan'] = planData_result
 
         if self.studylevel not in [4,5]:
             competences_data = self.get_competences_data(root)
@@ -74,7 +74,7 @@ class PLXParser:
         lines_data_result = []
         for key, items in lines_data.items():
             lines_data_result.append(items)
-        self.data.append(lines_data_result)
+        self.data['lines'] = lines_data_result
 
         lines_indicators = self.get_lines_ind_comp_bind_data(root)
         semester_data = self.get_semester_data(root)
@@ -107,7 +107,7 @@ class PLXParser:
             semester_data_res.append(temp)
 
         semester_data_result = self.insert_semester_data(semester_data_res)
-        self.data.append(semester_data_result)
+        self.data['semester'] = semester_data_result
 
 
         lines_indicators_res = []
@@ -136,10 +136,10 @@ class PLXParser:
 
 
         lines_indicators_result = self.insert_lines_indicators(lines_indicators_res)
-        self.data.append(lines_indicators_result)
+        self.data['indicators'] = lines_indicators_result
 
         plan_files = self.get_documents_plan(lines_data, planData['id'])
-        self.data.append(plan_files)
+        self.data['documents'] = plan_files
 
         for i in range(1):
             pass
@@ -519,7 +519,7 @@ class AISServices(object):
     @cache_function(timeout=60 * 1)
     def get_kaf_codes():
         q = """
-	        SELECT ckaf2rpgen, name2rpgen FROM dbo.uchplan_kaf
+	        SELECT ckaf2rpgen as value, name2rpgen as label FROM dbo.uchplan_kaf
 	        """
 
         r = requests.get(f"{settings.ARIM_URL}/wizard.sql", {

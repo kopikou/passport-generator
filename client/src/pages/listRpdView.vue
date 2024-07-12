@@ -12,7 +12,7 @@ const files = ref([])
 
 const $q = useQuasar()
 async function getFiles() {
-  let r = await axios.get("api/upload/get_files/")
+  let r = await axios.get("api/upload/get-files/")
   files.value = r.data.items
 }
 

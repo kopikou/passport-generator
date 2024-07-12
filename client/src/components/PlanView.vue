@@ -1,12 +1,19 @@
 <script setup lang="ts">
 
-import {ref} from "vue";
+import {computed, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onMounted, onUnmounted, ref} from "vue";
+import axios from "axios";
+import {useQuasar} from "quasar";
+import _ from "lodash";
+
+const $q = useQuasar()
 
 const props = defineProps({
   data: {
     require: true,
-  }
+  },
 })
+
+const cafData = ref([])
 
 const columns = [
   {name: 'species', field: 'species', label: 'Направление', align: 'center'},
@@ -22,6 +29,26 @@ const columns = [
   {name: 'semesteroncource', field: 'semesteroncource', label: 'Семестров на курсе', align: 'center'},
 ]
 
+
+function updatePlan(value) {
+  console.log(value)
+}
+
+async function getCafData() {
+  let r = await axios.get("api/upload/get-caf-codes/")
+  cafData.value = r.data.items
+}
+
+const cafDataById = computed(() => {
+  return _.keyBy(cafData.value, 'value')
+})
+
+onBeforeMount(async () => {
+  $q.loading.show()
+  await getCafData()
+  $q.loading.hide()
+})
+
 </script>
 
 <template>
@@ -31,7 +58,7 @@ const columns = [
       :rows="props.data"
       :columns="columns"
       row-key="id"
-      rows-per-page-options="0"
+      :rows-per-page-options="[0]"
       wrap-cells
     >
 
@@ -65,11 +92,19 @@ const columns = [
             {{ props.row.faculty }}
           </q-td>
 
-          <q-td key="kafcode" :props>
-            {{ props.row.kafcode }}
-            <q-popup-edit v-model="kafcode" v-slot="scope">
-              <q-select>
-
+          <q-td key="kafcode" :props="props" class="bg-grey-4">
+            {{ cafDataById[props.row.kafcode]?.label }}
+            <q-popup-edit v-model="props.row.kafcode" v-slot="scope">
+              <q-select
+              v-model="scope.value"
+              emit-value
+              map-options
+              :options="cafData"
+              @popup-hide="scope.set"
+              @update:modelValue="updatePlan(props.row)"
+              filled
+              behavior="dialog"
+              >
               </q-select>
             </q-popup-edit>
           </q-td>
@@ -90,7 +125,6 @@ const columns = [
       </template>
 
     </q-table>
-  {{ props.data }}
 </div>
 </template>
 

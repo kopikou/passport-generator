@@ -4,11 +4,11 @@ from rest_framework import routers
 from auths.views import LoginView, LogoutView, BitrixAuthView
 from auths.api import UserApiViewSet
 
-from rpd.api import UploadViewSet
+from rpd.api import PlxUploadViewSet
 
 router = routers.DefaultRouter()
 router.register(r'user', UserApiViewSet, basename="user")
-router.register(r'upload', UploadViewSet, basename="upload")
+router.register(r'upload', PlxUploadViewSet, basename="upload")
 
 urlpatterns = [
     path('api/', include(router.urls)),

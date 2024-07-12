@@ -33,7 +33,7 @@ function onRejected(rejectedEntries) {
         color="amber"
         text-color="black"
       auto-upload
-      url="/api/upload/insert_file/"
+      url="/api/upload/insert-file/"
       multiple
       accept=".plx"
       :filter="filefilter"

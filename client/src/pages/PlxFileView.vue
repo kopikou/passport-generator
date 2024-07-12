@@ -9,6 +9,7 @@ import CompetencesView from "components/CompetencesView.vue";
 import IndicatorsView from "components/IndicatorsView.vue";
 import SemesterView from "components/SemesterView.vue";
 import {useQuasar} from "quasar";
+import _ from "lodash";
 
 const $q = useQuasar()
 
@@ -18,16 +19,16 @@ const props = defineProps( {
   }
 })
 
-const link = ref('plan')
-const plan_data = ref([])
-const lines_data = ref([])
-const documents_data = ref([])
-const semester_data = ref([])
-const indicators_data = ref([])
-async function getFileData() {
-  $q.loading.show()
 
-  let r = await axios.get("api/upload/get_file_by_id/", {params: {id: props.id}})
+const link = ref('plan')
+const planData = ref([])
+const linesData = ref([])
+const documentsData = ref([])
+const semesterData = ref([])
+const indicatorsData = ref([])
+async function getFileData() {
+
+  let r = await axios.get("api/upload/get-file-by-id/", {params: {id: props.id}})
     .catch((response) => {
       $q.notify({
         color: 'negative',
@@ -35,20 +36,21 @@ async function getFileData() {
         icon: 'mdi-alert-box',
         position: 'top',
       })
-      $q.loading.hide()
     })
 
-  plan_data.value = r.data.parser[0]
-  lines_data.value = r.data.parser[1]
-  semester_data.value = r.data.parser[2]
-  indicators_data.value = r.data.parser[3]
-  documents_data.value = r.data.parser[4]
+  planData.value = r.data.parser.plan
+  linesData.value = r.data.parser.lines
+  semesterData.value = r.data.parser.semester
+  indicatorsData.value = r.data.parser.indicators
+  documentsData.value = r.data.parser.documents
 
-  $q.loading.hide()
 }
 
-onBeforeMount(() => {
-  getFileData()
+
+onBeforeMount(async() => {
+  $q.loading.show()
+  await getFileData()
+  $q.loading.hide()
 })
 
 </script>
@@ -154,12 +156,12 @@ onBeforeMount(() => {
     </div>
     <div class="col-10">
       <div class="q-pl-lg">
-        <plan-view v-if="link === 'plan'" :data="plan_data"/>
-        <discipline-view v-if="link === 'disciple'" :data="lines_data"/>
-        <documents-view v-if="link === 'documents'" :data="documents_data"/>
-        <semester-view v-if="link === 'semester'" :data="semester_data"/>
-        <competences-view v-if="link === 'competences'" :data="indicators_data"/>
-        <indicators-view v-if="link === 'indicators'" :data="indicators_data"/>
+        <plan-view v-if="link === 'plan'" :data="planData"/>
+        <discipline-view v-if="link === 'disciple'" :data="linesData"/>
+        <documents-view v-if="link === 'documents'" :data="documentsData"/>
+        <semester-view v-if="link === 'semester'" :data="semesterData"/>
+        <competences-view v-if="link === 'competences'" :data="indicatorsData"/>
+        <indicators-view v-if="link === 'indicators'" :data="indicatorsData"/>
       </div>
     </div>
   </div>

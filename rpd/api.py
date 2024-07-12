@@ -10,14 +10,14 @@ from rpd.services import PLXParser, AISServices
 
 from app.dictionaries import FILE_STATUS
 
-class UploadViewSet(
+class PlxUploadViewSet(
     CreateModelMixin,
     GenericViewSet,
 ):
     queryset = RPDFile.objects.all()
     serializer_class = RpdFileSerializer
 
-    @action(methods=['POST'], url_path="insert_file", detail=False)
+    @action(methods=['POST'], url_path="insert-file", detail=False)
     def upload_plan_file(self, request, *args, **kwargs):
         if request.method == 'POST':
             for filename, file in request.FILES.items():
@@ -25,6 +25,7 @@ class UploadViewSet(
                     'user_id': request.user.id,
                     'file': file,
                     'title': filename,
+                    'status': 0,
                 }
 
                 data_serializer = RpdFileSerializer(data=data)
@@ -42,7 +43,7 @@ class UploadViewSet(
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    @action(methods=['GET'], url_path="get_files", detail=False)
+    @action(methods=['GET'], url_path="get-files", detail=False)
     def get_files(self, request, *args, **kwargs):
         user = request.user
 
@@ -56,7 +57,7 @@ class UploadViewSet(
             "items": [i for i in serializer.data],
         })
 
-    @action(methods=['DELETE'], url_path="remove_files", detail=False)
+    @action(methods=['DELETE'], url_path="remove-files", detail=False)
     def remove_file(self, request, *args, **kwargs):
         id = request.data['id']
 
@@ -66,7 +67,7 @@ class UploadViewSet(
             "success": "True",
         })
 
-    @action(methods=['GET'], url_path="get_file_by_id", detail=False)
+    @action(methods=['GET'], url_path="get-file-by-id", detail=False)
     def get_file_by_id(self, request, *args, **kwargs):
         id = request.GET['id']
 
@@ -77,14 +78,13 @@ class UploadViewSet(
         serializer_data = RpdFileSerializer(data, many=True)
 
         parser = PLXParser(serializer_data.data[0]['file'], serializer_data.data[0]['id'])
-
         return JsonResponse({
             "items": [i for i in serializer_data.data],
             "parser": parser.get_result_data(),
         })
 
-    @action(methods=['GET'], url_path="get_kafcodes", detail=True)
-    def get_kaf_codes(self, request, *args, **kwargs):
+    @action(methods=['GET'], url_path="get-caf-codes", detail=False)
+    def get_caf_codes(self, request, *args, **kwargs):
         data = AISServices.get_kaf_codes()
 
         return JsonResponse({
