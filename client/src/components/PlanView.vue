@@ -4,16 +4,22 @@ import {computed, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onMounted, onU
 import {useQuasar} from "quasar";
 import _ from "lodash";
 import {api} from "boot/axios";
+import useCafStore from "stores/cafStore";
+import {storeToRefs} from "pinia";
 
 const $q = useQuasar()
+
+const cafStore = useCafStore()
+const {
+    cafData,
+} = storeToRefs(cafStore);
+
 
 const props = defineProps({
   data: {
     require: true,
   },
 })
-
-const cafData = ref([])
 
 const columns = [
   {name: 'species', field: 'species', label: 'Направление', align: 'center'},
@@ -37,17 +43,8 @@ async function updatePlan(values) {
   $q.loading.hide()
 }
 
-async function getCafData() {
-  let r = await api.get("api/upload/get-caf-codes/")
-  cafData.value = r.data.items
-}
-
 const cafDataById = computed(() => {
   return _.keyBy(cafData.value, 'value')
-})
-
-onBeforeMount(async () => {
-  await getCafData()
 })
 
 </script>
