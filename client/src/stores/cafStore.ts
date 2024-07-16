@@ -1,6 +1,8 @@
 import {defineStore} from "pinia";
 import {onBeforeMount, ref} from "vue";
 import {api} from "boot/axios";
+import {useQuasar} from "quasar";
+
 
 const useCafStore = defineStore('CafStore', () => {
     const cafData = ref([])

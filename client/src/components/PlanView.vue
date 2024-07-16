@@ -70,8 +70,16 @@ const cafDataById = computed(() => {
             {{ props.row.lastshifr }}
           </q-td>
 
-          <q-td key="abbrprofile" :props>
+          <q-td key="abbrprofile" :props class="bg-grey-4">
             {{ props.row.abbrprofile }}
+            <q-popup-edit v-model="props.row.abbrprofile" v-slot="scope" @update:modelValue="updatePlan(props.row)">
+              <q-input
+              v-model="scope.value"
+              @focusout="scope.set"
+              filled
+              >
+              </q-input>
+            </q-popup-edit>
           </q-td>
 
           <q-td key="studyform" :props>
