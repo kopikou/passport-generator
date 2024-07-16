@@ -164,6 +164,7 @@ class PLXParser:
         planData['studyprog'] = self.study_prog[int(root.attrib.get('КодУровняОбразования'))]
         planData['elementsinweek'] = int(root.attrib['ЭлементовВНеделе'])
         planData['faculty'] = ''
+        planData['synchronize'] = True
 
         for child in root.findall(self.path + 'Планы'):
             # print(child.tag.strip(self.XMLNS), child.attrib)
@@ -242,6 +243,7 @@ class PLXParser:
         for child in root.findall(self.path + 'ПланыСтроки'):
             temp_dict = {}
             temp_dict['plan_id'] = plan_id
+            temp_dict['synchronize'] = True
 
             temp_dict['dis'] = child.attrib.get('Дисциплина')
             temp_dict['newdisid'] = child.attrib.get('ДисциплинаКод')
@@ -339,8 +341,8 @@ class PLXParser:
                     'kr': True if child.attrib.get('КодВидаРаботы') == '5' else None,
                     'zacho': 1 if child.attrib.get('КодВидаРаботы') == '3' else None,
                     'eios': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '143' else None,
+                    'synchronize': True,
                 }
-
         return data
 
     def insert_semester_data(self, data):
@@ -410,7 +412,8 @@ class PLXParser:
             ind_comp_bind_data[abs(int(child.attrib.get('Код')))] = {
                 "КодКомпетенции": abs(int(child.attrib.get('КодКомпетенции'))),
                 "КодСтроки": abs(int(child.attrib.get('КодСтроки'))),
-                "find": False}
+                "find": False,
+                "synchronize": True,}
 
         return ind_comp_bind_data
 

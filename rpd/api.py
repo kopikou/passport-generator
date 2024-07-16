@@ -5,8 +5,8 @@ from rest_framework.mixins import ListModelMixin, CreateModelMixin
 from rest_framework.viewsets import GenericViewSet
 from urllib3 import request
 
-from rpd.models import RPDFile, PlanData
-from rpd.serializer import RpdFileSerializer, PlanDataSerializer
+from rpd.models import RPDFile, PlanData, LinesData
+from rpd.serializer import RpdFileSerializer, PlanDataSerializer, LinesDataSerializer
 from rpd.services import PLXParser, AISServices
 
 from app.dictionaries import FILE_STATUS
@@ -105,3 +105,19 @@ class PlxUploadViewSet(
         return JsonResponse({
             "success": "True",
         })
+
+    @action(methods=['POST'], url_path='update-lines-data', detail=False)
+    def update_lines_data(self, request, *args, **kwargs):
+        data = request.data
+
+        instance = LinesData.objects.get(id=data['id'])
+
+        serializer = LinesDataSerializer(instance, data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return JsonResponse({
+            "success": "True",
+        })
+
+

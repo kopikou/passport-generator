@@ -40,6 +40,7 @@ class PlanData(TimestampsModel):
     vuzname = models.CharField(max_length=256, verbose_name='')
     head = models.CharField(max_length=256, verbose_name='', null=True, blank=True)
     faculty = models.CharField(max_length=256, verbose_name='', null=True, blank=True)
+    synchronize = models.BooleanField(verbose_name='', default=1)
 
 
 class Disciplines(TimestampsModel):
@@ -59,6 +60,7 @@ class LinesData(TimestampsModel):
     viewpract = models.IntegerField(verbose_name='', null=True)
     viewobject = models.IntegerField(verbose_name='', null=True)
     kompetences = models.CharField(max_length=256, verbose_name='', null=True, blank=True)
+    synchronize = models.BooleanField(verbose_name='', default=1)
 
 
 class SemesterData(TimestampsModel):
@@ -78,6 +80,7 @@ class SemesterData(TimestampsModel):
     kr = models.BooleanField(verbose_name='', null=True)
     zacho = models.IntegerField(verbose_name='', null=True)
     eios = models.IntegerField(verbose_name='', null=True)
+    synchronize = models.BooleanField(verbose_name='', default=1)
 
 
 class LinesIndicators(TimestampsModel):
@@ -86,12 +89,14 @@ class LinesIndicators(TimestampsModel):
     competence = models.CharField(max_length=2048, verbose_name='', null=True, blank=True)
     indicator_index = models.CharField(max_length=32, verbose_name='')
     indicator = models.CharField(max_length=2048, verbose_name='')
+    synchronize = models.BooleanField(verbose_name='', default=1)
 
 
 class PlanDocuments(TimestampsModel):
     plan = models.ForeignKey(PlanData, verbose_name='', on_delete=models.PROTECT)
     name = models.CharField(max_length=256, verbose_name='')
     type = models.IntegerField(verbose_name='')
+    synchronize = models.BooleanField(verbose_name='', default=1)
 
 
 class ExceptionNames(TimestampsModel):

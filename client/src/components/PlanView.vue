@@ -4,15 +4,16 @@ import {computed, onBeforeMount, onBeforeUnmount, onBeforeUpdate, onMounted, onU
 import {useQuasar} from "quasar";
 import _ from "lodash";
 import {api} from "boot/axios";
-import useCafStore from "stores/cafStore";
 import {storeToRefs} from "pinia";
+import usePlanViewStore from "stores/planViewStore";
 
 const $q = useQuasar()
 
-const cafStore = useCafStore()
+const planViewStore = usePlanViewStore()
 const {
-    cafData,
-} = storeToRefs(cafStore);
+  cafData,
+  sync_option,
+} = storeToRefs(planViewStore);
 
 
 const props = defineProps({
@@ -20,6 +21,8 @@ const props = defineProps({
     require: true,
   },
 })
+
+const disabled = ref(false)
 
 const columns = [
   {name: 'species', field: 'species', label: 'Направление', align: 'center'},
@@ -33,15 +36,18 @@ const columns = [
   {name: 'startyear', field: 'startyear', label: 'Год начала подготовки', align: 'center'},
   {name: 'igahourzet', field: 'igahourzet', label: 'ЗЕТ в неделю', align: 'center'},
   {name: 'semesteroncource', field: 'semesteroncource', label: 'Семестров на курсе', align: 'center'},
+  {name: 'synchronize', field: 'synchronize', label: 'Синхронизация с АИС', align: 'center'},
 ]
-
 
 async function updatePlan(values) {
   $q.loading.show()
   let r = await api.post("api/upload/update-plan-data/", values)
-  console.log(r.data)
   $q.loading.hide()
 }
+
+const synctDataByValue = computed(() => {
+  return _.keyBy(sync_option.value, 'value')
+})
 
 const cafDataById = computed(() => {
   return _.keyBy(cafData.value, 'value')
@@ -50,7 +56,7 @@ const cafDataById = computed(() => {
 </script>
 
 <template>
-<div style="width: 90%">
+  <div style="width: 90%">
     <q-table
       title="Информация о плане"
       :rows="props.data"
@@ -74,9 +80,10 @@ const cafDataById = computed(() => {
             {{ props.row.abbrprofile }}
             <q-popup-edit v-model="props.row.abbrprofile" v-slot="scope" @update:modelValue="updatePlan(props.row)">
               <q-input
-              v-model="scope.value"
-              @focusout="scope.set"
-              filled
+                v-model="scope.value"
+                @focusout="scope.set"
+                filled
+                :readonly="disabled"
               >
               </q-input>
             </q-popup-edit>
@@ -102,13 +109,14 @@ const cafDataById = computed(() => {
             {{ cafDataById[props.row.kafcode]?.label }}
             <q-popup-edit v-model="props.row.kafcode" v-slot="scope" @update:modelValue="updatePlan(props.row)">
               <q-select
-              v-model="scope.value"
-              emit-value
-              map-options
-              :options="cafData"
-              @popup-hide="scope.set"
-              filled
-              behavior="dialog"
+                v-model="scope.value"
+                emit-value
+                map-options
+                :options="cafData"
+                @popup-hide="scope.set"
+                filled
+                behavior="dialog"
+                :readonly="disabled"
               >
               </q-select>
             </q-popup-edit>
@@ -125,12 +133,28 @@ const cafDataById = computed(() => {
           <q-td key="semesteroncource" :props>
             {{ props.row.semesteroncource }}
           </q-td>
-        </q-tr>
 
+          <q-td key="synchronize" :props class="bg-grey-4">
+            {{ synctDataByValue[props.row.synchronize]?.label }}
+            <q-popup-edit v-model="props.row.synchronize" v-slot="scope" @update:modelValue="updatePlan(props.row)">
+              <q-select
+                v-model="scope.value"
+                emit-value
+                map-options
+                :options="sync_option"
+                @popup-hide="scope.set"
+                filled
+                behavior="dialog"
+                :readonly="disabled"
+              >
+              </q-select>
+            </q-popup-edit>
+          </q-td>
+        </q-tr>
       </template>
 
     </q-table>
-</div>
+  </div>
 </template>
 
 <style scoped>

@@ -4,8 +4,12 @@ import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 
 
-const useCafStore = defineStore('CafStore', () => {
+const usePlanViewStore = defineStore('PlanViewStore', () => {
     const cafData = ref([])
+    const sync_option = ref([
+      {value: true, label: 'Да'},
+      {value: false, label: 'Нет'},
+    ])
 
     async function getData() {
         let r = await api.get("api/upload/get-caf-codes/")
@@ -19,8 +23,9 @@ const useCafStore = defineStore('CafStore', () => {
     })
 
     return {
-        cafData,
+      cafData,
+      sync_option,
     }
 })
 
-export default useCafStore;
+export default usePlanViewStore;
