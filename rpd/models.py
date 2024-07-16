@@ -17,7 +17,7 @@ class PlanData(TimestampsModel):
     file = models.ForeignKey(RPDFile, verbose_name="Файл", on_delete=models.PROTECT)
     subtype = models.CharField(max_length=64, verbose_name='')
     shifr = models.CharField(max_length=8, verbose_name='')
-    abbrprofile = models.CharField(max_length=12, verbose_name='')
+    abbrprofile = models.CharField(max_length=12, verbose_name='', null=True, blank=True)
     studyform = models.CharField(max_length=48, verbose_name='')
     studylevel = models.CharField(max_length=64, verbose_name='')
     studyprog = models.CharField(max_length=64, verbose_name='')

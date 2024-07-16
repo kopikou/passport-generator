@@ -185,7 +185,10 @@ class PLXParser:
                 "%Y-%m-%d") if child.attrib.get('ДатаГОСа') else None
             planData['gostype'] = float(child.attrib.get('ТипГОСа'))
             planData['napr_t'] = child.attrib.get('Титул').rstrip().replace("\r\n", " ")
-            planData['abbrprofile'] = re.search(self.fileNameRegex, child.attrib.get('ИмяФайла').replace("_", "-"))[1]
+            try:
+                planData['abbrprofile'] = re.search(self.fileNameRegex, child.attrib.get('ИмяФайла').replace("_", "-"))[1]
+            except:
+                planData['abbrprofile'] = None
 
         for child in root.findall(self.path + 'ООП'):
             planData['gosdocument'] = int(child.attrib.get('НомерДокумента') if child.attrib.get('НомерДокумента') else None)

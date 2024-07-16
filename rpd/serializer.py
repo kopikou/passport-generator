@@ -68,7 +68,7 @@ class PlanDataSerializer(serializers.ModelSerializer):
     file_id = serializers.IntegerField()
     subtype = serializers.CharField()
     shifr = serializers.CharField()
-    abbrprofile = serializers.CharField()
+    abbrprofile = serializers.CharField(allow_null=True, allow_blank=True)
     studyform = serializers.CharField()
     studylevel = serializers.CharField()
     studyprog = serializers.CharField()
