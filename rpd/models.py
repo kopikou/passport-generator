@@ -93,6 +93,7 @@ class PlanDocuments(TimestampsModel):
     plan = models.ForeignKey(PlanData, verbose_name='', on_delete=models.PROTECT)
     name = models.CharField(max_length=256, verbose_name='')
     type = models.IntegerField(verbose_name='')
+    synchronize = models.BooleanField(verbose_name='')
 
 
 class ExceptionNames(TimestampsModel):
@@ -108,11 +109,6 @@ class AllowedNames(TimestampsModel):
     def __str__(self):
         return f"{self.name}"
 
-class ExceptionNames(TimestampsModel):
-    name = models.CharField(max_length=256, verbose_name='')
-
-    def __str__(self):
-        return f"{self.name}"
 
 class Competence(models.Model):
     code = models.IntegerField()
@@ -122,4 +118,3 @@ class Competence(models.Model):
     class Meta:
         db_table = "mleha_competences"
         managed = False
-

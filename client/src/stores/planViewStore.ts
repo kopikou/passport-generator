@@ -1,31 +1,82 @@
 import {defineStore} from "pinia";
-import {onBeforeMount, ref} from "vue";
+import {computed, onBeforeMount, ref, watch} from "vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
-
+import _ from "lodash";
 
 const usePlanViewStore = defineStore('PlanViewStore', () => {
-    const cafData = ref([])
-    const sync_option = ref([
-      {value: true, label: 'Да'},
-      {value: false, label: 'Нет'},
-    ])
+  const cafData = ref([])
+  const sync_option = ref([
+    {value: true, label: 'Да'},
+    {value: false, label: 'Нет'},
+  ])
 
-    async function getData() {
-        let r = await api.get("api/upload/get-caf-codes/")
-        let data = r.data
+  const planData = ref([])
+  const linesData = ref([])
+  const semesterData = ref([])
+  const indicatorsData = ref([])
+  const documentsData = ref([])
 
-        cafData.value = data.items
-    }
+  const activeFileId = ref(null)
 
-    onBeforeMount(async () => {
-        await getData()
+  const $q = useQuasar()
+  async function getData() {
+    let r = await api.get("api/upload/get-caf-codes/")
+    let data = r.data
+
+    cafData.value = data.items
+  }
+
+  async function getFileData() {
+    let r = await api.get("api/upload/get-file-by-id/", {params: {id: activeFileId.value}})
+
+    planData.value = r.data.parser.plan
+    linesData.value = r.data.parser.lines
+    semesterData.value = r.data.parser.semester
+    indicatorsData.value = r.data.parser.indicators
+    documentsData.value = r.data.parser.documents
+
+  }
+
+  const linesDataById = computed(() => {
+    return _.keyBy(linesData.value, 'id');
+  })
+
+  onBeforeMount(async () => {
+    const loadingData = $q.loading.show({
+      group: 'first',
+      message: 'Загрузка данных плана',
     })
 
-    return {
-      cafData,
-      sync_option,
-    }
+    await getData()
+
+    loadingData()
+  })
+
+  watch(activeFileId, async () => {
+    const loadingCafData = $q.loading.show({
+      group: 'second',
+      message: 'Загрузка данных кафедр',
+    })
+
+    if (activeFileId.value != null)
+      await getFileData()
+
+    loadingCafData()
+  }, {immediate: true})
+
+
+  return {
+    activeFileId,
+    cafData,
+    sync_option,
+    planData,
+    linesData,
+    semesterData,
+    indicatorsData,
+    documentsData,
+    linesDataById,
+  }
 })
 
 export default usePlanViewStore;

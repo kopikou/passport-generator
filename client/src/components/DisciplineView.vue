@@ -9,16 +9,11 @@ import usePlanViewStore from "stores/planViewStore";
 
 const $q = useQuasar()
 
-const props = defineProps({
-  data: {
-    require: true,
-  }
-});
-
 const planViewStore = usePlanViewStore()
 const {
   cafData,
   sync_option,
+  linesData,
 } = storeToRefs(planViewStore);
 
 const disabled = ref(false)
@@ -55,7 +50,7 @@ const cafDataById = computed(() => {
   <div style="width: 95%">
     <q-table
       title="Информация о дисциплинах плана"
-      :rows="props.data"
+      :rows="linesData"
       :columns="columns"
       row-key="id"
       :rows-per-page-options="[0]"
@@ -88,7 +83,7 @@ const cafDataById = computed(() => {
             {{ props.row.hoursinzet }}
           </q-td>
 
-          <q-td key="caf" :props class="bg-grey-4">
+          <q-td key="caf" :props :class="props.row.caf ? 'bg-green-2' : 'bg-red-2'">
             {{ cafDataById[props.row.caf]?.label }}
             <q-popup-edit v-model="props.row.caf" v-slot="scope" @update:modelValue="updateLines(props.row)">
               <q-select
@@ -109,7 +104,7 @@ const cafDataById = computed(() => {
             {{ props.row.kompetences }}
           </q-td>
 
-          <q-td key="synchronize" :props class="bg-grey-4">
+          <q-td key="synchronize" :props :class="props.row.synchronize ? 'bg-green-2' : 'bg-red-2'">
             {{ synctDataByValue[props.row.synchronize]?.label }}
             <q-popup-edit v-model="props.row.synchronize" v-slot="scope" @update:modelValue="updateLines(props.row)">
               <q-select
@@ -119,7 +114,6 @@ const cafDataById = computed(() => {
                 :options="sync_option"
                 @popup-hide="scope.set"
                 filled
-                behavior="dialog"
                 :readonly="disabled"
               >
               </q-select>

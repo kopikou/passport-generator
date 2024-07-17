@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import useMainStore from "stores/mainStore";
 import {storeToRefs} from "pinia";
+import {api} from "boot/axios";
+import {useQuasar} from "quasar";
 
 const mainStore = useMainStore();
 const {
@@ -10,12 +12,29 @@ const {
   firstName,
 } = storeToRefs(mainStore)
 
+const $q = useQuasar()
+
+api.interceptors.response.use((response) => response, (error) => {
+  // if (error.response.data.detail) {
+  //   throw error
+  // }
+
+  $q.notify({
+    color: 'negative',
+    message: 'Ошибка получения данных, перезагрузите страницу',
+    icon: 'mdi-alert-box',
+    position: 'top',
+  })
+  $q.loading.hide()
+
+  throw error
+})
+
 </script>
 
-
-
 <template>
-<q-layout view="hHh lpR fFf">
+
+  <q-layout view="hHh lpR fFf">
 
     <q-header elevated class="bg-white text-black">
       <q-toolbar>

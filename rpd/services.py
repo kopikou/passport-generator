@@ -471,67 +471,77 @@ class PLXParser:
                 documents_data.append({
                     'name': items['dis'].capitalize(),
                     'type': items['type'],
+                    'synchronize': True,
                 })
 
+        # TODO а может в таблицу????
         documents_data.append({
             'name': 'Учебный план',
             'type': 5,
+            'synchronize': True,
         })
         documents_data.append({
             'name': 'Адаптивный учебный план',
             'type': 8,
+            'synchronize': True,
         })
         documents_data.append({
             'name': 'Календарный учебный план',
             'type': 6,
+            'synchronize': True,
         })
         documents_data.append({
             'name': 'Программа ГИА',
             'type': 1,
+            'synchronize': True,
         })
         documents_data.append({
             'name': 'ФОС ГИА',
             'type': 2,
+            'synchronize': True,
         })
         documents_data.append({
             'name': 'ООП',
             'type': 7,
+            'synchronize': True,
         })
 
         if self.studylevel in [1, 2, 4, 5]:
             documents_data.append({
                 'name': 'Рабочая программа воспитания',
                 'type': 7,
-            })
-            documents_data.append({
-                'name': 'Образовательный стандарт ФГОС',
-                'type': 10,
+                'synchronize': True,
             })
             documents_data.append({
                 'name': 'Календарный план воспитательной работы',
                 'type': 7,
+                'synchronize': True,
             })
 
         if self.studylevel in [3]:
             documents_data.append({
                 'name': 'Образовательный стандарт ФГОС',
                 'type': 10,
+                'synchronize': True,
             })
 
         if self.studylevel not in [4, 5]:
             documents_data.append({
                 'name': 'АОП',
                 'type': 7,
+                'synchronize': True,
             })
 
         if self.studylevel in [7]:
             documents_data.append({
                 'name': 'Федеральные государственные требования ФГТ',
                 'type': 21,
+                'synchronize': True,
             })
             documents_data.append({
                 'name': 'План научной деятельности',
                 'type': 19,
+                'synchronize': True,
             })
 
 

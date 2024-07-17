@@ -13,20 +13,14 @@ const planViewStore = usePlanViewStore()
 const {
   cafData,
   sync_option,
+  planData,
 } = storeToRefs(planViewStore);
-
-
-const props = defineProps({
-  data: {
-    require: true,
-  },
-})
 
 const disabled = ref(false)
 
 const columns = [
   {name: 'species', field: 'species', label: 'Направление', align: 'center'},
-  {name: 'lastshifr', field: 'lastshifr', label: 'ОКСО', align: 'cnter'},
+  {name: 'lastshifr', field: 'lastshifr', label: 'ОКСО', align: 'center'},
   {name: 'abbrprofile', field: 'abbrprofile', label: 'Аббревиатура', align: 'center'},
   {name: 'studyform', field: 'studyform', label: 'Форма обучения', align: 'center'},
   {name: 'studylevel', field: 'studylevel', label: 'Уровень подготовки', align: 'center'},
@@ -44,10 +38,6 @@ async function updatePlan(values) {
   $q.loading.hide()
 }
 
-const synctDataByValue = computed(() => {
-  return _.keyBy(sync_option.value, 'value')
-})
-
 const cafDataById = computed(() => {
   return _.keyBy(cafData.value, 'value')
 })
@@ -58,7 +48,7 @@ const cafDataById = computed(() => {
   <div style="width: 95%">
     <q-table
       title="Информация о плане"
-      :rows="props.data"
+      :rows="planData"
       :columns="columns"
       row-key="id"
       :rows-per-page-options="[0]"
@@ -75,7 +65,7 @@ const cafDataById = computed(() => {
             {{ props.row.lastshifr }}
           </q-td>
 
-          <q-td key="abbrprofile" :props class="bg-grey-4">
+          <q-td key="abbrprofile" :props :class="props.row.abbrprofile ? 'bg-green-2' : 'bg-red-2'">
             {{ props.row.abbrprofile }}
             <q-popup-edit v-model="props.row.abbrprofile" v-slot="scope" @update:modelValue="updatePlan(props.row)">
               <q-input
@@ -104,7 +94,7 @@ const cafDataById = computed(() => {
             {{ props.row.faculty }}
           </q-td>
 
-          <q-td key="kafcode" :props="props" class="bg-grey-4">
+          <q-td key="kafcode" :props="props" :class="props.row.kafcode ? 'bg-green-2' : 'bg-red-2'">
             {{ cafDataById[props.row.kafcode]?.label }}
             <q-popup-edit v-model="props.row.kafcode" v-slot="scope" @update:modelValue="updatePlan(props.row)">
               <q-select

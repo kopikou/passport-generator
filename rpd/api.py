@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import APIException
 from rest_framework.mixins import ListModelMixin, CreateModelMixin
 from rest_framework.viewsets import GenericViewSet
 from urllib3 import request
@@ -70,6 +71,7 @@ class PlxUploadViewSet(
 
     @action(methods=['GET'], url_path="get-file-by-id", detail=False)
     def get_file_by_id(self, request, *args, **kwargs):
+
         id = request.GET['id']
 
         data = RPDFile.objects.filter(id=id)

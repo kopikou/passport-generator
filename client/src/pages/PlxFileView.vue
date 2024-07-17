@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {onBeforeMount, ref} from "vue";
+import {onBeforeMount, ref, watch} from "vue";
 import PlanView from "components/PlanView.vue";
 import DisciplineView from "components/DisciplineView.vue";
 import DocumentsView from "components/DocumentsView.vue";
@@ -10,6 +10,8 @@ import SemesterView from "components/SemesterView.vue";
 import {useQuasar} from "quasar";
 import _ from "lodash";
 import {api} from "boot/axios";
+import usePlanViewStore from "stores/planViewStore";
+import {storeToRefs} from "pinia";
 
 const $q = useQuasar()
 
@@ -19,39 +21,16 @@ const props = defineProps( {
   }
 })
 
+const planViewStore = usePlanViewStore()
+const {
+  activeFileId,
+} = storeToRefs(planViewStore);
 
 const link = ref('plan')
-const planData = ref([])
-const linesData = ref([])
-const documentsData = ref([])
-const semesterData = ref([])
-const indicatorsData = ref([])
-async function getFileData() {
 
-  let r = await api.get("api/upload/get-file-by-id/", {params: {id: props.id}})
-    .catch((response) => {
-      $q.notify({
-        color: 'negative',
-        message: 'Ошибка получения данных, перезагрузите страницу',
-        icon: 'mdi-alert-box',
-        position: 'top',
-      })
-    })
-
-  planData.value = r.data.parser.plan
-  linesData.value = r.data.parser.lines
-  semesterData.value = r.data.parser.semester
-  indicatorsData.value = r.data.parser.indicators
-  documentsData.value = r.data.parser.documents
-
-}
-
-
-onBeforeMount(async() => {
-  $q.loading.show()
-  await getFileData()
-  $q.loading.hide()
-})
+watch(() => props.id, () => {
+  activeFileId.value = props.id
+}, {immediate: true})
 
 </script>
 
@@ -125,21 +104,6 @@ onBeforeMount(async() => {
         <q-item
           clickable
           v-ripple
-          :active="link === 'competences'"
-          @click="link = 'competences'"
-          active-class="my-menu-link"
-        >
-
-        <q-item-section avatar>
-          <q-icon name="mdi-text-account" />
-        </q-item-section>
-
-        <q-item-section>Компетенции</q-item-section>
-
-        </q-item>
-        <q-item
-          clickable
-          v-ripple
           :active="link === 'indicators'"
           @click="link = 'indicators'"
           active-class="my-menu-link"
@@ -156,12 +120,11 @@ onBeforeMount(async() => {
     </div>
     <div class="col-10">
       <div class="q-pl-lg">
-        <plan-view v-if="link === 'plan'" :data="planData"/>
-        <discipline-view v-if="link === 'disciple'" :data="linesData"/>
-        <documents-view v-if="link === 'documents'" :data="documentsData"/>
-        <semester-view v-if="link === 'semester'" :data="semesterData"/>
-        <competences-view v-if="link === 'competences'" :data="indicatorsData"/>
-        <indicators-view v-if="link === 'indicators'" :data="indicatorsData"/>
+        <plan-view v-if="link === 'plan'" />
+        <discipline-view v-if="link === 'disciple'" />
+        <documents-view v-if="link === 'documents'" />
+        <semester-view v-if="link === 'semester'" />
+        <indicators-view v-if="link === 'indicators'" />
       </div>
     </div>
   </div>
