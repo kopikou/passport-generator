@@ -39,7 +39,6 @@ class SemesterDataSerializer(serializers.ModelSerializer):
     kr = serializers.BooleanField(allow_null=True)
     zacho = serializers.IntegerField(allow_null=True)
     eios = serializers.IntegerField(allow_null=True)
-    synchronize = serializers.BooleanField()
 
     class Meta:
         model = SemesterData
@@ -61,7 +60,6 @@ class SemesterDataSerializer(serializers.ModelSerializer):
             'kr',
             'zacho',
             'eios',
-            'synchronize',
         ]
 
 
@@ -93,7 +91,6 @@ class PlanDataSerializer(serializers.ModelSerializer):
     vuzname = serializers.CharField()
     head = serializers.CharField(allow_null=True, allow_blank=True)
     faculty = serializers.CharField(allow_null=True, allow_blank=True)
-    synchronize = serializers.BooleanField()
 
     class Meta:
         model = PlanData
@@ -125,7 +122,6 @@ class PlanDataSerializer(serializers.ModelSerializer):
             'vuzname',
             'head',
             'faculty',
-            'synchronize',
         ]
 
 
@@ -172,7 +168,6 @@ class LinesIndicatorsSerializer(serializers.ModelSerializer):
     competence = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     indicator_index = serializers.CharField()
     indicator = serializers.CharField()
-    synchronize = serializers.BooleanField()
 
     class Meta:
         model = LinesIndicators
@@ -183,7 +178,6 @@ class LinesIndicatorsSerializer(serializers.ModelSerializer):
             'competence',
             'indicator_index',
             'indicator',
-            'synchronize',
         ]
 
 
@@ -192,7 +186,6 @@ class PlanDocumentsSerializer(serializers.ModelSerializer):
     plan_id = serializers.IntegerField()
     name = serializers.CharField()
     type = serializers.IntegerField()
-    synchronize = serializers.BooleanField()
 
     class Meta:
         model = PlanDocuments
@@ -201,7 +194,6 @@ class PlanDocumentsSerializer(serializers.ModelSerializer):
             'plan_id',
             'name',
             'type',
-            'synchronize',
         ]
 
 

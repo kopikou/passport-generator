@@ -52,7 +52,7 @@ const cafDataById = computed(() => {
 </script>
 
 <template>
-  <div>
+  <div style="width: 95%">
     <q-table
       title="Информация о дисциплинах плана"
       :rows="props.data"

@@ -36,7 +36,6 @@ const columns = [
   {name: 'startyear', field: 'startyear', label: 'Год начала подготовки', align: 'center'},
   {name: 'igahourzet', field: 'igahourzet', label: 'ЗЕТ в неделю', align: 'center'},
   {name: 'semesteroncource', field: 'semesteroncource', label: 'Семестров на курсе', align: 'center'},
-  {name: 'synchronize', field: 'synchronize', label: 'Синхронизация с АИС', align: 'center'},
 ]
 
 async function updatePlan(values) {
@@ -56,7 +55,7 @@ const cafDataById = computed(() => {
 </script>
 
 <template>
-  <div style="width: 90%">
+  <div style="width: 95%">
     <q-table
       title="Информация о плане"
       :rows="props.data"
@@ -134,22 +133,6 @@ const cafDataById = computed(() => {
             {{ props.row.semesteroncource }}
           </q-td>
 
-          <q-td key="synchronize" :props class="bg-grey-4">
-            {{ synctDataByValue[props.row.synchronize]?.label }}
-            <q-popup-edit v-model="props.row.synchronize" v-slot="scope" @update:modelValue="updatePlan(props.row)">
-              <q-select
-                v-model="scope.value"
-                emit-value
-                map-options
-                :options="sync_option"
-                @popup-hide="scope.set"
-                filled
-                behavior="dialog"
-                :readonly="disabled"
-              >
-              </q-select>
-            </q-popup-edit>
-          </q-td>
         </q-tr>
       </template>
 

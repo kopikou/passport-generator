@@ -47,6 +47,12 @@ class PLXParser:
         self.XMLNS = "{%s}" % XHTML_NAMESPACE
         self.path = ".//%s" % self.XMLNS
 
+        allwd_names = AllowedNames.objects.values_list('name', flat=True)
+        allowed_names = [i.lower() for i in allwd_names]
+
+        except_names = ExceptionNames.objects.values_list('name', flat=True)
+        exception_names = [i.lower() for i in except_names]
+
         planData_result = []
         plnData = self.get_plan_data(root)
         planData = self.insert_plan_data(plnData)
@@ -60,6 +66,16 @@ class PLXParser:
         indikators_data = self.get_indicators_data(root)
 
         lnsdata = self.get_lines_data(root, planData['id'], indikators_data)
+
+        for key, item in lnsdata.items():
+            for name in exception_names:
+                if item['dis'].lower().find(name) != -1:
+                    lnsdata[key]['synchronize'] = False
+
+            for name in allowed_names:
+                if item['dis'].lower().find(name) != -1:
+                    lnsdata[key]['synchronize'] = True
+
         tmp = self.insert_lines_data(lnsdata)
 
         list_id = []
@@ -140,7 +156,7 @@ class PLXParser:
         lines_indicators_result = self.insert_lines_indicators(lines_indicators_res)
         self.data['indicators'] = lines_indicators_result
 
-        plan_files = self.get_documents_plan(lines_data, planData['id'])
+        plan_files = self.get_documents_plan(lines_data, planData['id'], allowed_names)
         self.data['documents'] = plan_files
 
     study_prog = {
@@ -164,7 +180,6 @@ class PLXParser:
         planData['studyprog'] = self.study_prog[int(root.attrib.get('КодУровняОбразования'))]
         planData['elementsinweek'] = int(root.attrib['ЭлементовВНеделе'])
         planData['faculty'] = ''
-        planData['synchronize'] = True
 
         for child in root.findall(self.path + 'Планы'):
             # print(child.tag.strip(self.XMLNS), child.attrib)
@@ -269,6 +284,8 @@ class PLXParser:
             lines_data[abs(lines_code)] = {}
             lines_data[abs(lines_code)].update(temp_dict)
 
+
+
         return lines_data
 
     def insert_lines_data(self, data):
@@ -341,7 +358,6 @@ class PLXParser:
                     'kr': True if child.attrib.get('КодВидаРаботы') == '5' else None,
                     'zacho': 1 if child.attrib.get('КодВидаРаботы') == '3' else None,
                     'eios': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '143' else None,
-                    'synchronize': True,
                 }
         return data
 
@@ -412,8 +428,7 @@ class PLXParser:
             ind_comp_bind_data[abs(int(child.attrib.get('Код')))] = {
                 "КодКомпетенции": abs(int(child.attrib.get('КодКомпетенции'))),
                 "КодСтроки": abs(int(child.attrib.get('КодСтроки'))),
-                "find": False,
-                "synchronize": True,}
+                "find": False,}
 
         return ind_comp_bind_data
 
@@ -444,9 +459,7 @@ class PLXParser:
 
         return result
 
-    def get_documents_plan(self, data, plan_id):
-        allwd_names = AllowedNames.objects.values_list('name', flat=True)
-        allowed_names = [i.lower() for i in allwd_names]
+    def get_documents_plan(self, data, plan_id, allowed_names):
 
         documents_data = []
         for key, items in data.items():
