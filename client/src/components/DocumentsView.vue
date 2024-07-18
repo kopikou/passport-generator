@@ -2,8 +2,9 @@
 
 import {useQuasar} from "quasar";
 import usePlanViewStore from "stores/planViewStore";
+import addDocumentDialog from "components/AddDocumentDialog.vue";
 import {storeToRefs} from "pinia";
-import {computed, ref} from "vue";
+import {computed, onBeforeMount, ref} from "vue";
 import {api} from "boot/axios";
 import _ from "lodash";
 
@@ -31,6 +32,29 @@ async function updateDocuments(values) {
   $q.loading.hide()
 }
 
+function addRow() {
+  let freeId = _.findLastIndex(documentsData.value) + 1
+  _.set(documentsData.value, `${freeId}`, {name: 'test', type: 1, synchronize: false, added: true, key: freeId})
+
+  $q.dialog({
+    component: addDocumentDialog,
+    componentProps: {
+      id: freeId,
+    }
+  }).onOk(() => {
+    console.log("ok")
+  })
+
+}
+
+function removeRow(id) {
+  _.unset(documentsData.value, `${id}`)
+}
+
+function saveRow(values) {
+  console.log(values)
+}
+
 const synctDataByValue = computed(() => {
   return _.keyBy(sync_option.value, 'value')
 })
@@ -39,13 +63,18 @@ const synctDataByValue = computed(() => {
 
 <template>
   <div style="width: 95%;">
+    <div class="q-pb-md">
+      <q-btn @click="addRow" color="primary" label="Добавить документ"/>
+    </div>
+
     <q-table
-      title="Информация о плане"
+      title="Информация о документах"
       :rows="documentsData"
       :columns="columns"
       row-key="id"
       :rows-per-page-options="[0]"
       wrap-cells
+      hide-bottom
     >
       <template v-slot:top-right>
         <q-input outlined dense debounce="300" v-model="filter" placeholder="Поиск" class="bg-grey-2">
@@ -58,6 +87,10 @@ const synctDataByValue = computed(() => {
       <template v-slot:body="props">
         <q-tr :props>
           <q-td key="name" :props>
+            <span v-if="props.row.added">
+              <q-btn icon="mdi-check" @click="saveRow(props.row)" flat color="green" />
+              <q-btn icon="mdi-delete" @click="removeRow(props.row.key)" flat color="red"/>
+            </span>
             {{ props.row.name }}
           </q-td>
 

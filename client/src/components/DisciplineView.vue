@@ -56,7 +56,9 @@ const cafDataById = computed(() => {
       :rows-per-page-options="[0]"
       wrap-cells
       :filter="filter"
+      hide-bottom
     >
+
       <template v-slot:top-right>
         <q-input outlined dense debounce="300" v-model="filter" placeholder="Поиск" class="bg-grey-2">
           <template v-slot:append>

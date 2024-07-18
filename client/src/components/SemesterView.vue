@@ -40,12 +40,13 @@ const synctDataByValue = computed(() => {
   {{ semesterData }}
   <div style="width: 95%;">
     <q-table
-      title="Информация о плане"
+      title="Информация о семестрах"
       :rows="semesterData"
       :columns="columns"
       row-key="id"
       :rows-per-page-options="[0]"
       wrap-cells
+      hide-bottom
     >
       <template v-slot:top-right>
         <q-input outlined dense debounce="300" v-model="filter" placeholder="Поиск" class="bg-grey-2">

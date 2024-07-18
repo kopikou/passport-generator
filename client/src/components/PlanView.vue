@@ -53,6 +53,7 @@ const cafDataById = computed(() => {
       row-key="id"
       :rows-per-page-options="[0]"
       wrap-cells
+      hide-bottom
     >
 
       <template v-slot:body="props">

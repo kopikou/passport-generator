@@ -28,9 +28,11 @@ const {
 
 const link = ref('plan')
 
-watch(() => props.id, () => {
-  activeFileId.value = props.id
-}, {immediate: true})
+watch(() => props.id,
+  () => {
+    activeFileId.value = props.id
+  },
+  {immediate: true})
 
 </script>
 
