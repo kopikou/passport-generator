@@ -32,7 +32,7 @@ function removeFile(file_id) {
         },
         persistent: true
       }).onOk(async() => {
-        let r = await api.delete("api/upload/remove_files/", {headers: {'X-CSRFToken': csrf.value}, data: {id: file_id}})
+        let r = await api.delete("api/upload/remove-files/", {headers: {'X-CSRFToken': csrf.value}, data: {id: file_id}})
         if (!r.data.success) {
           $q.notify({
             type: 'negative',
