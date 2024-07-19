@@ -544,19 +544,18 @@ class PLXParser:
                 'synchronize': True,
             })
 
-
         query = Q()
 
         result = []
         for item in documents_data:
-            query |= Q(plan_id=plan_id, name=item['name'])
+            query |= Q(plan_id=plan_id)
 
-        documents = PlanDocuments.objects.filter(query)
-        documents = {f"{plan_id}_{i['name']}": i for i in documents.values()}
+        documents = PlanDocuments.objects.filter(query).values()
+        documents_by_id = {f"{plan_id}_{i['name']}": i for i in documents}
 
         for item in documents_data:
             item['plan_id'] = plan_id
-            if not documents.get(f"{item['plan_id']}_{item['name']}"):
+            if not documents_by_id.get(f"{item['plan_id']}_{item['name']}"):
                 obj = PlanDocumentsSerializer(data=item)
 
                 obj.is_valid(raise_exception=True)
@@ -564,7 +563,11 @@ class PLXParser:
 
                 result.append(obj.data)
             else:
-                result.append(documents.get(f"{item['plan_id']}_{item['name']}"))
+                result.append(documents_by_id.get(f"{item['plan_id']}_{item['name']}"))
+
+        for item in documents:
+            if item['manual']:
+                result.append(item)
 
         return result
 

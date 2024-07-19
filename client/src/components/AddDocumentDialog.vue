@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import {useDialogPluginComponent} from "quasar";
+import _ from "lodash";
+import {computed, onBeforeMount, ref} from "vue";
+import usePlanViewStore from "stores/planViewStore";
+import {storeToRefs} from "pinia";
+import {api} from "boot/axios";
 
-const props = defineProps({
-  id: {
-    required: true,
-    type: Number,
-  }
-})
+const planViewStore = usePlanViewStore()
+const {
+  cafData,
+  sync_option,
+  documentsData,
+  planData,
+} = storeToRefs(planViewStore);
 
 defineEmits([
   ...useDialogPluginComponent.emits
@@ -14,19 +20,57 @@ defineEmits([
 
 const {dialogRef, onDialogHide, onDialogOK, onDialogCancel} = useDialogPluginComponent()
 
-function onOKClick() {
+const name = ref('')
+const type = ref(3)
+
+const correct = computed(() => {
+  if (type.value < 0 || type.value == 0) return true
+  if (name.value.length < 3) return true
+
+  return false
+})
+
+async function onOKClick() {
+  let data = {name: name.value, type: type.value, synchronize: false, plan_id: planData.value[0].id, manual: true}
+  documentsData.value.push(data)
+  let r = await api.post('api/upload/add-document-data/', data)
   onDialogOK()
 }
 
+onBeforeMount(() => {
+  name.value = ''
+  type.value = 3
+})
 
 </script>
 
 <template>
   <q-dialog ref="dialogRef" @hide="onDialogHide">
     <q-card class="q-dialog-plugin">
-      {{ props.id }}
+      <div class="q-pa-md q-gutter-md">
+      <q-input
+        label="Наименование документа"
+        v-model="name"
+        filled
+        type="text"
+        :rules="[
+          val => !!val || 'Введите значение'
+          ]"
+      />
+
+      <q-input
+        label="Тип документа"
+        type="number"
+        v-model="type"
+        filled
+        :rules="[
+          val => val != 0 || 'Значение не должно быть 0',
+          val => val > 0 || 'Значение не должно быть меньше 0'
+        ]"
+      />
+      </div>
       <q-card-actions align="right">
-        <q-btn color="primary" label="OK" @click="onOKClick"/>
+        <q-btn color="primary" label="OK" @click="onOKClick" :disable="correct"/>
         <q-btn color="primary" label="Cancel" @click="onDialogCancel"/>
       </q-card-actions>
     </q-card>

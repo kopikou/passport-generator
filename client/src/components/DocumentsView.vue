@@ -33,26 +33,14 @@ async function updateDocuments(values) {
 }
 
 function addRow() {
-  let freeId = _.findLastIndex(documentsData.value) + 1
-  _.set(documentsData.value, `${freeId}`, {name: 'test', type: 1, synchronize: false, added: true, key: freeId})
 
   $q.dialog({
     component: addDocumentDialog,
-    componentProps: {
-      id: freeId,
-    }
-  }).onOk(() => {
-    console.log("ok")
   })
-
 }
 
 function removeRow(id) {
   _.unset(documentsData.value, `${id}`)
-}
-
-function saveRow(values) {
-  console.log(values)
 }
 
 const synctDataByValue = computed(() => {
@@ -88,7 +76,7 @@ const synctDataByValue = computed(() => {
         <q-tr :props>
           <q-td key="name" :props>
             <span v-if="props.row.added">
-              <q-btn icon="mdi-check" @click="saveRow(props.row)" flat color="green" />
+              <q-btn icon="mdi-check" @click="updateDocuments(props.row)" flat color="green" />
               <q-btn icon="mdi-delete" @click="removeRow(props.row.key)" flat color="red"/>
             </span>
             {{ props.row.name }}

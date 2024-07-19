@@ -94,6 +94,7 @@ class PlanDocuments(TimestampsModel):
     name = models.CharField(max_length=256, verbose_name='')
     type = models.IntegerField(verbose_name='')
     synchronize = models.BooleanField(verbose_name='')
+    manual = models.BooleanField(verbose_name='', default=False)
 
 
 class ExceptionNames(TimestampsModel):
