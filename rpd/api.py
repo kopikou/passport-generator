@@ -132,6 +132,7 @@ class PlxUploadViewSet(
 
         return JsonResponse({
             "success": "True",
+            "items": serializer.data
         })
 
     @action(methods=['POST'], url_path='update-document-data', detail=False)

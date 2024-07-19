@@ -32,8 +32,8 @@ const correct = computed(() => {
 
 async function onOKClick() {
   let data = {name: name.value, type: type.value, synchronize: false, plan_id: planData.value[0].id, manual: true}
-  documentsData.value.push(data)
   let r = await api.post('api/upload/add-document-data/', data)
+  documentsData.value.push(r.data.items)
   onDialogOK()
 }
 

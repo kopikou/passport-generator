@@ -20,8 +20,22 @@ const disabled = ref(false)
 const filter = ref('')
 
 const columns = [
-  {name: 'name', field: 'name', label: 'Наименование', align: 'center'},
-  {name: 'type', field: 'type', label: 'Тип', align: 'center'},
+  {name: 'dis', field: 'dis', label: 'Дисциплина', align: 'center'},
+  {name: 'num', field: 'num', label: 'Семестр', align: 'center'},
+  {name: 'lekc', field: 'lekc', label: 'Лекции', align: 'center'},
+  {name: 'lab', field: 'lab', label: 'Лабораторные', align: 'center'},
+  {name: 'pr', field: 'pr', label: 'Практика', align: 'center'},
+  {name: 'srs', field: 'srs', label: 'Самостоятельные', align: 'center'},
+  {name: 'ekzhour', field: 'ekzhour', label: 'Экз. часы', align: 'center'},
+  {name: 'zet', field: 'zet', label: 'ЗЕТ', align: 'center'},
+  {name: 'ekz', field: 'ekz', label: 'Экзамен', align: 'center'},
+  {name: 'zach', field: 'zach', label: 'Зачет', align: 'center'},
+  {name: 'zacho', field: 'zacho', label: 'Зачет с оценкой', align: 'center'},
+  {name: 'kp', field: 'kp', label: 'Курсовые проекты', align: 'center'},
+  {name: 'kp_hour', field: 'kp_hour', label: 'Часы', align: 'center'},
+  {name: 'kr', field: 'kr', label: 'Курсовая работа', align: 'center'},
+  {name: 'kr_hour', field: 'kr_hour', label: 'Часы', align: 'center'},
+  {name: 'eios', field: 'eios', label: 'хз', align: 'center'},
 ]
 
 async function updateDocuments(values) {
@@ -56,17 +70,7 @@ const synctDataByValue = computed(() => {
         </q-input>
       </template>
 
-      <template v-slot:body="props">
-        <q-tr :props>
-          <q-td key="name" :props>
-            {{ props.row.name }}
-          </q-td>
 
-          <q-td key="type" :props>
-            {{ props.row.type }}
-          </q-td>
-        </q-tr>
-      </template>
     </q-table>
   </div>
 </template>
