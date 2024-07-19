@@ -63,7 +63,7 @@ class PlxUploadViewSet(
     def remove_file(self, request, *args, **kwargs):
         id = request.data['id']
 
-        RPDFile.objects.filter(id=id)[0].soft_delete()
+        RPDFile.objects.filter(id=id).delete()
 
         return JsonResponse({
             "success": "True",
