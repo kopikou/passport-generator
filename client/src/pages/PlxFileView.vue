@@ -71,7 +71,7 @@ watch(() => props.id,
 <template>
   <div class="q-pt-md">
     <div v-show="disabled" class="text-center text-green text-h6">
-      План отправлен в АИС, только просмотр
+      План отправлен в АИС, разрешен только просмотр
     </div>
     <div class="row">
       <div class="col-2">
