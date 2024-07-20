@@ -111,6 +111,19 @@ class AllowedNames(TimestampsModel):
         return f"{self.name}"
 
 
+class BaseDocuments(TimestampsModel):
+    name = models.CharField(max_length=64, verbose_name='Наименование файла')
+    type = models.IntegerField(verbose_name='Тип')
+    specialist = models.BooleanField(verbose_name='Специалитет')
+    bachelor = models.BooleanField(verbose_name='Бакалавр')
+    magistrate = models.BooleanField(verbose_name='Магистратура')
+    spo = models.BooleanField(verbose_name='СПО')
+    aspirant = models.BooleanField(verbose_name='Аспирантура')
+
+    def __str__(self):
+        return f"{self.name}"
+
+
 class Competence(models.Model):
     code = models.IntegerField()
     index = models.CharField(max_length=32)

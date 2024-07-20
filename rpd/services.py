@@ -12,7 +12,7 @@ from lxml import etree
 import re
 
 from rpd.models import PlanData, LinesData, Disciplines, SemesterData, LinesIndicators, ExceptionNames, AllowedNames, \
-    PlanDocuments
+    PlanDocuments, BaseDocuments
 from rpd.serializer import PlanDataSerializer, DisciplinesSerializer, LinesDataSerializer, SemesterDataSerializer, \
     LinesIndicatorsSerializer, PlanDocumentsSerializer
 
@@ -207,10 +207,11 @@ class PLXParser:
                 planData['abbrprofile'] = None
 
         for child in root.findall(self.path + 'ООП'):
-            planData['gosdocument'] = int(child.attrib.get('НомерДокумента') if child.attrib.get('НомерДокумента') else None)
-            planData['lastshifr'] = child.attrib.get('Шифр')
-            planData['naprcode'] = child.attrib.get('Шифр')
-            planData['napr_e'] = child.attrib.get('Название')
+            if not child.attrib.get('КодРодительскогоООП'):
+                planData['gosdocument'] = int(child.attrib.get('НомерДокумента')) if child.attrib.get('НомерДокумента') else None
+                planData['lastshifr'] = child.attrib.get('Шифр')
+                planData['naprcode'] = child.attrib.get('Шифр')
+                planData['napr_e'] = child.attrib.get('Название')
 
         for child in root.findall(self.path + 'Филиалы'):
             planData['vuzname'] = child.attrib['Полное_название']
@@ -474,73 +475,24 @@ class PLXParser:
                     'synchronize': True,
                 })
 
-        # TODO а может в таблицу????
-        documents_data.append({
-            'name': 'Учебный план',
-            'type': 5,
-            'synchronize': True,
-        })
-        documents_data.append({
-            'name': 'Адаптивный учебный план',
-            'type': 8,
-            'synchronize': True,
-        })
-        documents_data.append({
-            'name': 'Календарный учебный план',
-            'type': 6,
-            'synchronize': True,
-        })
-        documents_data.append({
-            'name': 'Программа ГИА',
-            'type': 1,
-            'synchronize': True,
-        })
-        documents_data.append({
-            'name': 'ФОС ГИА',
-            'type': 2,
-            'synchronize': True,
-        })
-        documents_data.append({
-            'name': 'ООП',
-            'type': 7,
-            'synchronize': True,
-        })
+        query = Q()
+        if self.studylevel == 1:
+            query = Q(specialist=True)
+        elif self.studylevel == 2:
+            query = Q(bachelor=True)
+        elif self.studylevel == 3:
+            query = Q(magistrate=True)
+        elif self.studylevel in [4,5]:
+            query = Q(spo=True)
+        elif self.studylevel == 7:
+            query = Q(aspirant=True)
 
-        if self.studylevel in [1, 2, 4, 5]:
-            documents_data.append({
-                'name': 'Рабочая программа воспитания',
-                'type': 7,
-                'synchronize': True,
-            })
-            documents_data.append({
-                'name': 'Календарный план воспитательной работы',
-                'type': 7,
-                'synchronize': True,
-            })
+        base_documents = BaseDocuments.objects.filter(query).values()
 
-        if self.studylevel in [3]:
+        for item in base_documents:
             documents_data.append({
-                'name': 'Образовательный стандарт ФГОС',
-                'type': 10,
-                'synchronize': True,
-            })
-
-        if self.studylevel not in [4, 5]:
-            documents_data.append({
-                'name': 'АОП',
-                'type': 7,
-                'synchronize': True,
-            })
-
-        if self.studylevel in [7]:
-            documents_data.append({
-                'name': 'Федеральные государственные требования ФГТ',
-                'type': 21,
-                'synchronize': True,
-            })
-            documents_data.append({
-                'name': 'План научной деятельности',
-                'type': 19,
+                'name': item['name'],
+                'type': item['type'],
                 'synchronize': True,
             })
 

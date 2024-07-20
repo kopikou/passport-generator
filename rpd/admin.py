@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from rpd.models import ExceptionNames, AllowedNames
+from rpd.models import ExceptionNames, AllowedNames, BaseDocuments
 
 
 # Register your models here.
@@ -11,4 +11,8 @@ class ExceptionNamesAdmin(admin.ModelAdmin):
 
 @admin.register(AllowedNames)
 class AllowedNamesAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(BaseDocuments)
+class BaseDocumentsAdmin(admin.ModelAdmin):
     pass

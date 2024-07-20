@@ -14,9 +14,9 @@ const {
   cafData,
   sync_option,
   planData,
+  disabled,
 } = storeToRefs(planViewStore);
 
-const disabled = ref(false)
 
 const columns = [
   {name: 'species', field: 'species', label: 'Направление', align: 'center'},

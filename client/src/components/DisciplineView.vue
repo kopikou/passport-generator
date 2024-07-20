@@ -14,9 +14,9 @@ const {
   cafData,
   sync_option,
   linesData,
+  disabled,
 } = storeToRefs(planViewStore);
 
-const disabled = ref(false)
 const filter = ref('')
 
 const columns = [

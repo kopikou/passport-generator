@@ -15,9 +15,9 @@ const {
   cafData,
   sync_option,
   documentsData,
+  disabled,
 } = storeToRefs(planViewStore);
 
-const disabled = ref(false)
 const filter = ref('')
 
 const columns = [
@@ -52,7 +52,7 @@ const synctDataByValue = computed(() => {
 <template>
   <div style="width: 95%;">
     <div class="q-pb-md">
-      <q-btn @click="addRow" color="primary" label="Добавить документ"/>
+      <q-btn @click="addRow" color="primary" label="Добавить документ" :disable="disabled"/>
     </div>
 
     <q-table

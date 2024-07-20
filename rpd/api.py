@@ -76,7 +76,9 @@ class PlxUploadViewSet(
 
         data = RPDFile.objects.filter(id=id)
 
-        data.update(status=FILE_STATUS[2][0])
+        for item in data:
+            if item.status != 3:
+                data.update(status=FILE_STATUS[2][0])
 
         serializer_data = RpdFileSerializer(data, many=True)
 
@@ -84,7 +86,19 @@ class PlxUploadViewSet(
         return JsonResponse({
             "items": [i for i in serializer_data.data],
             "parser": parser.get_result_data(),
-        })
+        }, status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], url_path='accept-file', detail=False)
+    def accept_file(self, request, *args, **kwargs):
+        id = request.GET['id']
+
+        data = RPDFile.objects.filter(id=id)
+
+        data.update(status=FILE_STATUS[3][0])
+
+        return JsonResponse({
+            "success": True,
+        }, status=status.HTTP_200_OK)
 
     @action(methods=['GET'], url_path="get-caf-codes", detail=False)
     def get_caf_codes(self, request, *args, **kwargs):
@@ -106,7 +120,7 @@ class PlxUploadViewSet(
 
         return JsonResponse({
             "success": "True",
-        })
+        }, status=status.HTTP_200_OK)
 
     @action(methods=['POST'], url_path='update-lines-data', detail=False)
     def update_lines_data(self, request, *args, **kwargs):
@@ -120,7 +134,7 @@ class PlxUploadViewSet(
 
         return JsonResponse({
             "success": "True",
-        })
+        }, status=status.HTTP_200_OK)
 
     @action(methods=['POST'], url_path='add-document-data', detail=False)
     def add_document_data(self, request, *args, **kwargs):
@@ -133,7 +147,7 @@ class PlxUploadViewSet(
         return JsonResponse({
             "success": "True",
             "items": serializer.data
-        })
+        }, status=status.HTTP_201_CREATED)
 
     @action(methods=['POST'], url_path='update-document-data', detail=False)
     def update_document_data(self, request, *args, **kwargs):
@@ -147,5 +161,5 @@ class PlxUploadViewSet(
 
         return JsonResponse({
             "success": "True",
-        })
+        }, status=status.HTTP_200_OK)
 

@@ -17,7 +17,6 @@ const {
   linesDataById,
 } = storeToRefs(planViewStore);
 
-const disabled = ref(false)
 const filter = ref('')
 
 const columns = [

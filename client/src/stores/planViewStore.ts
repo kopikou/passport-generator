@@ -11,6 +11,7 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
     {value: false, label: 'Нет'},
   ])
 
+  const fileData = ref([])
   const planData = ref([])
   const linesData = ref([])
   const semesterData = ref([])
@@ -20,6 +21,7 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
   const activeFileId = ref(null)
 
   const $q = useQuasar()
+
   async function getData() {
     let r = await api.get("api/upload/get-caf-codes/")
     let data = r.data
@@ -30,6 +32,7 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
   async function getFileData() {
     let r = await api.get("api/upload/get-file-by-id/", {params: {id: activeFileId.value}})
 
+    fileData.value = r.data.items
     planData.value = r.data.parser.plan
     linesData.value = r.data.parser.lines
     semesterData.value = r.data.parser.semester
@@ -37,6 +40,16 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
     documentsData.value = r.data.parser.documents
 
   }
+
+  const disabled = computed(() => {
+    if (fileData.value.length == 0) {
+      return false
+    }
+    if (fileData.value[0].status == 3) {
+      return true
+    }
+    return false
+  })
 
   const linesDataById = computed(() => {
     return _.keyBy(linesData.value, 'id');
@@ -68,6 +81,7 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
 
   return {
     activeFileId,
+    fileData,
     cafData,
     sync_option,
     planData,
@@ -76,6 +90,7 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
     indicatorsData,
     documentsData,
     linesDataById,
+    disabled,
   }
 })
 
