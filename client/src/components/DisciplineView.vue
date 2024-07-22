@@ -55,24 +55,33 @@ async function changeCaf() {
     return
   }
 
-  let ids = _.map(selected.value, (x) => {
-    return x.id
-  })
-
   $q.dialog({
     title: 'Выберите кафедру',
     component: SelectDialog,
     componentProps: {
       options: cafData.value,
     }
-  }).onOk((data) => {
-    console.log(data)
+  }).onOk(async (data) => {
 
-    selected.value = []
-  })
+      $q.loading.show()
 
+      _.forEach(selected.value, async (x) => {
+        x.caf = data
+        let r = await api.post("api/upload/update-lines-data/", {
+          data: x,
+        })
 
+      })
 
+      $q.notify({
+        color: 'secondary',
+        message: 'Я все сделаль ^_^'
+      })
+
+      selected.value = []
+      $q.loading.hide()
+    }
+  )
 }
 
 </script>

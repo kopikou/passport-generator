@@ -39,7 +39,6 @@ watch(() => props.modelValue,
   <q-dialog ref="dialogRef" @hide="onDialogHide">
     <q-card class="q-dialog-plugin">
       <div class="q-pa-md q-gutter-md">
-
         <q-select
           :options="options"
           v-model="value"

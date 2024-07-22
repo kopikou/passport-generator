@@ -124,7 +124,7 @@ class PlxUploadViewSet(
 
     @action(methods=['POST'], url_path='update-lines-data', detail=False)
     def update_lines_data(self, request, *args, **kwargs):
-        data = request.data
+        data = request.data['data']
 
         instance = LinesData.objects.get(id=data['id'])
 
