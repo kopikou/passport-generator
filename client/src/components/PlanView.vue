@@ -56,16 +56,7 @@ const cafDataById = computed(() => {
       hide-bottom
     >
 
-      <template v-slot:body="props">
-        <q-tr :props>
-          <q-td key="species" :props>
-            {{ props.row.species }}
-          </q-td>
-
-          <q-td key="lastshifr" :props>
-            {{ props.row.lastshifr }}
-          </q-td>
-
+      <template v-slot:body-cell-abbrprofile="props">
           <q-td key="abbrprofile" :props :class="props.row.abbrprofile ? 'bg-green-2' : 'bg-red-2'">
             {{ props.row.abbrprofile }}
             <q-popup-edit v-model="props.row.abbrprofile" v-slot="scope" @update:modelValue="updatePlan(props.row)">
@@ -78,23 +69,8 @@ const cafDataById = computed(() => {
               </q-input>
             </q-popup-edit>
           </q-td>
-
-          <q-td key="studyform" :props>
-            {{ props.row.studyform }}
-          </q-td>
-
-          <q-td key="studylevel" :props>
-            {{ props.row.studylevel }}
-          </q-td>
-
-          <q-td key="studyprog" :props>
-            {{ props.row.studyprog }}
-          </q-td>
-
-          <q-td key="faculty" :props>
-            {{ props.row.faculty }}
-          </q-td>
-
+      </template>
+      <template v-slot:body-cell-kafcode="props">
           <q-td key="kafcode" :props="props" :class="props.row.kafcode ? 'bg-green-2' : 'bg-red-2'">
             {{ cafDataById[props.row.kafcode]?.label }}
             <q-popup-edit v-model="props.row.kafcode" v-slot="scope" @update:modelValue="updatePlan(props.row)">
@@ -111,20 +87,6 @@ const cafDataById = computed(() => {
               </q-select>
             </q-popup-edit>
           </q-td>
-
-          <q-td key="startyear" :props>
-            {{ props.row.startyear }}
-          </q-td>
-
-          <q-td key="igahourzet" :props>
-            {{ props.row.igahourzet }}
-          </q-td>
-
-          <q-td key="semesteroncource" :props>
-            {{ props.row.semesteroncource }}
-          </q-td>
-
-        </q-tr>
       </template>
 
     </q-table>

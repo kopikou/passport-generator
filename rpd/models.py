@@ -33,7 +33,7 @@ class PlanData(TimestampsModel):
     igazetweek = models.FloatField(verbose_name='', null=True)
     igahourzet = models.FloatField(verbose_name='', null=True)
     semesteroncource = models.IntegerField(verbose_name='')
-    gosdate = models.DateField(verbose_name='')
+    gosdate = models.DateField(verbose_name='', null=True)
     lastshifr = models.CharField(max_length=64, verbose_name='')
     napr_e = models.CharField(max_length=1024, verbose_name='')
     napr_t = models.CharField(max_length=1024, verbose_name='')
@@ -58,7 +58,7 @@ class LinesData(TimestampsModel):
     type = models.IntegerField(verbose_name='', null=True)
     viewpract = models.IntegerField(verbose_name='', null=True)
     viewobject = models.IntegerField(verbose_name='', null=True)
-    kompetences = models.CharField(max_length=256, verbose_name='', null=True, blank=True)
+    kompetences = models.CharField(max_length=1024, verbose_name='', null=True, blank=True)
     synchronize = models.BooleanField(verbose_name='', default=1)
 
 

@@ -33,7 +33,6 @@ async function updateDocuments(values) {
 }
 
 function addRow() {
-
   $q.dialog({
     component: addDocumentDialog,
   })

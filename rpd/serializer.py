@@ -84,7 +84,7 @@ class PlanDataSerializer(serializers.ModelSerializer):
     igazetweek = serializers.FloatField()
     igahourzet = serializers.FloatField()
     semesteroncource = serializers.IntegerField()
-    gosdate = serializers.DateField()
+    gosdate = serializers.DateField(allow_null=True)
     lastshifr = serializers.CharField()
     napr_e = serializers.CharField()
     napr_t = serializers.CharField()

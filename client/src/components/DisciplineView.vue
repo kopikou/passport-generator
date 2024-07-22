@@ -6,6 +6,7 @@ import {computed, ref} from "vue";
 import _ from "lodash";
 import {useQuasar} from "quasar";
 import usePlanViewStore from "stores/planViewStore";
+import SelectDialog from "components/SelectDialog.vue";
 
 const $q = useQuasar()
 
@@ -18,6 +19,7 @@ const {
 } = storeToRefs(planViewStore);
 
 const filter = ref('')
+const selected = ref([])
 
 const columns = [
   {name: 'dis', field: 'dis', label: 'Дисциплина', align: 'center'},
@@ -39,15 +41,47 @@ const synctDataByValue = computed(() => {
   return _.keyBy(sync_option.value, 'value')
 })
 
-
 const cafDataById = computed(() => {
   return _.keyBy(cafData.value, 'value')
 })
+
+async function changeCaf() {
+  if (selected.value.length == 0) {
+    $q.notify({
+      type: 'negative',
+      color: 'negative',
+      message: 'Вы не выбрали записи для изменения',
+    })
+    return
+  }
+
+  let ids = _.map(selected.value, (x) => {
+    return x.id
+  })
+
+  $q.dialog({
+    title: 'Выберите кафедру',
+    component: SelectDialog,
+    componentProps: {
+      options: cafData.value,
+    }
+  }).onOk((data) => {
+    console.log(data)
+
+    selected.value = []
+  })
+
+
+
+}
 
 </script>
 
 <template>
   <div style="width: 95%">
+    <div class="q-pb-md">
+      <q-btn @click="changeCaf" color="primary" label="Изменить кафедру" :disable="disabled"/>
+    </div>
     <q-table
       title="Информация о дисциплинах плана"
       :rows="linesData"
@@ -57,6 +91,8 @@ const cafDataById = computed(() => {
       wrap-cells
       :filter="filter"
       hide-bottom
+      selection="multiple"
+      v-model:selected="selected"
     >
 
       <template v-slot:top-right>
@@ -67,61 +103,41 @@ const cafDataById = computed(() => {
         </q-input>
       </template>
 
-      <template v-slot:body="props">
-        <q-tr :props>
-          <q-td key="dis" :props>
-            {{ props.row.dis }}
-          </q-td>
+      <template v-slot:body-cell-caf="props">
+        <q-td key="caf" :props :class="props.row.caf ? 'bg-green-2' : 'bg-red-2'">
+          {{ cafDataById[props.row.caf]?.label }}
+          <q-popup-edit v-model="props.row.caf" v-slot="scope" @update:modelValue="updateLines(props.row)">
+            <q-select
+              v-model="scope.value"
+              emit-value
+              map-options
+              :options="cafData"
+              @popup-hide="scope.set"
+              filled
+              behavior="dialog"
+              :readonly="disabled"
+            >
+            </q-select>
+          </q-popup-edit>
+        </q-td>
+      </template>
 
-          <q-td key="newdisid" :props>
-            {{ props.row.newdisid }}
-          </q-td>
-
-          <q-td key="mustbesdudied" :props>
-            {{ props.row.mustbesdudied }}
-          </q-td>
-
-          <q-td key="hoursinzet" :props>
-            {{ props.row.hoursinzet }}
-          </q-td>
-
-          <q-td key="caf" :props :class="props.row.caf ? 'bg-green-2' : 'bg-red-2'">
-            {{ cafDataById[props.row.caf]?.label }}
-            <q-popup-edit v-model="props.row.caf" v-slot="scope" @update:modelValue="updateLines(props.row)">
-              <q-select
-                v-model="scope.value"
-                emit-value
-                map-options
-                :options="cafData"
-                @popup-hide="scope.set"
-                filled
-                behavior="dialog"
-                :readonly="disabled"
-              >
-              </q-select>
-            </q-popup-edit>
-          </q-td>
-
-          <q-td key="kompetences" :props>
-            {{ props.row.kompetences }}
-          </q-td>
-
-          <q-td key="synchronize" :props :class="props.row.synchronize ? 'bg-green-2' : 'bg-red-2'">
-            {{ synctDataByValue[props.row.synchronize]?.label }}
-            <q-popup-edit v-model="props.row.synchronize" v-slot="scope" @update:modelValue="updateLines(props.row)">
-              <q-select
-                v-model="scope.value"
-                emit-value
-                map-options
-                :options="sync_option"
-                @popup-hide="scope.set"
-                filled
-                :readonly="disabled"
-              >
-              </q-select>
-            </q-popup-edit>
-          </q-td>
-        </q-tr>
+      <template v-slot:body-cell-synchronize="props">
+        <q-td key="synchronize" :props :class="props.row.synchronize ? 'bg-green-2' : 'bg-red-2'">
+          {{ synctDataByValue[props.row.synchronize]?.label }}
+          <q-popup-edit v-model="props.row.synchronize" v-slot="scope" @update:modelValue="updateLines(props.row)">
+            <q-select
+              v-model="scope.value"
+              emit-value
+              map-options
+              :options="sync_option"
+              @popup-hide="scope.set"
+              filled
+              :readonly="disabled"
+            >
+            </q-select>
+          </q-popup-edit>
+        </q-td>
       </template>
     </q-table>
   </div>

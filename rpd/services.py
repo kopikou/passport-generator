@@ -482,7 +482,7 @@ class PLXParser:
             query = Q(bachelor=True)
         elif self.studylevel == 3:
             query = Q(magistrate=True)
-        elif self.studylevel in [4,5]:
+        elif self.studylevel in [4, 5]:
             query = Q(spo=True)
         elif self.studylevel == 7:
             query = Q(aspirant=True)
@@ -530,7 +530,7 @@ class AISServices(object):
     @cache_function(timeout=60 * 1)
     def get_kaf_codes():
         q = """
-	        SELECT ckaf2rpgen as value, name2rpgen as label FROM dbo.uchplan_kaf
+	        SELECT ckaf2rpgen as value, name2rpgen as label FROM dbo.uchplan_kaf ORDER BY name2rpgen
 	        """
 
         r = requests.get(f"{settings.ARIM_URL}/wizard.sql", {
