@@ -48,7 +48,7 @@ function acceptPlan() {
       type: "text",
     }
   }).onOk(async () => {
-    let r = await api.get('api/upload/accept-file/', {params: {id: props.id}})
+    let r = await api.get('/api/upload/accept-file/', {params: {id: props.id}})
       .then(() => {
         $q.notify({
           color: "primary",

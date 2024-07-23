@@ -14,7 +14,7 @@ const $q = useQuasar()
 
 async function getFiles() {
   $q.loading.show()
-  let r = await api.get("api/upload/get-files/")
+  let r = await api.get("/api/upload/get-files/")
   files.value = r.data.items
   $q.loading.hide()
 }
@@ -35,7 +35,7 @@ function removeFile(file_id) {
     },
     persistent: true
   }).onOk(async () => {
-    let r = await api.delete("api/upload/remove-files/", {headers: {'X-CSRFToken': csrf.value}, data: {id: file_id}})
+    let r = await api.delete("/api/upload/remove-files/", {headers: {'X-CSRFToken': csrf.value}, data: {id: file_id}})
     if (!r.data.success) {
       $q.notify({
         type: 'negative',

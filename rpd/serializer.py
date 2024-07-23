@@ -125,6 +125,11 @@ class PlanDataSerializer(serializers.ModelSerializer):
         ]
 
 
+class BatchUpdateCafLinesSerializer(serializers.Serializer):
+    ids = serializers.ListSerializer(child=serializers.IntegerField())
+    caf = serializers.IntegerField()
+
+
 class LinesDataSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     plan_id = serializers.IntegerField()

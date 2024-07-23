@@ -16,6 +16,7 @@ const {
   sync_option,
   linesData,
   disabled,
+  getLinesData,
 } = storeToRefs(planViewStore);
 
 const filter = ref('')
@@ -33,7 +34,7 @@ const columns = [
 
 async function updateLines(values) {
   $q.loading.show()
-  let r = await api.post("api/upload/update-lines-data/", values)
+  let r = await api.post("/api/upload/update-lines-data/", values)
   $q.loading.hide()
 }
 
@@ -62,26 +63,31 @@ async function changeCaf() {
       options: cafData.value,
     }
   }).onOk(async (data) => {
+    $q.loading.show()
 
-      $q.loading.show()
-
-      _.forEach(selected.value, async (x) => {
-        x.caf = data
-        let r = await api.post("api/upload/update-lines-data/", {
-          data: x,
-        })
-
+    try {
+      let r = await api.post("/api/upload/batch-update-caf-lines/", {
+        ids: selected.value.map((x) => x.id),
+        caf: data,
       })
+
+      await planViewStore.getLinesData()
 
       $q.notify({
         color: 'secondary',
         message: 'Я все сделаль ^_^'
       })
 
-      selected.value = []
-      $q.loading.hide()
     }
-  )
+    catch {
+      $q.notify({
+        color: 'negative',
+        message: 'Я не смочь, ничего не обновилось :('
+      })
+    }
+    selected.value = []
+    $q.loading.hide()
+  })
 }
 
 </script>
@@ -102,6 +108,7 @@ async function changeCaf() {
       hide-bottom
       selection="multiple"
       v-model:selected="selected"
+      :pagination="{sortBy: 'dis'}"
     >
 
       <template v-slot:top-right>

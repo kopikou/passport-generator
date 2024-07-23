@@ -1,13 +1,14 @@
-from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException
 from rest_framework.mixins import ListModelMixin, CreateModelMixin
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from urllib3 import request
 
 from rpd.models import RPDFile, PlanData, LinesData, PlanDocuments
-from rpd.serializer import RpdFileSerializer, PlanDataSerializer, LinesDataSerializer, PlanDocumentsSerializer
+from rpd.serializer import RpdFileSerializer, PlanDataSerializer, LinesDataSerializer, PlanDocumentsSerializer, \
+    BatchUpdateCafLinesSerializer
 from rpd.services import PLXParser, AISServices
 
 from app.dictionaries import FILE_STATUS
@@ -35,12 +36,12 @@ class PlxUploadViewSet(
                 data_serializer.is_valid(raise_exception=True)
                 data_serializer.save()
 
-            return JsonResponse(
+            return Response(
                 data={"success": "True"},
                 status=status.HTTP_201_CREATED,
             )
 
-        return JsonResponse(
+        return Response(
             data={"success": "False"},
             status=status.HTTP_400_BAD_REQUEST,
         )
@@ -55,7 +56,7 @@ class PlxUploadViewSet(
         for items in serializer.data:
             items['status'] = FILE_STATUS[items['status']][1]
 
-        return JsonResponse({
+        return Response({
             "items": [i for i in serializer.data],
         })
 
@@ -65,7 +66,7 @@ class PlxUploadViewSet(
 
         RPDFile.objects.filter(id=id).delete()
 
-        return JsonResponse({
+        return Response({
             "success": "True",
         })
 
@@ -83,7 +84,7 @@ class PlxUploadViewSet(
         serializer_data = RpdFileSerializer(data, many=True)
 
         parser = PLXParser(serializer_data.data[0]['file'], serializer_data.data[0]['id'])
-        return JsonResponse({
+        return Response({
             "items": [i for i in serializer_data.data],
             "parser": parser.get_result_data(),
         }, status=status.HTTP_200_OK)
@@ -96,7 +97,7 @@ class PlxUploadViewSet(
 
         data.update(status=FILE_STATUS[3][0])
 
-        return JsonResponse({
+        return Response({
             "success": True,
         }, status=status.HTTP_200_OK)
 
@@ -104,7 +105,7 @@ class PlxUploadViewSet(
     def get_caf_codes(self, request, *args, **kwargs):
         data = AISServices.get_kaf_codes()
 
-        return JsonResponse({
+        return Response({
             "items": [i for i in data],
         })
 
@@ -118,7 +119,7 @@ class PlxUploadViewSet(
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return JsonResponse({
+        return Response({
             "success": "True",
         }, status=status.HTTP_200_OK)
 
@@ -132,7 +133,7 @@ class PlxUploadViewSet(
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return JsonResponse({
+        return Response({
             "success": "True",
         }, status=status.HTTP_200_OK)
 
@@ -144,7 +145,7 @@ class PlxUploadViewSet(
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return JsonResponse({
+        return Response({
             "success": "True",
             "items": serializer.data
         }, status=status.HTTP_201_CREATED)
@@ -159,7 +160,31 @@ class PlxUploadViewSet(
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return JsonResponse({
+        return Response({
             "success": "True",
+        }, status=status.HTTP_200_OK)
+
+
+    @action(methods=['POST'], url_path='batch-update-caf-lines', detail=False)
+    def batch_update_caf_lines(self, request, *args, **kwargs):
+
+        serializer = BatchUpdateCafLinesSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = LinesData.objects.filter(id__in=serializer.validated_data['ids']).update(caf=serializer.validated_data['caf'])
+
+        return Response({
+            "success": "True",
+        }, status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], url_path='get-lines-data', detail=False)
+    def get_lines_data(self, request, *args, **kwargs):
+
+        id = request.GET['id']
+
+        data = LinesData.objects.filter(plan__file_id=id).values()
+
+        return Response({
+            "items": [i for i in data],
         }, status=status.HTTP_200_OK)
 
