@@ -3,12 +3,14 @@ from django.urls import path, include
 from rest_framework import routers
 from auths.views import LoginView, LogoutView, BitrixAuthView
 from auths.api import UserApiViewSet
+from rpd.api.AccreditationInfoViewSet import AccreditationInfoViewSet
+from rpd.api.PlxUploadViewSet import PlxUploadViewSet
 
-from rpd.api import PlxUploadViewSet
 
 router = routers.DefaultRouter()
 router.register(r'user', UserApiViewSet, basename="user")
 router.register(r'upload', PlxUploadViewSet, basename="upload")
+router.register(r'accreditation', AccreditationInfoViewSet, basename="accreditation")
 
 urlpatterns = [
     path('api/', include(router.urls)),

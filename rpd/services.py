@@ -522,24 +522,3 @@ class PLXParser:
                 result.append(item)
 
         return result
-
-
-class AISServices(object):
-
-    @staticmethod
-    @cache_function(timeout=60 * 1)
-    def get_kaf_codes():
-        q = """
-	        SELECT ckaf2rpgen as value, name2rpgen as label FROM dbo.uchplan_kaf ORDER BY name2rpgen
-	        """
-
-        r = requests.get(f"{settings.ARIM_URL}/wizard.sql", {
-            "q": q
-        }, proxies={
-            "http": "",
-            "https": "",
-        })
-
-        data = r.json()['RecordSet']
-
-        return data

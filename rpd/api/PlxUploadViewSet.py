@@ -9,7 +9,7 @@ from urllib3 import request
 from rpd.models import RPDFile, PlanData, LinesData, PlanDocuments
 from rpd.serializer import RpdFileSerializer, PlanDataSerializer, LinesDataSerializer, PlanDocumentsSerializer, \
     BatchUpdateCafLinesSerializer
-from rpd.services import PLXParser, AISServices
+from rpd.services import PLXParser
 
 from app.dictionaries import FILE_STATUS
 

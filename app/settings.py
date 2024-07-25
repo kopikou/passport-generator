@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
     'rpd',
     'auths',
+    'arim',
 ]
 
 MIDDLEWARE = [
