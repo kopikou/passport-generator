@@ -131,6 +131,7 @@ class Competence(models.Model):
 
     class Meta:
         db_table = "mleha_competences"
+        managed = False
 
 
 class Indikator(models.Model):
@@ -139,6 +140,7 @@ class Indikator(models.Model):
 
     class Meta:
         db_table = "mleha_indikator"
+        managed = False
 
 
 class Discipline(models.Model):
@@ -146,6 +148,7 @@ class Discipline(models.Model):
 
     class Meta:
         db_table = "mleha_dis"
+        managed = False
 
 
 class Plan(models.Model):
@@ -194,6 +197,7 @@ class Plan(models.Model):
 
     class Meta:
         db_table = "mleha_plan"
+        managed = False
 
 
 class Planlines(models.Model):
@@ -225,6 +229,7 @@ class Planlines(models.Model):
 
     class Meta:
         db_table = "mleha_planlines"
+        managed = False
 
 
 class PlanCompetence(models.Model):
@@ -233,6 +238,7 @@ class PlanCompetence(models.Model):
 
     class Meta:
         db_table = "mleha_plancompetence"
+        managed = False
 
 
 class PlanIndikator(models.Model):
@@ -247,6 +253,7 @@ class PlanIndikator(models.Model):
 
     class Meta:
         db_table = "mleha_planindikator"
+        managed = False
 
 class Semestr(models.Model):
     planlineid = models.ForeignKey(Planlines, on_delete=models.PROTECT, null=False, db_constraint=False)
@@ -286,3 +293,4 @@ class Semestr(models.Model):
 
     class Meta:
         db_table = "mleha_semestr"
+        managed = False
