@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from urllib3 import request
 
+from arim.services import AISServices
 from rpd.models import RPDFile, PlanData, LinesData, PlanDocuments
 from rpd.serializer import RpdFileSerializer, PlanDataSerializer, LinesDataSerializer, PlanDocumentsSerializer, \
     BatchUpdateCafLinesSerializer
