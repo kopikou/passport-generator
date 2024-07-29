@@ -2,10 +2,11 @@ import { RouteRecordRaw } from 'vue-router';
 import PlxUploadedView from "pages/PlxUploadedView.vue";
 import listRpdView from "pages/listRpdView.vue";
 import PlxFileView from 'src/pages/PlxFileView.vue';
+import GeneratorListView from "pages/GeneratorListView.vue";
 
 const routes: RouteRecordRaw[] = [
   {
-    path: '/',
+    path: '/upload/list',
     name: 'home',
     component: listRpdView,
   },
@@ -15,10 +16,15 @@ const routes: RouteRecordRaw[] = [
     component: PlxUploadedView,
   },
   {
-    path: '/view/:id',
+    path: '/upload/view/:id',
     name: 'viewFile',
     component: PlxFileView,
     props: true,
+  },
+  {
+    path: '/generator/list',
+    name: 'generatorList',
+    component: GeneratorListView,
   },
 
   // Always leave this as last one,

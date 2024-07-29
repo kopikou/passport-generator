@@ -14,7 +14,7 @@ class RPDFile(TimestampsModel):
 
 
 class PlanData(TimestampsModel):
-    file = models.ForeignKey(RPDFile, verbose_name="Файл", on_delete=models.PROTECT)
+    file = models.ForeignKey(RPDFile, verbose_name="Файл", on_delete=models.CASCADE)
     subtype = models.CharField(max_length=64, verbose_name='')
     shifr = models.CharField(max_length=8, verbose_name='')
     abbrprofile = models.CharField(max_length=12, verbose_name='', null=True, blank=True)
@@ -47,8 +47,8 @@ class Disciplines(TimestampsModel):
 
 
 class LinesData(TimestampsModel):
-    plan = models.ForeignKey(PlanData, verbose_name='', on_delete=models.PROTECT)
-    disid = models.ForeignKey(Disciplines, verbose_name='', on_delete=models.PROTECT, db_column='disid')
+    plan = models.ForeignKey(PlanData, verbose_name='', on_delete=models.CASCADE)
+    disid = models.ForeignKey(Disciplines, verbose_name='', on_delete=models.CASCADE, db_column='disid')
     dis = models.CharField(max_length=256, verbose_name='')
     newdisid = models.CharField(max_length=128, verbose_name='', null=True, blank=True)
     mustbesdudied = models.IntegerField(verbose_name='', null=True)
@@ -63,7 +63,7 @@ class LinesData(TimestampsModel):
 
 
 class SemesterData(TimestampsModel):
-    planlineid = models.ForeignKey(LinesData, verbose_name='', on_delete=models.PROTECT, db_column="planlineid")
+    planlineid = models.ForeignKey(LinesData, verbose_name='', on_delete=models.CASCADE, db_column="planlineid")
     num = models.IntegerField(verbose_name='')
     lekc = models.IntegerField(verbose_name='', null=True)
     lab = models.IntegerField(verbose_name='', null=True)
@@ -82,7 +82,7 @@ class SemesterData(TimestampsModel):
 
 
 class LinesIndicators(TimestampsModel):
-    planlineid = models.ForeignKey(LinesData, verbose_name='', on_delete=models.PROTECT, db_column="planlineid")
+    planlineid = models.ForeignKey(LinesData, verbose_name='', on_delete=models.CASCADE, db_column="planlineid")
     competence_index = models.CharField(max_length=32, verbose_name='', null=True, blank=True)
     competence = models.CharField(max_length=2048, verbose_name='', null=True, blank=True)
     indicator_index = models.CharField(max_length=32, verbose_name='')
@@ -90,7 +90,7 @@ class LinesIndicators(TimestampsModel):
 
 
 class PlanDocuments(TimestampsModel):
-    plan = models.ForeignKey(PlanData, verbose_name='', on_delete=models.PROTECT)
+    plan = models.ForeignKey(PlanData, verbose_name='', on_delete=models.CASCADE)
     name = models.CharField(max_length=256, verbose_name='')
     type = models.IntegerField(verbose_name='')
     synchronize = models.BooleanField(verbose_name='')

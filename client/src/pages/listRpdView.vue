@@ -76,7 +76,7 @@ onBeforeMount(() => {
           <q-item-section top side>
             <div class="q-gutter-xs">
               <q-btn class="gt-xs" flat dense round icon="mdi-magnify"
-                     color="green" :to='`/view/${file.id}`'/>
+                     color="green" :to='`/upload/view/${file.id}`'/>
               <q-btn :disable="file.status == 'Проверен'" class="gt-xs" flat dense round icon="mdi-delete" color="red"
                      @click="removeFile(file.id)"/>
             </div>
