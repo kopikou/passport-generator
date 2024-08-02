@@ -1,0 +1,23 @@
+{% extends "admin/change_list.html" %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script>
+        django.jQuery(function () {
+            django.jQuery('.loginas-user-button').click(function () {
+                django.jQuery('#loginas-form').attr("action", this.dataset.url)
+                django.jQuery('#loginas-form').submit();
+                return false;
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+{{ block.super }}
+
+    <form action="" method="post" id="loginas-form">
+        {%  csrf_token %}
+    </form>
+
+{% endblock %}

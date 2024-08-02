@@ -40,6 +40,7 @@ class UserApiViewSet(ListModelMixin, GenericViewSet):
                 'is_staff': self.request.user.is_staff,
                 'is_student': self.request.user.userprofile.is_student,
                 'is_teacher': self.request.user.userprofile.is_teacher,
+                'permissions': self.request.user.userprofile.permissions,
             })
 
         return JsonResponse(data)

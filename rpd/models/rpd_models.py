@@ -13,6 +13,7 @@ class RPDFile(TimestampsModel):
     status = models.IntegerField(choices=FILE_STATUS, default=FILE_STATUS[0])
 
 
+
 class PlanData(TimestampsModel):
     file = models.ForeignKey(RPDFile, verbose_name="Файл", on_delete=models.CASCADE)
     subtype = models.CharField(max_length=64, verbose_name='')

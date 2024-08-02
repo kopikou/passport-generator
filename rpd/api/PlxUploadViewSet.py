@@ -6,7 +6,9 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from urllib3 import request
 
+from app.utils import UserProfileHasPermission
 from arim.services import AISServices
+from auths.models import Permissions
 from rpd.models import RPDFile, PlanData, LinesData, PlanDocuments
 from rpd.serializer import RpdFileSerializer, PlanDataSerializer, LinesDataSerializer, PlanDocumentsSerializer, \
     BatchUpdateCafLinesSerializer
@@ -14,12 +16,14 @@ from rpd.services import PLXParser
 
 from app.dictionaries import FILE_STATUS
 
+
 class PlxUploadViewSet(
     CreateModelMixin,
     GenericViewSet,
 ):
     queryset = RPDFile.objects.all()
     serializer_class = RpdFileSerializer
+    permission_classes = [UserProfileHasPermission(Permissions.can_upload_plx_files)]
 
     @action(methods=['POST'], url_path="insert-file", detail=False)
     def upload_plan_file(self, request, *args, **kwargs):
@@ -165,14 +169,14 @@ class PlxUploadViewSet(
             "success": "True",
         }, status=status.HTTP_200_OK)
 
-
     @action(methods=['POST'], url_path='batch-update-caf-lines', detail=False)
     def batch_update_caf_lines(self, request, *args, **kwargs):
 
         serializer = BatchUpdateCafLinesSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        data = LinesData.objects.filter(id__in=serializer.validated_data['ids']).update(caf=serializer.validated_data['caf'])
+        data = LinesData.objects.filter(id__in=serializer.validated_data['ids']).update(
+            caf=serializer.validated_data['caf'])
 
         return Response({
             "success": "True",
@@ -188,4 +192,3 @@ class PlxUploadViewSet(
         return Response({
             "items": [i for i in data],
         }, status=status.HTTP_200_OK)
-

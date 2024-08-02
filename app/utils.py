@@ -1,5 +1,13 @@
+from django import forms
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.forms import SimpleArrayField
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
+from django.forms import CheckboxSelectMultiple, MultipleChoiceField
+from rest_framework.permissions import BasePermission
+
+from auths.models import Permissions
 
 
 def cache_function(timeout=60 * 15):
@@ -18,3 +26,23 @@ def cache_function(timeout=60 * 15):
         return wrapper
 
     return decorator
+
+
+class CheckboxSelectMultipleEx(CheckboxSelectMultiple):
+    def format_value(self, value):
+        return value.split(",")
+
+
+class UserProfileHasPermission(BasePermission):
+    message = "У вас не достаточно прав"
+
+    def __init__(self, permission):
+        super().__init__()
+        self.permission = permission
+
+    def __call__(self):
+        return self
+
+    def has_permission(self, request, view):
+        return self.permission in request.user.userprofile.permissions
+
