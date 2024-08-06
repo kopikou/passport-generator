@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException
-from rest_framework.mixins import ListModelMixin, CreateModelMixin
+from rest_framework.mixins import ListModelMixin, CreateModelMixin, DestroyModelMixin, RetrieveModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from urllib3 import request
@@ -18,6 +18,9 @@ from app.dictionaries import FILE_STATUS
 
 
 class PlxUploadViewSet(
+    RetrieveModelMixin,
+    ListModelMixin,
+    DestroyModelMixin,
     CreateModelMixin,
     GenericViewSet,
 ):
@@ -51,48 +54,21 @@ class PlxUploadViewSet(
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    @action(methods=['GET'], url_path="get-files", detail=False)
-    def get_files(self, request, *args, **kwargs):
-        user = request.user
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
 
-        data = RPDFile.objects.filter(user=user)
-        serializer = RpdFileSerializer(data, many=True)
+        if instance.status != 3:
+            instance.status = FILE_STATUS[2][0]
+            instance.save()
 
-        for items in serializer.data:
-            items['status'] = FILE_STATUS[items['status']][1]
+        serializer_data = RpdFileSerializer(instance)
 
-        return Response({
-            "items": [i for i in serializer.data],
-        })
-
-    @action(methods=['DELETE'], url_path="remove-files", detail=False)
-    def remove_file(self, request, *args, **kwargs):
-        id = request.data['id']
-
-        RPDFile.objects.filter(id=id).delete()
-
-        return Response({
-            "success": "True",
-        })
-
-    @action(methods=['GET'], url_path="get-file-by-id", detail=False)
-    def get_file_by_id(self, request, *args, **kwargs):
-
-        id = request.GET['id']
-
-        data = RPDFile.objects.filter(id=id)
-
-        for item in data:
-            if item.status != 3:
-                data.update(status=FILE_STATUS[2][0])
-
-        serializer_data = RpdFileSerializer(data, many=True)
-
-        parser = PLXParser(serializer_data.data[0]['file'], serializer_data.data[0]['id'])
+        parser = PLXParser(serializer_data.data['file'], serializer_data.data['id'])
         return Response({
             "items": [i for i in serializer_data.data],
             "parser": parser.get_result_data(),
         }, status=status.HTTP_200_OK)
+
 
     @action(methods=['GET'], url_path='accept-file', detail=False)
     def accept_file(self, request, *args, **kwargs):
@@ -105,14 +81,6 @@ class PlxUploadViewSet(
         return Response({
             "success": True,
         }, status=status.HTTP_200_OK)
-
-    @action(methods=['GET'], url_path="get-caf-codes", detail=False)
-    def get_caf_codes(self, request, *args, **kwargs):
-        data = AISServices.get_kaf_codes()
-
-        return Response({
-            "items": [i for i in data],
-        })
 
     @action(methods=['POST'], url_path='update-plan-data', detail=False)
     def update_plan_data(self, request, *args, **kwargs):

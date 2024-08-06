@@ -93,7 +93,7 @@ async function changeCaf() {
 </script>
 
 <template>
-  <div style="width: 95%">
+  <div>
     <div class="q-pb-md">
       <q-btn @click="changeCaf" color="primary" label="Изменить кафедру" :disable="disabled"/>
     </div>

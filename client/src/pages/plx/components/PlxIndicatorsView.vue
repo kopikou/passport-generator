@@ -40,7 +40,7 @@ const synctDataByValue = computed(() => {
 </script>
 
 <template>
-  <div style="width: 95%;">
+  <div>
     <q-table
       title="Информация о индикаторах"
       :rows="indicatorsData"

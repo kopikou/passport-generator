@@ -45,7 +45,7 @@ const cafDataById = computed(() => {
 </script>
 
 <template>
-  <div style="width: 95%">
+  <div>
     <q-table
       title="Информация о плане"
       :rows="planData"
@@ -55,7 +55,6 @@ const cafDataById = computed(() => {
       wrap-cells
       hide-bottom
     >
-
       <template v-slot:body-cell-abbrprofile="props">
           <q-td key="abbrprofile" :props :class="props.row.abbrprofile ? 'bg-green-2' : 'bg-red-2'">
             {{ props.row.abbrprofile }}

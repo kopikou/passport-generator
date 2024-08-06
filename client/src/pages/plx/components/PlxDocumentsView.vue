@@ -49,7 +49,7 @@ const synctDataByValue = computed(() => {
 </script>
 
 <template>
-  <div style="width: 95%;">
+  <div>
     <div class="q-pb-md">
       <q-btn @click="addRow" color="primary" label="Добавить документ" :disable="disabled"/>
     </div>

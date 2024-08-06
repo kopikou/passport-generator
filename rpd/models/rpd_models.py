@@ -12,6 +12,9 @@ class RPDFile(TimestampsModel):
     file = models.FileField(upload_to="uploads/rpd_plan/%Y-%m-%d/", verbose_name="Файл РПД")
     status = models.IntegerField(choices=FILE_STATUS, default=FILE_STATUS[0])
 
+    @property
+    def status_verbose(self):
+        return FILE_STATUS[self.status][1]
 
 
 class PlanData(TimestampsModel):
@@ -41,7 +44,6 @@ class PlanData(TimestampsModel):
     vuzname = models.CharField(max_length=256, verbose_name='')
     head = models.CharField(max_length=256, verbose_name='', null=True, blank=True)
     faculty = models.CharField(max_length=256, verbose_name='', null=True, blank=True)
-
 
 class Disciplines(TimestampsModel):
     name = models.CharField(max_length=256, verbose_name='')

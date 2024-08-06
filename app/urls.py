@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
+
+from arim.api import ArimViewSet
 from auths.views import LoginView, LogoutView, BitrixAuthView
 from auths.api import UserApiViewSet
 from rpd.api.AccreditationInfoViewSet import AccreditationInfoViewSet
@@ -9,7 +11,8 @@ from rpd.api.PlxUploadViewSet import PlxUploadViewSet
 
 router = routers.DefaultRouter()
 router.register(r'user', UserApiViewSet, basename="user")
-router.register(r'upload', PlxUploadViewSet, basename="upload")
+router.register(r'plx', PlxUploadViewSet, basename="plx")
+router.register(r'arim', ArimViewSet, basename="arim")
 router.register(r'accreditation', AccreditationInfoViewSet, basename="accreditation")
 
 urlpatterns = [

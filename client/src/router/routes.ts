@@ -1,10 +1,11 @@
 import {RouteRecordRaw} from 'vue-router';
-import PlxUploadedView from "pages/PlxUploadedView.vue";
-import listRpdView from "pages/listRpdView.vue";
-import PlxFileView from 'src/pages/PlxFileView.vue';
-import GeneratorListView from "pages/GeneratorListView.vue";
+import PlxUploadedView from "pages/plx/PlxUploadedView.vue";
+import PlxListRpdView from "pages/plx/PlxListRpdView.vue";
+import PlxFileView from 'pages/plx/PlxFileView.vue';
+import GeneratorListView from "pages/plx/GeneratorListView.vue";
 import IndexPage from "pages/IndexPage.vue";
 import {Permissions} from "src/types";
+import PlxIndexView from "pages/plx/PlxIndexView.vue";
 
 const routes: RouteRecordRaw[] = [
   {
@@ -15,24 +16,29 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/plx",
     name: "PlxMainPage",
-    component: listRpdView,
+    component: PlxIndexView,
     meta: {
       permissions: [Permissions.can_upload_plx_files]
     },
     children: [
       {
-        path: '/upload',
+        path: 'list',
+        name: 'PlxListRpdView',
+        component: PlxListRpdView,
+      },
+      {
+        path: 'upload',
         name: 'PlxUploadFiles',
         component: PlxUploadedView,
       },
       {
-        path: '/upload/view/:id',
+        path: ':id',
         name: 'PlxViewFile',
         component: PlxFileView,
         props: true,
       },
       {
-        path: '/generator/list',
+        path: 'generator/list',
         name: 'PlxGeneratorList',
         component: GeneratorListView,
       },

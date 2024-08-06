@@ -9,6 +9,8 @@ class RpdFileSerializer(serializers.ModelSerializer):
     title = serializers.CharField()
     file = serializers.FileField()
     status = serializers.IntegerField()
+    status_verbose = serializers.CharField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = RPDFile
@@ -18,6 +20,8 @@ class RpdFileSerializer(serializers.ModelSerializer):
             'title',
             'file',
             'status',
+            'status_verbose',
+            'created_at',
         ]
 
 

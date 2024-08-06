@@ -23,21 +23,19 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
   const $q = useQuasar()
 
   async function getData() {
-    let r = await api.get("/api/upload/get-caf-codes/")
-    let data = r.data
-
-    cafData.value = data.items
+    let r = await api.get("/api/arim/kafs/")
+    cafData.value = r.data
   }
 
   async function getLinesData() {
-    let r = await api.get("/api/upload/get-lines-data", {params: {id: activeFileId.value}})
+    let r = await api.get("/api/plx/get-lines-data", {params: {id: activeFileId.value}})
     let data = r.data
 
     linesData.value = r.data.items
   }
 
   async function getFileData() {
-    let r = await api.get("/api/upload/get-file-by-id/", {params: {id: activeFileId.value}})
+    let r = await api.get(`/api/plx/${activeFileId.value}/`)
 
     fileData.value = r.data.items
     planData.value = r.data.parser.plan

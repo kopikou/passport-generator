@@ -51,8 +51,7 @@ api.interceptors.response.use((response) => response, (error) => {
         </q-toolbar-title>
 
         <q-tabs inline-label dense shrink stretch v-if="isAuthenticated">
-          <q-route-tab icon="mdi-format-list-checks" label="Список файлов" to="/upload/list" />
-          <q-route-tab icon="mdi-upload" label="Загрузка файлов" to="/upload" />
+          <q-route-tab icon="mdi-format-list-checks" label="PLX файлы" to="/plx/list/" />
           <q-btn-dropdown auto-close stretch flat :label="`${lastName} ${firstName}`">
             <q-list>
               <q-item clickable href="/admin/" v-if="isStaff">
