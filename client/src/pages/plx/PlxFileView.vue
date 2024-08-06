@@ -176,6 +176,7 @@ watch(() => props.id,
 <style lang="scss" scoped>
 .my-menu-link {
   color: white;
+  background: $amber;
 }
 
 .plx-file-view-container {
