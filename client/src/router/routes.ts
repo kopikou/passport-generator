@@ -2,16 +2,26 @@ import {RouteRecordRaw} from 'vue-router';
 import PlxUploadedView from "pages/plx/PlxUploadedView.vue";
 import PlxListRpdView from "pages/plx/PlxListRpdView.vue";
 import PlxFileView from 'pages/plx/PlxFileView.vue';
-import GeneratorListView from "pages/plx/GeneratorListView.vue";
+import GeneratorListView from "pages/generator/GeneratorListView.vue";
 import IndexPage from "pages/IndexPage.vue";
 import {Permissions} from "src/types";
 import PlxIndexView from "pages/plx/PlxIndexView.vue";
+import component from "*.vue";
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
     component: IndexPage,
+  },
+  {
+    path: '/generator',
+    name: 'GeneratorListView',
+    component: GeneratorListView,
+    meta: {
+      permissions: [],
+    },
+    children: []
   },
   {
     path: "/plx",
@@ -36,11 +46,6 @@ const routes: RouteRecordRaw[] = [
         name: 'PlxViewFile',
         component: PlxFileView,
         props: true,
-      },
-      {
-        path: 'generator/list',
-        name: 'PlxGeneratorList',
-        component: GeneratorListView,
       },
     ]
   },

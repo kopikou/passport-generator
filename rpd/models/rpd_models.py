@@ -10,7 +10,9 @@ class RPDFile(TimestampsModel):
     class StatusChoice(models.IntegerChoices):
         download = 0, "Загружен"
         in_review = 1, "На рассмотрении"
-        accepted = 2, "Принят"
+        accepted = 2, "Принят, ожидает синхронизации"
+        on_synchronize = 3, "Принят, синхронизируется"
+        finished = 4, "Принят, уже в АИС"
 
     user = models.ForeignKey(User, verbose_name="Пользователь", on_delete=models.PROTECT)
     title = models.CharField(max_length=100, verbose_name="Наименование файла")
