@@ -1,20 +1,25 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-from app.dictionaries import FILE_STATUS
 from rpd.utils import TimestampsModel
 
 
 # Create your models here.
 class RPDFile(TimestampsModel):
+
+    class StatusChoice(models.IntegerChoices):
+        download = 0, "Загружен"
+        in_review = 1, "На рассмотрении"
+        accepted = 2, "Принят"
+
     user = models.ForeignKey(User, verbose_name="Пользователь", on_delete=models.PROTECT)
     title = models.CharField(max_length=100, verbose_name="Наименование файла")
     file = models.FileField(upload_to="uploads/rpd_plan/%Y-%m-%d/", verbose_name="Файл РПД")
-    status = models.IntegerField(choices=FILE_STATUS, default=FILE_STATUS[0])
+    status = models.IntegerField(choices=StatusChoice.choices, default=StatusChoice.download)
 
     @property
     def status_verbose(self):
-        return FILE_STATUS[self.status][1]
+        return RPDFile.StatusChoice.labels[self.status]
 
 
 class PlanData(TimestampsModel):

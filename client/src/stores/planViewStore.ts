@@ -3,6 +3,7 @@ import {computed, onBeforeMount, ref, watch} from "vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import _ from "lodash";
+import {PlanData, PlanDocumentData, PlanFileData, PlanIndicatorData, PlanLineData, PlanSemestrData} from "src/types";
 
 const usePlanViewStore = defineStore('PlanViewStore', () => {
   const cafData = ref([])
@@ -11,12 +12,12 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
     {value: false, label: 'Нет'},
   ])
 
-  const fileData = ref([])
-  const planData = ref([])
-  const linesData = ref([])
-  const semesterData = ref([])
-  const indicatorsData = ref([])
-  const documentsData = ref([])
+  const fileData = ref<PlanFileData[]>([])
+  const planData = ref<PlanData[]>([])
+  const linesData = ref<PlanLineData[]>([])
+  const semesterData = ref<PlanSemestrData[]>([])
+  const indicatorsData = ref<PlanIndicatorData[]>([])
+  const documentsData = ref<PlanDocumentData[]>([])
 
   const activeFileId = ref(null)
 
@@ -47,13 +48,7 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
   }
 
   const disabled = computed(() => {
-    if (fileData.value.length == 0) {
-      return false
-    }
-    if (fileData.value[0].status == 3) {
-      return true
-    }
-    return false
+    return fileData.value.status === 2
   })
 
   const linesDataById = computed(() => {

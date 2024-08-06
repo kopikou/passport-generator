@@ -1,3 +1,122 @@
 export enum Permissions {
   can_upload_plx_files = 'can_upload_plx_files'
 }
+export interface PlanLineItem{
+    status: string,
+    link_id: number,
+    person: number,
+    id: number,
+    dis: string,
+    plan__abbrprofile: string,
+    plan__startyear: string,
+    newdisid: string,
+    caf: string,
+}
+
+export interface PlanFileData{
+    id: number,
+    user_id: number,
+    title: string,
+    file: string,
+    status: number,
+}
+
+export interface PlanDocumentData{
+    id: number,
+    created_at: string,
+    updated_at: string,
+    is_deleted: boolean,
+    plan_id: number,
+    name: string,
+    type: number,
+    synchronize: boolean,
+    manual: boolean,
+}
+
+export interface PlanLineData{
+    id: number,
+    created_at: string,
+    updated_at: string,
+    is_deleted: boolean,
+    plan_id: number,
+    disid_id: number,
+    dis: string,
+    newdisid: string,
+    mustbesdudied: number,
+    hoursinzet: number,
+    caf: number,
+    nocalccontrol: boolean,
+    type: number,
+    viewpract: number,
+    viewobject: number,
+    kompetences: string,
+    synchronize: boolean,
+}
+
+export interface PlanSemestrData{
+    id: number,
+    created_at: string,
+    updated_at: string,
+    is_deleted: boolean,
+    planlineid_id: number,
+    num: number,
+    lekc: number,
+    lab: number,
+    pr: number,
+    srs: number,
+    ekzhour: number,
+    zet: number,
+    ekz: boolean,
+    zach: boolean,
+    kp_hour: number,
+    kp: boolean,
+    kr_hour: number,
+    kr: boolean,
+    zacho: number,
+    eios: number,
+}
+
+export interface PlanIndicatorData{
+    id: number,
+    created_at: string,
+    updated_at: string,
+    is_deleted: boolean,
+    planlineid_id: number,
+    competence_index: string,
+    competence: string,
+    indicator_index: string,
+    indicator: string,
+}
+
+export interface PlanData{
+    id: number,
+    created_at: string,
+    updated_at: string,
+    is_deleted: boolean,
+    file_id: number,
+    subtype: stringm
+    shifr: string,
+    abbrprofile: string,
+    studyform: string,
+    studylevel: string,
+    studyprog: string,
+    elementsinweek: number,
+    species: string,
+    usernum: number,
+    whoratif: string,
+    planname: string,
+    kafcode: number,
+    startyear: number,
+    dviga: boolean,
+    gviga: boolean,
+    igazetweek: number,
+    igahourzet: number,
+    semesteroncource: number,
+    gosdate: string,
+    lastshifr: string,
+    napr_e: string,
+    napr_t: string,
+    vuzname: string,
+    head: string,
+    faculty: string,
+}

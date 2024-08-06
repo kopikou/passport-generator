@@ -12,8 +12,10 @@ import _ from "lodash";
 import {api} from "boot/axios";
 import usePlanViewStore from "stores/planViewStore";
 import {storeToRefs} from "pinia";
+import {useRouter} from "vue-router";
 
 const $q = useQuasar()
+const router = useRouter()
 
 const props = defineProps({
   id: {
@@ -48,15 +50,15 @@ function acceptPlan() {
       type: "text",
     }
   }).onOk(async () => {
-    let r = await api.get('/api/upload/accept-file/', {params: {id: props.id}})
-      .then(() => {
-        $q.notify({
-          color: "primary",
-          type: 'secondary',
-          message: `Успешно, отправляем данные в АИС! :)`,
-        })
-      })
-    location.href = '/'
+    let r = await api.get('/api/plx/accept-file/', {params: {id: props.id}})
+
+    $q.notify({
+      color: "primary",
+      type: 'secondary',
+      message: `Успешно, отправляем данные в АИС! :)`,
+    })
+
+    router.push('/')
   })
 }
 

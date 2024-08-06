@@ -14,8 +14,6 @@ from rpd.serializer import RpdFileSerializer, PlanDataSerializer, LinesDataSeria
     BatchUpdateCafLinesSerializer
 from rpd.services import PLXParser
 
-from app.dictionaries import FILE_STATUS
-
 
 class PlxUploadViewSet(
     RetrieveModelMixin,
@@ -57,15 +55,15 @@ class PlxUploadViewSet(
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
 
-        if instance.status != 3:
-            instance.status = FILE_STATUS[2][0]
+        if instance.status != 2:
+            instance.status = RPDFile.StatusChoice.in_review.value
             instance.save()
 
         serializer_data = RpdFileSerializer(instance)
 
         parser = PLXParser(serializer_data.data['file'], serializer_data.data['id'])
         return Response({
-            "items": [i for i in serializer_data.data],
+            "items": serializer_data.data,
             "parser": parser.get_result_data(),
         }, status=status.HTTP_200_OK)
 
@@ -76,7 +74,7 @@ class PlxUploadViewSet(
 
         data = RPDFile.objects.filter(id=id)
 
-        data.update(status=FILE_STATUS[3][0])
+        data.update(status=RPDFile.StatusChoice.accepted.value)
 
         return Response({
             "success": True,

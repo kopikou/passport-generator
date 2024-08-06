@@ -34,7 +34,7 @@ const columns = [
 
 async function updatePlan(values) {
   $q.loading.show()
-  let r = await api.post("/api/upload/update-plan-data/", values)
+  let r = await api.post("/api/plx/update-plan-data/", values)
   $q.loading.hide()
 }
 
