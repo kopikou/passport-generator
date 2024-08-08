@@ -40,7 +40,6 @@ const synctDataByValue = computed(() => {
 </script>
 
 <template>
-  <div>
     <q-table
       title="Информация о индикаторах"
       :rows="indicatorsData"
@@ -50,7 +49,6 @@ const synctDataByValue = computed(() => {
       wrap-cells
       hide-bottom
     >
-
 
       <template v-slot:top-right>
         <q-input outlined dense debounce="300" v-model="filter" placeholder="Поиск" class="bg-grey-2">
@@ -84,7 +82,6 @@ const synctDataByValue = computed(() => {
         </q-tr>
       </template>
     </q-table>
-  </div>
 </template>
 
 <style scoped>

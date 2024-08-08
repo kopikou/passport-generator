@@ -75,31 +75,17 @@ watch(() => props.id,
     <!--    <div v-show="disabled" class="text-center text-green text-h6">-->
     <!--      План отправлен в АИС, разрешен только просмотр-->
     <!--    </div>-->
-    <div>
+    <div class="q-pa-sm">
       <q-list
         bordered
+        separator
       >
-        <q-item
-          clickable
-          v-ripple
-          :active="link === 'plan'"
-          @click="link = 'plan'"
-          active-class="my-menu-link"
-        >
-
-          <q-item-section avatar>
-            <q-icon name="mdi-book-edit-outline"/>
-          </q-item-section>
-
-          <q-item-section>План</q-item-section>
-
-        </q-item>
         <q-item
           clickable
           v-ripple
           :active="link === 'disciple'"
           @click="link = 'disciple'"
-          active-class="my-menu-link"
+          active-class="bg-amber-4 text-black"
         >
 
           <q-item-section avatar>
@@ -114,7 +100,7 @@ watch(() => props.id,
           v-ripple
           :active="link === 'documents'"
           @click="link = 'documents'"
-          active-class="my-menu-link"
+          active-class="bg-amber-4 text-black"
         >
 
           <q-item-section avatar>
@@ -129,7 +115,7 @@ watch(() => props.id,
           v-ripple
           :active="link === 'semester'"
           @click="link = 'semester'"
-          active-class="my-menu-link"
+          active-class="bg-amber-4 text-black"
         >
 
           <q-item-section avatar>
@@ -144,7 +130,7 @@ watch(() => props.id,
           v-ripple
           :active="link === 'indicators'"
           @click="link = 'indicators'"
-          active-class="my-menu-link"
+          active-class="bg-amber-4 text-black"
         >
 
           <q-item-section avatar>
@@ -160,25 +146,29 @@ watch(() => props.id,
         label="Отправить план в АИС"
         @click="acceptPlan"
         :disable="disabled"
-        class="q-mt-md my-menu-link"
-        style="width: 100%"
+        color="purple-3"
+        class="q-mt-sm"
       />
 
     </div>
-    <div style="overflow: scroll">
-        <plan-view v-if="link === 'plan'"/>
+    <div style="display: grid; grid-template-rows: auto 1fr; overflow: hidden">
+      <div class="q-ma-sm">
+        <plan-view/>
+      </div>
+      <div style="overflow: hidden">
         <discipline-view v-if="link === 'disciple'"/>
         <documents-view v-if="link === 'documents'"/>
         <semester-view v-if="link === 'semester'"/>
         <indicators-view v-if="link === 'indicators'"/>
+      </div>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.my-menu-link {
+.plx-file-link__active {
   color: white;
-  background: $amber;
+  background: $purple-3;
 }
 
 .plx-file-view-container {
@@ -189,4 +179,17 @@ watch(() => props.id,
   right: 0;
   overflow: hidden;
 }
+
+:deep(.q-table__container) {
+  overflow: hidden;
+  max-height: 100%
+}
+
+:deep(table thead tr th) {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 1;
+}
+
 </style>

@@ -45,15 +45,15 @@ const cafDataById = computed(() => {
 </script>
 
 <template>
-  <div>
     <q-table
-      title="Информация о плане"
       :rows="planData"
       :columns="columns"
       row-key="id"
       :rows-per-page-options="[0]"
       wrap-cells
+      bordered
       hide-bottom
+      flat
     >
       <template v-slot:body-cell-abbrprofile="props">
           <q-td key="abbrprofile" :props :class="props.row.abbrprofile ? 'bg-green-2' : 'bg-red-2'">
@@ -89,7 +89,6 @@ const cafDataById = computed(() => {
       </template>
 
     </q-table>
-  </div>
 </template>
 
 <style scoped>

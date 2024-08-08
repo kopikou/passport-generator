@@ -95,23 +95,25 @@ async function changeCaf() {
 </script>
 
 <template>
-  <div>
-    <div class="q-pb-md">
-      <q-btn @click="changeCaf" color="primary" label="Изменить кафедру" :disable="disabled"/>
-    </div>
+  <div style="display: grid; grid-template-rows: auto 1fr; overflow: hidden; max-height: 100%">
     <q-table
       title="Информация о дисциплинах плана"
       :rows="linesData"
       :columns="columns"
-      row-key="id"
       :rows-per-page-options="[0]"
-      wrap-cells
       :filter="filter"
+      row-key="id"
+      wrap-cells
       hide-bottom
       selection="multiple"
       v-model:selected="selected"
       :pagination="{sortBy: 'dis'}"
     >
+
+      <template #top-left>
+        <q-btn @click="changeCaf" color="primary" label="Изменить кафедру" :disable="disabled"/>
+
+      </template>
 
       <template v-slot:top-right>
         <q-input outlined dense debounce="300" v-model="filter" placeholder="Поиск" class="bg-grey-2">
@@ -119,6 +121,12 @@ async function changeCaf() {
             <q-icon name="search"/>
           </template>
         </q-input>
+      </template>
+
+      <template v-slot:body-cell-kompetences="{row}">
+        <q-td>
+          {{ _.sortBy(row.kompetences.split(",")).join(", ") }}
+        </q-td>
       </template>
 
       <template v-slot:body-cell-caf="props">
