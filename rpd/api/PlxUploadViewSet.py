@@ -28,29 +28,29 @@ class PlxUploadViewSet(
 
     @action(methods=['POST'], url_path="insert-file", detail=False)
     def upload_plan_file(self, request, *args, **kwargs):
-        if request.method == 'POST':
-            for filename, file in request.FILES.items():
-                data = {
-                    'user_id': request.user.id,
-                    'file': file,
-                    'title': filename,
-                    'status': 0,
-                }
+        for filename, file in request.FILES.items():
+            data = {
+                'user_id': request.user.id,
+                'file': file,
+                'title': filename,
+                'status': 0,
+            }
 
-                data_serializer = RpdFileSerializer(data=data)
+            if RPDFile.objects.filter(title=filename).exists():
+                raise APIException({
+                    "message": f"Файл {filename} уже существует"
+                }, status.HTTP_400_BAD_REQUEST)
 
-                data_serializer.is_valid(raise_exception=True)
-                data_serializer.save()
+            data_serializer = RpdFileSerializer(data=data)
 
-            return Response(
-                data={"success": "True"},
-                status=status.HTTP_201_CREATED,
-            )
+            data_serializer.is_valid(raise_exception=True)
+            data_serializer.save()
 
         return Response(
-            data={"success": "False"},
-            status=status.HTTP_400_BAD_REQUEST,
+            data={"success": "True"},
+            status=status.HTTP_201_CREATED,
         )
+
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()

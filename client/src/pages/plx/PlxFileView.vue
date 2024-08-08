@@ -194,8 +194,13 @@ watch(() => props.id,
 :deep(table thead tr th) {
   position: sticky;
   top: 0;
-  background-color: white;
+  background-color: $grey-2;
   z-index: 1;
+  font-weight: bold;
+}
+
+:deep(table thead tr ) {
+  box-shadow: 4px 0 8px silver;
 }
 
 </style>
