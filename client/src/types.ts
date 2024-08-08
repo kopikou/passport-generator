@@ -19,6 +19,7 @@ export interface PlanFileData{
     title: string,
     file: string,
     status: number,
+    status_verbose: string,
 }
 
 export interface PlanDocumentData{

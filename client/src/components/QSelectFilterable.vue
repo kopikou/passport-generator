@@ -23,13 +23,13 @@ watch(() => props.options, () => {
 function filterFn(val: any, update: any, abort: any) {
   update(() => {
     const needle = val.toLowerCase()
-    filteredOptions.value = props.options.filter(v => v.toLowerCase().indexOf(needle) > -1)
+    filteredOptions.value = props.options.filter(v => v ?? v.toLowerCase().indexOf(needle) > -1)
   })
 }
 </script>
 
 <template>
-  <q-select v-bind="attrs" @filter="filterFn" :options="filteredOptions" />
+  <q-select use-input v-bind="attrs" @filter="filterFn" :options="filteredOptions" />
 </template>
 
 <style scoped>

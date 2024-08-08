@@ -26,10 +26,12 @@ const props = defineProps({
 const planViewStore = usePlanViewStore()
 const {
   activeFileId,
+  activeFile,
   disabled,
+  fileData,
+  files,
 } = storeToRefs(planViewStore);
 
-const link = ref('plan')
 
 function acceptPlan() {
   $q.dialog({
@@ -58,7 +60,7 @@ function acceptPlan() {
       message: `Успешно, отправляем данные в АИС! :)`,
     })
 
-    router.push('/')
+    await router.push('/')
   })
 }
 
@@ -71,11 +73,13 @@ watch(() => props.id,
 </script>
 
 <template>
-  <div class="plx-file-view-container" style="display: grid; grid-template-columns: auto 1fr; gap: 8px">
+  <div class="plx-file-view-container" style="display: grid; grid-template-columns: auto 1fr; gap: 2px">
     <!--    <div v-show="disabled" class="text-center text-green text-h6">-->
     <!--      План отправлен в АИС, разрешен только просмотр-->
     <!--    </div>-->
-    <div class="q-pa-sm">
+    <div class="q-py-sm q-pl-sm">
+      <q-select filled :options="files" option-label="title" v-model="activeFile" map-options emit-value></q-select>
+
       <q-list
         bordered
         separator
@@ -83,11 +87,9 @@ watch(() => props.id,
         <q-item
           clickable
           v-ripple
-          :active="link === 'disciple'"
-          @click="link = 'disciple'"
           active-class="bg-amber-4 text-black"
+          :to="`/plx/${id}/disciplines`"
         >
-
           <q-item-section avatar>
             <q-icon name="mdi-account-school"/>
           </q-item-section>
@@ -98,9 +100,8 @@ watch(() => props.id,
         <q-item
           clickable
           v-ripple
-          :active="link === 'documents'"
-          @click="link = 'documents'"
           active-class="bg-amber-4 text-black"
+          :to="`/plx/${id}/documents`"
         >
 
           <q-item-section avatar>
@@ -113,9 +114,8 @@ watch(() => props.id,
         <q-item
           clickable
           v-ripple
-          :active="link === 'semester'"
-          @click="link = 'semester'"
           active-class="bg-amber-4 text-black"
+          :to="`/plx/${id}/semesters`"
         >
 
           <q-item-section avatar>
@@ -128,9 +128,8 @@ watch(() => props.id,
         <q-item
           clickable
           v-ripple
-          :active="link === 'indicators'"
-          @click="link = 'indicators'"
           active-class="bg-amber-4 text-black"
+          :to="`/plx/${id}/indicators`"
         >
 
           <q-item-section avatar>
@@ -142,24 +141,31 @@ watch(() => props.id,
         </q-item>
       </q-list>
 
-      <q-btn
-        label="Отправить план в АИС"
-        @click="acceptPlan"
-        :disable="disabled"
-        color="purple-3"
-        class="q-mt-sm"
-      />
+      <div class="q-mt-xs">
+        <template v-if="!disabled">
+          <q-btn
+            label="Отправить план в АИС"
+            @click="acceptPlan"
+            :disable="disabled"
+            color="purple-3"
+
+          />
+        </template>
+        <template v-else>
+          <q-chip square color="green-2">
+            <q-avatar icon="bookmark" color="green" text-color="white" />
+            {{ fileData.status_verbose }}
+          </q-chip>
+        </template>
+      </div>
 
     </div>
     <div style="display: grid; grid-template-rows: auto 1fr; overflow: hidden">
       <div class="q-ma-sm">
         <plan-view/>
       </div>
-      <div style="overflow: hidden">
-        <discipline-view v-if="link === 'disciple'"/>
-        <documents-view v-if="link === 'documents'"/>
-        <semester-view v-if="link === 'semester'"/>
-        <indicators-view v-if="link === 'indicators'"/>
+      <div style="overflow: hidden" class="q-ml-sm">
+        <router-view/>
       </div>
     </div>
   </div>

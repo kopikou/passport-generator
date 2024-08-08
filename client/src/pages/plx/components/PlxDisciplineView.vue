@@ -17,6 +17,7 @@ const {
   linesData,
   disabled,
   getLinesData,
+  indicatorsDataById
 } = storeToRefs(planViewStore);
 
 const filter = ref('')
@@ -29,7 +30,7 @@ const columns = [
   {name: 'hoursinzet', field: 'hoursinzet', label: 'Часов в ЗЕТ', align: 'center'},
   {name: 'caf', field: 'caf', label: 'Кафедра', align: 'center'},
   {name: 'kompetences', field: 'kompetences', label: 'Компетенции', align: 'center'},
-  {name: 'synchronize', field: 'synchronize', label: 'Синхронизация с АИС', align: 'center'},
+  {name: 'synchronize', field: 'synchronize', label: 'Синхронизировать с АИС', align: 'center'},
 ]
 
 async function updateLines(values) {
@@ -125,7 +126,14 @@ async function changeCaf() {
 
       <template v-slot:body-cell-kompetences="{row}">
         <q-td>
-          {{ _.sortBy(row.kompetences.split(",")).join(", ") }}
+          <template v-for="p in _.sortBy(row.kompetences.split(','))">
+            <q-chip size="md" dense v-if="p" style="cursor: pointer">
+              <q-tooltip max-width="300px" style="font-size: 0.75rem;">{{ indicatorsDataById[p].indicator }}</q-tooltip>
+              {{p}}
+            </q-chip>
+
+          </template>
+
         </q-td>
       </template>
 

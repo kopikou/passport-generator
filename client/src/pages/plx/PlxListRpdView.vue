@@ -8,10 +8,15 @@ import {api} from "boot/axios";
 import _ from "lodash";
 import QSelectFilterable from "components/QSelectFilterable.vue";
 import dayjs from "dayjs";
+import usePlanViewStore from "stores/planViewStore";
 
 const mainStore = useMainStore();
 const {csrf} = storeToRefs(mainStore)
-const files = ref([])
+
+const planViewStore = usePlanViewStore();
+const {files} = storeToRefs(planViewStore);
+
+
 const uploading = ref(false);
 const uploaderRef = ref();
 const $q = useQuasar()
@@ -37,23 +42,6 @@ const years = computed(() => {
 const yearFilter = ref([]);
 
 
-async function fetchPlxFiles() {
-  $q.loading.show()
-  let r = await api.get("/api/plx/")
-  files.value = _.sortBy(r.data, 'title')
-
-  for (let f of files.value) {
-    let m = f.title.match(/(\d{2}.\d{2}.\d{2})\s*\(([А-Яа-я]+)-(\d{2})/)
-    if (m) {
-      f.code = m[1]
-      f.abbr = m[2]
-      f.year = '20' + m[3]
-    }
-  }
-
-  $q.loading.hide()
-}
-
 function removeFile(fileId: number) {
   $q.dialog({
     title: 'Удаление файла',
@@ -75,7 +63,7 @@ function removeFile(fileId: number) {
       type: 'secondary',
       message: `Файл удален :)  `,
     })
-    await fetchPlxFiles()
+    await planViewStore.fetchPlxFiles()
   })
 
 }
@@ -103,12 +91,9 @@ function onRejected(rejectedEntries: any[]) {
 
 async function onUploadFinished() {
   uploading.value = false
-  await fetchPlxFiles()
+  await planViewStore.fetchPlxFiles()
 }
 
-onBeforeMount(() => {
-  fetchPlxFiles()
-})
 </script>
 
 <template>
@@ -166,7 +151,7 @@ onBeforeMount(() => {
 
       <div v-for="f in filesFiltered" class="plx-file-row">
         <div class="plx-file-cell" style="font-size: 1.25rem">
-          <router-link :to="`/plx/${f.id}`">{{ f.title }}</router-link>
+          <router-link :to="`/plx/${f.id}/disciplines`">{{ f.title }}</router-link>
         </div>
         <div class="plx-file-cell">{{ f.abbr }}</div>
         <div class="plx-file-cell">{{ f.code }}</div>
