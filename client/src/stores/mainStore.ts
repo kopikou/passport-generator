@@ -1,6 +1,7 @@
 import {defineStore} from "pinia";
 import {onBeforeMount, ref} from "vue";
 import {api} from "boot/axios";
+import {useRouter} from "vue-router";
 
 const useMainStore = defineStore("MainStore", () => {
   const username = ref("");
@@ -14,6 +15,8 @@ const useMainStore = defineStore("MainStore", () => {
   const VISIT_TOKEN_TIMEOUT = ref(30);
   const csrf = ref('');
   const permissions = ref<Permissions[]>([]);
+
+  const router = useRouter();
 
   async function checkLogin() {
     let r = await api.get('/api/user/checkLogin/')
@@ -37,9 +40,6 @@ const useMainStore = defineStore("MainStore", () => {
     }
   }
 
-  onBeforeMount(async () => {
-    await checkLogin()
-  })
 
   return {
     username,
@@ -53,6 +53,7 @@ const useMainStore = defineStore("MainStore", () => {
     VISIT_TOKEN_TIMEOUT,
     csrf,
     permissions,
+    checkLogin,
   }
 })
 

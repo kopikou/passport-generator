@@ -6,6 +6,7 @@ import _ from "lodash";
 import {PlanData, PlanDocumentData, PlanFileData, PlanIndicatorData, PlanLineData, PlanSemestrData} from "src/types";
 import {useRoute, useRouter} from "vue-router";
 import router from "src/router";
+import {onAuthenticated} from "src/composables/onAuthenticated";
 
 const usePlanViewStore = defineStore('PlanViewStore', () => {
   const cafData = ref([])
@@ -98,7 +99,7 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
   }
 
 
-  onBeforeMount(async () => {
+  onAuthenticated(async () => {
     const loadingData = $q.loading.show({
       group: 'first',
       message: 'Загрузка данных плана',

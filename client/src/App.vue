@@ -4,6 +4,7 @@ import {storeToRefs} from "pinia";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import {Permissions} from "src/types";
+import {onBeforeMount} from "vue";
 
 const mainStore = useMainStore();
 const {
@@ -31,6 +32,12 @@ api.interceptors.response.use((response) => response, (error) => {
   throw error
 })
 
+onBeforeMount(async () => {
+  if (!isAuthenticated.value) {
+    await mainStore.checkLogin()
+  }
+})
+
 </script>
 
 <template>
@@ -51,8 +58,8 @@ api.interceptors.response.use((response) => response, (error) => {
 
         </q-toolbar-title>
 
-        <q-tabs inline-label dense shrink stretch v-if="isAuthenticated" >
-          <q-route-tab icon="mdi-format-list-checks" label="PLX файлы" to="/plx/list/"
+        <q-tabs inline-label dense shrink stretch v-if="isAuthenticated">
+          <q-route-tab icon="mdi-format-list-checks" label="PLX файлы" to="/plx"
                        v-permissions-required="Permissions.can_upload_plx_files"
           />
           <q-btn-dropdown auto-close stretch flat :label="`${lastName} ${firstName}`">

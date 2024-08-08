@@ -79,7 +79,7 @@ class PlanDataSerializer(serializers.ModelSerializer):
     elementsinweek = serializers.IntegerField()
     species = serializers.CharField()
     usernum = serializers.IntegerField()
-    whoratif = serializers.CharField()
+    whoratif = serializers.CharField(allow_null=True)
     planname = serializers.CharField()
     kafcode = serializers.IntegerField(allow_null=True)
     startyear = serializers.IntegerField()

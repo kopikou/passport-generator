@@ -37,11 +37,13 @@ export default route(function (/* { store, ssrContext } */) {
   Router.beforeEach((to, from, next) => {
     const mainStore = useMainStore();
 
-    if (to.meta.permissions) {
+    if (mainStore.isAuthenticated && to.meta.permissions) {
       if (_.intersection(to.meta.permissions, mainStore.permissions).length > 0) {
         next()
+        return;
       } else {
         next('/');
+        return;
       }
     }
     next()

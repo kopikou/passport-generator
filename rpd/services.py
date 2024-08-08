@@ -186,7 +186,7 @@ class PLXParser:
 
             planData['species'] = child.attrib.get('Титул').rstrip().replace("\r\n", " ")
             planData['usernum'] = int(child.attrib.get('НомерПользователя'))
-            planData['whoratif'] = child.attrib.get('ПланОдобрен')
+            planData['whoratif'] = child.attrib.get('ПланОдобрен', '-')
 
             planData['planname'] = child.attrib.get('ИмяФайла')
             planData['kafcode'] = int(child.attrib.get('КодПрофКафедры')) if child.attrib.get('КодПрофКафедры') else None
@@ -277,7 +277,7 @@ class PLXParser:
             for deep in root.findall(self.path + 'ПланыКомпетенцииДисциплины'):
                 indicators_code = abs(int(deep.attrib.get('КодКомпетенции')))
 
-                if lines_code == int(deep.attrib.get('КодСтроки')):
+                if lines_code == int(deep.attrib.get('КодСтроки')) and indicators_code in indicators:
                     tmp.append(indicators[indicators_code]['index'])
 
             temp_dict['kompetences'] = ','.join(tmp)

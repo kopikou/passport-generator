@@ -147,7 +147,7 @@ watch(() => props.id,
             label="Отправить план в АИС"
             @click="acceptPlan"
             :disable="disabled"
-            color="purple-3"
+            color="blue-10"
 
           />
         </template>
