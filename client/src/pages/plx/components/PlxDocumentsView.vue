@@ -50,9 +50,6 @@ const synctDataByValue = computed(() => {
 
 <template>
   <div>
-    <div class="q-pb-md">
-      <q-btn @click="addRow" color="primary" label="Добавить документ" :disable="disabled"/>
-    </div>
 
     <q-table
       title="Информация о документах"
@@ -63,7 +60,12 @@ const synctDataByValue = computed(() => {
       wrap-cells
       hide-bottom
     >
+      <template #top-left>
+        <q-btn @click="addRow" color="primary" label="Добавить документ" :disable="disabled"/>
+      </template>
+
       <template v-slot:top-right>
+
         <q-input outlined dense debounce="300" v-model="filter" placeholder="Поиск" class="bg-grey-2">
           <template v-slot:append>
             <q-icon name="search"/>

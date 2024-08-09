@@ -17,6 +17,7 @@ const {
   linesData,
   disabled,
   getLinesData,
+  indicatorsDataById
 } = storeToRefs(planViewStore);
 
 const filter = ref('')
@@ -29,7 +30,7 @@ const columns = [
   {name: 'hoursinzet', field: 'hoursinzet', label: 'Часов в ЗЕТ', align: 'center'},
   {name: 'caf', field: 'caf', label: 'Кафедра', align: 'center'},
   {name: 'kompetences', field: 'kompetences', label: 'Компетенции', align: 'center'},
-  {name: 'synchronize', field: 'synchronize', label: 'Синхронизация с АИС', align: 'center'},
+  {name: 'synchronize', field: 'synchronize', label: 'Синхронизировать с АИС', align: 'center'},
 ]
 
 async function updateLines(values) {
@@ -95,23 +96,25 @@ async function changeCaf() {
 </script>
 
 <template>
-  <div>
-    <div class="q-pb-md">
-      <q-btn @click="changeCaf" color="primary" label="Изменить кафедру" :disable="disabled"/>
-    </div>
+  <div style="display: grid; grid-template-rows: auto 1fr; overflow: hidden; max-height: 100%">
     <q-table
       title="Информация о дисциплинах плана"
       :rows="linesData"
       :columns="columns"
-      row-key="id"
       :rows-per-page-options="[0]"
-      wrap-cells
       :filter="filter"
+      row-key="id"
+      wrap-cells
       hide-bottom
       selection="multiple"
       v-model:selected="selected"
       :pagination="{sortBy: 'dis'}"
     >
+
+      <template #top-left>
+        <q-btn @click="changeCaf" color="primary" label="Изменить кафедру" :disable="disabled"/>
+
+      </template>
 
       <template v-slot:top-right>
         <q-input outlined dense debounce="300" v-model="filter" placeholder="Поиск" class="bg-grey-2">
@@ -119,6 +122,19 @@ async function changeCaf() {
             <q-icon name="search"/>
           </template>
         </q-input>
+      </template>
+
+      <template v-slot:body-cell-kompetences="{row}">
+        <q-td>
+          <template v-for="p in _.sortBy(row.kompetences.split(','))">
+            <q-chip size="md" dense v-if="p" style="cursor: pointer">
+              <q-tooltip max-width="300px" style="font-size: 0.75rem;">{{ indicatorsDataById[p].indicator }}</q-tooltip>
+              {{p}}
+            </q-chip>
+
+          </template>
+
+        </q-td>
       </template>
 
       <template v-slot:body-cell-caf="props">

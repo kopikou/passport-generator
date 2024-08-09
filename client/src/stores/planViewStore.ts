@@ -4,6 +4,9 @@ import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import _ from "lodash";
 import {PlanData, PlanDocumentData, PlanFileData, PlanIndicatorData, PlanLineData, PlanSemestrData} from "src/types";
+import {useRoute, useRouter} from "vue-router";
+import router from "src/router";
+import {onAuthenticated} from "src/composables/onAuthenticated";
 
 const usePlanViewStore = defineStore('PlanViewStore', () => {
   const cafData = ref([])
@@ -12,16 +15,46 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
     {value: false, label: 'Нет'},
   ])
 
-  const fileData = ref<PlanFileData[]>([])
+  const fileData = ref<PlanFileData>([])
   const planData = ref<PlanData[]>([])
   const linesData = ref<PlanLineData[]>([])
   const semesterData = ref<PlanSemestrData[]>([])
   const indicatorsData = ref<PlanIndicatorData[]>([])
   const documentsData = ref<PlanDocumentData[]>([])
+  const files = ref<PlanFileData[]>([])
 
   const activeFileId = ref(null)
 
   const $q = useQuasar()
+
+
+  const router = useRouter();
+  const route = useRoute();
+
+  const activeFile = computed({
+    get() {
+      let matchFiles = files.value.filter(x => x.id == activeFileId.value)
+      return matchFiles.length > 0 ? matchFiles[0] : null
+    },
+    async set(value) {
+      if (value) {
+        await router.push({name: route.name, params: {id: value.id}})
+      }
+    }
+  })
+
+
+  const disabled = computed(() => {
+    return fileData.value.status === 2
+  })
+
+  const linesDataById = computed(() => {
+    return _.keyBy(linesData.value, 'id');
+  })
+
+  const indicatorsDataById = computed(() => {
+    return _.keyBy(indicatorsData.value, 'indicator_index')
+  })
 
   async function getData() {
     let r = await api.get("/api/arim/kafs/")
@@ -51,17 +84,32 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
     return fileData.value.status >= 2
   })
 
-  const linesDataById = computed(() => {
-    return _.keyBy(linesData.value, 'id');
-  })
+  async function fetchPlxFiles() {
+    $q.loading.show()
+    let r = await api.get("/api/plx/")
+    files.value = _.sortBy(r.data, 'title')
 
-  onBeforeMount(async () => {
+    for (let f of files.value) {
+      let m = f.title.match(/(\d{2}.\d{2}.\d{2})\s*\(([А-Яа-я]+)-(\d{2})/)
+      if (m) {
+        f.code = m[1]
+        f.abbr = m[2]
+        f.year = '20' + m[3]
+      }
+    }
+
+    $q.loading.hide()
+  }
+
+
+  onAuthenticated(async () => {
     const loadingData = $q.loading.show({
       group: 'first',
       message: 'Загрузка данных плана',
     })
 
     await getData()
+    await fetchPlxFiles();
 
     loadingData()
   })
@@ -81,17 +129,23 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
 
   return {
     activeFileId,
-    fileData,
-    cafData,
-    sync_option,
+    activeFile,
+
     planData,
     linesData,
     semesterData,
     indicatorsData,
     documentsData,
     linesDataById,
+    indicatorsDataById,
+    fileData,
+    cafData,
+    sync_option,
     disabled,
+    files,
+
     getLinesData,
+    fetchPlxFiles,
   }
 })
 
