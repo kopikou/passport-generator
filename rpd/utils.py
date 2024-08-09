@@ -1,10 +1,8 @@
 from django.db import models
 
 class BaseQuerySet(models.QuerySet):
-
     def delete(self):
         self.update(is_deleted=True)
-
 
 class BaseModelManager(models.Manager):
 

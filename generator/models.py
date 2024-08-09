@@ -16,6 +16,7 @@ class PlanLinesLink(TimestampsModel):
 
     cadmission = models.IntegerField(verbose_name='')
     planlines = models.ForeignKey(LinesData, on_delete=models.CASCADE, verbose_name='')
+    mira_id = models.IntegerField(verbose_name='')
     person = models.IntegerField(verbose_name='')
     status = models.IntegerField(choices=StatusChoices.choices, default=StatusChoices.appointed)
 

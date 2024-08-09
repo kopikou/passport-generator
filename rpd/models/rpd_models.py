@@ -45,12 +45,15 @@ class PlanData(TimestampsModel):
     igahourzet = models.FloatField(verbose_name='', null=True)
     semesteroncource = models.IntegerField(verbose_name='')
     gosdate = models.DateField(verbose_name='', null=True)
+    gostype = models.FloatField(verbose_name='', null=True)
+    gosdocument = models.IntegerField(verbose_name='', null=True)
     lastshifr = models.CharField(max_length=64, verbose_name='')
     napr_e = models.CharField(max_length=1024, verbose_name='')
     napr_t = models.CharField(max_length=1024, verbose_name='')
     vuzname = models.CharField(max_length=256, verbose_name='')
     head = models.CharField(max_length=256, verbose_name='', null=True, blank=True)
     faculty = models.CharField(max_length=256, verbose_name='', null=True, blank=True)
+    mira_id = models.IntegerField(verbose_name='', null=True, blank=True)
 
 class Disciplines(TimestampsModel):
     name = models.CharField(max_length=256, verbose_name='')
@@ -105,6 +108,7 @@ class PlanDocuments(TimestampsModel):
     type = models.IntegerField(verbose_name='')
     synchronize = models.BooleanField(verbose_name='')
     manual = models.BooleanField(verbose_name='', default=False)
+    mira_id = models.IntegerField(verbose_name='', null=True, blank=True)
 
 
 class ExceptionNames(TimestampsModel):
