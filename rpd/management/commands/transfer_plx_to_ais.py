@@ -2,6 +2,7 @@ from pprint import pprint
 
 from django.core.management import BaseCommand
 
+from arim.models import UchPlanPlan
 from arim.services import AISServices
 from rpd.models import RPDFile, LinesData, PlanData
 
@@ -43,6 +44,5 @@ class Command(BaseCommand):
             pprint(plan_data)
             pprint(line_data)
             pprint(semester_data)
-
 
             # RPDFile.objects.get(id=i.id).update(status=RPDFile.StatusChoice.finished)

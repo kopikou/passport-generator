@@ -80,10 +80,6 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
 
   }
 
-  const disabled = computed(() => {
-    return fileData.value.status >= 2
-  })
-
   async function fetchPlxFiles() {
     $q.loading.show()
     let r = await api.get("/api/plx/")
