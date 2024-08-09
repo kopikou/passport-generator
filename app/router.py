@@ -18,7 +18,7 @@ class MainRouter(object):
         return None
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
-        if db == 'arim' or app_label == 'arim':
+        if db == 'mira' or app_label == 'arim':
             return False
         return None
 
