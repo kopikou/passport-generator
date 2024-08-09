@@ -45,7 +45,7 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
 
 
   const disabled = computed(() => {
-    return fileData.value.status === 2
+    return fileData.value.status >= 2
   })
 
   const linesDataById = computed(() => {
