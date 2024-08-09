@@ -1,9 +1,9 @@
 from django.db import models
 from django.db.models import TextChoices
+from mssql import features
 
 
 # Create your models here.
-
 class BoolChoice(TextChoices):
     t = 't', "True"
     f = 'f', "False"
@@ -29,7 +29,7 @@ class UchPlanPlan(models.Model):
     fordel = models.CharField(max_length=1, choices=BoolChoice, default=BoolChoice.f)
     cperson = models.IntegerField(null=True, blank=True)
     cobrazstandart = models.IntegerField(null=True, blank=True)
-    moved = models.CharField(max_length=1, choices=BoolChoice)
+    moved = models.CharField(max_length=1, choices=BoolChoice, default=BoolChoice.f)
     guid = models.CharField(max_length=64, null=True, blank=True)
 
     class Meta:
