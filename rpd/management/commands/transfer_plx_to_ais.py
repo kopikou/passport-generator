@@ -3,9 +3,9 @@ from pprint import pprint
 from django.core.management import BaseCommand
 from django.db.models import Q
 
-from arim.models import UchPlanPlan, UchPlanLines, UchPlanDiscpl, UchPlanKaf
+from arim.models import UchPlanPlan, UchPlanLines, UchPlanDiscpl, UchPlanKaf, UchPlanSemestr, BoolChoice
 from arim.services import AISServices
-from rpd.models import RPDFile, LinesData, PlanData
+from rpd.models import RPDFile, LinesData, PlanData, SemesterData
 
 
 class Command(BaseCommand):
@@ -14,12 +14,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         data = list(RPDFile.objects.filter(status=RPDFile.StatusChoice.accepted))
-        # RPDFile.objects.filter(status=RPDFile.StatusChoice.accepted).update(status=RPDFile.StatusChoice.on_synchronize)
+        RPDFile.objects.filter(status=RPDFile.StatusChoice.accepted).update(status=RPDFile.StatusChoice.on_synchronize)
 
         for i in data:
             plan_data = PlanData.objects.filter(file_id=i.id).values()
             line_data = LinesData.objects.filter(synchronize=True, plan__file_id=i.id).values()
-            semester_data = LinesData.objects.filter(synchronize=True, plan__file_id=i.id).values()
+            semester_data = SemesterData.objects.filter(planlineid__synchronize=True, planlineid__plan__file_id=i.id).values()
 
             transfer_plan_data = {}
             for plan in plan_data:
@@ -82,17 +82,41 @@ class Command(BaseCommand):
                     "viewpract": line['viewpract'],
                     "viewobject": line['viewobject'],
                 }
-
                 lines, created = UchPlanLines.objects.get_or_create(
                     planid_id=uchplan.id,
                     disid_id=transfer_line_data['disid_id'],
+                    newdisid=transfer_line_data['newdisid'],
                     defaults=transfer_line_data,
                 )
 
-                print(transfer_line_data)
+                # print(transfer_line_data)
 
-            # pprint(plan_data)
-            # pprint(line_data)
-            # pprint(semester_data)
+                for semestr in semester_data:
+                    if semestr['planlineid_id'] == line['id']:
 
-            # RPDFile.objects.get(id=i.id).update(status=RPDFile.StatusChoice.finished)
+                        transfer_semester_data = {
+                            "planlineid_id": lines.id,
+                            "num": semestr['num'],
+                            "lekc": semestr['lekc'],
+                            "lab": semestr['lab'],
+                            "pr": semestr['pr'],
+                            "srs": semestr['srs'],
+                            "ekzhour": semestr['ekzhour'],
+                            "zet": semestr['zet'],
+                            "ekz": 't' if semestr['ekz'] else None,
+                            "zach": 't' if semestr['zach'] else None,
+                            "kp": 't' if semestr['kp'] else None,
+                            "kp_hour": semestr['kp_hour'],
+                            "kr": 't' if semestr['kr'] else None,
+                            "kr_hour": semestr['kr_hour'],
+                            "zacho": semestr['zacho'],
+                            "eios": semestr['eios'],
+                        }
+
+                        semesters, created = UchPlanSemestr.objects.get_or_create(
+                            planlineid_id=lines.id,
+                            num=transfer_semester_data['num'],
+                            defaults=transfer_semester_data,
+                        )
+
+            RPDFile.objects.filter(id=i.id).update(status=RPDFile.StatusChoice.finished)

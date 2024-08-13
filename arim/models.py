@@ -88,7 +88,7 @@ class UchPlanLines(models.Model):
 
 class UchPlanSemestr(models.Model):
     class Meta:
-        db_table = "uchplan_semester"
+        db_table = "uchplan_semestr"
         managed = False
 
     planlineid = models.ForeignKey("UchPlanLines", on_delete=models.CASCADE, db_column="planlineid")
