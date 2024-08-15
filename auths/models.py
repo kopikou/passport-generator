@@ -11,6 +11,7 @@ from rpd.utils import TimestampsModel
 class Permissions(TextChoices):
     can_upload_plx_files = "can_upload_plx_files", "Может загружать plx файлы"
     can_edit_rpd = "can_edit_rpd", "Может редактировать РПД"
+    can_use_generator = "can_use_generator", "Может использовать генератор"
 
 
 # Create your models here.

@@ -21,7 +21,7 @@ const routes: RouteRecordRaw[] = [
     name: 'GeneratorListView',
     component: GeneratorListView,
     meta: {
-      permissions: [],
+      permissions: [Permissions.can_use_generator],
     },
     children: []
   },

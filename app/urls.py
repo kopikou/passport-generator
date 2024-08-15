@@ -5,6 +5,7 @@ from rest_framework import routers
 from arim.api import ArimViewSet
 from auths.views import LoginView, LogoutView, BitrixAuthView
 from auths.api import UserApiViewSet
+from generator.api.GeneratorViewSet import GeneratorViewSet
 from rpd.api.AccreditationInfoViewSet import AccreditationInfoViewSet
 from rpd.api.PlxUploadViewSet import PlxUploadViewSet
 
@@ -14,6 +15,7 @@ router.register(r'user', UserApiViewSet, basename="user")
 router.register(r'plx', PlxUploadViewSet, basename="plx")
 router.register(r'arim', ArimViewSet, basename="arim")
 router.register(r'accreditation', AccreditationInfoViewSet, basename="accreditation")
+router.register(r'generator', GeneratorViewSet, basename="generator")
 
 urlpatterns = [
     path('api/', include(router.urls)),

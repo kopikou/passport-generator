@@ -55,8 +55,8 @@ class PlxUploadViewSet(
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
 
-        if instance.status != 2:
-            instance.status = RPDFile.StatusChoice.in_review.value
+        if instance.status == RPDFile.StatusChoice.download:
+            instance.status = RPDFile.StatusChoice.in_review
             instance.save()
 
         serializer_data = RpdFileSerializer(instance)

@@ -1,5 +1,6 @@
 export enum Permissions {
-  can_upload_plx_files = 'can_upload_plx_files'
+  can_upload_plx_files = 'can_upload_plx_files',
+  can_use_generator = 'can_use_generator',
 }
 export interface PlanLineItem{
     status: string,
@@ -95,7 +96,7 @@ export interface PlanData{
     updated_at: string,
     is_deleted: boolean,
     file_id: number,
-    subtype: stringm
+    subtype: string,
     shifr: string,
     abbrprofile: string,
     studyform: string,

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'loginas',
 
     'rpd',
+    'generator',
     'auths',
     'arim',
 ]

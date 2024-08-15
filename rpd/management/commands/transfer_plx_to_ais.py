@@ -3,7 +3,7 @@ from pprint import pprint
 from django.core.management import BaseCommand
 from django.db.models import Q
 
-from arim.models import UchPlanPlan, UchPlanLines, UchPlanDiscpl, UchPlanKaf, UchPlanSemestr, BoolChoice
+from arim.models import UchPlanPlan, UchPlanLines, UchPlanDiscpl, UchPlanKaf, UchPlanSemestr, BoolChoice, Catadmission
 from arim.services import AISServices
 from rpd.models import RPDFile, LinesData, PlanData, SemesterData
 
@@ -23,6 +23,8 @@ class Command(BaseCommand):
 
             transfer_plan_data = {}
             for plan in plan_data:
+                cadmission = Catadmission.objects.get(abbr=plan['abbrprofile'], yr=plan['startyear'])
+
                 transfer_plan_data = {
                     "species": plan['species'],
                     "studyprog": plan['studyprog'],
@@ -31,6 +33,7 @@ class Command(BaseCommand):
                     "kafcode": plan['kafcode'],
                     "lastshifr": plan['lastshifr'],
                     "abbrprofile": plan['abbrprofile'],
+                    "cadmission_id": cadmission.id,
                     "startyear": plan['startyear'],
                     "gosdate": plan['gosdate'],
                     "gosdocument": plan['gosdocument'],
@@ -38,13 +41,14 @@ class Command(BaseCommand):
                     "fordel": 'f',
                 }
 
-
                 uchplan, created = UchPlanPlan.objects.get_or_create(
                     species=plan['species'],
                     startyear=plan['startyear'],
                     abbrprofile=plan['abbrprofile'],
                     defaults=transfer_plan_data,
                 )
+
+                Catadmission.objects.filter(id=cadmission.id).update(cuchplan_id=uchplan.id)
 
             query = Q()
             for line in line_data:

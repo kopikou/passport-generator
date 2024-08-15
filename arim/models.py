@@ -16,6 +16,7 @@ class Catadmission(models.Model):
 
     yr = models.IntegerField()
     abbr = models.CharField(max_length=10)
+    cuchplan = models.ForeignKey("UchPlanPlan", on_delete=models.CASCADE, null=True, blank=True, db_column="cuchplan")
 
 
 class UchPlanKaf(models.Model):
