@@ -76,7 +76,7 @@ class LinesData(TimestampsModel):
 
 
 class SemesterData(TimestampsModel):
-    planlineid = models.ForeignKey(LinesData, verbose_name='', on_delete=models.CASCADE, db_column="planlineid")
+    planlineid = models.ForeignKey(LinesData, verbose_name='', on_delete=models.CASCADE, db_column="planlineid", related_name="semesters")
     num = models.IntegerField(verbose_name='')
     lekc = models.IntegerField(verbose_name='', null=True)
     lab = models.IntegerField(verbose_name='', null=True)
@@ -95,7 +95,7 @@ class SemesterData(TimestampsModel):
 
 
 class LinesIndicators(TimestampsModel):
-    planlineid = models.ForeignKey(LinesData, verbose_name='', on_delete=models.CASCADE, db_column="planlineid")
+    planlineid = models.ForeignKey(LinesData, verbose_name='', on_delete=models.CASCADE, db_column="planlineid", related_name="indicators")
     competence_index = models.CharField(max_length=32, verbose_name='', null=True, blank=True)
     competence = models.CharField(max_length=2048, verbose_name='', null=True, blank=True)
     indicator_index = models.CharField(max_length=32, verbose_name='')

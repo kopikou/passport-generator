@@ -22,6 +22,14 @@ class GeneratorViewSet(
     serializer_class = PlanLinesLinkSerializer
     permission_classes = [UserProfileHasPermission(Permissions.can_use_generator)]
 
+    def retrieve(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        instance = (PlanLinesLink.objects.filter(id=pk)
+                    .select_related("planlines")
+                    .prefetch_related("planlines__semesters", "planlines__indicators").first())
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
     @action(methods=['GET'], url_path="get-program-list", detail=False)
     def get_program_list(self, request, *args, **kwargs):
 
@@ -32,7 +40,8 @@ class GeneratorViewSet(
         result = []
         for item in data:
 
-            line = LinesData.objects.filter(dis=item['discpl'], plan__abbrprofile=item['abbr'], plan__startyear=item['yr'], plan__file__status=4).first()
+            line = LinesData.objects.filter(dis=item['discpl'], plan__abbrprofile=item['abbr'],
+                                            plan__startyear=item['yr'], plan__file__status=4).first()
 
             if line:
                 lines, created = PlanLinesLink.objects.get_or_create(
@@ -43,7 +52,7 @@ class GeneratorViewSet(
                         "cadmission": item['id_admission'],
                         "mira_id": item['planlin'],
                         "person": item['mira_id'],
-                        "status": 1,
+                        "status": PlanLinesLink.StatusChoices.appointed,
                         "planlines_id": line.id,
                     }
                 )

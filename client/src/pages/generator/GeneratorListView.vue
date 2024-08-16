@@ -1,17 +1,33 @@
 <script setup lang="ts">
 
+import useGeneratorViewStore from "stores/generatorViewStore";
 
-import {onBeforeMount, ref} from "vue";
+const generatorViewStore = useGeneratorViewStore();
+
+const{
+  cafData,
+}=storeToRefs(generatorViewStore)
+
+import {computed, onBeforeMount, ref} from "vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
+import {GeneratorListData} from "src/types";
+import {useRouter} from "vue-router";
+import {storeToRefs} from "pinia";
+import _ from "lodash";
 
 const $q = useQuasar()
-const listData = ref([])
+const router = useRouter()
+const listData = ref<GeneratorListData[]>([])
 
 async function getProgramData() {
   let r = await api.get("api/generator/get-program-list/")
   listData.value = r.data
 }
+
+const cafDataById = computed(() => {
+  return _.keyBy(cafData.value, 'value')
+})
 
 onBeforeMount(async () => {
   $q.loading.show()
@@ -23,7 +39,7 @@ onBeforeMount(async () => {
 
 <template>
   <div class="q-pa-lg">
-    <div class="text-center text-h6 q-mb-md">Генератор рабочих программ дисциплин ИРНИТУ</div>
+    <div class="text-center text-h6 q-mb-md">Список рабочих программ дисциплин ИРНИТУ</div>
     <div class="rpd-container">
       <div class="rpd-row rpd-row__header text-weight-bold">
         <div>Аббревиатура</div>
@@ -34,14 +50,14 @@ onBeforeMount(async () => {
         <div>Статус</div>
         <div></div>
       </div>
-      <div class="rpd-row rpd-row__body">
-        <div>АСУб 2024</div>
-        <div>код дисциплины</div>
-        <div>дисциплина</div>
-        <div>Составитель</div>
-        <div>кафедра</div>
-        <div>статус</div>
-        <div>Просмотр файлов</div>
+      <div class="rpd-row rpd-row__body" v-for="item in listData" @click="router.push(`/generator/${item.id}/main`)">
+        <div>{{ item.abbr }} {{ item.yr }}</div>
+        <div>{{ item.discode }}</div>
+        <div>{{ item.discpl }}</div>
+        <div>{{ item.person }}</div>
+        <div>{{ cafDataById[item.kafcode]?.label }}</div>
+        <div>{{ item.status_verbose }}</div>
+        <div>Тырым пырым</div>
       </div>
     </div>
   </div>

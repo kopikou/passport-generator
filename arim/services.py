@@ -27,7 +27,7 @@ class AISServices(object):
         return data
 
     @staticmethod
-    @cache_function(timeout=10 * 1)
+    # @cache_function(timeout=10 * 1)
     def get_disciplines_by_person(id):
 
         q = f"""exec rpd_list_for_person {int(id)}"""

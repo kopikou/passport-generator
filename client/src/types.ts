@@ -2,7 +2,7 @@ export enum Permissions {
   can_upload_plx_files = 'can_upload_plx_files',
   can_use_generator = 'can_use_generator',
 }
-export interface PlanLineItem{
+export interface PlanLineItem {
     status: string,
     link_id: number,
     person: number,
@@ -14,7 +14,7 @@ export interface PlanLineItem{
     caf: string,
 }
 
-export interface PlanFileData{
+export interface PlanFileData {
     id: number,
     user_id: number,
     title: string,
@@ -23,7 +23,7 @@ export interface PlanFileData{
     status_verbose: string,
 }
 
-export interface PlanDocumentData{
+export interface PlanDocumentData {
     id: number,
     created_at: string,
     updated_at: string,
@@ -35,7 +35,7 @@ export interface PlanDocumentData{
     manual: boolean,
 }
 
-export interface PlanLineData{
+export interface PlanLineData {
     id: number,
     created_at: string,
     updated_at: string,
@@ -55,7 +55,7 @@ export interface PlanLineData{
     synchronize: boolean,
 }
 
-export interface PlanSemestrData{
+export interface PlanSemestrData {
     id: number,
     created_at: string,
     updated_at: string,
@@ -78,7 +78,7 @@ export interface PlanSemestrData{
     eios: number,
 }
 
-export interface PlanIndicatorData{
+export interface PlanIndicatorData {
     id: number,
     created_at: string,
     updated_at: string,
@@ -90,7 +90,7 @@ export interface PlanIndicatorData{
     indicator: string,
 }
 
-export interface PlanData{
+export interface PlanData {
     id: number,
     created_at: string,
     updated_at: string,
@@ -121,4 +121,21 @@ export interface PlanData{
     vuzname: string,
     head: string,
     faculty: string,
+}
+
+export interface GeneratorListData {
+    discpl:  string,
+    id_discpl: number,
+    planlin: number,
+    abbr: string,
+    yr: number,
+    id_admission: number,
+    mira_id: number,
+    type: number,
+    person:  string,
+    id: number,
+    status: number,
+    status_verbose: string,
+    kafcode: number,
+    discode: string,
 }

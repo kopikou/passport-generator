@@ -8,11 +8,11 @@ from rpd.utils import TimestampsModel
 class PlanLinesLink(TimestampsModel):
 
     class StatusChoices(models.IntegerChoices):
-        appointed = 1, "Назначен"
-        is_filled = 2, "Заполняется"
-        on_review = 3, "Отправлен на проверку"
-        accepted = 4, "Подтвержден"
-        on_refile = 5, "Требуются правки"
+        appointed = 0, "Назначен"
+        is_filled = 1, "Заполняется"
+        on_review = 2, "Отправлен на проверку"
+        accepted = 3, "Подтвержден"
+        on_refile = 4, "Требуются правки"
 
     cadmission = models.IntegerField(verbose_name='')
     planlines = models.ForeignKey(LinesData, on_delete=models.CASCADE, verbose_name='')

@@ -8,7 +8,9 @@ import PlxDisciplineView from "pages/plx/components/PlxDisciplineView.vue";
 import PlxDocumentsView from "pages/plx/components/PlxDocumentsView.vue";
 import PlxIndicatorsView from "pages/plx/components/PlxIndicatorsView.vue";
 import PlxSemesterView from "pages/plx/components/PlxSemesterView.vue";
-import component from "*.vue";
+import GeneratorView from "pages/generator/GeneratorView.vue";
+import GeneratorMainView from "pages/generator/components/GeneratorMainView.vue";
+
 
 const routes: RouteRecordRaw[] = [
   {
@@ -18,12 +20,30 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/generator',
-    name: 'GeneratorListView',
-    component: GeneratorListView,
+    name: 'GeneratorMainPage',
     meta: {
       permissions: [Permissions.can_use_generator],
     },
-    children: []
+    children: [
+      {
+        path: '',
+        name: 'GeneratorListView',
+        component: GeneratorListView,
+      },
+      {
+        path: ':id',
+        name: 'GeneratorView',
+        component: GeneratorView,
+        props: true,
+        children: [
+          {
+            path: "main",
+            name: "GeneratorMainView",
+            component: GeneratorMainView,
+          },
+        ]
+      },
+    ]
   },
   {
     path: "/plx",
