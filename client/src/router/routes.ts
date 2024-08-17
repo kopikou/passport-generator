@@ -10,6 +10,18 @@ import PlxIndicatorsView from "pages/plx/components/PlxIndicatorsView.vue";
 import PlxSemesterView from "pages/plx/components/PlxSemesterView.vue";
 import GeneratorView from "pages/generator/GeneratorView.vue";
 import GeneratorMainView from "pages/generator/components/GeneratorMainView.vue";
+import GeneratorCompetenceView from "pages/generator/components/GeneratorCompetenceView.vue";
+import GeneratorIndicatorsView from "pages/generator/components/GeneratorIndicatorsView.vue";
+import GeneratorDisciplinePlaceView from "pages/generator/components/GeneratorDisciplinePlaceView.vue";
+import GeneratorStructureView from "pages/generator/components/GeneratorStructureView.vue";
+import GeneratorDisciplineThemeView from "pages/generator/components/GeneratorDisciplineThemeView.vue";
+import GeneratorDisciplineLabView from "pages/generator/components/GeneratorDisciplineLabView.vue";
+import GeneratorDisciplinePracticeView from "pages/generator/components/GeneratorDisciplinePracticeView.vue";
+import GeneratorDisciplineIndependentView from "pages/generator/components/GeneratorDisciplineIndependentView.vue";
+import GeneratorLibraryView from "pages/generator/components/GeneratorLibraryView.vue";
+import GeneratorRDWView from "pages/generator/components/GeneratorRDWView.vue";
+import GeneratorSoftwareView from "pages/generator/components/GeneratorSoftwareView.vue";
+import GeneratorLogisticsView from "pages/generator/components/GeneratorLogisticsView.vue";
 
 
 const routes: RouteRecordRaw[] = [
@@ -40,6 +52,66 @@ const routes: RouteRecordRaw[] = [
             path: "main",
             name: "GeneratorMainView",
             component: GeneratorMainView,
+          },
+          {
+            path: "competences",
+            name: "GeneratorCompetencesView",
+            component: GeneratorCompetenceView,
+          },
+          {
+            path: "indicators",
+            name: "GeneratorindicatorsView",
+            component: GeneratorIndicatorsView,
+          },
+          {
+            path: "discipline-place",
+            name: "GeneratorDisciplinePlaceView",
+            component: GeneratorDisciplinePlaceView,
+          },
+          {
+            path: "structure",
+            name: "GeneratorStructureView",
+            component: GeneratorStructureView,
+          },
+          {
+            path: "discipline-theme",
+            name: "GeneratorDisciplineThemeView",
+            component: GeneratorDisciplineThemeView,
+          },
+          {
+            path: "discipline-lab",
+            name: "GeneratorDisciplineLabView",
+            component: GeneratorDisciplineLabView,
+          },
+          {
+            path: "discipline-practice",
+            name: "GeneratorDisciplinePracticeView",
+            component: GeneratorDisciplinePracticeView,
+          },
+          {
+            path: "discipline-independent",
+            name: "GeneratorDisciplineIndependentView",
+            component: GeneratorDisciplineIndependentView,
+          },
+          {
+            path: "library",
+            name: "GeneratorLibraryView",
+            component: GeneratorLibraryView,
+          },
+          {
+            path: "rdw",
+            name: "GeneratorRDWView",
+            component: GeneratorRDWView,
+          },
+          {
+            path: "soft",
+            name: "GeneratorSoftwareView",
+            component: GeneratorSoftwareView,
+          },
+          {
+            path: "logistics",
+            name: "GeneratorLogisticsView",
+            component: GeneratorLogisticsView,
           },
         ]
       },
