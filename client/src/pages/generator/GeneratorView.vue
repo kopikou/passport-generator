@@ -73,7 +73,7 @@ watch(() => props.id,
 
 .generator-container {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 20% auto;
   grid-template-rows: auto 1fr;
   position: absolute;
   left: 0;
