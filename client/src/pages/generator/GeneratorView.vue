@@ -40,33 +40,67 @@ watch(() => props.id,
 </script>
 
 <template>
-  <div class="q-pa-lg">
-    <div>
-      <div class="text-h6 q-mb-md text-center">
-          <span class="text-center">
-            Генератор рабочей программы дисциплины ИРНИТУ
-          </span>
-      </div>
-    </div>
-    <div class="q-pa-md">
+  <div class="generator-container">
+    <div class="generator-container__buttons q-pa-md">
       <q-btn
         color="secondary"
         label="Назад к списку"
         @click="router.push('/generator/')"
       />
     </div>
-    <div class="row">
-      <div class="col-md-2">
-          <generator-left-menu :id="props.id"/>
+    <div class="text-h6 q-pa-md generator-container__header">
+      <div class="text-center">
+        Генератор рабочей программы дисциплины ИРНИТУ
       </div>
-      <div class="col-md-10">
-        <router-view />
-        {{ rpdData }}
-      </div>
+    </div>
+    <div class="generator-container__menu">
+      <generator-left-menu :id="props.id"/>
+    </div>
+    <div class="generator-container__content">
+      <router-view/>
+      {{ rpdData }}
+      {{ rpdData }}
+      {{ rpdData }}
+      {{ rpdData }}
+      {{ rpdData }}
+      {{ rpdData }}
+      {{ rpdData }}
     </div>
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+
+.generator-container {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  grid-template-areas:
+  "a b"
+  "c d";
+}
+
+.generator-container__buttons {
+  grid-area: a;
+}
+
+.generator-container__header {
+  grid-area: b;
+}
+
+.generator-container__menu {
+  grid-area: c;
+}
+
+.generator-container__content {
+  overflow-y: scroll;
+  grid-area: d;
+}
+
 
 </style>
