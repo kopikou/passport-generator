@@ -28,6 +28,7 @@ class GeneratorViewSet(
                     .select_related("planlines")
                     .prefetch_related("planlines__semesters", "planlines__indicators").first())
         serializer = self.get_serializer(instance)
+
         return Response(serializer.data)
 
     @action(methods=['GET'], url_path="get-program-list", detail=False)

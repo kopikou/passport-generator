@@ -1,13 +1,19 @@
 import {defineStore} from "pinia";
-import {ref, watch} from "vue";
+import {computed, ref, watch} from "vue";
 import {api} from "boot/axios";
 import {onAuthenticated} from "src/composables/onAuthenticated";
 import {useQuasar} from "quasar";
+import _ from "lodash";
+import {GeneratorData} from "src/types";
 
 const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   const cafData = ref([])
-  const rpdData = ref([])
+  const rpdData = ref<GeneratorData[]>([])
   const activeRpdId = ref(null)
+
+  const indicatorsData = computed(() => {
+      return rpdData.value.planlines?.indicators || []
+  })
 
   const $q = useQuasar()
 
@@ -27,9 +33,13 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       message: 'Загрузка данных кафедр',
     })
 
+    if (activeRpdId.value != null)
+      await getData()
+
     await getCafData()
 
     loadingCafData()
+
   })
 
   watch(activeRpdId, async () => {
@@ -50,6 +60,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
     activeRpdId,
     rpdData,
+    indicatorsData,
   }
 })
 

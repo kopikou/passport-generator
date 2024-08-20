@@ -153,7 +153,7 @@ watch(() => props.id,
         </template>
         <template v-else>
           <q-chip square color="green-2">
-            <q-avatar icon="bookmark" color="green" text-color="white" />
+            <q-avatar icon="bookmark" color="green" text-color="white"/>
             {{ fileData.status_verbose }}
           </q-chip>
         </template>
