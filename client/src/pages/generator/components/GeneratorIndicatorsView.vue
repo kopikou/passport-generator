@@ -1,9 +1,18 @@
 <script setup lang="ts">
+import useGeneratorViewStore from "stores/generatorViewStore";
+import {storeToRefs} from "pinia";
+import IndicatorsListView from "pages/generator/components/IndicatorsListView.vue";
+
+const generatorViewStore = useGeneratorViewStore()
+
+const {
+  indicatorsData,
+} = storeToRefs(generatorViewStore)
 
 </script>
 
 <template>
- <div>
+  <div>
     <div class="text-center">
       <span class="text-h5">Индикаторы</span>
     </div>
@@ -11,12 +20,14 @@
       <span class="text-h6 q-pl-lg">Индикаторы по дисциплине</span>
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
-      <div class="q-pb-md">
+      <div  v-for="i in indicatorsData">
+        <indicators-list-view  :data="i"/>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+
 
 </style>
