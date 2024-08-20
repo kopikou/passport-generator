@@ -17,9 +17,6 @@ const cols = ref([
 
 <template>
   <div>
-    <div class="text-center">
-      <span class="text-h5">Компетенции</span>
-    </div>
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Компетенции по дисциплине</span>
       <p>В результате освоения дисциплины "Базы данных" у обучающихся должны быть сформированы компетенции. Данные

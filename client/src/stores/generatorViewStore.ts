@@ -33,9 +33,6 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       message: 'Загрузка данных кафедр',
     })
 
-    if (activeRpdId.value != null)
-      await getData()
-
     await getCafData()
 
     loadingCafData()
@@ -48,8 +45,9 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       message: 'Загрузка данных РПД',
     })
 
-    if (activeRpdId.value != null)
+    if (activeRpdId.value) {
       await getData()
+    }
 
     loadingData()
   }, {immediate: true})

@@ -13,9 +13,6 @@ const {
 
 <template>
   <div>
-    <div class="text-center">
-      <span class="text-h5">Титульный лист</span>
-    </div>
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Данные по дисциплине</span>
       <p>Данные для рабочей программы по дисциплине "Базы данных" получены автоматически из учебного плана</p>
