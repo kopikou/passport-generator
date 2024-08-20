@@ -3,9 +3,13 @@
 </script>
 
 <template>
-<div>
-  discipline-independent
-</div>
+  <div>
+    <div style="width: 95%">
+      <span class="text-h6 q-pl-lg">Перечень самостоятельных работ по дисциплине</span>
+      <p>бла бла бла</p>
+      <q-separator class="q-mt-md q-mb-md"/>
+    </div>
+  </div>
 </template>
 
 <style scoped>

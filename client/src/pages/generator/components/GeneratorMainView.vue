@@ -49,7 +49,7 @@ const {
         <span class="text-subtitle1">Количество семестров</span>
         <q-field filled dense style="width: 5%" class="q-ml-md q-mr-md">
           <template v-slot:control>
-            <div class="self-center full-width no-outline text-center">2</div>
+              <div class="self-center full-width no-outline text-center">2</div>
           </template>
         </q-field>
         <span class="text-subtitle1">Начальный семестр</span>

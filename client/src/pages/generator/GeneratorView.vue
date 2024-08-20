@@ -54,6 +54,7 @@ watch(() => props.id,
       </div>
     </div>
     <div class="generator-container__menu">
+      <div class="text-subtitle1 q-pl-md">АСУБ 2024 База данных</div>
       <generator-left-menu :id="props.id"/>
     </div>
     <div class="generator-container__content">

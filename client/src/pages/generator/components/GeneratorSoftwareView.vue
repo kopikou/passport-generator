@@ -3,9 +3,13 @@
 </script>
 
 <template>
-<div>
-  soft
-</div>
+  <div>
+    <div style="width: 95%">
+      <span class="text-h6 q-pl-lg">Перечень лицензионного программного обеспечения для дисциплины</span>
+      <p>бла бла бла</p>
+      <q-separator class="q-mt-md q-mb-md"/>
+    </div>
+  </div>
 </template>
 
 <style scoped>
