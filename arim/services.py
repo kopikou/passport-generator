@@ -5,6 +5,7 @@ import requests
 from django.conf import settings
 
 from app.utils import cache_function
+from arim.models import UistLicense
 
 
 class AISServices(object):
@@ -43,3 +44,13 @@ class AISServices(object):
 
         return data
 
+    @staticmethod
+    def search_software(val):
+
+        data = UistLicense.objects.filter(clicense__name__contains=val).values(
+            "id",
+            "cnt",
+            "clicense__name"
+        )
+
+        return data

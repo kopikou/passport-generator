@@ -59,7 +59,6 @@ watch(() => props.id,
     </div>
     <div class="generator-container__content">
       <router-view/>
-      {{ rpdData }}
     </div>
   </div>
 </template>

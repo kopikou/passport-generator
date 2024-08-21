@@ -213,3 +213,9 @@ export interface BookData {
     izd_type: string,
     place: string,
 }
+
+export interface SoftwareData {
+    id: number,
+    cnt: number,
+    clicense__name: string,
+}

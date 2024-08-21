@@ -112,3 +112,18 @@ class UchPlanSemestr(models.Model):
     eios = models.IntegerField()
 
 
+class UistLicense(models.Model):
+    class Meta:
+        db_table = "uistlicense"
+        managed = False
+
+    cnt = models.IntegerField()
+    clicense = models.ForeignKey("ClLicense", db_column="clicense", on_delete=models.CASCADE)
+
+
+class ClLicense(models.Model):
+    class Meta:
+        db_table = "cl$license"
+        managed = False
+
+    name = models.CharField(max_length=128)

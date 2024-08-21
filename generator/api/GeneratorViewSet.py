@@ -80,3 +80,20 @@ class GeneratorViewSet(
 
         return Response(data)
 
+    @action(methods=['GET'], url_path="search-software", detail=False)
+    def search_soft(self, request, *args, **kwargs):
+        val = self.request.query_params.get('val')
+
+        data = AISServices.search_software(val)
+
+        return Response(data)
+
+    @action(methods=['GET'], url_path="search-oborud", detail=False)
+    def search_oborud(self, request, *args, **kwargs):
+        val = self.request.query_params.get('val')
+
+        data = LibraryServices.search_book(val)
+
+        return Response(data)
+
+

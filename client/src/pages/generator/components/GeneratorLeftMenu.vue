@@ -17,7 +17,6 @@ const menuItems = [
   {title: 'Содержание практических работ', url: 'discipline-practice'},
   {title: 'Содержание самостоятельных работ', url: 'discipline-independent'},
   {title: 'Литература', url: 'library'},
-  {title: 'Использованные результаты НИОКР', url: 'rdw'},
   {title: 'Использованное программное обеспечение', url: 'soft'},
   {title: 'Используемое материально-техническое обеспечение', url: 'logistics'},
 ]

@@ -19,7 +19,6 @@ import GeneratorDisciplineLabView from "pages/generator/components/GeneratorDisc
 import GeneratorDisciplinePracticeView from "pages/generator/components/GeneratorDisciplinePracticeView.vue";
 import GeneratorDisciplineIndependentView from "pages/generator/components/GeneratorDisciplineIndependentView.vue";
 import GeneratorLibraryView from "pages/generator/components/GeneratorLibraryView.vue";
-import GeneratorRDWView from "pages/generator/components/GeneratorRDWView.vue";
 import GeneratorSoftwareView from "pages/generator/components/GeneratorSoftwareView.vue";
 import GeneratorLogisticsView from "pages/generator/components/GeneratorLogisticsView.vue";
 
@@ -97,11 +96,6 @@ const routes: RouteRecordRaw[] = [
             path: "library",
             name: "GeneratorLibraryView",
             component: GeneratorLibraryView,
-          },
-          {
-            path: "rdw",
-            name: "GeneratorRDWView",
-            component: GeneratorRDWView,
           },
           {
             path: "soft",

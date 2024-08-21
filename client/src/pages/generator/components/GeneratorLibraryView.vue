@@ -7,17 +7,24 @@ import {BookData} from "src/types";
 
 const $q = useQuasar()
 
-const searchVal = ref(null)
+const searchVal = ref('')
 const bookData = ref([])
 
 const dopBook = ref([])
 const mainBook = ref<BookData[]>([])
 
 async function searchBook() {
-  $q.loading.show({message: "Поиск книг"})
-  let r = await api.get('/api/generator/search-book/', {params: {val: searchVal.value}})
-  bookData.value = r.data
-  $q.loading.hide()
+  if (searchVal.value.length <= 3) {
+    $q.notify({
+      message: "Введите больше 3-ех символов",
+      color: "negative",
+    })
+  } else {
+    $q.loading.show({message: "Поиск книг"})
+    let r = await api.get('/api/generator/search-book/', {params: {val: searchVal.value}})
+    bookData.value = r.data
+    $q.loading.hide()
+  }
 }
 
 </script>
@@ -36,8 +43,9 @@ async function searchBook() {
             v-model="searchVal"
             filled
             class="col"
+            :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
         />
-        <q-btn color="secondary" @click="searchBook" label="Поиск"/>
+        <q-btn color="secondary" @click="searchBook" label="Поиск" />
       </div>
       <div class="row">
         <div class="col-5">
@@ -47,21 +55,20 @@ async function searchBook() {
           table
         </div>
         <div class="col-7">
-            <div v-for="item in bookData">
-              <q-field label="Название" stack-label filled>
-                <template #control>
-                  <div class="text-subtitle1 self-center full-width no-outline">
-                    <a v-if="item.http_link" :href="`${item.http_link}`" target="_blank">{{ item.bib_disc }}</a>
-                    <span v-else>{{ item.bib_disc }}</span>
-                  </div>
-                </template>
-              </q-field>
-              <div class="q-gutter-x-md q-mt-md q-mb-md">
-                <q-btn color="primary" label="В основную литературу" />
-                <q-btn color="secondary" label="В дополнительную литературу" />
-              </div>
+          <div v-for="item in bookData">
+            <q-field label="Название" stack-label filled>
+              <template #control>
+                <div class="text-subtitle1 self-center full-width no-outline">
+                  <a v-if="item.http_link" :href="`${item.http_link}`" target="_blank">{{ item.bib_disc }}</a>
+                  <span v-else>{{ item.bib_disc }}</span>
+                </div>
+              </template>
+            </q-field>
+            <div class="q-gutter-x-md q-mt-md q-mb-md">
+              <q-btn color="primary" label="В основную литературу"/>
+              <q-btn color="secondary" label="В дополнительную литературу"/>
             </div>
-          {{ bookData }}
+          </div>
         </div>
       </div>
     </div>
