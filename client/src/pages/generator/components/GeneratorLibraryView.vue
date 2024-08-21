@@ -1,5 +1,25 @@
 <script setup lang="ts">
 
+import {ref} from "vue";
+import {api} from "boot/axios";
+import {useQuasar} from "quasar";
+import {BookData} from "src/types";
+
+const $q = useQuasar()
+
+const searchVal = ref(null)
+const bookData = ref([])
+
+const dopBook = ref([])
+const mainBook = ref<BookData[]>([])
+
+async function searchBook() {
+  $q.loading.show({message: "Поиск книг"})
+  let r = await api.get('/api/generator/search-book/', {params: {val: searchVal.value}})
+  bookData.value = r.data
+  $q.loading.hide()
+}
+
 </script>
 
 <template>
@@ -8,6 +28,42 @@
       <span class="text-h6 q-pl-lg">Учебная литература для дисциплины</span>
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
+
+      <div class="row q-gutter-x-md q-mb-md">
+        <q-input
+            label="Введите текст для поиска"
+            stack-label
+            v-model="searchVal"
+            filled
+            class="col"
+        />
+        <q-btn color="secondary" @click="searchBook" label="Поиск"/>
+      </div>
+      <div class="row">
+        <div class="col-5">
+          <div class="text-h6">Основная литература</div>
+          table
+          <div class="text-h6">Дополнительная литература</div>
+          table
+        </div>
+        <div class="col-7">
+            <div v-for="item in bookData">
+              <q-field label="Название" stack-label filled>
+                <template #control>
+                  <div class="text-subtitle1 self-center full-width no-outline">
+                    <a v-if="item.http_link" :href="`${item.http_link}`" target="_blank">{{ item.bib_disc }}</a>
+                    <span v-else>{{ item.bib_disc }}</span>
+                  </div>
+                </template>
+              </q-field>
+              <div class="q-gutter-x-md q-mt-md q-mb-md">
+                <q-btn color="primary" label="В основную литературу" />
+                <q-btn color="secondary" label="В дополнительную литературу" />
+              </div>
+            </div>
+          {{ bookData }}
+        </div>
+      </div>
     </div>
   </div>
 </template>

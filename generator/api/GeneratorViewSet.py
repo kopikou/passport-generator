@@ -5,6 +5,7 @@ from rest_framework.viewsets import GenericViewSet
 
 from app.utils import UserProfileHasPermission
 from arim.services import AISServices
+from arim_library.services import LibraryServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink
 from generator.serializer import PlanLinesLinkSerializer
@@ -70,3 +71,12 @@ class GeneratorViewSet(
         return Response(
             data=result
         )
+
+    @action(methods=['GET'], url_path="search-book", detail=False)
+    def search_book(self, request, *args, **kwargs):
+        val = self.request.query_params.get('val')
+
+        data = LibraryServices.search_book(val)
+
+        return Response(data)
+
