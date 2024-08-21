@@ -15,7 +15,7 @@ class RPDFile(TimestampsModel):
         finished = 4, "Принят, уже в АИС"
 
     user = models.ForeignKey(User, verbose_name="Пользователь", on_delete=models.PROTECT)
-    title = models.CharField(max_length=100, verbose_name="Наименование файла")
+    title = models.TextField(verbose_name="Наименование файла")
     file = models.FileField(upload_to="uploads/rpd_plan/%Y-%m-%d/", verbose_name="Файл РПД")
     status = models.IntegerField(choices=StatusChoice.choices, default=StatusChoice.download)
 
@@ -26,17 +26,17 @@ class RPDFile(TimestampsModel):
 
 class PlanData(TimestampsModel):
     file = models.ForeignKey(RPDFile, verbose_name="Файл", on_delete=models.CASCADE)
-    subtype = models.CharField(max_length=64, verbose_name='')
-    shifr = models.CharField(max_length=8, verbose_name='')
-    abbrprofile = models.CharField(max_length=12, verbose_name='', null=True, blank=True)
-    studyform = models.CharField(max_length=48, verbose_name='')
-    studylevel = models.CharField(max_length=64, verbose_name='')
-    studyprog = models.CharField(max_length=64, verbose_name='')
+    subtype = models.TextField( verbose_name='')
+    shifr = models.TextField(verbose_name='')
+    abbrprofile = models.TextField(verbose_name='', null=True, blank=True)
+    studyform = models.TextField(verbose_name='')
+    studylevel = models.TextField( verbose_name='')
+    studyprog = models.TextField( verbose_name='')
     elementsinweek = models.IntegerField(verbose_name='')
-    species = models.CharField(max_length=4096, verbose_name='')
+    species = models.TextField(verbose_name='')
     usernum = models.IntegerField(verbose_name='')
-    whoratif = models.CharField(max_length=128, verbose_name='')
-    planname = models.CharField(max_length=256, verbose_name='')
+    whoratif = models.TextField(verbose_name='')
+    planname = models.TextField(verbose_name='')
     kafcode = models.IntegerField(verbose_name='', null=True)
     startyear = models.IntegerField(verbose_name='')
     dviga = models.BooleanField(verbose_name='')
@@ -47,23 +47,23 @@ class PlanData(TimestampsModel):
     gosdate = models.DateField(verbose_name='', null=True)
     gostype = models.FloatField(verbose_name='', null=True)
     gosdocument = models.IntegerField(verbose_name='', null=True)
-    lastshifr = models.CharField(max_length=64, verbose_name='')
-    napr_e = models.CharField(max_length=1024, verbose_name='')
-    napr_t = models.CharField(max_length=1024, verbose_name='')
-    vuzname = models.CharField(max_length=256, verbose_name='')
-    head = models.CharField(max_length=256, verbose_name='', null=True, blank=True)
-    faculty = models.CharField(max_length=256, verbose_name='', null=True, blank=True)
+    lastshifr = models.TextField( verbose_name='')
+    napr_e = models.TextField(verbose_name='')
+    napr_t = models.TextField(verbose_name='')
+    vuzname = models.TextField(verbose_name='')
+    head = models.TextField(verbose_name='', null=True, blank=True)
+    faculty = models.TextField(verbose_name='', null=True, blank=True)
     mira_id = models.IntegerField(verbose_name='', null=True, blank=True)
 
 class Disciplines(TimestampsModel):
-    name = models.CharField(max_length=256, verbose_name='')
+    name = models.TextField(verbose_name='')
 
 
 class LinesData(TimestampsModel):
     plan = models.ForeignKey(PlanData, verbose_name='', on_delete=models.CASCADE)
     disid = models.ForeignKey(Disciplines, verbose_name='', on_delete=models.CASCADE, db_column='disid')
-    dis = models.CharField(max_length=256, verbose_name='')
-    newdisid = models.CharField(max_length=128, verbose_name='', null=True, blank=True)
+    dis = models.TextField(verbose_name='')
+    newdisid = models.TextField(verbose_name='', null=True, blank=True)
     mustbesdudied = models.IntegerField(verbose_name='', null=True)
     hoursinzet = models.IntegerField(verbose_name='', null=True)
     caf = models.IntegerField(verbose_name='', null=True)
@@ -71,7 +71,7 @@ class LinesData(TimestampsModel):
     type = models.IntegerField(verbose_name='', null=True)
     viewpract = models.IntegerField(verbose_name='', null=True)
     viewobject = models.IntegerField(verbose_name='', null=True)
-    kompetences = models.CharField(max_length=1024, verbose_name='', null=True, blank=True)
+    kompetences = models.TextField(verbose_name='', null=True, blank=True)
     synchronize = models.BooleanField(verbose_name='', default=1)
 
 
@@ -96,15 +96,15 @@ class SemesterData(TimestampsModel):
 
 class LinesIndicators(TimestampsModel):
     planlineid = models.ForeignKey(LinesData, verbose_name='', on_delete=models.CASCADE, db_column="planlineid", related_name="indicators")
-    competence_index = models.CharField(max_length=32, verbose_name='', null=True, blank=True)
-    competence = models.CharField(max_length=2048, verbose_name='', null=True, blank=True)
-    indicator_index = models.CharField(max_length=32, verbose_name='')
-    indicator = models.CharField(max_length=2048, verbose_name='')
+    competence_index = models.TextField(verbose_name='', null=True, blank=True)
+    competence = models.TextField(verbose_name='', null=True, blank=True)
+    indicator_index = models.TextField(verbose_name='')
+    indicator = models.TextField(verbose_name='')
 
 
 class PlanDocuments(TimestampsModel):
     plan = models.ForeignKey(PlanData, verbose_name='', on_delete=models.CASCADE)
-    name = models.CharField(max_length=256, verbose_name='')
+    name = models.TextField(verbose_name='')
     type = models.IntegerField(verbose_name='')
     synchronize = models.BooleanField(verbose_name='')
     manual = models.BooleanField(verbose_name='', default=False)
@@ -112,21 +112,21 @@ class PlanDocuments(TimestampsModel):
 
 
 class ExceptionNames(TimestampsModel):
-    name = models.CharField(max_length=256, verbose_name='')
+    name = models.TextField(verbose_name='')
 
     def __str__(self):
         return f"{self.name}"
 
 
 class AllowedNames(TimestampsModel):
-    name = models.CharField(max_length=256, verbose_name='')
+    name = models.TextField(verbose_name='')
 
     def __str__(self):
         return f"{self.name}"
 
 
 class BaseDocuments(TimestampsModel):
-    name = models.CharField(max_length=64, verbose_name='Наименование файла')
+    name = models.TextField( verbose_name='Наименование файла')
     type = models.IntegerField(verbose_name='Тип')
     specialist = models.BooleanField(verbose_name='Специалитет')
     bachelor = models.BooleanField(verbose_name='Бакалавр')

@@ -6,7 +6,6 @@ from rpd.utils import TimestampsModel
 
 # Create your models here.
 class PlanLinesLink(TimestampsModel):
-
     class StatusChoices(models.IntegerChoices):
         appointed = 0, "Назначен"
         is_filled = 1, "Заполняется"

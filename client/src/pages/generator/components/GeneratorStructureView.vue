@@ -29,12 +29,12 @@ const tab = ref(null)
           transition-prev="scale"
           transition-next="scale"
       >
-        <q-tab-panel name="1">
+        <q-tab-panel v-for="i in 2" :name="`${i}`">
           <div class="structure-form q-gutter-md">
             <div class="text-subtitle1">Лекции</div>
             <q-field outlined dense>
               <template v-slot:control>
-                <div class="self-center full-width no-outline text-center">12</div>
+                <div class="self-center full-width no-outline text-center">{{ i }}</div>
               </template>
             </q-field>
 
@@ -87,9 +87,6 @@ const tab = ref(null)
               </template>
             </q-field>
           </div>
-        </q-tab-panel>
-        <q-tab-panel name="2">
-          asdfasd
         </q-tab-panel>
       </q-tab-panels>
     </div>

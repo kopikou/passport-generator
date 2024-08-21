@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'generator',
     'auths',
     'arim',
+    'arim_library',
 ]
 
 MIDDLEWARE = [
@@ -131,12 +132,11 @@ STATICFILES_DIRS = [
     BASE_DIR / "client" / "dist" / "spa",
 ]
 
-DATABASE_ROUTERS = ["app.router.RPDRouter"]
+DATABASE_ROUTERS = ["app.router.MainRouter", "app.router.RpdRouter", "app.router.LibraryRouter"]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
-DATABASE_ROUTERS = ["app.router.MainRouter"]
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 BITRIX_SECRET_KEY = ""
