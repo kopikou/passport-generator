@@ -20,7 +20,6 @@ const tab = ref(null)
       <span class="text-h6 q-pl-lg">Структура дисциплины "Базы данных"</span>
       <p>Количество академических часов, выделенных на дисциплину Базы данных. Данные автоматически получены их учебного
         плана.</p>
-      {{ semestersData }}
       <q-separator class="q-mt-md q-mb-md"/>
       <q-tabs
           v-model="tab"
