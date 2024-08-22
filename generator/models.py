@@ -22,3 +22,7 @@ class PlanLinesLink(TimestampsModel):
     @property
     def status_verbose(self):
         return PlanLinesLink.StatusChoices.labels[self.status]
+
+
+class FormControl(TimestampsModel):
+    name = models.CharField(max_length=64)

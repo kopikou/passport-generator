@@ -3,11 +3,11 @@
 import {useQuasar} from "quasar";
 import {api} from "boot/axios";
 import {ref} from "vue";
-import {SoftwareData} from "src/types";
+import {GeneratorSoftwareData} from "src/types";
 
 const $q = useQuasar()
 const searchVal = ref('')
-const softwareData = ref<SoftwareData[]>([])
+const softwareData = ref<GeneratorSoftwareData[]>([])
 
 async function searchSoft() {
   if (searchVal.value.length <= 3) {
@@ -42,7 +42,7 @@ async function searchSoft() {
         />
         <q-btn color="secondary" @click="searchSoft" label="Поиск"/>
       </div>
-            <div class="row">
+      <div class="row">
         <div class="col-5">
           <div class="text-h6">выбрано</div>
           table
@@ -62,7 +62,6 @@ async function searchSoft() {
           </div>
         </div>
       </div>
-      {{ softwareData }}
     </div>
   </div>
 </template>

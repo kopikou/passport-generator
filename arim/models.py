@@ -127,3 +127,22 @@ class ClLicense(models.Model):
         managed = False
 
     name = models.CharField(max_length=128)
+
+class OborudData(models.Model):
+    class Meta:
+        db_table = "oborud_data"
+        managed = False
+
+    name = models.CharField(max_length=250)
+    inv = models.CharField(max_length=12, null=True, blank=True)
+    caud = models.ForeignKey("CatAud", db_column="caud", on_delete=models.CASCADE, null=True)
+    ismobile = models.CharField(max_length=1, choices=BoolChoice)
+
+class CatAud(models.Model):
+    class Meta:
+        db_table = "cataud"
+        managed = False
+
+    name = models.CharField(max_length=16, null=True, blank=True)
+    ckaf = models.IntegerField(null=True)
+    cnazn = models.IntegerField(null=True)

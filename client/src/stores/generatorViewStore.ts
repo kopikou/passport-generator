@@ -4,15 +4,24 @@ import {api} from "boot/axios";
 import {onAuthenticated} from "src/composables/onAuthenticated";
 import {useQuasar} from "quasar";
 import _ from "lodash";
-import {GeneratorData} from "src/types";
+import {
+  GeneratorData, GeneratorFormControlData,
+  GeneratorIndicatorsData,
+  GeneratorPlanLineData,
+} from "src/types";
 
 const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   const cafData = ref([])
   const rpdData = ref<GeneratorData[]>([])
+  const formControl = ref<GeneratorFormControlData[]>([])
   const activeRpdId = ref(null)
 
-  const indicatorsData = computed(() => {
+  const indicatorsData = computed<GeneratorIndicatorsData[]>(() => {
       return rpdData.value.planlines?.indicators || []
+  })
+
+  const planlinesData = computed<GeneratorPlanLineData[]>(() => {
+    return rpdData.value?.planlines
   })
 
   const $q = useQuasar()
@@ -27,15 +36,21 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     rpdData.value = r.data
   }
 
+  async function getFormControlData() {
+    let r = await api.get('/api/generator/get-form-control-data/')
+    formControl.value = r.data
+  }
+
   onAuthenticated(async () => {
-    const loadingCafData = $q.loading.show({
+    const loadingHelpers = $q.loading.show({
       group: 'first',
-      message: 'Загрузка данных кафедр',
+      message: 'Загрузка справочников',
     })
 
     await getCafData()
+    await getFormControlData()
 
-    loadingCafData()
+    loadingHelpers()
 
   })
 
@@ -55,10 +70,12 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   return {
     cafData,
+    formControl,
 
     activeRpdId,
     rpdData,
     indicatorsData,
+    planlinesData,
   }
 })
 

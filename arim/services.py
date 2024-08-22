@@ -3,9 +3,10 @@ from json import JSONDecodeError
 import pendulum
 import requests
 from django.conf import settings
+from django.db.models import Q
 
 from app.utils import cache_function
-from arim.models import UistLicense
+from arim.models import UistLicense, OborudData, BoolChoice, UchPlanKaf
 
 
 class AISServices(object):
@@ -51,6 +52,35 @@ class AISServices(object):
             "id",
             "cnt",
             "clicense__name"
+        )
+
+        return data
+
+    @staticmethod
+    def search_oborud(val, type, caf):
+
+        query = Q()
+        query_second = Q()
+        query_third = Q()
+
+        query |= Q(caud__name__contains=val)
+        query |= Q(name__contains=val)
+        query |= Q(inv__contains=val)
+
+        if type != 3:
+            сkaf = UchPlanKaf.objects.get(ckaf2rpgen=caf)
+            query_second |= Q(caud__ckaf=сkaf.ckaf2istu)
+
+            if type == 1:
+                query_third |= Q(caud__cnazn=7)
+                query_third |= Q(ismobile=BoolChoice.t)
+                query_third |= Q(caud__ckaf=сkaf.ckaf2istu)
+
+        data = OborudData.objects.filter(query, query_second, query_third).values(
+            'id',
+            'name',
+            'inv',
+            'caud__name',
         )
 
         return data

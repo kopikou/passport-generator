@@ -199,7 +199,7 @@ export interface GeneratorData {
     status_verbose: string,
 }
 
-export interface BookData {
+export interface GeneratorBookData {
     id: number,
     idd: number,
     irbisid: string,
@@ -214,8 +214,20 @@ export interface BookData {
     place: string,
 }
 
-export interface SoftwareData {
+export interface GeneratorSoftwareData {
     id: number,
     cnt: number,
     clicense__name: string,
+}
+
+export interface GeneratorOborudData {
+    id: number,
+    name: string,
+    inv: string,
+    caud__name: string,
+}
+
+export interface GeneratorFormControlData {
+    id: number,
+    name: string,
 }

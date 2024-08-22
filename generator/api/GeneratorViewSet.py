@@ -7,7 +7,7 @@ from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
-from generator.models import PlanLinesLink
+from generator.models import PlanLinesLink, FormControl
 from generator.serializer import PlanLinesLinkSerializer
 from rpd.models import LinesData
 
@@ -91,9 +91,17 @@ class GeneratorViewSet(
     @action(methods=['GET'], url_path="search-oborud", detail=False)
     def search_oborud(self, request, *args, **kwargs):
         val = self.request.query_params.get('val')
+        type = int(self.request.query_params.get('type'))
+        caf = int(self.request.query_params.get('caf'))
 
-        data = LibraryServices.search_book(val)
+        data = AISServices.search_oborud(val, type, caf)
 
         return Response(data)
 
 
+    @action(methods=['GET'], url_path="get-form-control-data", detail=False)
+    def get_form_control_data(self, request, *args, **kwargs):
+
+        data = FormControl.objects.all().values("id", "name")
+
+        return Response(data)

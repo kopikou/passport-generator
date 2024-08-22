@@ -70,8 +70,8 @@ onBeforeMount(() => {
       />
       </div>
       <q-card-actions align="right">
-        <q-btn color="primary" label="OK" @click="onOKClick" :disable="correct"/>
-        <q-btn color="primary" label="Cancel" @click="onDialogCancel"/>
+        <q-btn color="primary" label="Сохранить" @click="onOKClick" :disable="correct"/>
+        <q-btn color="primary" label="Отмена" @click="onDialogCancel"/>
       </q-card-actions>
     </q-card>
   </q-dialog>

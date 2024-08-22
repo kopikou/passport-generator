@@ -3,7 +3,7 @@
 import {ref} from "vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
-import {BookData} from "src/types";
+import {GeneratorBookData} from "src/types";
 
 const $q = useQuasar()
 
@@ -11,7 +11,7 @@ const searchVal = ref('')
 const bookData = ref([])
 
 const dopBook = ref([])
-const mainBook = ref<BookData[]>([])
+const mainBook = ref<GeneratorBookData[]>([])
 
 async function searchBook() {
   if (searchVal.value.length <= 3) {
