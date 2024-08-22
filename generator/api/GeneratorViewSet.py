@@ -7,7 +7,7 @@ from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
-from generator.models import PlanLinesLink, FormControl
+from generator.models import PlanLinesLink, FormControl, IndependentTypes
 from generator.serializer import PlanLinesLinkSerializer
 from rpd.models import LinesData
 
@@ -98,10 +98,16 @@ class GeneratorViewSet(
 
         return Response(data)
 
-
     @action(methods=['GET'], url_path="get-form-control-data", detail=False)
     def get_form_control_data(self, request, *args, **kwargs):
 
         data = FormControl.objects.all().values("id", "name")
+
+        return Response(data)
+
+    @action(methods=['GET'], url_path="get-independent-types-data", detail=False)
+    def get_independent_types_data(self, request, *args, **kwargs):
+
+        data = IndependentTypes.objects.all().values("id", "name")
 
         return Response(data)

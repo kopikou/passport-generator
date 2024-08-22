@@ -5,78 +5,87 @@ import {onAuthenticated} from "src/composables/onAuthenticated";
 import {useQuasar} from "quasar";
 import _ from "lodash";
 import {
-  GeneratorData, GeneratorFormControlData,
-  GeneratorIndicatorsData,
-  GeneratorPlanLineData,
+    GeneratorData, GeneratorFormControlData, GeneratorIndependentTypesData,
+    GeneratorIndicatorsData,
+    GeneratorPlanLineData,
 } from "src/types";
 
 const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
-  const cafData = ref([])
-  const rpdData = ref<GeneratorData[]>([])
-  const formControl = ref<GeneratorFormControlData[]>([])
-  const activeRpdId = ref(null)
+    const cafData = ref([])
+    const rpdData = ref<GeneratorData[]>([])
+    const formControl = ref<GeneratorFormControlData[]>([])
+    const independentTypes = ref<GeneratorIndependentTypesData[]>([])
+    const activeRpdId = ref(null)
 
-  const indicatorsData = computed<GeneratorIndicatorsData[]>(() => {
-      return rpdData.value.planlines?.indicators || []
-  })
-
-  const planlinesData = computed<GeneratorPlanLineData[]>(() => {
-    return rpdData.value?.planlines
-  })
-
-  const $q = useQuasar()
-
-  async function getCafData() {
-    let r = await api.get("/api/arim/kafs/")
-    cafData.value = r.data
-  }
-
-  async function getData() {
-    let r = await api.get(`/api/generator/${activeRpdId.value}/`)
-    rpdData.value = r.data
-  }
-
-  async function getFormControlData() {
-    let r = await api.get('/api/generator/get-form-control-data/')
-    formControl.value = r.data
-  }
-
-  onAuthenticated(async () => {
-    const loadingHelpers = $q.loading.show({
-      group: 'first',
-      message: 'Загрузка справочников',
+    const indicatorsData = computed<GeneratorIndicatorsData[]>(() => {
+        return rpdData.value.planlines?.indicators || []
     })
 
-    await getCafData()
-    await getFormControlData()
-
-    loadingHelpers()
-
-  })
-
-  watch(activeRpdId, async () => {
-    const loadingData = $q.loading.show({
-      group: 'second',
-      message: 'Загрузка данных РПД',
+    const planlinesData = computed<GeneratorPlanLineData[]>(() => {
+        return rpdData.value?.planlines
     })
 
-    if (activeRpdId.value) {
-      await getData()
+    const $q = useQuasar()
+
+    async function getCafData() {
+        let r = await api.get("/api/arim/kafs/")
+        cafData.value = r.data
     }
 
-    loadingData()
-  }, {immediate: true})
+    async function getFormControlData() {
+        let r = await api.get('/api/generator/get-form-control-data/')
+        formControl.value = r.data
+    }
+
+    async function getIndependentTypesData() {
+        let r = await api.get('/api/generator/get-independent-types-data/')
+        independentTypes.value = r.data
+    }
+
+    async function getData() {
+        let r = await api.get(`/api/generator/${activeRpdId.value}/`)
+        rpdData.value = r.data
+    }
 
 
-  return {
-    cafData,
-    formControl,
+    onAuthenticated(async () => {
+        const loadingHelpers = $q.loading.show({
+            group: 'first',
+            message: 'Загрузка справочников',
+        })
 
-    activeRpdId,
-    rpdData,
-    indicatorsData,
-    planlinesData,
-  }
+        await getCafData()
+        await getFormControlData()
+        await getIndependentTypesData()
+
+        loadingHelpers()
+
+    })
+
+    watch(activeRpdId, async () => {
+        const loadingData = $q.loading.show({
+            group: 'second',
+            message: 'Загрузка данных РПД',
+        })
+
+        if (activeRpdId.value) {
+            await getData()
+        }
+
+        loadingData()
+    }, {immediate: true})
+
+
+    return {
+        cafData,
+        formControl,
+        independentTypes,
+
+        activeRpdId,
+        rpdData,
+        indicatorsData,
+        planlinesData,
+    }
 })
 
 export default useGeneratorViewStore;

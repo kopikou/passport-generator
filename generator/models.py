@@ -26,3 +26,7 @@ class PlanLinesLink(TimestampsModel):
 
 class FormControl(TimestampsModel):
     name = models.CharField(max_length=64)
+
+
+class IndependentTypes(TimestampsModel):
+    name = models.CharField(max_length=128)

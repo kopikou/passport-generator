@@ -231,3 +231,8 @@ export interface GeneratorFormControlData {
     id: number,
     name: string,
 }
+
+export interface GeneratorIndependentTypesData {
+    id: number,
+    name: string,
+}
