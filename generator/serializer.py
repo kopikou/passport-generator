@@ -2,15 +2,16 @@ from rest_framework import serializers
 
 from generator.models import PlanLinesLink
 from rpd.models import LinesData
-from rpd.serializer import LinesDataSerializer, SemesterDataSerializer, LinesIndicatorsSerializer
+from rpd.serializer import LinesDataSerializer, SemesterDataSerializer, LinesIndicatorsSerializer, PlanDataSerializer
 
 
 class GeneratorLinesDataSerializer(LinesDataSerializer):
     semesters = SemesterDataSerializer(many=True)
     indicators = LinesIndicatorsSerializer(many=True)
+    plan = PlanDataSerializer()
 
     class Meta(LinesDataSerializer.Meta):
-        fields = LinesDataSerializer.Meta.fields + ['semesters', 'indicators']
+        fields = LinesDataSerializer.Meta.fields + ['semesters', 'indicators', 'plan']
 
 class PlanLinesLinkSerializer(serializers.Serializer):
     planlines = GeneratorLinesDataSerializer(read_only=True)

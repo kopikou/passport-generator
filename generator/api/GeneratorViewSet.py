@@ -26,11 +26,20 @@ class GeneratorViewSet(
     def retrieve(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
         instance = (PlanLinesLink.objects.filter(id=pk)
-                    .select_related("planlines")
-                    .prefetch_related("planlines__semesters", "planlines__indicators").first())
+                    .select_related("planlines", "planlines__plan")
+                    .prefetch_related("planlines__semesters", "planlines__indicators",).first())
+
+
         serializer = self.get_serializer(instance)
 
-        return Response(serializer.data)
+        admission_info = AISServices.get_admissionn_info(serializer.data['cadmission'])
+
+        result = {
+            "admission": admission_info[0],
+            **serializer.data,
+        }
+
+        return Response(result)
 
     @action(methods=['GET'], url_path="get-program-list", detail=False)
     def get_program_list(self, request, *args, **kwargs):

@@ -6,10 +6,21 @@ from django.conf import settings
 from django.db.models import Q
 
 from app.utils import cache_function
-from arim.models import UistLicense, OborudData, BoolChoice, UchPlanKaf
+from arim.models import UistLicense, OborudData, BoolChoice, UchPlanKaf, Catadmission
 
 
 class AISServices(object):
+
+    @staticmethod
+    @cache_function(timeout=60 * 1)
+    def get_admissionn_info(pk):
+
+        data = Catadmission.objects.filter(
+            id=pk,
+        ).values()
+
+        return data
+
     @staticmethod
     @cache_function(timeout=60 * 1)
     def get_kaf_codes():

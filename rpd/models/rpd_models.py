@@ -60,7 +60,7 @@ class Disciplines(TimestampsModel):
 
 
 class LinesData(TimestampsModel):
-    plan = models.ForeignKey(PlanData, verbose_name='', on_delete=models.CASCADE)
+    plan = models.ForeignKey(PlanData, verbose_name='', on_delete=models.CASCADE, related_name="lines")
     disid = models.ForeignKey(Disciplines, verbose_name='', on_delete=models.CASCADE, db_column='disid')
     dis = models.TextField(verbose_name='')
     newdisid = models.TextField(verbose_name='', null=True, blank=True)

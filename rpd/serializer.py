@@ -66,6 +66,8 @@ class SemesterDataSerializer(serializers.ModelSerializer):
             'eios',
         ]
 
+        ordering = ['num']
+
 
 class PlanDataSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)

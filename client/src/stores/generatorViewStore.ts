@@ -5,87 +5,91 @@ import {onAuthenticated} from "src/composables/onAuthenticated";
 import {useQuasar} from "quasar";
 import _ from "lodash";
 import {
-    GeneratorData, GeneratorFormControlData, GeneratorIndependentTypesData,
-    GeneratorIndicatorsData,
-    GeneratorPlanLineData,
+  GeneratorData, GeneratorFormControlData, GeneratorIndependentTypesData,
+  GeneratorPlanLineData, PlanIndicatorData, PlanSemestrData,
 } from "src/types";
 
 const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
-    const cafData = ref([])
-    const rpdData = ref<GeneratorData[]>([])
-    const formControl = ref<GeneratorFormControlData[]>([])
-    const independentTypes = ref<GeneratorIndependentTypesData[]>([])
-    const activeRpdId = ref(null)
+  const cafData = ref([])
+  const rpdData = ref<GeneratorData[]>([])
+  const formControl = ref<GeneratorFormControlData[]>([])
+  const independentTypes = ref<GeneratorIndependentTypesData[]>([])
+  const activeRpdId = ref(null)
 
-    const indicatorsData = computed<GeneratorIndicatorsData[]>(() => {
-        return rpdData.value.planlines?.indicators || []
+  const indicatorsData = computed<PlanIndicatorData[]>(() => {
+    return rpdData.value.planlines?.indicators || []
+  })
+
+  const planlinesData = computed<GeneratorPlanLineData[]>(() => {
+    return rpdData.value?.planlines
+  })
+
+  const semestersData = computed<PlanSemestrData[]>(() => {
+    return rpdData.value.planlines?.semesters || []
+  })
+
+  const $q = useQuasar()
+
+  async function getCafData() {
+    let r = await api.get("/api/arim/kafs/")
+    cafData.value = r.data
+  }
+
+  async function getFormControlData() {
+    let r = await api.get('/api/generator/get-form-control-data/')
+    formControl.value = r.data
+  }
+
+  async function getIndependentTypesData() {
+    let r = await api.get('/api/generator/get-independent-types-data/')
+    independentTypes.value = r.data
+  }
+
+  async function getData() {
+    let r = await api.get(`/api/generator/${activeRpdId.value}/`)
+    rpdData.value = r.data
+  }
+
+
+  onAuthenticated(async () => {
+    const loadingHelpers = $q.loading.show({
+      group: 'first',
+      message: 'Загрузка справочников',
     })
 
-    const planlinesData = computed<GeneratorPlanLineData[]>(() => {
-        return rpdData.value?.planlines
+    await getCafData()
+    await getFormControlData()
+    await getIndependentTypesData()
+
+    loadingHelpers()
+
+  })
+
+  watch(activeRpdId, async () => {
+    const loadingData = $q.loading.show({
+      group: 'second',
+      message: 'Загрузка данных РПД',
     })
 
-    const $q = useQuasar()
-
-    async function getCafData() {
-        let r = await api.get("/api/arim/kafs/")
-        cafData.value = r.data
+    if (activeRpdId.value) {
+      await getData()
     }
 
-    async function getFormControlData() {
-        let r = await api.get('/api/generator/get-form-control-data/')
-        formControl.value = r.data
-    }
-
-    async function getIndependentTypesData() {
-        let r = await api.get('/api/generator/get-independent-types-data/')
-        independentTypes.value = r.data
-    }
-
-    async function getData() {
-        let r = await api.get(`/api/generator/${activeRpdId.value}/`)
-        rpdData.value = r.data
-    }
+    loadingData()
+  }, {immediate: true})
 
 
-    onAuthenticated(async () => {
-        const loadingHelpers = $q.loading.show({
-            group: 'first',
-            message: 'Загрузка справочников',
-        })
+  return {
+    cafData,
+    formControl,
+    independentTypes,
 
-        await getCafData()
-        await getFormControlData()
-        await getIndependentTypesData()
-
-        loadingHelpers()
-
-    })
-
-    watch(activeRpdId, async () => {
-        const loadingData = $q.loading.show({
-            group: 'second',
-            message: 'Загрузка данных РПД',
-        })
-
-        if (activeRpdId.value) {
-            await getData()
-        }
-
-        loadingData()
-    }, {immediate: true})
-
-
-    return {
-        cafData,
-        formControl,
-        independentTypes,
-
-        activeRpdId,
-        rpdData,
-        indicatorsData,
-        planlinesData,
-    }
+    activeRpdId,
+    rpdData,
+    indicatorsData,
+    planlinesData,
+    semestersData,
+  }
 })
 
 export default useGeneratorViewStore;
