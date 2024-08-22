@@ -34,8 +34,11 @@ class GeneratorViewSet(
 
         admission_info = AISServices.get_admissionn_info(serializer.data['cadmission'])
 
+        other_discipline = LinesData.objects.filter(plan_id=serializer.data['planlines']['plan_id'], synchronize=True).values("disid", "dis")
+
         result = {
             "admission": admission_info[0],
+            "other_discipline": [i for i in other_discipline],
             **serializer.data,
         }
 
@@ -120,3 +123,4 @@ class GeneratorViewSet(
         data = IndependentTypes.objects.all().values("id", "name")
 
         return Response(data)
+

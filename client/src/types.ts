@@ -170,9 +170,15 @@ export interface AdmissionInfo {
   direct_name: string,
 }
 
+export interface OtherDiscipline {
+  disid: number,
+  dis: string;
+}
+
 export interface GeneratorData {
   admission: AdmissionInfo[],
   planlines: GeneratorPlanLineData[],
+  other_discipline: OtherDiscipline[],
   id: number,
   cadmission: number,
   mira_id: number,

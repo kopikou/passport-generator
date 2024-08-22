@@ -6,7 +6,7 @@ import {useQuasar} from "quasar";
 import _ from "lodash";
 import {
   GeneratorData, GeneratorFormControlData, GeneratorIndependentTypesData,
-  GeneratorPlanLineData, PlanIndicatorData, PlanSemestrData,
+  GeneratorPlanLineData, OtherDiscipline, PlanIndicatorData, PlanSemestrData,
 } from "src/types";
 
 const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
@@ -21,11 +21,15 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
   const planlinesData = computed<GeneratorPlanLineData[]>(() => {
-    return rpdData.value?.planlines
+    return rpdData.value?.planlines || []
   })
 
   const semestersData = computed<PlanSemestrData[]>(() => {
     return rpdData.value.planlines?.semesters || []
+  })
+
+  const otherDiscipline = computed<OtherDiscipline[]>(() => {
+    return rpdData.value.other_discipline || []
   })
 
   const $q = useQuasar()
@@ -83,6 +87,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     cafData,
     formControl,
     independentTypes,
+    otherDiscipline,
 
     activeRpdId,
     rpdData,

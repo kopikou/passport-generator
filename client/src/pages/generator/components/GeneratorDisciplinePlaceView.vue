@@ -2,11 +2,20 @@
 
 import {ref} from "vue";
 import {bi0CircleFill} from "@quasar/extras/bootstrap-icons";
+import useGeneratorViewStore from "stores/generatorViewStore";
+import {storeToRefs} from "pinia";
+import _ from "lodash";
+
+const generatorViewStore = useGeneratorViewStore();
+
+const {
+  otherDiscipline,
+} = storeToRefs(generatorViewStore)
 
 const precedence = ref([])
 const subsequent = ref([])
 
-const listDiscipline = ref([])
+const listDiscipline = ref(otherDiscipline)
 const filteredDiscipline = ref(listDiscipline.value)
 
 function filterDiscipline(val, update) {
@@ -15,9 +24,9 @@ function filterDiscipline(val, update) {
       filteredDiscipline.value = listDiscipline.value
     } else {
       const needle = val.toLowerCase()
-      filteredDiscipline.value = listDiscipline.value.filter(
-          v => v.toLowerCase().indexOf(needle) > -1
-      )
+      filteredDiscipline.value = _.filter(listDiscipline.value, (x) => {
+        return x.dis.toLowerCase().indexOf(needle) > -1
+      })
     }
   })
 }
@@ -31,27 +40,35 @@ function filterDiscipline(val, update) {
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-select
-          label="Обеспечивающие (предшествующие) дисциплины и практики"
-          stack-label
-          filled
-          use-chips
-          use-input
-          multiple
-          :options="filteredDiscipline"
-          v-model="precedence"
-          @filter="filterDiscipline"
+        label="Обеспечивающие (предшествующие) дисциплины и практики"
+        stack-label
+        filled
+        use-chips
+        clearable
+        use-input
+        multiple
+        option-label="dis"
+        option-value="disid"
+        :options="listDiscipline"
+        v-model="precedence"
+        @filter="filterDiscipline"
       />
-      <br />
+      <br/>
       <q-select
-          label="Обеспечиваемые (последующие) дисциплины и практики"
-          stack-label
-          filled
-          use-chips
-          use-input
-          multiple
-          :options="filteredDiscipline"
-          v-model="subsequent"
-          @filter="filterDiscipline"
+        label="Обеспечиваемые (последующие) дисциплины и практики"
+        stack-label
+        filled
+        use-chips
+        clearable
+        use-input
+        multiple
+        emit-value
+        map-options
+        option-label="dis"
+        option-value="disid"
+        :options="listDiscipline"
+        v-model="subsequent"
+        @filter="filterDiscipline"
       />
     </div>
   </div>
