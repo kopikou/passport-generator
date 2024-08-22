@@ -5,11 +5,6 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import {computed, ref} from "vue";
 
-const generatorViewStore = useGeneratorViewStore();
-const {
-  formControl,
-} = storeToRefs(generatorViewStore)
-
 defineEmits([
   ...useDialogPluginComponent.emits
 ])
@@ -22,14 +17,11 @@ const props = defineProps({
   }
 })
 
-const themeName = ref('')
+const name = ref('')
 const hourCount = ref(0)
-const control = ref()
+const theme = ref()
 
 const correct = computed(() => {
-  if (hourCount.value <= 0) return true
-  if (themeName.value.length < 3) return true
-  if (control.value == null) return true
 
   return false
 })
@@ -47,12 +39,11 @@ async function onOKClick() {
       <div class="q-pa-md q-gutter-md">
         <q-chip color="teal" class="text-subtitle1">Семестр {{ id }}</q-chip>
         <q-input
-            stack-label
-            label="Название темы"
-            v-model="themeName"
-            filled
-            :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
-            type="textarea"
+          v-model="name"
+          stack-label
+          label="Наименование практического занятия"
+          filled
+          :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
         />
         <q-input
             stack-label
@@ -63,16 +54,17 @@ async function onOKClick() {
             :rules="[ val => val > 0 || 'Введите значение больше 0']"
         />
         <q-select
-            stack-label
-            label="Форма контроля"
-            filled
-            :options="formControl"
-            v-model="control"
-            option-label="name"
-            option-value="id"
-            map-options
-            emit-value
+          stack-label
+          label="Тема дисциплины"
+          filled
+          :options="[]"
+          v-model="theme"
+          option-label="name"
+          option-value="id"
+          map-options
+          emit-value
         />
+
       </div>
       <q-card-actions align="right">
         <q-btn flat color="teal" label="Сохранить" @click="onOKClick" :disabled="correct"/>

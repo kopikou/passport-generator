@@ -13,18 +13,28 @@ class AISServices(object):
     @staticmethod
     @cache_function(timeout=60 * 1)
     def get_kaf_codes():
-        q = """
-            SELECT ckaf2rpgen as value, name2rpgen as label, ckaf2istu FROM dbo.uchplan_kaf ORDER BY name2rpgen
-            """
 
-        r = requests.get(f"{settings.ARIM_URL}/wizard.sql", {
-            "q": q
-        }, proxies={
-            "http": "",
-            "https": "",
-        })
 
-        data = r.json()['RecordSet']
+        data = UchPlanKaf.objects.extra(
+            select={
+                "value": "ckaf2rpgen",
+                "label": "name2rpgen",
+                "ckaf2istu": "ckaf2istu",
+            }
+        ).values()
+
+        # q = """
+        #     SELECT ckaf2rpgen as value, name2rpgen as label, ckaf2istu FROM dbo.uchplan_kaf ORDER BY name2rpgen
+        #     """
+        #
+        # r = requests.get(f"{settings.ARIM_URL}/wizard.sql", {
+        #     "q": q
+        # }, proxies={
+        #     "http": "",
+        #     "https": "",
+        # })
+        #
+        # data = r.json()['RecordSet']
 
         return data
 

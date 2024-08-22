@@ -1,8 +1,22 @@
 <script setup lang="ts">
 
 import {ref} from "vue";
+import {useQuasar} from "quasar";
+import GeneratorAddPracticeDialog from "pages/generator/components/dialogs/GeneratorAddPracticeDialog.vue";
+
+const $q = useQuasar()
 
 const tab = ref(0)
+
+function addPractice() {
+  $q.dialog({
+    component: GeneratorAddPracticeDialog,
+    componentProps: {
+      id: tab.value
+    },
+  })
+}
+
 </script>
 
 <template>
@@ -11,7 +25,7 @@ const tab = ref(0)
       <span class="text-h6 q-pl-lg">Перечень практических работ по дисциплине</span>
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
-      <q-btn label="Добавить новую практическую рработу" color="teal" class="q-mb-md" @click="addTheme"/>
+      <q-btn label="Добавить новую практическую рработу" color="teal" class="q-mb-md" @click="addPractice"/>
       <q-tabs
           v-model="tab"
           align="left"

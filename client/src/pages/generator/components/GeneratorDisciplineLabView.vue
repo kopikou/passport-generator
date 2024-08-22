@@ -3,12 +3,18 @@
 
 import {useQuasar} from "quasar";
 import {ref} from "vue";
+import GeneratorAddLabDialog from "./dialogs/GeneratorAddLabDialog.vue";
 
 
 const $q = useQuasar()
 const tab = ref(0)
 function addTheme() {
-  $q.dialog
+  $q.dialog({
+    component: GeneratorAddLabDialog,
+    componentProps: {
+      id: tab.value
+    },
+  })
 }
 
 </script>

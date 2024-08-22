@@ -5,11 +5,6 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import {computed, ref} from "vue";
 
-const generatorViewStore = useGeneratorViewStore();
-const {
-  independentTypes,
-} = storeToRefs(generatorViewStore)
-
 defineEmits([
   ...useDialogPluginComponent.emits
 ])
@@ -22,9 +17,9 @@ const props = defineProps({
   }
 })
 
-const themeName = ref('')
+const name = ref('')
 const hourCount = ref(0)
-const control = ref()
+const theme = ref()
 
 const correct = computed(() => {
 
@@ -40,9 +35,35 @@ async function onOKClick() {
 
 <template>
   <q-dialog ref="dialogRef" @hide="onDialogHide">
-    <q-card class="q-dialog-plugin">
+    <q-card class="q-dialog-plugin" style="width: 700px;">
       <div class="q-pa-md q-gutter-md">
         <q-chip color="teal" class="text-subtitle1">Семестр {{ id }}</q-chip>
+        <q-input
+          v-model="name"
+          stack-label
+          label="Наименование лабораторной работы"
+          filled
+          :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
+        />
+        <q-input
+            stack-label
+            label="Количество часов"
+            v-model="hourCount"
+            filled
+            type="number"
+            :rules="[ val => val > 0 || 'Введите значение больше 0']"
+        />
+        <q-select
+          stack-label
+          label="Тема дисциплины"
+          filled
+          :options="[]"
+          v-model="theme"
+          option-label="name"
+          option-value="id"
+          map-options
+          emit-value
+        />
 
       </div>
       <q-card-actions align="right">

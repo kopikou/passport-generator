@@ -1,8 +1,21 @@
 <script setup lang="ts">
 
 import {ref} from "vue";
+import {useQuasar} from "quasar";
+import GeneratorAddIndependentDialog from "pages/generator/components/dialogs/GeneratorAddIndependentDialog.vue";
+
+const $q = useQuasar()
 
 const tab = ref(0)
+
+function addIndependent() {
+  $q.dialog({
+    component: GeneratorAddIndependentDialog,
+    componentProps: {
+      id: tab.value
+    },
+  })
+}
 </script>
 
 <template>
@@ -11,7 +24,7 @@ const tab = ref(0)
       <span class="text-h6 q-pl-lg">Перечень самостоятельных работ по дисциплине</span>
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
-      <q-btn label="Добавить новую самостоятельную работу" color="teal" class="q-mb-md" @click="addTheme"/>
+      <q-btn label="Добавить новую самостоятельную работу" color="teal" class="q-mb-md" @click="addIndependent"/>
       <q-tabs
           v-model="tab"
           align="left"
