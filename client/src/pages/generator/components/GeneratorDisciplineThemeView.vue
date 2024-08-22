@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import {ref} from "vue";
 import {useQuasar} from "quasar";
-import GeneratorDialogAddTheme from "pages/generator/components/dialogs/GeneratorDialogAddTheme.vue";
+import GeneratorDialogAddTheme from "pages/generator/components/dialogs/GeneratorAddThemeDialog.vue";
 
 const $q = useQuasar()
-
-
-
 
 const tab = ref(0)
 
