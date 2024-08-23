@@ -100,7 +100,6 @@ export interface PlanIndicatorData {
   competence: string,
   indicator_index: string,
   indicator: string,
-
   discipline_indicator: GeneratorDisciplineIndicatorData[],
 }
 
