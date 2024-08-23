@@ -4,7 +4,15 @@
 import {useQuasar} from "quasar";
 import {ref} from "vue";
 import GeneratorAddLabDialog from "./dialogs/GeneratorAddLabDialog.vue";
+import useGeneratorViewStore from "stores/generatorViewStore";
+import {storeToRefs} from "pinia";
 
+
+const generatorViewStore = useGeneratorViewStore();
+
+const{
+  semestersData,
+}=storeToRefs(generatorViewStore)
 
 const $q = useQuasar()
 const tab = ref(0)
@@ -32,8 +40,7 @@ function addTheme() {
           narrow-indicator
           class="q-mb-md"
       >
-        <q-tab class="text-teal bg-grey-4" name="1" label="1"/>
-        <q-tab class="text-teal bg-grey-4" name="2" label="2"/>
+        <q-tab class="text-teal bg-grey-4"  v-for="item in semestersData" :name="`${item.num}`" :label="`${item.num}`"/>
       </q-tabs>
       <q-tab-panels
           v-model="tab"
@@ -41,7 +48,7 @@ function addTheme() {
           transition-prev="scale"
           transition-next="scale"
       >
-        <q-tab-panel v-for="i in 2" :name="`${i}`">
+        <q-tab-panel v-for="item in semestersData" :name="`${item.num}`">
           hello world
         </q-tab-panel>
       </q-tab-panels>

@@ -13,6 +13,11 @@ const bookData = ref([])
 const dopBook = ref([])
 const mainBook = ref<GeneratorBookData[]>([])
 
+const columns = ref([
+  {name: 'name', label: 'Название', field: 'name', align: 'center'},
+])
+
+
 async function searchBook() {
   if (searchVal.value.length <= 3) {
     $q.notify({
@@ -48,13 +53,13 @@ async function searchBook() {
         <q-btn color="secondary" @click="searchBook" label="Поиск" />
       </div>
       <div class="row">
-        <div class="col-5">
+        <div class="col-6">
           <div class="text-h6">Основная литература</div>
           table
           <div class="text-h6">Дополнительная литература</div>
           table
         </div>
-        <div class="col-7">
+        <div class="col-6">
           <div v-for="item in bookData">
             <q-field label="Название" stack-label filled>
               <template #control>

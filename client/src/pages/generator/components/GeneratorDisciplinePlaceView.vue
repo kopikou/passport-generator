@@ -5,6 +5,7 @@ import {bi0CircleFill} from "@quasar/extras/bootstrap-icons";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import _ from "lodash";
+import QSelectFilterable from "components/QSelectFilterable.vue";
 
 const generatorViewStore = useGeneratorViewStore();
 
@@ -36,39 +37,33 @@ function filterDiscipline(val, update) {
 <template>
   <div>
     <div style="width: 95%">
-      <span class="text-h6 q-pl-lg">Место дисциплины "Базы данных" в структуре ООП</span>
+      <span class="text-h6 q-pl-lg">Место дисциплины в структуре ООП</span>
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
-      <q-select
+      <q-select-filterable
         label="Обеспечивающие (предшествующие) дисциплины и практики"
+        v-model="precedence"
+        option-label="dis"
+        option-value="disid"
         stack-label
         filled
         use-chips
         clearable
-        use-input
         multiple
-        option-label="dis"
-        option-value="disid"
-        :options="listDiscipline"
-        v-model="precedence"
-        @filter="filterDiscipline"
+        :options="otherDiscipline"
       />
       <br/>
-      <q-select
+      <q-select-filterable
         label="Обеспечиваемые (последующие) дисциплины и практики"
+        v-model="subsequent"
+        option-label="dis"
+        option-value="disid"
         stack-label
         filled
         use-chips
         clearable
-        use-input
         multiple
-        emit-value
-        map-options
-        option-label="dis"
-        option-value="disid"
-        :options="listDiscipline"
-        v-model="subsequent"
-        @filter="filterDiscipline"
+        :options="otherDiscipline"
       />
     </div>
   </div>

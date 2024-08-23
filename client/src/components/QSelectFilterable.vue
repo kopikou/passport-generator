@@ -22,8 +22,17 @@ watch(() => props.options, () => {
 
 function filterFn(val: any, update: any, abort: any) {
   update(() => {
+    if (val === '') {
+      filteredOptions.value = props.options
+    }
     const needle = val.toLowerCase()
-    filteredOptions.value = props.options.filter(v => v ?? v.toLowerCase().indexOf(needle) > -1)
+
+    filteredOptions.value = props.options.filter(v => {
+      if (!v) {
+        return false
+      }
+      return (attrs['option-label'] ? v[attrs['option-label']] : v ).toLowerCase().indexOf(needle) > -1
+    })
   })
 }
 </script>
