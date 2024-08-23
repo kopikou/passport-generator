@@ -17,7 +17,7 @@ const {
       <span class="text-h6 q-pl-lg">Индикаторы по дисциплине</span>
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
-      <div  v-for="i in indicatorsData">
+      <div v-for="i in indicatorsData">
         <indicators-list-view  :data="i"/>
       </div>
     </div>

@@ -8,7 +8,8 @@ from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes
-from generator.serializer import PlanLinesLinkSerializer
+from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
+    DisciplineIndicatorsAddSerializer
 from rpd.models import LinesData
 
 
@@ -27,7 +28,8 @@ class GeneratorViewSet(
         pk = self.kwargs['pk']
         instance = (PlanLinesLink.objects.filter(id=pk)
                     .select_related("planlines", "planlines__plan")
-                    .prefetch_related("planlines__semesters", "planlines__indicators",).first())
+                    .prefetch_related("planlines__semesters", "planlines__indicators",
+                                      "planlines__indicators__discipline_indicator").first())
 
 
         serializer = self.get_serializer(instance)
@@ -124,3 +126,14 @@ class GeneratorViewSet(
 
         return Response(data)
 
+
+    @action(methods=['POST'], url_path="save-discipline-indicator", detail=False)
+    def save_discipline_indicator(self, request, *args, **kwargs):
+
+        data = self.request.data
+
+        serializer_data = DisciplineIndicatorsAddSerializer(data=data)
+        serializer_data.is_valid(raise_exception=True)
+        serializer_data.save()
+
+        return Response(serializer_data.data)

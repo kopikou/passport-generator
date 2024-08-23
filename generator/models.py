@@ -1,8 +1,7 @@
 from django.db import models
 
-from rpd.models import LinesData
+from rpd.models import LinesData, LinesIndicators
 from rpd.utils import TimestampsModel
-
 
 # Create your models here.
 class PlanLinesLink(TimestampsModel):
@@ -30,3 +29,13 @@ class FormControl(TimestampsModel):
 
 class IndependentTypes(TimestampsModel):
     name = models.CharField(max_length=128)
+
+
+class DisciplineIndicators(TimestampsModel):
+    indicator = models.ForeignKey(LinesIndicators, on_delete=models.CASCADE, related_name="discipline_indicator")
+    planlineid = models.ForeignKey(LinesData, on_delete=models.CASCADE)
+    know = models.TextField(null=True, blank=True)
+    able = models.TextField(null=True, blank=True)
+    own = models.TextField(null=True, blank=True)
+    criteria = models.TextField(null=True, blank=True)
+    methods = models.TextField(null=True, blank=True)

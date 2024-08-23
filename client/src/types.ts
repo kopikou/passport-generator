@@ -79,6 +79,17 @@ export interface PlanSemestrData {
   eios: number,
 }
 
+export interface GeneratorDisciplineIndicatorData {
+    id: number,
+    indicator_id: number,
+    planlineid_id: number,
+    know: string,
+    able: string,
+    own: string,
+    criteria: string,
+    methods: string,
+}
+
 export interface PlanIndicatorData {
   id: number,
   created_at: string,
@@ -89,6 +100,8 @@ export interface PlanIndicatorData {
   competence: string,
   indicator_index: string,
   indicator: string,
+
+  discipline_indicator: GeneratorDisciplineIndicatorData[],
 }
 
 export interface PlanData {
