@@ -3,6 +3,8 @@ from django.db import models
 from rpd.models import LinesData, LinesIndicators
 from rpd.utils import TimestampsModel
 
+from django.contrib.postgres.fields import ArrayField
+
 # Create your models here.
 class PlanLinesLink(TimestampsModel):
     class StatusChoices(models.IntegerChoices):
@@ -17,6 +19,8 @@ class PlanLinesLink(TimestampsModel):
     mira_id = models.IntegerField(verbose_name='')
     person = models.IntegerField(verbose_name='')
     status = models.IntegerField(choices=StatusChoices.choices, default=StatusChoices.appointed)
+    precedence_discipline = ArrayField(models.IntegerField(verbose_name=''), default=[], null=True, blank=True)
+    subsequent_discipline = ArrayField(models.IntegerField(verbose_name=''), default=[], null=True, blank=True)
 
     @property
     def status_verbose(self):

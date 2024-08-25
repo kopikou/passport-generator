@@ -52,6 +52,8 @@ function filterDiscipline(val, update) {
         use-chips
         clearable
         multiple
+        map-options
+        emit-value
         :options="otherDiscipline"
       />
       <br/>
@@ -65,6 +67,8 @@ function filterDiscipline(val, update) {
         use-chips
         clearable
         multiple
+        map-options
+        emit-value
         :options="otherDiscipline"
       />
     </div>

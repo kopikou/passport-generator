@@ -99,6 +99,8 @@ class PlanLinesLinkSerializer(serializers.Serializer):
     person = serializers.IntegerField()
     status = serializers.IntegerField()
     status_verbose = serializers.CharField(read_only=True)
+    precedence_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True, allow_empty=True)
+    subsequent_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True, allow_empty=True)
 
     class Meta:
         model = PlanLinesLink
@@ -111,4 +113,6 @@ class PlanLinesLinkSerializer(serializers.Serializer):
             'person',
             'status',
             'status_verbose',
+            'precedence_discipline',
+            'subsequent_discipline',
         ]
