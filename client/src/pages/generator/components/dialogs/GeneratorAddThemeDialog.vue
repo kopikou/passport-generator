@@ -4,10 +4,12 @@ import {useDialogPluginComponent} from "quasar";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import {computed, ref} from "vue";
+import {api} from "boot/axios";
 
 const generatorViewStore = useGeneratorViewStore();
 const {
   formControl,
+  rpdData,
 } = storeToRefs(generatorViewStore)
 
 defineEmits([
@@ -17,7 +19,7 @@ defineEmits([
 const {dialogRef, onDialogHide, onDialogOK, onDialogCancel} = useDialogPluginComponent()
 
 const props = defineProps({
-  id: {
+  sem: {
     required: true,
   }
 })
@@ -25,7 +27,7 @@ const props = defineProps({
 const themeName = ref('')
 const hourCount = ref(0)
 const control = ref()
-const comment = ref()
+const comment = ref('')
 
 const correct = computed(() => {
   if (hourCount.value <= 0) return true
@@ -37,6 +39,17 @@ const correct = computed(() => {
 })
 
 async function onOKClick() {
+
+  let r = await api.post('/api/generator/save-discipline-themes/', {
+    planlineslink_id: rpdData.value.id,
+    name: themeName.value,
+    hours: hourCount.value,
+    semester: props.sem,
+    formcontrol_id: control.value,
+    comment: comment.value,
+    id: null,
+  })
+
   onDialogOK()
 }
 
@@ -46,7 +59,7 @@ async function onOKClick() {
   <q-dialog ref="dialogRef" @hide="onDialogHide">
     <q-card class="q-dialog-plugin" style="width: 700px;">
       <div class="q-pa-md q-gutter-md">
-        <q-chip color="teal" class="text-subtitle1">Семестр {{ id }}</q-chip>
+        <q-chip color="teal" class="text-subtitle1">Семестр {{ sem }}</q-chip>
         <q-input
             stack-label
             label="Название темы"

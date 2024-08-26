@@ -46,7 +46,7 @@ class DisciplineIndicators(TimestampsModel):
 
 
 class DisciplineThemes(TimestampsModel):
-    planlineslink = models.ForeignKey("PlanLinesLink", on_delete=models.CASCADE)
+    planlineslink = models.ForeignKey("PlanLinesLink", on_delete=models.CASCADE, related_name="discipline_themes")
     name = models.TextField()
     hours = models.FloatField()
     semester = models.IntegerField()

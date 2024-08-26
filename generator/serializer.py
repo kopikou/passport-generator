@@ -1,8 +1,9 @@
 from rest_framework import serializers
 
-from generator.models import PlanLinesLink, DisciplineIndicators
+from generator.models import PlanLinesLink, DisciplineIndicators, DisciplineThemes
 from rpd.models import LinesData, LinesIndicators
 from rpd.serializer import LinesDataSerializer, SemesterDataSerializer, LinesIndicatorsSerializer, PlanDataSerializer
+
 
 class DisciplineIndicatorsSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False)
@@ -83,6 +84,7 @@ class GeneratorLinesIndicatorsSerializer(serializers.ModelSerializer):
             'discipline_indicator',
         ]
 
+
 class GeneratorLinesDataSerializer(LinesDataSerializer):
     semesters = SemesterDataSerializer(many=True)
     indicators = GeneratorLinesIndicatorsSerializer(many=True)
@@ -92,11 +94,42 @@ class GeneratorLinesDataSerializer(LinesDataSerializer):
         fields = LinesDataSerializer.Meta.fields + ['semesters', 'indicators', 'plan']
 
 
+class DisciplineThemeSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    planlineslink_id = serializers.IntegerField()
+    name = serializers.CharField()
+    hours = serializers.FloatField()
+    semester = serializers.IntegerField()
+    formcontrol_id = serializers.IntegerField()
+    comment = serializers.CharField()
+
+    class Meta:
+        model = DisciplineThemes
+        fields = [
+            'id',
+            'planlineslink_id',
+            'name',
+            'hours',
+            'semester',
+            'formcontrol_id',
+            'comment',
+        ]
+
+    def create(self, validate_data):
+        discipline_themes, created = DisciplineThemes.objects.update_or_create(
+            planlineslink_id=validate_data['planlineslink_id'],
+            defaults=validate_data,
+        )
+
+        return discipline_themes
+
+
 class PlanLinesLinkAddPrecSubDisciplineSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
-    precedence_discipline = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True, allow_empty=True, required=False)
-    subsequent_discipline = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True, allow_empty=True, required=False)
-
+    precedence_discipline = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
+                                                       allow_empty=True, required=False)
+    subsequent_discipline = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
+                                                       allow_empty=True, required=False)
 
     class Meta:
         model = PlanLinesLink
@@ -115,8 +148,12 @@ class PlanLinesLinkSerializer(serializers.Serializer):
     person = serializers.IntegerField()
     status = serializers.IntegerField()
     status_verbose = serializers.CharField(read_only=True)
-    precedence_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True, allow_empty=True, required=False)
-    subsequent_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True, allow_empty=True, required=False)
+    precedence_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True, allow_empty=True,
+                                                  required=False)
+    subsequent_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True, allow_empty=True,
+                                                  required=False)
+
+    discipline_themes = DisciplineThemeSerializer(many=True)
 
     class Meta:
         model = PlanLinesLink
@@ -131,4 +168,6 @@ class PlanLinesLinkSerializer(serializers.Serializer):
             'status_verbose',
             'precedence_discipline',
             'subsequent_discipline',
+
+            'discipline_themes',
         ]

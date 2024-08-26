@@ -191,6 +191,7 @@ export interface GeneratorData {
   admission: AdmissionInfo[],
   planlines: GeneratorPlanLineData[],
   other_discipline: OtherDiscipline[],
+  discipline_themes: DisciplineThemesData[],
   id: number,
   cadmission: number,
   mira_id: number,
@@ -237,4 +238,14 @@ export interface GeneratorFormControlData {
 export interface GeneratorIndependentTypesData {
   id: number,
   name: string,
+}
+
+export interface DisciplineThemesData {
+    id: number,
+    planlineslink_id: number,
+    name: string,
+    hours: number,
+    semester: number,
+    formcontrol_id: number,
+    comment: string,
 }

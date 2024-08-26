@@ -9,7 +9,7 @@ from arim_library.services import LibraryServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes
 from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
-    DisciplineIndicatorsAddSerializer, PlanLinesLinkAddPrecSubDisciplineSerializer
+    DisciplineIndicatorsAddSerializer, PlanLinesLinkAddPrecSubDisciplineSerializer, DisciplineThemeSerializer
 from rpd.models import LinesData
 
 
@@ -29,7 +29,7 @@ class GeneratorViewSet(
         instance = (PlanLinesLink.objects.filter(id=pk)
                     .select_related("planlines", "planlines__plan")
                     .prefetch_related("planlines__semesters", "planlines__indicators",
-                                      "planlines__indicators__discipline_indicator").first())
+                                      "planlines__indicators__discipline_indicator", "discipline_themes").first())
 
         serializer = self.get_serializer(instance)
 
@@ -152,3 +152,15 @@ class GeneratorViewSet(
         instance.save()
 
         return Response(serializer_data.data)
+
+    @action(methods=['POST'], url_path="save-discipline-themes", detail=False)
+    def save_discipline_themes(self, request, *args, **kwargs):
+
+        data = self.request.data
+
+        serializer_data = DisciplineThemeSerializer(data=data)
+        serializer_data.is_valid(raise_exception=True)
+        serializer_data.save()
+
+        return Response(serializer_data.data)
+
