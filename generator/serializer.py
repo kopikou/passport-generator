@@ -95,7 +95,7 @@ class GeneratorLinesDataSerializer(LinesDataSerializer):
 
 
 class DisciplineThemeSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
+    id = serializers.IntegerField(required=False, allow_null=True)
     planlineslink_id = serializers.IntegerField()
     name = serializers.CharField()
     hours = serializers.FloatField()
@@ -117,7 +117,7 @@ class DisciplineThemeSerializer(serializers.Serializer):
 
     def create(self, validate_data):
         discipline_themes, created = DisciplineThemes.objects.update_or_create(
-            planlineslink_id=validate_data['planlineslink_id'],
+            id=validate_data['id'],
             defaults=validate_data,
         )
 

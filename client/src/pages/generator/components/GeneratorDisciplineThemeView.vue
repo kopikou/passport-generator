@@ -57,7 +57,12 @@ onBeforeMount(() => {
           transition-next="scale"
       >
         <q-tab-panel v-for="item in semestersData" :name="`${item.num}`">
-          hello world
+          <div v-for="theme in disciplineThemes">
+            <div v-if="theme.semester == tab">
+              {{ theme.name }}
+              {{ theme.semester }}
+            </div>
+          </div>
         </q-tab-panel>
       </q-tab-panels>
     </div>
