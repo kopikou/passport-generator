@@ -3,7 +3,9 @@
 import {PlanIndicatorData} from "src/types";
 import {onBeforeMount, ref} from "vue";
 import {api} from "boot/axios";
+import {useQuasar} from "quasar";
 
+const $q = useQuasar()
 const props = defineProps({
   data: {
     type: Object as () => PlanIndicatorData,
@@ -18,6 +20,7 @@ const criteria = ref(null)
 const methods = ref(null)
 
 async function saveData() {
+  $q.loading.show({message: "Сохранение"})
   let r = await api.post('/api/generator/save-discipline-indicator/', {
     indicator_id: props.data.id,
     planlineid_id: props.data.planlineid_id,
@@ -29,6 +32,7 @@ async function saveData() {
   })
 
   props.data.discipline_indicator[0] = r.data
+  $q.loading.hide()
 }
 
 onBeforeMount(() => {

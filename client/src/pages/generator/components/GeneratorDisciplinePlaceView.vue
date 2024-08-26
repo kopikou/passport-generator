@@ -7,7 +7,9 @@ import {storeToRefs} from "pinia";
 import _ from "lodash";
 import QSelectFilterable from "components/QSelectFilterable.vue";
 import {api} from "boot/axios";
+import {useQuasar} from "quasar";
 
+const $q = useQuasar()
 const generatorViewStore = useGeneratorViewStore();
 
 const {
@@ -23,6 +25,7 @@ const listDiscipline = ref(otherDiscipline)
 const filteredDiscipline = ref(listDiscipline.value)
 
 async function savePrecSubDiscipline() {
+  $q.loading.show({message: "Сохранение"})
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-prec-sub-discipline/`, {
     id: activeRpdId.value,
     precedence_discipline: precedence.value,
@@ -31,6 +34,8 @@ async function savePrecSubDiscipline() {
 
   rpdData.value.subsequent_discipline = r.data.subsequent_discipline
   rpdData.value.precedence_discipline = r.data.precedence_discipline
+
+  $q.loading.hide()
 }
 
 watch(rpdData, () => {

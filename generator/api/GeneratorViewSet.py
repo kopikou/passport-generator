@@ -7,7 +7,7 @@ from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
-from generator.models import PlanLinesLink, FormControl, IndependentTypes
+from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes
 from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
     DisciplineIndicatorsAddSerializer, PlanLinesLinkAddPrecSubDisciplineSerializer, DisciplineThemeSerializer
 from rpd.models import LinesData
@@ -164,3 +164,10 @@ class GeneratorViewSet(
 
         return Response(serializer_data.data)
 
+    @action(methods=['GET'], url_path="delete-discipline-themes", detail=False)
+    def delete_discipline_themes(self, request, *args, **kwargs):
+        pk = self.request.query_params.get('id')
+
+        DisciplineThemes.objects.get(id=pk).delete()
+
+        return Response({"success": True})

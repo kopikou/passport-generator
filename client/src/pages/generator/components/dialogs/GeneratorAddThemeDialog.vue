@@ -1,15 +1,18 @@
 <script setup lang="ts">
 
-import {useDialogPluginComponent} from "quasar";
+import {useDialogPluginComponent, useQuasar} from "quasar";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
-import {computed, ref} from "vue";
+import {computed, onBeforeMount, ref} from "vue";
 import {api} from "boot/axios";
+import _ from "lodash";
 
+const $q = useQuasar()
 const generatorViewStore = useGeneratorViewStore();
 const {
   formControl,
   rpdData,
+  disciplineThemes,
 } = storeToRefs(generatorViewStore)
 
 defineEmits([
@@ -21,7 +24,10 @@ const {dialogRef, onDialogHide, onDialogOK, onDialogCancel} = useDialogPluginCom
 const props = defineProps({
   sem: {
     required: true,
-  }
+  },
+  id: {
+    required: true,
+  },
 })
 
 const themeName = ref('')
@@ -30,16 +36,16 @@ const control = ref()
 const comment = ref('')
 
 const correct = computed(() => {
-  if (hourCount.value <= 0) return true
-  else if (themeName.value.length < 3) return true
-  else if (control.value == null) return true
-  else if (comment.value.length < 10) return true
+  if (!hourCount.value || hourCount.value <= 0) return true
+  else if (!themeName.value || themeName.value.length < 3) return true
+  else if (!control.value || control.value == null) return true
+  else if (!comment.value || comment.value.length < 10) return true
 
   return false
 })
 
 async function onOKClick() {
-
+  $q.loading.show({message: "Сохранение"})
   let r = await api.post('/api/generator/save-discipline-themes/', {
     planlineslink_id: rpdData.value.id,
     name: themeName.value,
@@ -47,11 +53,28 @@ async function onOKClick() {
     semester: props.sem,
     formcontrol_id: control.value,
     comment: comment.value,
-    id: null,
+    id: props.id,
   })
 
+  if (!props.id) {
+    rpdData.value.discipline_themes.push(r.data)
+  } else {
+    rpdData.value.discipline_themes[_.findKey(disciplineThemes.value, (x) => x.id == props.id)] = r.data
+  }
+
+  $q.loading.hide()
   onDialogOK()
 }
+
+onBeforeMount(() => {
+  if (props.id) {
+    let data = _.keyBy(disciplineThemes.value, "id")
+    themeName.value = data[props.id].name
+    hourCount.value = data[props.id].hours
+    control.value = data[props.id].formcontrol_id
+    comment.value = data[props.id].comment
+  }
+})
 
 </script>
 

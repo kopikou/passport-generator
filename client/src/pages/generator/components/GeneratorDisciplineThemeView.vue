@@ -1,17 +1,21 @@
 <script setup lang="ts">
-import {onBeforeMount, ref, watch} from "vue";
+import {computed, onBeforeMount, ref, watch} from "vue";
 import {useQuasar} from "quasar";
 import GeneratorDialogAddTheme from "pages/generator/components/dialogs/GeneratorAddThemeDialog.vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
+import _ from "lodash";
+import {api} from "boot/axios";
 
 const $q = useQuasar()
 const generatorViewStore = useGeneratorViewStore();
 
-const{
+const {
   semestersData,
   disciplineThemes,
-}=storeToRefs(generatorViewStore)
+  formControl,
+  rpdData,
+} = storeToRefs(generatorViewStore)
 
 const tab = ref(0)
 
@@ -19,10 +23,34 @@ function addTheme() {
   $q.dialog({
     component: GeneratorDialogAddTheme,
     componentProps: {
-      sem: tab.value
+      sem: tab.value,
+      id: null,
     },
   })
 }
+
+function updateTheme(id) {
+  $q.dialog({
+    component: GeneratorDialogAddTheme,
+    componentProps: {
+      sem: tab.value,
+      id: id,
+    },
+  })
+}
+
+async function deleteTheme(id) {
+  $q.loading.show({message: "Удаление"})
+  let r = await api.get('/api/generator/delete-discipline-themes/', {params: {id: id}})
+
+  rpdData.value.discipline_themes.splice(_.findKey(disciplineThemes.value, (x) => x.id == id), 1)
+
+  $q.loading.hide()
+}
+
+const formControlByValue = computed(() => {
+  return _.keyBy(formControl.value, 'id')
+})
 
 watch(semestersData, () => {
   tab.value = `${semestersData.value[0].num}`
@@ -39,28 +67,62 @@ onBeforeMount(() => {
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Содержание разделов и тем по дисциплине</span>
       <p>бла бла бла</p>
-      {{ disciplineThemes }}
       <q-separator class="q-mt-md q-mb-md"/>
       <q-btn label="Добавить тему дисциплины" color="teal" class="q-mb-md" @click="addTheme"/>
       <q-tabs
-          v-model="tab"
-          align="left"
-          narrow-indicator
-          class="q-mb-md"
+        v-model="tab"
+        align="left"
+        narrow-indicator
+        class="q-mb-md"
       >
-        <q-tab class="text-teal bg-grey-4"  v-for="item in semestersData" :name="`${item.num}`" :label="`${item.num}`"/>
+        <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`" :label="`${item.num}`"/>
       </q-tabs>
       <q-tab-panels
-          v-model="tab"
-          animated
-          transition-prev="scale"
-          transition-next="scale"
+        v-model="tab"
+        animated
+        transition-prev="scale"
+        transition-next="scale"
       >
-        <q-tab-panel v-for="item in semestersData" :name="`${item.num}`">
-          <div v-for="theme in disciplineThemes">
-            <div v-if="theme.semester == tab">
-              {{ theme.name }}
-              {{ theme.semester }}
+        <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="theme-container">
+          <div v-if="item" class="theme-container__header text-center text-subtitle1 items-center">
+            <div>
+              Наименование темы
+            </div>
+            <div>
+              Часы
+            </div>
+            <div>
+              Форма контроля
+            </div>
+            <div>
+              Краткое описание темы
+            </div>
+            <div>
+              Управление
+            </div>
+          </div>
+          <div v-for="theme in disciplineThemes" class="theme-container__body">
+            <div v-if="theme.semester == tab" class="theme-container__body__cell text-subtitle1 text-center items-center">
+              <div>
+                {{ theme.name }}
+              </div>
+              <div>
+                {{ theme.hours }}
+              </div>
+              <div>
+                {{ formControlByValue[theme.formcontrol_id]?.name }}
+              </div>
+              <div>
+                {{ theme.comment }}
+              </div>
+              <div>
+                <q-btn
+                  icon="mdi-delete" color="red" flat @click="deleteTheme(theme.id)"
+                />
+                <q-btn
+                  icon="mdi-update" color="green" flat @click="updateTheme(theme.id)"
+                />
+              </div>
             </div>
           </div>
         </q-tab-panel>
@@ -70,5 +132,21 @@ onBeforeMount(() => {
 </template>
 
 <style scoped>
+
+.theme-container {
+  > .theme-container__header {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    font-weight: bold;
+  }
+
+  > .theme-container__body {
+    > .theme-container__body__cell {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+    }
+  }
+}
+
 
 </style>
