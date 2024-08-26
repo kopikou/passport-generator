@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {ref} from "vue";
+import {onBeforeMount, ref, watch} from "vue";
 import {useQuasar} from "quasar";
 import GeneratorAddPracticeDialog from "pages/generator/components/dialogs/GeneratorAddPracticeDialog.vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
@@ -23,6 +23,14 @@ function addPractice() {
     },
   })
 }
+
+watch(semestersData, () => {
+  tab.value = `${semestersData.value[0].num}`
+})
+
+onBeforeMount(() => {
+  tab.value = `${semestersData.value[0]?.num}`
+})
 
 </script>
 

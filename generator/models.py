@@ -43,3 +43,12 @@ class DisciplineIndicators(TimestampsModel):
     own = models.TextField(null=True, blank=True)
     criteria = models.TextField(null=True, blank=True)
     methods = models.TextField(null=True, blank=True)
+
+
+class DisciplineThemes(TimestampsModel):
+    planlineslink = models.ForeignKey("PlanLinesLink", on_delete=models.CASCADE)
+    name = models.TextField()
+    hours = models.FloatField()
+    semester = models.IntegerField()
+    formcontrol = models.ForeignKey("FormControl", on_delete=models.CASCADE)
+    comment = models.TextField()

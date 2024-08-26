@@ -25,17 +25,18 @@ const props = defineProps({
 const themeName = ref('')
 const hourCount = ref(0)
 const control = ref()
+const comment = ref()
 
 const correct = computed(() => {
   if (hourCount.value <= 0) return true
-  if (themeName.value.length < 3) return true
-  if (control.value == null) return true
+  else if (themeName.value.length < 3) return true
+  else if (control.value == null) return true
+  else if (comment.value.length < 10) return true
 
   return false
 })
 
 async function onOKClick() {
-
   onDialogOK()
 }
 
@@ -72,6 +73,14 @@ async function onOKClick() {
             option-value="id"
             map-options
             emit-value
+        />
+        <q-input
+            stack-label
+            label="Краткое описание темы"
+            v-model="comment"
+            filled
+            :rules="[ val => val.length >= 11 || 'Введите больше 10-ти символов']"
+            type="textarea"
         />
       </div>
       <q-card-actions align="right">

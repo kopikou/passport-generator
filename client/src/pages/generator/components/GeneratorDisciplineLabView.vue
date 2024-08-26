@@ -2,7 +2,7 @@
 
 
 import {useQuasar} from "quasar";
-import {ref} from "vue";
+import {onBeforeMount, ref, watch} from "vue";
 import GeneratorAddLabDialog from "./dialogs/GeneratorAddLabDialog.vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
@@ -24,6 +24,14 @@ function addTheme() {
     },
   })
 }
+
+watch(semestersData, () => {
+  tab.value = `${semestersData.value[0].num}`
+})
+
+onBeforeMount(() => {
+  tab.value = `${semestersData.value[0]?.num}`
+})
 
 </script>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref} from "vue";
+import {onBeforeMount, ref, watch} from "vue";
 import {useQuasar} from "quasar";
 import GeneratorDialogAddTheme from "pages/generator/components/dialogs/GeneratorAddThemeDialog.vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
@@ -22,6 +22,14 @@ function addTheme() {
     },
   })
 }
+
+watch(semestersData, () => {
+  tab.value = `${semestersData.value[0].num}`
+})
+
+onBeforeMount(() => {
+  tab.value = `${semestersData.value[0]?.num}`
+})
 
 </script>
 
