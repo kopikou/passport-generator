@@ -9,7 +9,7 @@ from arim_library.services import LibraryServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes
 from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
-    DisciplineIndicatorsAddSerializer
+    DisciplineIndicatorsAddSerializer, PlanLinesLinkAddPrecSubDisciplineSerializer
 from rpd.models import LinesData
 
 
@@ -31,12 +31,12 @@ class GeneratorViewSet(
                     .prefetch_related("planlines__semesters", "planlines__indicators",
                                       "planlines__indicators__discipline_indicator").first())
 
-
         serializer = self.get_serializer(instance)
 
         admission_info = AISServices.get_admissionn_info(serializer.data['cadmission'])
 
-        other_discipline = LinesData.objects.filter(plan_id=serializer.data['planlines']['plan_id'], synchronize=True).values("disid", "dis")
+        other_discipline = LinesData.objects.filter(plan_id=serializer.data['planlines']['plan_id'],
+                                                    synchronize=True).values("disid", "dis")
 
         result = {
             "admission": admission_info[0],
@@ -126,7 +126,6 @@ class GeneratorViewSet(
 
         return Response(data)
 
-
     @action(methods=['POST'], url_path="save-discipline-indicator", detail=False)
     def save_discipline_indicator(self, request, *args, **kwargs):
 
@@ -135,5 +134,21 @@ class GeneratorViewSet(
         serializer_data = DisciplineIndicatorsAddSerializer(data=data)
         serializer_data.is_valid(raise_exception=True)
         serializer_data.save()
+
+        return Response(serializer_data.data)
+
+    @action(methods=['POST'], url_path="save-prec-sub-discipline", detail=True)
+    def seve_prec_sub_discipline(self, request, *args, **kwargs):
+
+        data = self.request.data
+
+        serializer_data = PlanLinesLinkAddPrecSubDisciplineSerializer(data=data)
+        serializer_data.is_valid(raise_exception=True)
+
+        instance = self.get_object()
+
+        instance.subsequent_discipline = serializer_data.data['subsequent_discipline']
+        instance.precedence_discipline = serializer_data.data['precedence_discipline']
+        instance.save()
 
         return Response(serializer_data.data)

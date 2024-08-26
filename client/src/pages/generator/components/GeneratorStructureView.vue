@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {ref} from "vue";
+import {onBeforeMount, ref, watch} from "vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 
@@ -10,7 +10,15 @@ const{
   semestersData,
 }=storeToRefs(generatorViewStore)
 
-const tab = ref(null)
+const tab = ref<string>('')
+
+watch(semestersData, () => {
+  tab.value = `${semestersData.value[0].num}`
+})
+
+onBeforeMount(() => {
+  tab.value = `${semestersData.value[0]?.num}`
+})
 
 </script>
 
@@ -18,6 +26,7 @@ const tab = ref(null)
   <div>
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Структура дисциплины</span>
+      {{ tab }}
       <p>Количество академических часов, выделенных на дисциплину Базы данных. Данные автоматически получены их учебного
         плана.</p>
       <q-separator class="q-mt-md q-mb-md"/>

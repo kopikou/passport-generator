@@ -91,6 +91,22 @@ class GeneratorLinesDataSerializer(LinesDataSerializer):
     class Meta(LinesDataSerializer.Meta):
         fields = LinesDataSerializer.Meta.fields + ['semesters', 'indicators', 'plan']
 
+
+class PlanLinesLinkAddPrecSubDisciplineSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    precedence_discipline = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True, allow_empty=True, required=False)
+    subsequent_discipline = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True, allow_empty=True, required=False)
+
+
+    class Meta:
+        model = PlanLinesLink
+        fields = [
+            'id',
+            'precedence_discipline',
+            'subsequent_discipline',
+        ]
+
+
 class PlanLinesLinkSerializer(serializers.Serializer):
     planlines = GeneratorLinesDataSerializer(read_only=True)
     id = serializers.IntegerField(read_only=True)
@@ -99,8 +115,8 @@ class PlanLinesLinkSerializer(serializers.Serializer):
     person = serializers.IntegerField()
     status = serializers.IntegerField()
     status_verbose = serializers.CharField(read_only=True)
-    precedence_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True, allow_empty=True)
-    subsequent_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True, allow_empty=True)
+    precedence_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True, allow_empty=True, required=False)
+    subsequent_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True, allow_empty=True, required=False)
 
     class Meta:
         model = PlanLinesLink

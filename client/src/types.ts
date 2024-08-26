@@ -197,6 +197,8 @@ export interface GeneratorData {
   person: number,
   status: number,
   status_verbose: string,
+  precedence_discipline: Array<number>,
+  subsequent_discipline: Array<number>,
 }
 
 export interface GeneratorBookData {
