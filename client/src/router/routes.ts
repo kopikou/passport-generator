@@ -21,6 +21,7 @@ import GeneratorDisciplineIndependentView from "pages/generator/components/Gener
 import GeneratorLibraryView from "pages/generator/components/GeneratorLibraryView.vue";
 import GeneratorSoftwareView from "pages/generator/components/GeneratorSoftwareView.vue";
 import GeneratorLogisticsView from "pages/generator/components/GeneratorLogisticsView.vue";
+import GeneratorDisciplineLecturesView from "pages/generator/components/GeneratorDisciplineLecturesView.vue";
 
 
 const routes: RouteRecordRaw[] = [
@@ -76,6 +77,11 @@ const routes: RouteRecordRaw[] = [
             path: "discipline-theme",
             name: "GeneratorDisciplineThemeView",
             component: GeneratorDisciplineThemeView,
+          },
+          {
+            path: "discipline-lectures",
+            name: "GeneratorDisciplineLecturesView",
+            component: GeneratorDisciplineLecturesView,
           },
           {
             path: "discipline-lab",

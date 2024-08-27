@@ -4,7 +4,7 @@ import {useQuasar} from "quasar";
 import GeneratorDialogAddTheme from "pages/generator/components/dialogs/GeneratorAddThemeDialog.vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
-import _ from "lodash";
+import _, {sumBy} from "lodash";
 import {api} from "boot/axios";
 
 const $q = useQuasar()
@@ -89,9 +89,6 @@ onBeforeMount(() => {
               Наименование темы
             </div>
             <div>
-              Часы
-            </div>
-            <div>
               Форма контроля
             </div>
             <div>
@@ -102,12 +99,10 @@ onBeforeMount(() => {
             </div>
           </div>
           <div v-for="theme in disciplineThemes" class="theme-container__body">
-            <div v-if="theme.semester == tab" class="theme-container__body__cell text-subtitle1 text-center items-center">
+            <div v-if="theme.semester == tab"
+                 class="theme-container__body__cell text-subtitle1 text-center items-center">
               <div>
                 {{ theme.name }}
-              </div>
-              <div>
-                {{ theme.hours }}
               </div>
               <div>
                 {{ formControlByValue[theme.formcontrol_id]?.name }}
@@ -136,14 +131,14 @@ onBeforeMount(() => {
 .theme-container {
   > .theme-container__header {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     font-weight: bold;
   }
 
   > .theme-container__body {
     > .theme-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(4, 1fr);
     }
   }
 }

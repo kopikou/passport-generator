@@ -31,13 +31,11 @@ const props = defineProps({
 })
 
 const themeName = ref('')
-const hourCount = ref(0)
 const control = ref()
 const comment = ref('')
 
 const correct = computed(() => {
-  if (!hourCount.value || hourCount.value <= 0) return true
-  else if (!themeName.value || themeName.value.length < 3) return true
+  if (!themeName.value || themeName.value.length < 3) return true
   else if (!control.value || control.value == null) return true
   else if (!comment.value || comment.value.length < 10) return true
 
@@ -49,7 +47,6 @@ async function onOKClick() {
   let r = await api.post('/api/generator/save-discipline-themes/', {
     planlineslink_id: rpdData.value.id,
     name: themeName.value,
-    hours: hourCount.value,
     semester: props.sem,
     formcontrol_id: control.value,
     comment: comment.value,
@@ -70,7 +67,6 @@ onBeforeMount(() => {
   if (props.id) {
     let data = _.keyBy(disciplineThemes.value, "id")
     themeName.value = data[props.id].name
-    hourCount.value = data[props.id].hours
     control.value = data[props.id].formcontrol_id
     comment.value = data[props.id].comment
   }
@@ -90,14 +86,6 @@ onBeforeMount(() => {
             filled
             :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
             type="textarea"
-        />
-        <q-input
-            stack-label
-            label="Количество часов"
-            v-model="hourCount"
-            filled
-            type="number"
-            :rules="[ val => val > 0 || 'Введите значение больше 0']"
         />
         <q-select
             stack-label

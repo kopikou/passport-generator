@@ -168,6 +168,6 @@ class GeneratorViewSet(
     def delete_discipline_themes(self, request, *args, **kwargs):
         pk = self.request.query_params.get('id')
 
-        DisciplineThemes.objects.get(id=pk).delete()
+        DisciplineThemes.objects.filter(id=pk).delete()
 
         return Response({"success": True})

@@ -13,6 +13,7 @@ const menuItems = [
   {title: 'Место дисциплины в структуре ООП', url: 'discipline-place'},
   {title: 'Структура дисциплины', url: 'structure'},
   {title: 'Содержание тем дисциплины', url: 'discipline-theme'},
+  {title: '->Содержание лекционных работ', url: 'discipline-lectures'},
   {title: '->Содержание лабораторных работ', url: 'discipline-lab'},
   {title: '->Содержание практических работ', url: 'discipline-practice'},
   {title: '->Содержание самостоятельных работ', url: 'discipline-independent'},
