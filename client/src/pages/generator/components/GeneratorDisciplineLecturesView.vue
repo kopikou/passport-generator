@@ -1,19 +1,31 @@
 <script setup lang="ts">
 
-import {onBeforeMount, ref, watch} from "vue";
+import {onBeforeMount, ref, watch, computed} from "vue";
 import {useQuasar} from "quasar";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import GeneratorAddLecturesDialog from "pages/generator/components/dialogs/GeneratorAddLecturesDialog.vue";
+import _ from "lodash";
 
 const $q = useQuasar()
 
 const generatorViewStore = useGeneratorViewStore();
 
-const{
+const {
   semestersData,
-}=storeToRefs(generatorViewStore)
+} = storeToRefs(generatorViewStore)
+
 const tab = ref(0)
+
+const allProcent = computed(() => {
+  let hoursList = _.map(semestersData.value, (x) => x.lekc)
+  return _.sum(hoursList)
+})
+
+const semesterProcent = computed(() => {
+  let hoursList = _.map(_.filter(semestersData.value, (x) => x.num == tab.value), (x) => x.lekc)
+  return _.sum(hoursList)
+})
 
 function addPractice() {
   $q.dialog({
@@ -41,14 +53,24 @@ onBeforeMount(() => {
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-btn label="Добавить новую лекционную работу" color="teal" class="q-mb-md" @click="addPractice"/>
+      <q-linear-progress class="q-mb-md" size="20px" rounded :value="0" color="teal">
+        <div class="absolute-full flex flex-center">
+          <q-badge color="white" text-color="black" :label="`0 / ${allProcent}`"/>
+        </div>
+      </q-linear-progress>
       <q-tabs
           v-model="tab"
           align="left"
           narrow-indicator
           class="q-mb-md"
       >
-        <q-tab class="text-teal bg-grey-4"  v-for="item in semestersData" :name="`${item.num}`" :label="`${item.num}`"/>
+        <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`" :label="`${item.num}`"/>
       </q-tabs>
+      <q-linear-progress class="q-mb-md" size="20px" rounded :value="0" color="primary">
+        <div class="absolute-full flex flex-center">
+          <q-badge color="white" text-color="black" :label="`0 / ${semesterProcent}`"/>
+        </div>
+      </q-linear-progress>
       <q-tab-panels
           v-model="tab"
           animated

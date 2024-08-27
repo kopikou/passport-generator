@@ -51,3 +51,8 @@ class DisciplineThemes(TimestampsModel):
     semester = models.IntegerField()
     formcontrol = models.ForeignKey("FormControl", on_delete=models.CASCADE)
     comment = models.TextField()
+
+
+class DisciplineWorkHours(TimestampsModel):
+    planlineslink = models.ForeignKey("PlanLinesLink", on_delete=models.CASCADE)
+
