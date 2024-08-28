@@ -9,7 +9,8 @@ from arim_library.services import LibraryServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes
 from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
-    DisciplineIndicatorsAddSerializer, PlanLinesLinkAddPrecSubDisciplineSerializer, DisciplineThemeSerializer
+    DisciplineIndicatorsAddSerializer, PlanLinesLinkAddPrecSubDisciplineSerializer, DisciplineThemeSerializer, \
+    DisciplineWorkHoursSerializer
 from rpd.models import LinesData
 
 
@@ -171,3 +172,14 @@ class GeneratorViewSet(
         DisciplineThemes.objects.filter(id=pk).delete()
 
         return Response({"success": True})
+
+    @action(methods=['POST'], url_path="save-discipline-work-hour", detail=False)
+    def save_discipline_work(self, request, *args, **kwargs):
+
+        data = self.request.data
+
+        serializer_data = DisciplineWorkHoursSerializer(data=data)
+        serializer_data.is_valid(raise_exception=True)
+        serializer_data.save()
+
+        return Response(serializer_data.data)

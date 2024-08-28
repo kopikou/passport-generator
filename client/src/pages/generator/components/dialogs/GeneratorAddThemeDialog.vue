@@ -36,7 +36,7 @@ const comment = ref('')
 
 const correct = computed(() => {
   if (!themeName.value || themeName.value.length < 3) return true
-  else if (!control.value || control.value == null) return true
+  else if (!control.value) return true
   else if (!comment.value || comment.value.length < 10) return true
 
   return false

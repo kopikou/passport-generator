@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from generator.models import PlanLinesLink, DisciplineIndicators, DisciplineThemes
+from generator.models import PlanLinesLink, DisciplineIndicators, DisciplineThemes, DisciplineWorkHours
 from rpd.models import LinesData, LinesIndicators
 from rpd.serializer import LinesDataSerializer, SemesterDataSerializer, LinesIndicatorsSerializer, PlanDataSerializer
 
@@ -169,3 +169,34 @@ class PlanLinesLinkSerializer(serializers.Serializer):
 
             'discipline_themes',
         ]
+
+class DisciplineWorkHoursSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=False, allow_null=True)
+    planlineslink_id =  serializers.IntegerField()
+    theme_id =  serializers.IntegerField()
+    type = serializers.IntegerField()
+    name = serializers.CharField()
+    hours = serializers.IntegerField()
+    semester = serializers.IntegerField()
+
+    class Meta:
+        model = DisciplineWorkHours
+        fields = [
+            'id',
+            'planlineslink_id',
+            'theme_id',
+            'type',
+            'type_verbose',
+            'name',
+            'hours',
+            'semester',
+        ]
+
+
+    def create(self, validate_data):
+        discipline_themes, created = DisciplineWorkHours.objects.update_or_create(
+            id=validate_data['id'],
+            defaults=validate_data,
+        )
+
+        return discipline_themes

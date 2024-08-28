@@ -40,12 +40,31 @@ function updateTheme(id) {
 }
 
 async function deleteTheme(id) {
-  $q.loading.show({message: "Удаление"})
-  let r = await api.get('/api/generator/delete-discipline-themes/', {params: {id: id}})
 
-  rpdData.value.discipline_themes.splice(_.findKey(disciplineThemes.value, (x) => x.id == id), 1)
+  $q.dialog({
+    title: 'Удаление темы',
+    message: 'Вы точно хотите отправить тему в архив?',
+    ok: {
+      label: 'В архив',
+      flat: true,
+      color: 'red',
+    },
+    cancel: {
+      label: 'Отмена',
+      flat: true,
+      color: 'green',
+    },
+    persistent: true
+  }).onOk(async () => {
 
-  $q.loading.hide()
+    $q.loading.show({message: "Удаление"})
+    let r = await api.get('/api/generator/delete-discipline-themes/', {params: {id: id}})
+
+    rpdData.value.discipline_themes.splice(_.findKey(disciplineThemes.value, (x) => x.id == id), 1)
+
+    $q.loading.hide()
+  })
+
 }
 
 const formControlByValue = computed(() => {

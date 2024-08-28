@@ -27,11 +27,22 @@ const semesterProcent = computed(() => {
   return _.sum(hoursList)
 })
 
-function addPractice() {
+function addLectures() {
   $q.dialog({
     component: GeneratorAddLecturesDialog,
     componentProps: {
-      id: tab.value
+      sem: tab.value,
+      id: null,
+    },
+  })
+}
+
+function updateLectures(id) {
+  $q.dialog({
+    component: GeneratorAddLecturesDialog,
+    componentProps: {
+      sem: tab.value,
+      id: id,
     },
   })
 }
@@ -52,7 +63,7 @@ onBeforeMount(() => {
       <span class="text-h6 q-pl-lg">Перечень лекционных работ по дисциплине</span>
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
-      <q-btn label="Добавить новую лекционную работу" color="teal" class="q-mb-md" @click="addPractice"/>
+      <q-btn label="Добавить новую лекционную работу" color="teal" class="q-mb-md" @click="addLectures"/>
       <q-linear-progress class="q-mb-md" size="20px" rounded :value="0" color="teal">
         <div class="absolute-full flex flex-center">
           <q-badge color="white" text-color="black" :label="`0 / ${allProcent}`"/>

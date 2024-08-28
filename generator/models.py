@@ -54,5 +54,21 @@ class DisciplineThemes(TimestampsModel):
 
 
 class DisciplineWorkHours(TimestampsModel):
-    planlineslink = models.ForeignKey("PlanLinesLink", on_delete=models.CASCADE)
 
+    class TypeChoices(models.IntegerChoices):
+        lectures = 0, "Лекции"
+        practice = 1, "Практики"
+        independent = 2, "Самостоятельные"
+        laboratory = 3, "Лабораторные"
+
+
+    planlineslink = models.ForeignKey("PlanLinesLink", on_delete=models.CASCADE)
+    theme = models.ForeignKey("DisciplineThemes", on_delete=models.CASCADE)
+    type = models.IntegerField(choices=TypeChoices.choices)
+    name = models.TextField()
+    hours = models.IntegerField()
+    semester = models.IntegerField()
+
+    @property
+    def type_verbose(self):
+        return DisciplineWorkHours.TypeChoices.labels[self.type]
