@@ -81,7 +81,7 @@ function deleteLectures(id) {
     $q.loading.show({message: "Удаление"})
     let r = await api.get('/api/generator/delete-discipline-work-hour/', {params: {id: id}})
 
-    rpdData.value.discipline_work_hour.splice(_.findKey(lecturesDisciplineWorkHour.value, (x) => x.id == id), 1)
+    rpdData.value.discipline_work_hour.splice(_.findKey(rpdData.value.discipline_work_hour.value, (x) => x.id == id), 1)
 
     $q.loading.hide()
   })
@@ -148,7 +148,7 @@ onBeforeMount(() => {
             </div>
           </div>
           <div v-for="lectures in lecturesDisciplineWorkHour" class="lectures-container__body">
-            <div v-if="lectures.semester == tab "
+            <div v-if="lectures.semester == tab"
                  class="lectures-container__body__cell text-subtitle1 text-center items-center">
               <div>
                 {{ lectures.name }}

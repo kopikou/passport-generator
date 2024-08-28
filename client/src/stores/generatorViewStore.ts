@@ -41,6 +41,19 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return _.filter(rpdData.value.discipline_work_hour, (x) => x.type == 0) || []
   })
 
+  const labDisciplineWorkHour = computed<DisciplineWorkHour[]>(() => {
+    return _.filter(rpdData.value.discipline_work_hour, (x) => x.type == 3) || []
+  })
+
+  const independentDisciplineWorkHour = computed<DisciplineWorkHour[]>(() => {
+    return _.filter(rpdData.value.discipline_work_hour, (x) => x.type == 2) || []
+  })
+
+  const practiceDisciplineWorkHour = computed<DisciplineWorkHour[]>(() => {
+    return _.filter(rpdData.value.discipline_work_hour, (x) => x.type == 1) || []
+  })
+
+
   const $q = useQuasar()
 
   async function getCafData() {
@@ -99,6 +112,9 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     otherDiscipline,
     disciplineThemes,
     lecturesDisciplineWorkHour,
+    labDisciplineWorkHour,
+    independentDisciplineWorkHour,
+    practiceDisciplineWorkHour,
 
     activeRpdId,
     rpdData,

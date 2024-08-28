@@ -19,7 +19,7 @@ const generatorViewStore = useGeneratorViewStore();
 const {
   rpdData,
   disciplineThemes,
-  disciplineWorkHour,
+  lecturesDisciplineWorkHour,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -27,8 +27,8 @@ const props = defineProps({
     required: true,
   },
   sem: {
-    require: true
-  }
+    required: true
+  },
 })
 
 const name = ref('')
@@ -49,7 +49,7 @@ async function onOKClick() {
   let r = await api.post('/api/generator/save-discipline-work-hour/', {
     planlineslink_id: rpdData.value.id,
     theme_id: theme.value,
-    type: 0,  // Лекции
+    type: 3,  // Лабораторные
     name: name.value,
     hours: hourCount.value,
     semester: props.sem,
@@ -59,7 +59,7 @@ async function onOKClick() {
   if (!props.id) {
     rpdData.value.discipline_work_hour.push(r.data)
   } else {
-    rpdData.value.discipline_work_hour[_.findKey(disciplineWorkHour.value, (x) => x.id == props.id)] = r.data
+    rpdData.value.discipline_work_hour[_.findKey(rpdData.value.discipline_work_hour, (x) => x.id == props.id)] = r.data
   }
 
   $q.loading.hide()
@@ -68,7 +68,7 @@ async function onOKClick() {
 
 onBeforeMount(() => {
   if (props.id) {
-    let data = _.keyBy(disciplineWorkHour.value, "id")
+    let data = _.keyBy(lecturesDisciplineWorkHour.value, "id")
     name.value = data[props.id].name
     hourCount.value = data[props.id].hours
     theme.value = data[props.id].theme_id
