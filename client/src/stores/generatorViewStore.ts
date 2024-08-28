@@ -5,7 +5,7 @@ import {onAuthenticated} from "src/composables/onAuthenticated";
 import {useQuasar} from "quasar";
 import _ from "lodash";
 import {
-  DisciplineThemesData,
+  DisciplineThemesData, DisciplineWorkHour,
   GeneratorData, GeneratorFormControlData, GeneratorIndependentTypesData,
   GeneratorPlanLineData, OtherDiscipline, PlanIndicatorData, PlanSemestrData,
 } from "src/types";
@@ -33,8 +33,12 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return rpdData.value.other_discipline || []
   })
 
-  const disciplineThemes = computed<DisciplineThemesData>(() => {
+  const disciplineThemes = computed<DisciplineThemesData[]>(() => {
     return rpdData.value.discipline_themes || []
+  })
+
+  const disciplineWorkHour = computed<DisciplineWorkHour[]>(() => {
+    return rpdData.value.discipline_work_hour || []
   })
 
   const $q = useQuasar()
@@ -94,6 +98,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     independentTypes,
     otherDiscipline,
     disciplineThemes,
+    disciplineWorkHour,
 
     activeRpdId,
     rpdData,

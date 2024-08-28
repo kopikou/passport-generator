@@ -7,7 +7,7 @@ from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
-from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes
+from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours
 from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
     DisciplineIndicatorsAddSerializer, PlanLinesLinkAddPrecSubDisciplineSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer
@@ -30,7 +30,8 @@ class GeneratorViewSet(
         instance = (PlanLinesLink.objects.filter(id=pk)
                     .select_related("planlines", "planlines__plan")
                     .prefetch_related("planlines__semesters", "planlines__indicators",
-                                      "planlines__indicators__discipline_indicator", "discipline_themes").first())
+                                      "planlines__indicators__discipline_indicator", "discipline_themes",
+                                      "discipline_work_hour").first())
 
         serializer = self.get_serializer(instance)
 
@@ -183,3 +184,11 @@ class GeneratorViewSet(
         serializer_data.save()
 
         return Response(serializer_data.data)
+
+    @action(methods=['GET'], url_path="delete-discipline-work-hour", detail=False)
+    def delete_discipline_themes(self, request, *args, **kwargs):
+        pk = self.request.query_params.get('id')
+
+        DisciplineWorkHours.objects.filter(id=pk).delete()
+
+        return Response({"success": True})

@@ -117,24 +117,24 @@ onBeforeMount(() => {
               Управление
             </div>
           </div>
-          <div v-for="theme in disciplineThemes" class="theme-container__body">
-            <div v-if="theme.semester == tab"
+          <div v-for="item in disciplineThemes" class="theme-container__body">
+            <div v-if="item.semester == tab"
                  class="theme-container__body__cell text-subtitle1 text-center items-center">
               <div>
-                {{ theme.name }}
+                {{ item.name }}
               </div>
               <div>
-                {{ formControlByValue[theme.formcontrol_id]?.name }}
+                {{ formControlByValue[item.formcontrol_id]?.name }}
               </div>
               <div>
-                {{ theme.comment }}
+                {{ item.comment }}
               </div>
               <div>
                 <q-btn
-                  icon="mdi-delete" color="red" flat @click="deleteTheme(theme.id)"
+                  icon="mdi-delete" color="red" flat @click="deleteTheme(item.id)"
                 />
                 <q-btn
-                  icon="mdi-update" color="green" flat @click="updateTheme(theme.id)"
+                  icon="mdi-update" color="green" flat @click="updateTheme(item.id)"
                 />
               </div>
             </div>

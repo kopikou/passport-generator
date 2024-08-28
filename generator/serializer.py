@@ -138,6 +138,37 @@ class PlanLinesLinkAddPrecSubDisciplineSerializer(serializers.Serializer):
         ]
 
 
+class DisciplineWorkHoursSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=False, allow_null=True)
+    planlineslink_id = serializers.IntegerField()
+    theme_id = serializers.IntegerField()
+    type = serializers.IntegerField()
+    name = serializers.CharField()
+    hours = serializers.FloatField()
+    semester = serializers.IntegerField()
+
+    class Meta:
+        model = DisciplineWorkHours
+        fields = [
+            'id',
+            'planlineslink_id',
+            'theme_id',
+            'type',
+            'type_verbose',
+            'name',
+            'hours',
+            'semester',
+        ]
+
+    def create(self, validate_data):
+        discipline_themes, created = DisciplineWorkHours.objects.update_or_create(
+            id=validate_data['id'],
+            defaults=validate_data,
+        )
+
+        return discipline_themes
+
+
 class PlanLinesLinkSerializer(serializers.Serializer):
     planlines = GeneratorLinesDataSerializer(read_only=True)
     id = serializers.IntegerField(read_only=True)
@@ -152,6 +183,7 @@ class PlanLinesLinkSerializer(serializers.Serializer):
                                                   required=False)
 
     discipline_themes = DisciplineThemeSerializer(many=True)
+    discipline_work_hour = DisciplineWorkHoursSerializer(many=True)
 
     class Meta:
         model = PlanLinesLink
@@ -168,35 +200,5 @@ class PlanLinesLinkSerializer(serializers.Serializer):
             'subsequent_discipline',
 
             'discipline_themes',
+            'discipline_work_hour',
         ]
-
-class DisciplineWorkHoursSerializer(serializers.Serializer):
-    id = serializers.IntegerField(required=False, allow_null=True)
-    planlineslink_id =  serializers.IntegerField()
-    theme_id =  serializers.IntegerField()
-    type = serializers.IntegerField()
-    name = serializers.CharField()
-    hours = serializers.IntegerField()
-    semester = serializers.IntegerField()
-
-    class Meta:
-        model = DisciplineWorkHours
-        fields = [
-            'id',
-            'planlineslink_id',
-            'theme_id',
-            'type',
-            'type_verbose',
-            'name',
-            'hours',
-            'semester',
-        ]
-
-
-    def create(self, validate_data):
-        discipline_themes, created = DisciplineWorkHours.objects.update_or_create(
-            id=validate_data['id'],
-            defaults=validate_data,
-        )
-
-        return discipline_themes

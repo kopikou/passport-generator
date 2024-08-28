@@ -62,11 +62,11 @@ class DisciplineWorkHours(TimestampsModel):
         laboratory = 3, "Лабораторные"
 
 
-    planlineslink = models.ForeignKey("PlanLinesLink", on_delete=models.CASCADE)
+    planlineslink = models.ForeignKey("PlanLinesLink", on_delete=models.CASCADE, related_name="discipline_work_hour")
     theme = models.ForeignKey("DisciplineThemes", on_delete=models.CASCADE)
     type = models.IntegerField(choices=TypeChoices.choices)
     name = models.TextField()
-    hours = models.IntegerField()
+    hours = models.FloatField()
     semester = models.IntegerField()
 
     @property

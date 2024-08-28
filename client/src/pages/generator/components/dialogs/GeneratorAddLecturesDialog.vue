@@ -3,7 +3,7 @@
 import {useDialogPluginComponent, useQuasar} from "quasar";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
-import {computed, ref} from "vue";
+import {computed, onBeforeMount, ref} from "vue";
 import {api} from "boot/axios";
 import _ from "lodash";
 
@@ -19,6 +19,7 @@ const generatorViewStore = useGeneratorViewStore();
 const {
   rpdData,
   disciplineThemes,
+  disciplineWorkHour,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -55,16 +56,24 @@ async function onOKClick() {
     id: props.id,
   })
 
-  // if (!props.id) {
-  //   rpdData.value.discipline_themes.push(r.data)
-  // } else {
-  //   rpdData.value.discipline_themes[_.findKey(disciplineThemes.value, (x) => x.id == props.id)] = r.data
-  // }
+  if (!props.id) {
+    rpdData.value.discipline_work_hour.push(r.data)
+  } else {
+    rpdData.value.discipline_work_hour[_.findKey(disciplineWorkHour.value, (x) => x.id == props.id)] = r.data
+  }
 
   $q.loading.hide()
   onDialogOK()
 }
 
+onBeforeMount(() => {
+  if (props.id) {
+    let data = _.keyBy(disciplineWorkHour.value, "id")
+    name.value = data[props.id].name
+    hourCount.value = data[props.id].hours
+    theme.value = data[props.id].theme_id
+  }
+})
 </script>
 
 <template>

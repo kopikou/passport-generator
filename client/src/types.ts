@@ -192,6 +192,7 @@ export interface GeneratorData {
   planlines: GeneratorPlanLineData[],
   other_discipline: OtherDiscipline[],
   discipline_themes: DisciplineThemesData[],
+  discipline_work_hour: DisciplineWorkHour[],
   id: number,
   cadmission: number,
   mira_id: number,
@@ -248,4 +249,14 @@ export interface DisciplineThemesData {
     semester: number,
     formcontrol_id: number,
     comment: string,
+}
+
+export interface DisciplineWorkHour {
+    id: number,
+    planlineslink_id: number,
+    theme_id: number,
+    type: number,
+    name: string,
+    hours: number,
+    semester: number,
 }

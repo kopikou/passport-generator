@@ -6,25 +6,39 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import GeneratorAddLecturesDialog from "pages/generator/components/dialogs/GeneratorAddLecturesDialog.vue";
 import _ from "lodash";
+import {api} from "boot/axios";
 
 const $q = useQuasar()
 
 const generatorViewStore = useGeneratorViewStore();
 
 const {
+  rpdData,
   semestersData,
+  disciplineWorkHour,
+  disciplineThemes,
 } = storeToRefs(generatorViewStore)
 
 const tab = ref(0)
 
-const allProcent = computed(() => {
+const allPercent = computed(() => {
   let hoursList = _.map(semestersData.value, (x) => x.lekc)
   return _.sum(hoursList)
 })
 
-const semesterProcent = computed(() => {
+const allPercentValue = computed(() => {
+  let value = _.map(disciplineWorkHour.value, (x) => x.type == 0 ? x.hours : 0)
+  return _.sum(value)
+})
+
+const allSemesterPercent = computed(() => {
   let hoursList = _.map(_.filter(semestersData.value, (x) => x.num == tab.value), (x) => x.lekc)
   return _.sum(hoursList)
+})
+
+const allSemesterPercentValue = computed(() => {
+  let value = _.map(disciplineWorkHour.value, (x) => x.type == 0 && x.semester == tab.value ? x.hours : 0)
+  return _.sum(value)
 })
 
 function addLectures() {
@@ -47,6 +61,36 @@ function updateLectures(id) {
   })
 }
 
+function deleteLectures(id) {
+  $q.dialog({
+    title: 'Удаление темы',
+    message: 'Вы точно хотите отправить тему в архив?',
+    ok: {
+      label: 'В архив',
+      flat: true,
+      color: 'red',
+    },
+    cancel: {
+      label: 'Отмена',
+      flat: true,
+      color: 'green',
+    },
+    persistent: true
+  }).onOk(async () => {
+
+    $q.loading.show({message: "Удаление"})
+    let r = await api.get('/api/generator/delete-discipline-work-hour/', {params: {id: id}})
+
+    rpdData.value.discipline_work_hour.splice(_.findKey(disciplineWorkHour.value, (x) => x.id == id), 1)
+
+    $q.loading.hide()
+  })
+}
+
+const disciplineThemesByValue = computed(() => {
+  return _.keyBy(disciplineThemes.value, 'id')
+})
+
 watch(semestersData, () => {
   tab.value = `${semestersData.value[0].num}`
 })
@@ -64,32 +108,67 @@ onBeforeMount(() => {
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-btn label="Добавить новую лекционную работу" color="teal" class="q-mb-md" @click="addLectures"/>
-      <q-linear-progress class="q-mb-md" size="20px" rounded :value="0" color="teal">
+      <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
         <div class="absolute-full flex flex-center">
-          <q-badge color="white" text-color="black" :label="`0 / ${allProcent}`"/>
+          <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
         </div>
       </q-linear-progress>
       <q-tabs
-          v-model="tab"
-          align="left"
-          narrow-indicator
-          class="q-mb-md"
+        v-model="tab"
+        align="left"
+        narrow-indicator
+        class="q-mb-md"
       >
         <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`" :label="`${item.num}`"/>
       </q-tabs>
-      <q-linear-progress class="q-mb-md" size="20px" rounded :value="0" color="primary">
+      <q-linear-progress class="q-mb-md" size="20px" rounded :value="allSemesterPercentValue / allSemesterPercent" color="primary">
         <div class="absolute-full flex flex-center">
-          <q-badge color="white" text-color="black" :label="`0 / ${semesterProcent}`"/>
+          <q-badge color="white" text-color="black" :label="`${allSemesterPercentValue} / ${allSemesterPercent}`"/>
         </div>
       </q-linear-progress>
       <q-tab-panels
-          v-model="tab"
-          animated
-          transition-prev="scale"
-          transition-next="scale"
+        v-model="tab"
+        animated
+        transition-prev="scale"
+        transition-next="scale"
       >
-        <q-tab-panel v-for="item in semestersData" :name="`${item.num}`">
-          hello world
+        <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="lectures-container">
+          <div v-if="item" class="lectures-container__header text-center text-subtitle1 items-center">
+            <div>
+              Наименование раздела
+            </div>
+            <div>
+              Количество часов
+            </div>
+            <div>
+              Тема дисциплины
+            </div>
+            <div>
+              Управление
+            </div>
+          </div>
+          <div v-for="lectures in disciplineWorkHour" class="lectures-container__body">
+            <div v-if="lectures.semester == tab && lectures.type == 0 "
+                 class="lectures-container__body__cell text-subtitle1 text-center items-center">
+              <div>
+                {{ lectures.name }}
+              </div>
+              <div>
+                {{ lectures.hours }}
+              </div>
+              <div>
+                {{ disciplineThemesByValue[lectures.theme_id]?.name }}
+              </div>
+              <div>
+                <q-btn
+                  icon="mdi-delete" color="red" flat @click="deleteLectures(lectures.id)"
+                />
+                <q-btn
+                  icon="mdi-update" color="green" flat @click="updateLectures(lectures.id)"
+                />
+              </div>
+            </div>
+          </div>
         </q-tab-panel>
       </q-tab-panels>
     </div>
@@ -97,5 +176,20 @@ onBeforeMount(() => {
 </template>
 
 <style scoped>
+
+.lectures-container {
+  > .lectures-container__header {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    font-weight: bold;
+  }
+
+  > .lectures-container__body {
+    > .lectures-container__body__cell {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+}
 
 </style>
