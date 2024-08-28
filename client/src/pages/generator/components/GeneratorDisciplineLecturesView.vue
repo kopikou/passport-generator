@@ -15,7 +15,7 @@ const generatorViewStore = useGeneratorViewStore();
 const {
   rpdData,
   semestersData,
-  disciplineWorkHour,
+  lecturesDisciplineWorkHour,
   disciplineThemes,
 } = storeToRefs(generatorViewStore)
 
@@ -27,7 +27,7 @@ const allPercent = computed(() => {
 })
 
 const allPercentValue = computed(() => {
-  let value = _.map(disciplineWorkHour.value, (x) => x.type == 0 ? x.hours : 0)
+  let value = _.map(lecturesDisciplineWorkHour.value, (x) =>  x.hours)
   return _.sum(value)
 })
 
@@ -37,7 +37,7 @@ const allSemesterPercent = computed(() => {
 })
 
 const allSemesterPercentValue = computed(() => {
-  let value = _.map(disciplineWorkHour.value, (x) => x.type == 0 && x.semester == tab.value ? x.hours : 0)
+  let value = _.map(lecturesDisciplineWorkHour.value, (x) => x.semester == tab.value ? x.hours : 0)
   return _.sum(value)
 })
 
@@ -81,7 +81,7 @@ function deleteLectures(id) {
     $q.loading.show({message: "Удаление"})
     let r = await api.get('/api/generator/delete-discipline-work-hour/', {params: {id: id}})
 
-    rpdData.value.discipline_work_hour.splice(_.findKey(disciplineWorkHour.value, (x) => x.id == id), 1)
+    rpdData.value.discipline_work_hour.splice(_.findKey(lecturesDisciplineWorkHour.value, (x) => x.id == id), 1)
 
     $q.loading.hide()
   })
@@ -147,8 +147,8 @@ onBeforeMount(() => {
               Управление
             </div>
           </div>
-          <div v-for="lectures in disciplineWorkHour" class="lectures-container__body">
-            <div v-if="lectures.semester == tab && lectures.type == 0 "
+          <div v-for="lectures in lecturesDisciplineWorkHour" class="lectures-container__body">
+            <div v-if="lectures.semester == tab "
                  class="lectures-container__body__cell text-subtitle1 text-center items-center">
               <div>
                 {{ lectures.name }}
