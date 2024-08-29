@@ -80,14 +80,14 @@ export interface PlanSemestrData {
 }
 
 export interface GeneratorDisciplineIndicatorData {
-    id: number,
-    indicator_id: number,
-    planlineid_id: number,
-    know: string,
-    able: string,
-    own: string,
-    criteria: string,
-    methods: string,
+  id: number,
+  indicator_id: number,
+  planlineid_id: number,
+  know: string,
+  able: string,
+  own: string,
+  criteria: string,
+  methods: string,
 }
 
 export interface PlanIndicatorData {
@@ -201,6 +201,9 @@ export interface GeneratorData {
   status_verbose: string,
   precedence_discipline: Array<number>,
   subsequent_discipline: Array<number>,
+  library: Array<number>,
+  software: Array<number>,
+  logistics: Array<number>,
 }
 
 export interface GeneratorBookData {
@@ -242,21 +245,21 @@ export interface GeneratorIndependentTypesData {
 }
 
 export interface DisciplineThemesData {
-    id: number,
-    planlineslink_id: number,
-    name: string,
-    hours: number,
-    semester: number,
-    formcontrol_id: number,
-    comment: string,
+  id: number,
+  planlineslink_id: number,
+  name: string,
+  hours: number,
+  semester: number,
+  formcontrol_id: number,
+  comment: string,
 }
 
 export interface DisciplineWorkHour {
-    id: number,
-    planlineslink_id: number,
-    theme_id: number,
-    type: number,
-    name: string,
-    hours: number,
-    semester: number,
+  id: number,
+  planlineslink_id: number,
+  theme_id: number,
+  type: number,
+  name: string,
+  hours: number,
+  semester: number,
 }

@@ -128,6 +128,12 @@ class PlanLinesLinkAddPrecSubDisciplineSerializer(serializers.Serializer):
                                                        allow_empty=True, required=False)
     subsequent_discipline = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
                                                        allow_empty=True, required=False)
+    library = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
+                                                       allow_empty=True, required=False)
+    software = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
+                                                       allow_empty=True, required=False)
+    logistics = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
+                                                       allow_empty=True, required=False)
 
     class Meta:
         model = PlanLinesLink
@@ -135,6 +141,9 @@ class PlanLinesLinkAddPrecSubDisciplineSerializer(serializers.Serializer):
             'id',
             'precedence_discipline',
             'subsequent_discipline',
+            'library',
+            'software',
+            'logistics',
         ]
 
 
