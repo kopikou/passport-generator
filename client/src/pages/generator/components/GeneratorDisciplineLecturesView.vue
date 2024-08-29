@@ -23,22 +23,22 @@ const tab = ref(0)
 
 const allPercent = computed(() => {
   let hoursList = _.map(semestersData.value, (x) => x.lekc)
-  return _.sum(hoursList)
+  return _.sum(hoursList) || 0
 })
 
 const allPercentValue = computed(() => {
   let value = _.map(lecturesDisciplineWorkHour.value, (x) =>  x.hours)
-  return _.sum(value)
+  return _.sum(value) || 0
 })
 
 const allSemesterPercent = computed(() => {
   let hoursList = _.map(_.filter(semestersData.value, (x) => x.num == tab.value), (x) => x.lekc)
-  return _.sum(hoursList)
+  return _.sum(hoursList) || 0
 })
 
 const allSemesterPercentValue = computed(() => {
   let value = _.map(lecturesDisciplineWorkHour.value, (x) => x.semester == tab.value ? x.hours : 0)
-  return _.sum(value)
+  return _.sum(value) || 0
 })
 
 function addLectures() {
@@ -81,7 +81,7 @@ function deleteLectures(id) {
     $q.loading.show({message: "Удаление"})
     let r = await api.get('/api/generator/delete-discipline-work-hour/', {params: {id: id}})
 
-    rpdData.value.discipline_work_hour.splice(_.findKey(rpdData.value.discipline_work_hour.value, (x) => x.id == id), 1)
+    rpdData.value.discipline_work_hour.splice(_.findKey(rpdData.value.discipline_work_hour, (x) => x.id == id), 1)
 
     $q.loading.hide()
   })

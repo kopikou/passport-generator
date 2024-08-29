@@ -49,7 +49,7 @@ async function onOKClick() {
   let r = await api.post('/api/generator/save-discipline-work-hour/', {
     planlineslink_id: rpdData.value.id,
     theme_id: theme.value,
-    type: 3,  // Лабораторные
+    type: 0,  // Лабораторные
     name: name.value,
     hours: hourCount.value,
     semester: props.sem,
@@ -84,7 +84,7 @@ onBeforeMount(() => {
         <q-input
           v-model="name"
           stack-label
-          label="Наименование лекционной работы"
+          label="Наименование лекционного занятия"
           filled
           :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
         />

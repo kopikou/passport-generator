@@ -23,23 +23,23 @@ const $q = useQuasar()
 const tab = ref(0)
 
 const allPercent = computed(() => {
-  let hoursList = _.map(semestersData.value, (x) => x.lekc)
-  return _.sum(hoursList)
+  let hoursList = _.map(semestersData.value, (x) => x.lab)
+  return _.sum(hoursList) || 0
 })
 
 const allPercentValue = computed(() => {
   let value = _.map(labDisciplineWorkHour.value, (x) => x.hours)
-  return _.sum(value)
+  return _.sum(value) || 0
 })
 
 const allSemesterPercent = computed(() => {
-  let hoursList = _.map(_.filter(semestersData.value, (x) => x.num == tab.value), (x) => x.lekc)
-  return _.sum(hoursList)
+  let hoursList = _.map(_.filter(semestersData.value, (x) => x.num == tab.value), (x) => x.lab)
+  return _.sum(hoursList) || 0
 })
 
 const allSemesterPercentValue = computed(() => {
   let value = _.map(labDisciplineWorkHour.value, (x) => x.semester == tab.value ? x.hours : 0)
-  return _.sum(value)
+  return _.sum(value) || 0
 })
 
 function addLab() {
@@ -64,8 +64,8 @@ function updateLab(id) {
 
 function deleteLab(id) {
   $q.dialog({
-    title: 'Удаление лабораторной работы',
-    message: 'Вы точно хотите лабораторную работу в архив?',
+    title: 'Удаление лабораторного занятия',
+    message: 'Вы точно хотите отправить лабораторное занятие в архив?',
     ok: {
       label: 'В архив',
       flat: true,

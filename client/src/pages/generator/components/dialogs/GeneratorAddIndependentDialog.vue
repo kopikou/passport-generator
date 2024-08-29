@@ -1,41 +1,79 @@
 <script setup lang="ts">
 
-import {useDialogPluginComponent} from "quasar";
+import {useDialogPluginComponent, useQuasar} from "quasar";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
-import {computed, ref} from "vue";
+import {computed, ref, onBeforeMount} from "vue";
+import _ from "lodash";
+import {api} from "boot/axios";
 
 const generatorViewStore = useGeneratorViewStore();
 
 const{
   independentTypes,
+  independentDisciplineWorkHour,
+  rpdData,
+  disciplineThemes,
 }=storeToRefs(generatorViewStore)
 
 defineEmits([
   ...useDialogPluginComponent.emits
 ])
 
+const $q = useQuasar()
 const {dialogRef, onDialogHide, onDialogOK, onDialogCancel} = useDialogPluginComponent()
 
 const props = defineProps({
   id: {
     required: true,
+  },
+  sem: {
+    required: true,
   }
 })
 
-const independent = ref()
+const name = ref()
 const hourCount = ref(0)
 const theme = ref()
 
 const correct = computed(() => {
+  if (!name.value || name.value.length < 3) return true
+  else if (!hourCount.value || hourCount.value <= 0) return true
+  else if (!theme.value) return true
 
   return false
 })
 
 async function onOKClick() {
+  $q.loading.show({message: "Сохранение"})
+  let r = await api.post('/api/generator/save-discipline-work-hour/', {
+    planlineslink_id: rpdData.value.id,
+    theme_id: theme.value,
+    type: 2,  // Cамостоятельная
+    name: name.value,
+    hours: hourCount.value,
+    semester: props.sem,
+    id: props.id,
+  })
 
+  if (!props.id) {
+    rpdData.value.discipline_work_hour.push(r.data)
+  } else {
+    rpdData.value.discipline_work_hour[_.findKey(rpdData.value.discipline_work_hour, (x) => x.id == props.id)] = r.data
+  }
+
+  $q.loading.hide()
   onDialogOK()
 }
+
+onBeforeMount(() => {
+  if (props.id) {
+    let data = _.keyBy(independentDisciplineWorkHour.value, "id")
+    name.value = data[props.id].name
+    hourCount.value = data[props.id].hours
+    theme.value = data[props.id].theme_id
+  }
+})
 
 </script>
 
@@ -43,15 +81,15 @@ async function onOKClick() {
   <q-dialog ref="dialogRef" @hide="onDialogHide">
     <q-card class="q-dialog-plugin" style="width: 700px;">
       <div class="q-pa-md q-gutter-md">
-        <q-chip color="teal" class="text-subtitle1">Семестр {{ id }}</q-chip>
+        <q-chip color="teal" class="text-subtitle1">Семестр {{ sem }}</q-chip>
         <q-select
           stack-label
           label="Вид самостоятельной работы"
           filled
           :options="independentTypes"
-          v-model="independent"
+          v-model="name"
           option-label="name"
-          option-value="id"
+          option-value="name"
           map-options
           emit-value
         />
@@ -67,7 +105,7 @@ async function onOKClick() {
           stack-label
           label="Тема дисциплины"
           filled
-          :options="[]"
+          :options="disciplineThemes"
           v-model="theme"
           option-label="name"
           option-value="id"
