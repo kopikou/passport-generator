@@ -350,7 +350,7 @@ class PLXParser:
                     'pr': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '103' else None,
                     'srs': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '107' else None,
                     'ekzhour': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '108' else None,
-                    'zet': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '50' else None,
+                    'zet': float(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '50' else None,
                     'ekz': True if child.attrib.get('КодВидаРаботы') == '1' else None,
                     'zach': True if child.attrib.get('КодВидаРаботы') == '2' else None,
                     'kp_hour': int(child.attrib.get('Количество')) if child.attrib.get('КодВидаРаботы') == '4' else None,

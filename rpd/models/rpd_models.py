@@ -83,7 +83,7 @@ class SemesterData(TimestampsModel):
     pr = models.IntegerField(null=True)
     srs = models.IntegerField(null=True)
     ekzhour = models.IntegerField(null=True)
-    zet = models.IntegerField(null=True)
+    zet = models.FloatField(null=True)
     ekz = models.BooleanField(null=True)
     zach = models.BooleanField(null=True)
     kp_hour = models.IntegerField(null=True)

@@ -34,7 +34,7 @@ class SemesterDataSerializer(serializers.ModelSerializer):
     pr = serializers.IntegerField(allow_null=True)
     srs = serializers.IntegerField(allow_null=True)
     ekzhour = serializers.IntegerField(allow_null=True)
-    zet = serializers.IntegerField(allow_null=True)
+    zet = serializers.FloatField(allow_null=True)
     ekz = serializers.BooleanField(allow_null=True)
     zach = serializers.BooleanField(allow_null=True)
     kp_hour = serializers.IntegerField(allow_null=True)

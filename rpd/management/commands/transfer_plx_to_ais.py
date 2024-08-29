@@ -3,9 +3,10 @@ from pprint import pprint
 from django.core.management import BaseCommand
 from django.db.models import Q
 
-from arim.models import UchPlanPlan, UchPlanLines, UchPlanDiscpl, UchPlanKaf, UchPlanSemestr, BoolChoice, Catadmission
+from arim.models import UchPlanPlan, UchPlanLines, UchPlanDiscpl, UchPlanKaf, UchPlanSemestr, BoolChoice, Catadmission, \
+    UchPlanFiles
 from arim.services import AISServices
-from rpd.models import RPDFile, LinesData, PlanData, SemesterData
+from rpd.models import RPDFile, LinesData, PlanData, SemesterData, PlanDocuments
 
 
 class Command(BaseCommand):
@@ -20,6 +21,7 @@ class Command(BaseCommand):
             plan_data = PlanData.objects.filter(file_id=i.id).values()
             line_data = LinesData.objects.filter(synchronize=True, plan__file_id=i.id).values()
             semester_data = SemesterData.objects.filter(planlineid__synchronize=True, planlineid__plan__file_id=i.id).values()
+            files_data = PlanDocuments.objects.filter(plan__file_id=i.id).values()
 
             transfer_plan_data = {}
             for plan in plan_data:
@@ -28,9 +30,10 @@ class Command(BaseCommand):
                 transfer_plan_data = {
                     "species": plan['species'],
                     "studyprog": plan['studyprog'],
+                    "studyform": plan['studyform'],
                     "fullplanname": plan['planname'],
                     "name": plan['planname'],
-                    "kafcode": plan['kafcode'],
+                    "kafcode_id": plan['kafcode'],
                     "lastshifr": plan['lastshifr'],
                     "abbrprofile": plan['abbrprofile'],
                     "cadmission_id": cadmission.id,
@@ -49,6 +52,21 @@ class Command(BaseCommand):
                 )
 
                 Catadmission.objects.filter(id=cadmission.id).update(cuchplan_id=uchplan.id)
+
+
+            for file in files_data:
+                transfer_file_data = {
+                    "cplan_id": uchplan.id,
+                    "name": file['name'],
+                    "ctype": file['type'],
+                }
+
+                files, created = UchPlanFiles.objects.get_or_create(
+                    cplan_id=uchplan.id,
+                    name=transfer_file_data['name'],
+                    ctype=transfer_file_data['ctype'],
+                    defaults=transfer_file_data,
+                )
 
             query = Q()
             for line in line_data:

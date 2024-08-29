@@ -114,6 +114,17 @@ class UchPlanSemestr(models.Model):
     eios = models.IntegerField()
 
 
+class UchPlanFiles(models.Model):
+    class Meta:
+        db_table = "uchplan_files"
+        managed = False
+
+    cplan = models.ForeignKey("UchPlanPlan", db_column="cplan", on_delete=models.CASCADE)
+    name = models.CharField(max_length=250)
+    ctype = models.IntegerField()
+    fordel = models.CharField(max_length=1, choices=BoolChoice, default=BoolChoice.f)
+
+
 class UistLicense(models.Model):
     class Meta:
         db_table = "uistlicense"
