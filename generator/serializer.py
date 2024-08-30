@@ -122,18 +122,15 @@ class DisciplineThemeSerializer(serializers.Serializer):
         return discipline_themes
 
 
-class PlanLinesLinkAddPrecSubDisciplineSerializer(serializers.Serializer):
+class PlanLinesLinkSaveGeneratorDisciplineDataSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     precedence_discipline = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
                                                        allow_empty=True, required=False)
     subsequent_discipline = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
                                                        allow_empty=True, required=False)
-    library = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
-                                                       allow_empty=True, required=False)
-    software = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
-                                                       allow_empty=True, required=False)
-    logistics = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
-                                                       allow_empty=True, required=False)
+    library = serializers.JSONField(allow_null=True, required=False)
+    software = serializers.JSONField(allow_null=True, required=False)
+    logistics = serializers.JSONField(allow_null=True, required=False)
 
     class Meta:
         model = PlanLinesLink

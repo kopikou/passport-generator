@@ -4,6 +4,7 @@ import {ref} from "vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import {GeneratorBookData} from "src/types";
+import _ from "lodash";
 
 const $q = useQuasar()
 
@@ -17,6 +18,21 @@ const columns = ref([
   {name: 'name', label: 'Название', field: 'name', align: 'center'},
 ])
 
+function checkTaken(id) {
+  if (_.map(mainBook.value, (x) => x.id).includes(id))
+    return true
+  if (_.map(dopBook.value, (x) => x.id).includes(id))
+    return true
+  return false
+}
+
+function addMainBook(data) {
+  mainBook.value.push(data)
+}
+
+function addDopBook(data) {
+  dopBook.value.push(data)
+}
 
 async function searchBook() {
   if (searchVal.value.length <= 3) {
@@ -55,9 +71,9 @@ async function searchBook() {
       <div class="row">
         <div class="col-6">
           <div class="text-h6">Основная литература</div>
-          table
+          {{ mainBook }}
           <div class="text-h6">Дополнительная литература</div>
-          table
+          {{ dopBook }}
         </div>
         <div class="col-6">
           <div v-for="item in bookData">
@@ -70,8 +86,8 @@ async function searchBook() {
               </template>
             </q-field>
             <div class="q-gutter-x-md q-mt-md q-mb-md">
-              <q-btn color="primary" label="В основную литературу"/>
-              <q-btn color="secondary" label="В дополнительную литературу"/>
+              <q-btn :disabled="checkTaken(item.id)" color="primary" label="В основную литературу" @click="addMainBook(item)"/>
+              <q-btn :disabled="checkTaken(item.id)" color="secondary" label="В дополнительную литературу" @click="addDopBook(item)"/>
             </div>
           </div>
         </div>
