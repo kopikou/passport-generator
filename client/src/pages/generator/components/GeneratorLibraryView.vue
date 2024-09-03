@@ -128,18 +128,18 @@ watch(disciplineLibrary, () => {
           </div>
           <div class="text-h6">Дополнительная литература</div>
           <div v-for="item in dopBook" style="width: 95%">
-            <q-field label="Название" stack-label filled>
+            <q-field label="Название" stack-label filled class="q-mb-md">
               <template #control>
                 <div class="text-subtitle1 self-center full-width no-outline">
                   <a v-if="item.http_link" :href="`${item.http_link}`" target="_blank">{{ item.bib_disc }}</a>
                   <span v-else>{{ item.bib_disc }}</span>
+                  <div class="q-gutter-x-md q-mt-md">
+                    <q-btn color="red" label="Убрать"
+                           @click="deleteMainBook(item.id)"/>
+                  </div>
                 </div>
               </template>
             </q-field>
-            <div class="q-gutter-x-md q-mt-md q-mb-md">
-              <q-btn color="red" label="Убрать"
-                     @click="deleteDopBook(item.id)"/>
-            </div>
           </div>
         </div>
         <div class="col-6">
