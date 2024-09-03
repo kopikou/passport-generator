@@ -201,9 +201,9 @@ export interface GeneratorData {
   status_verbose: string,
   precedence_discipline: Array<number>,
   subsequent_discipline: Array<number>,
-  library: Array<number>,
-  software: Array<number>,
-  logistics: Array<number>,
+  library: Object,
+  software: Object,
+  logistics: Object,
 }
 
 export interface GeneratorBookData {

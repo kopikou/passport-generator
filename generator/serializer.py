@@ -72,6 +72,7 @@ class GeneratorLinesIndicatorsSerializer(serializers.ModelSerializer):
 
     discipline_indicator = DisciplineIndicatorsSerializer(many=True)
 
+
     class Meta:
         model = LinesIndicators
         fields = [
@@ -191,6 +192,10 @@ class PlanLinesLinkSerializer(serializers.Serializer):
     discipline_themes = DisciplineThemeSerializer(many=True)
     discipline_work_hour = DisciplineWorkHoursSerializer(many=True)
 
+    library = serializers.JSONField(allow_null=True, required=False)
+    software = serializers.JSONField(allow_null=True, required=False)
+    logistics = serializers.JSONField(allow_null=True, required=False)
+
     class Meta:
         model = PlanLinesLink
         fields = [
@@ -207,4 +212,7 @@ class PlanLinesLinkSerializer(serializers.Serializer):
 
             'discipline_themes',
             'discipline_work_hour',
+            'library',
+            'software',
+            'logistics',
         ]

@@ -1,17 +1,27 @@
 <script setup lang="ts">
 
-import {ref} from "vue";
+import {ref, watch} from "vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import {GeneratorBookData} from "src/types";
 import _ from "lodash";
+import useGeneratorViewStore from "stores/generatorViewStore";
+import {storeToRefs} from "pinia";
 
 const $q = useQuasar()
+
+const generatorViewStore = useGeneratorViewStore()
+
+const {
+  activeRpdId,
+  disciplineLibrary,
+} = storeToRefs(generatorViewStore)
+
 
 const searchVal = ref('')
 const bookData = ref([])
 
-const dopBook = ref([])
+const dopBook = ref<GeneratorBookData[]>([])
 const mainBook = ref<GeneratorBookData[]>([])
 
 const columns = ref([
@@ -34,6 +44,16 @@ function addDopBook(data) {
   dopBook.value.push(data)
 }
 
+function deleteMainBook(id) {
+  let key = _.findKey(mainBook.value, (x) => x.id == id)
+  mainBook.value.splice(key, 1)
+}
+
+function deleteDopBook(id) {
+  let key = _.findKey(dopBook.value, (x) => x.id == id)
+  dopBook.value.splice(key, 1)
+}
+
 async function searchBook() {
   if (searchVal.value.length <= 3) {
     $q.notify({
@@ -48,6 +68,25 @@ async function searchBook() {
   }
 }
 
+async function saveLibary() {
+  $q.loading.show()
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-library/`, {
+    library: {
+      mainBook: mainBook.value,
+      dopBook: dopBook.value,
+    }
+  })
+  $q.loading.hide()
+}
+
+watch(mainBook.value, () => {
+  saveLibary()
+})
+
+watch(dopBook.value, () => {
+  saveLibary()
+})
+
 </script>
 
 <template>
@@ -55,28 +94,24 @@ async function searchBook() {
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Учебная литература для дисциплины</span>
       <p>бла бла бла</p>
+      {{ disciplineLibrary }}
       <q-separator class="q-mt-md q-mb-md"/>
 
       <div class="row q-gutter-x-md q-mb-md">
         <q-input
-            label="Введите текст для поиска"
-            stack-label
-            v-model="searchVal"
-            filled
-            class="col"
-            :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
+          label="Введите текст для поиска"
+          stack-label
+          v-model="searchVal"
+          filled
+          class="col"
+          :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
         />
-        <q-btn color="secondary" @click="searchBook" label="Поиск" />
+        <q-btn color="secondary" @click="searchBook" label="Поиск"/>
       </div>
       <div class="row">
         <div class="col-6">
           <div class="text-h6">Основная литература</div>
-          {{ mainBook }}
-          <div class="text-h6">Дополнительная литература</div>
-          {{ dopBook }}
-        </div>
-        <div class="col-6">
-          <div v-for="item in bookData">
+          <div v-for="item in mainBook" style="width: 95%">
             <q-field label="Название" stack-label filled>
               <template #control>
                 <div class="text-subtitle1 self-center full-width no-outline">
@@ -86,9 +121,43 @@ async function searchBook() {
               </template>
             </q-field>
             <div class="q-gutter-x-md q-mt-md q-mb-md">
-              <q-btn :disabled="checkTaken(item.id)" color="primary" label="В основную литературу" @click="addMainBook(item)"/>
-              <q-btn :disabled="checkTaken(item.id)" color="secondary" label="В дополнительную литературу" @click="addDopBook(item)"/>
+              <q-btn color="red" label="Убрать"
+                     @click="deleteMainBook(item.id)"/>
             </div>
+          </div>
+          <div class="text-h6">Дополнительная литература</div>
+          <div v-for="item in dopBook" style="width: 95%">
+            <q-field label="Название" stack-label filled>
+              <template #control>
+                <div class="text-subtitle1 self-center full-width no-outline">
+                  <a v-if="item.http_link" :href="`${item.http_link}`" target="_blank">{{ item.bib_disc }}</a>
+                  <span v-else>{{ item.bib_disc }}</span>
+                </div>
+              </template>
+            </q-field>
+            <div class="q-gutter-x-md q-mt-md q-mb-md">
+              <q-btn color="red" label="Убрать"
+                     @click="deleteDopBook(item.id)"/>
+            </div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div v-for="item in bookData">
+            <q-field label="Название" stack-label filled class="q-mb-md">
+              <template #control>
+                <div class="text-subtitle1 self-center full-width no-outline">
+                  <a v-if="item.http_link" :href="`${item.http_link}`" target="_blank">{{ item.bib_disc }}</a>
+                  <span v-else>{{ item.bib_disc }}</span>
+                  <div class="q-gutter-x-md q-mt-md">
+                    <q-btn :disabled="checkTaken(item.id)" color="primary" label="В основную литературу"
+                           @click="addMainBook(item)"/>
+                    <q-btn :disabled="checkTaken(item.id)" color="secondary" label="В дополнительную литературу"
+                           @click="addDopBook(item)"/>
+                  </div>
+                </div>
+              </template>
+            </q-field>
+
           </div>
         </div>
       </div>

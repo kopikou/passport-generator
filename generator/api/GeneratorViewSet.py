@@ -193,13 +193,18 @@ class GeneratorViewSet(
 
         return Response({"success": True})
 
-    @action(methods=['POST'], url_path="save-main-discipline-library", detail=False)
+    @action(methods=['POST'], url_path="save-discipline-library", detail=True)
     def update_discipline_library(self, request, *args, **kwargs):
 
         data = self.request.data
 
         serializer_data = PlanLinesLinkSaveGeneratorDisciplineDataSerializer(data=data)
         serializer_data.is_valid(raise_exception=True)
-        serializer_data.save()
+
+        instance = self.get_object()
+
+        instance.library = serializer_data.data['library']
+        instance.save()
 
         return Response(serializer_data.data)
+
