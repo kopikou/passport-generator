@@ -15,14 +15,15 @@ const generatorViewStore = useGeneratorViewStore()
 const {
   activeRpdId,
   disciplineLibrary,
+  rpdData,
 } = storeToRefs(generatorViewStore)
 
 
 const searchVal = ref('')
 const bookData = ref([])
 
-const dopBook = ref<GeneratorBookData[]>([])
-const mainBook = ref<GeneratorBookData[]>([])
+const dopBook = ref<GeneratorBookData[]>(rpdData.value.library?.dopBook)
+const mainBook = ref<GeneratorBookData[]>(rpdData.value.library?.mainBook)
 
 const columns = ref([
   {name: 'name', label: 'Название', field: 'name', align: 'center'},
@@ -38,20 +39,24 @@ function checkTaken(id) {
 
 function addMainBook(data) {
   mainBook.value.push(data)
+  saveLibary()
 }
 
 function addDopBook(data) {
   dopBook.value.push(data)
+  saveLibary()
 }
 
 function deleteMainBook(id) {
   let key = _.findKey(mainBook.value, (x) => x.id == id)
   mainBook.value.splice(key, 1)
+  saveLibary()
 }
 
 function deleteDopBook(id) {
   let key = _.findKey(dopBook.value, (x) => x.id == id)
   dopBook.value.splice(key, 1)
+  saveLibary()
 }
 
 async function searchBook() {
@@ -79,12 +84,9 @@ async function saveLibary() {
   $q.loading.hide()
 }
 
-watch(mainBook.value, () => {
-  saveLibary()
-})
-
-watch(dopBook.value, () => {
-  saveLibary()
+watch(disciplineLibrary, () => {
+  mainBook.value = rpdData.value.library?.mainBook
+  dopBook.value = rpdData.value.library?.dopBook
 })
 
 </script>
@@ -94,7 +96,6 @@ watch(dopBook.value, () => {
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Учебная литература для дисциплины</span>
       <p>бла бла бла</p>
-      {{ disciplineLibrary }}
       <q-separator class="q-mt-md q-mb-md"/>
 
       <div class="row q-gutter-x-md q-mb-md">
@@ -112,18 +113,18 @@ watch(dopBook.value, () => {
         <div class="col-6">
           <div class="text-h6">Основная литература</div>
           <div v-for="item in mainBook" style="width: 95%">
-            <q-field label="Название" stack-label filled>
+            <q-field label="Название" stack-label filled class="q-mb-md">
               <template #control>
                 <div class="text-subtitle1 self-center full-width no-outline">
                   <a v-if="item.http_link" :href="`${item.http_link}`" target="_blank">{{ item.bib_disc }}</a>
                   <span v-else>{{ item.bib_disc }}</span>
+                  <div class="q-gutter-x-md q-mt-md">
+                    <q-btn color="red" label="Убрать"
+                           @click="deleteMainBook(item.id)"/>
+                  </div>
                 </div>
               </template>
             </q-field>
-            <div class="q-gutter-x-md q-mt-md q-mb-md">
-              <q-btn color="red" label="Убрать"
-                     @click="deleteMainBook(item.id)"/>
-            </div>
           </div>
           <div class="text-h6">Дополнительная литература</div>
           <div v-for="item in dopBook" style="width: 95%">
