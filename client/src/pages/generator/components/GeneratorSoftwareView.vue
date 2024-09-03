@@ -2,12 +2,50 @@
 
 import {useQuasar} from "quasar";
 import {api} from "boot/axios";
-import {ref} from "vue";
+import {onBeforeMount, ref, watch} from "vue";
 import {GeneratorSoftwareData} from "src/types";
+import _ from "lodash";
+import useGeneratorViewStore from "stores/generatorViewStore";
+import {storeToRefs} from "pinia";
 
 const $q = useQuasar()
+const generatorViewStore = useGeneratorViewStore()
+
+const {
+  activeRpdId,
+  disciplineSoftware,
+  rpdData,
+} = storeToRefs(generatorViewStore)
+
 const searchVal = ref('')
+const searchResult = ref<GeneratorSoftwareData[]>([])
 const softwareData = ref<GeneratorSoftwareData[]>([])
+
+function checkTaken(id) {
+  return _.map(softwareData.value, (x) => x.id).includes(id);
+}
+
+function addSoftware(data) {
+  softwareData.value.push(data)
+  saveSoftware()
+}
+
+function deleteSoftware(id) {
+  let key = _.findKey(softwareData.value, (x) => x.id == id)
+  softwareData.value.splice(key, 1)
+  saveSoftware()
+}
+
+async function saveSoftware() {
+  $q.loading.show()
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-software/`, {
+    software: {
+      softwareData,
+    }
+  })
+  $q.loading.hide()
+}
+
 
 async function searchSoft() {
   if (searchVal.value.length <= 3) {
@@ -18,10 +56,19 @@ async function searchSoft() {
   } else {
     $q.loading.show({message: "Поиск программного обеспечения"})
     let r = await api.get('/api/generator/search-software/', {params: {val: searchVal.value}})
-    softwareData.value = r.data
+    searchResult.value = r.data
     $q.loading.hide()
   }
 }
+
+onBeforeMount(() => {
+  softwareData.value = rpdData.value?.software
+})
+
+watch(disciplineSoftware, () => {
+  softwareData.value = rpdData.value?.software
+})
+
 </script>
 
 <template>
@@ -33,32 +80,32 @@ async function searchSoft() {
 
       <div class="row q-gutter-x-md q-mb-md">
         <q-input
-            label="Введите текст для поиска"
-            stack-label
-            v-model="searchVal"
-            filled
-            class="col"
-            :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
+          label="Введите текст для поиска"
+          stack-label
+          v-model="searchVal"
+          filled
+          class="col"
+          :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
         />
         <q-btn color="secondary" @click="searchSoft" label="Поиск"/>
       </div>
       <div class="row">
         <div class="col-5">
-          <div class="text-h6">выбрано</div>
-          table
+          <div class="text-h6">Выбраный софт</div>
+          {{ softwareData }}
         </div>
         <div class="col-7">
-          <div v-for="item in softwareData">
-            <q-field label="Название" stack-label filled>
+          <div v-for="item in searchResult">
+            <q-field label="Название" stack-label filled class="q-mb-md">
               <template #control>
                 <div class="text-subtitle1 self-center full-width no-outline">
                   <span>{{ item.clicense__name }}</span>
                 </div>
+                <div class="q-gutter-x-md q-mt-md">
+                  <q-btn :disable="checkTaken(item.id)" color="primary" label="Добавить" @click="addSoftware(item)"/>
+                </div>
               </template>
             </q-field>
-            <div class="q-gutter-x-md q-mt-md q-mb-md">
-              <q-btn color="primary" label="Добавить"/>
-            </div>
           </div>
         </div>
       </div>

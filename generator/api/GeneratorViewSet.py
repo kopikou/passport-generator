@@ -208,3 +208,17 @@ class GeneratorViewSet(
 
         return Response(serializer_data.data)
 
+    @action(methods=['POST'], url_path="save-discipline-software", detail=True)
+    def update_discipline_software(self, request, *args, **kwargs):
+
+        data = self.request.data
+
+        serializer_data = PlanLinesLinkSaveGeneratorDisciplineDataSerializer(data=data)
+        serializer_data.is_valid(raise_exception=True)
+
+        instance = self.get_object()
+
+        instance.software = serializer_data.data['software']
+        instance.save()
+
+        return Response(serializer_data.data)

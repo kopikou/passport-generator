@@ -202,8 +202,8 @@ export interface GeneratorData {
   precedence_discipline: Array<number>,
   subsequent_discipline: Array<number>,
   library: GeneratorBookData[],
-  software: GeneratorBookData[],
-  logistics: GeneratorBookData[],
+  software: GeneratorSoftwareData[],
+  logistics: GeneratorOborudData[],
 }
 
 export interface GeneratorBookData {
