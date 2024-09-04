@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {ref, watch} from "vue";
+import {ref, watch, onBeforeMount} from "vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import {GeneratorBookData} from "src/types";
@@ -22,8 +22,8 @@ const {
 const searchVal = ref('')
 const bookData = ref([])
 
-const dopBook = ref<GeneratorBookData[]>(rpdData.value.library?.dopBook)
-const mainBook = ref<GeneratorBookData[]>(rpdData.value.library?.mainBook)
+const dopBook = ref<GeneratorBookData[]>([])
+const mainBook = ref<GeneratorBookData[]>([])
 
 const columns = ref([
   {name: 'name', label: 'Название', field: 'name', align: 'center'},
@@ -85,9 +85,19 @@ async function saveLibary() {
 }
 
 watch(disciplineLibrary, () => {
-  mainBook.value = rpdData.value.library?.mainBook
-  dopBook.value = rpdData.value.library?.dopBook
+  if (disciplineLibrary.value?.mainBook?.length)
+    mainBook.value = disciplineLibrary.value?.mainBook
+  if (disciplineLibrary.value?.dopBook?.length)
+    dopBook.value = disciplineLibrary.value?.dopBook
 })
+
+onBeforeMount(() => {
+  if (disciplineLibrary.value?.mainBook?.length)
+    mainBook.value = disciplineLibrary.value?.mainBook
+  if (disciplineLibrary.value?.dopBook?.length)
+    dopBook.value = disciplineLibrary.value?.dopBook
+})
+
 
 </script>
 
@@ -135,7 +145,7 @@ watch(disciplineLibrary, () => {
                   <span v-else>{{ item.bib_disc }}</span>
                   <div class="q-gutter-x-md q-mt-md">
                     <q-btn color="red" label="Убрать"
-                           @click="deleteMainBook(item.id)"/>
+                           @click="deleteDopBook(item.id)"/>
                   </div>
                 </div>
               </template>

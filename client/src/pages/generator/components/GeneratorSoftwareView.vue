@@ -37,11 +37,10 @@ function deleteSoftware(id) {
 }
 
 async function saveSoftware() {
+  let software = softwareData.value
   $q.loading.show()
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-software/`, {
-    software: {
-      softwareData,
-    }
+    software
   })
   $q.loading.hide()
 }
@@ -62,11 +61,13 @@ async function searchSoft() {
 }
 
 onBeforeMount(() => {
-  softwareData.value = rpdData.value?.software
+  if (disciplineSoftware.value.length)
+    softwareData.value = disciplineSoftware.value
 })
 
 watch(disciplineSoftware, () => {
-  softwareData.value = rpdData.value?.software
+  if (disciplineSoftware.value.length)
+    softwareData.value = disciplineSoftware.value
 })
 
 </script>
@@ -92,7 +93,19 @@ watch(disciplineSoftware, () => {
       <div class="row">
         <div class="col-5">
           <div class="text-h6">Выбраный софт</div>
-          {{ softwareData }}
+          <div v-for="item in softwareData" style="width: 95%">
+            <q-field label="Название" stack-label filled class="q-mb-md">
+              <template #control>
+                <div class="text-subtitle1 self-center full-width no-outline">
+                  <span>{{ item.clicense__name }}</span>
+                  <div class="q-gutter-x-md q-mt-md">
+                    <q-btn color="red" label="Убрать"
+                           @click="deleteSoftware(item.id)"/>
+                  </div>
+                </div>
+              </template>
+            </q-field>
+          </div>
         </div>
         <div class="col-7">
           <div v-for="item in searchResult">
