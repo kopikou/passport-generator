@@ -35,7 +35,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   const disciplineThemes = computed<DisciplineThemesData[]>(() => {
     return rpdData.value.discipline_themes || []
-  })A
+  })
 
   const disciplineLibrary = computed<GeneratorBookData[]>(() => {
     return rpdData.value.library || []
