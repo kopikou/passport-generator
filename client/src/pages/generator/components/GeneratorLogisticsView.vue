@@ -31,15 +31,16 @@ const {
 
 function addOborud(data) {
   oborudData.value.push(data)
+  saveOborud()
 }
 
 function deleteOborud(id) {
   let key = _.findKey(oborudData.value, (x) => x.id == id)
   oborudData.value.splice(key, 1)
-  saveSoftware()
+  saveOborud()
 }
 
-async function saveSoftware() {
+async function saveOborud() {
   let logistics = oborudData.value
   $q.loading.show()
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-logistics/`, {
@@ -106,7 +107,19 @@ watch(disciplineLogistics, () => {
       <div class="row">
         <div class="col-5">
           <div class="text-h6">выбрано</div>
-          {{ oborudData }}
+          <div v-for="item in oborudData" style="width: 95%">
+            <q-field label="Название" stack-label filled class="q-mb-md">
+              <template #control>
+                <div class="text-subtitle1 self-center full-width no-outline">
+                  <span>{{ item.name }} <q-chip v-if="item.inv" :label="`${item.inv}`"/> <q-chip v-if="item.caud__name"
+                                                                                                 :label="`${item.caud__name}`"/></span>
+                </div>
+                <div class="q-gutter-x-md q-mt-md">
+                  <q-btn color="red" label="Удалить" @click="deleteOborud(item.id)"/>
+                </div>
+              </template>
+            </q-field>
+          </div>
         </div>
         <div class="col-7">
           <div v-for="item in searchData">
