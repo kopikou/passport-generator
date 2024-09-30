@@ -3,21 +3,41 @@
 import {onBeforeMount, ref, watch} from "vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
+import {api} from "boot/axios";
+import {useQuasar} from "quasar";
 
 const generatorViewStore = useGeneratorViewStore();
+const $q = useQuasar()
 
 const{
+  rpdData,
+  activeRpdId,
   semestersData,
+
 }=storeToRefs(generatorViewStore)
 
 const tab = ref<string>('')
+const methods = ref<string>('')
+
+async function saveMethods() {
+  let interactive_methods = methods.value
+  $q.loading.show()
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-interactive-methods/`, {
+    interactive_methods
+  })
+  $q.loading.hide()
+}
 
 watch(semestersData, () => {
   tab.value = `${semestersData.value[0].num}`
+    if (rpdData.value.interactive_methods)
+      methods.value = rpdData.value.interactive_methods
 })
 
 onBeforeMount(() => {
   tab.value = `${semestersData.value[0]?.num}`
+    if (rpdData.value.interactive_methods)
+      methods.value = rpdData.value.interactive_methods
 })
 
 </script>
@@ -128,6 +148,20 @@ onBeforeMount(() => {
           </div>
         </q-tab-panel>
       </q-tab-panels>
+      <div class="q-gutter-md">
+      <q-input
+        label="Интерактивные методы обучения"
+        filled
+        stack-label
+        v-model="methods"
+        clearable
+      />
+      <q-btn
+        label="Сохранить"
+        color="primary"
+        @click="saveMethods"
+      />
+      </div>
     </div>
   </div>
 </template>

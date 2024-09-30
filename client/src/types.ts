@@ -204,6 +204,7 @@ export interface GeneratorData {
   library: GeneratorBookData[],
   software: GeneratorSoftwareData[],
   logistics: GeneratorOborudData[],
+  interactive_methods: string,
 }
 
 export interface GeneratorBookData {

@@ -132,6 +132,7 @@ class PlanLinesLinkSaveGeneratorDisciplineDataSerializer(serializers.Serializer)
     library = serializers.JSONField(allow_null=True, required=False)
     software = serializers.JSONField(allow_null=True, required=False)
     logistics = serializers.JSONField(allow_null=True, required=False)
+    interactive_methods = serializers.CharField(allow_null=True, allow_blank=True, required=False)
 
     class Meta:
         model = PlanLinesLink
@@ -142,6 +143,7 @@ class PlanLinesLinkSaveGeneratorDisciplineDataSerializer(serializers.Serializer)
             'library',
             'software',
             'logistics',
+            'interactive_methods',
         ]
 
 
@@ -195,6 +197,7 @@ class PlanLinesLinkSerializer(serializers.Serializer):
     library = serializers.JSONField(allow_null=True, required=False)
     software = serializers.JSONField(allow_null=True, required=False)
     logistics = serializers.JSONField(allow_null=True, required=False)
+    interactive_methods = serializers.CharField(allow_null=True, required=False)
 
     class Meta:
         model = PlanLinesLink
@@ -215,4 +218,5 @@ class PlanLinesLinkSerializer(serializers.Serializer):
             'library',
             'software',
             'logistics',
+            'interactive_methods',
         ]

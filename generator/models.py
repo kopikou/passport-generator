@@ -24,6 +24,7 @@ class PlanLinesLink(TimestampsModel):
     library = models.JSONField(default=dict, blank=True, null=True)
     software = models.JSONField(default=dict, blank=True, null=True)
     logistics = models.JSONField(default=dict, blank=True, null=True)
+    interactive_methods = models.TextField(blank=True, null=True)
 
     @property
     def status_verbose(self):
