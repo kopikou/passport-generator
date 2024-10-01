@@ -7,6 +7,7 @@ import {GeneratorBookData} from "src/types";
 import _ from "lodash";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
+import GeneratorAddBookDialog from "pages/generator/components/dialogs/GeneratorAddBookDialog.vue";
 
 const $q = useQuasar()
 
@@ -84,6 +85,23 @@ async function saveLibary() {
   $q.loading.hide()
 }
 
+async function addBook() {
+  $q.notify({
+    message: "Убедитесь, что выбранный источник доступен всем студентам и в достаточном количестве.",
+    color: "secondary",
+    type: "info",
+    position: "center",
+    progress: true,
+    timeout: 3500,
+  })
+
+    $q.dialog({
+      component: GeneratorAddBookDialog,
+    }).onOk(() => {
+      saveLibary()
+    })
+}
+
 watch(disciplineLibrary, () => {
   if (disciplineLibrary.value?.mainBook?.length)
     mainBook.value = disciplineLibrary.value?.mainBook
@@ -107,7 +125,12 @@ onBeforeMount(() => {
       <span class="text-h6 q-pl-lg">Учебная литература для дисциплины</span>
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
-
+      <q-btn
+        class="q-mb-md"
+        label="Добавить книгу"
+        color="secondary"
+        @click="addBook"
+      />
       <div class="row q-gutter-x-md q-mb-md">
         <q-input
           label="Введите текст для поиска"
