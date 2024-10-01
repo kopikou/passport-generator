@@ -76,3 +76,14 @@ class DisciplineWorkHours(TimestampsModel):
     @property
     def type_verbose(self):
         return DisciplineWorkHours.TypeChoices.labels[self.type]
+
+
+class DefaultsResources(TimestampsModel):
+
+    class TypeChoices(models.IntegerChoices):
+        web_resources = 0, "Интернет"
+        storage = 1, "База данных"
+
+    name = models.TextField(verbose_name="Наименование ресурса")
+    url = models.TextField(verbose_name="Ссылка на ресурс", null=True, blank=True)
+    type = models.IntegerField(choices=TypeChoices.choices)
