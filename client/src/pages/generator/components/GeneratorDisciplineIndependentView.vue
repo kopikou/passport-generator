@@ -107,73 +107,79 @@ const disciplineThemesByValue = computed(() => {
       <span class="text-h6 q-pl-lg">Перечень самостоятельных работ по дисциплине</span>
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
-      <q-btn label="Добавить новую самостоятельную работу" color="teal" class="q-mb-md" @click="addIndependent"/>
-      <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
-        <div class="absolute-full flex flex-center">
-          <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
-        </div>
-      </q-linear-progress>
-      <q-tabs
-        v-model="tab"
-        align="left"
-        narrow-indicator
-        class="q-mb-md"
-      >
-        <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`" :label="`${item.num}`"/>
-      </q-tabs>
-      <q-linear-progress class="q-mb-md" size="20px" rounded :value="allSemesterPercentValue / allSemesterPercent"
-                         color="primary">
-        <div class="absolute-full flex flex-center">
-          <q-badge color="white" text-color="black" :label="`${allSemesterPercentValue} / ${allSemesterPercent}`"/>
-        </div>
-      </q-linear-progress>
-      <q-tab-panels
-        v-model="tab"
-        animated
-        transition-prev="scale"
-        transition-next="scale"
-      >
-        <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="independent-container">
-          <div v-if="item" class="independent-container__header text-center text-subtitle1 items-center">
-            <div>
-              Вид самостоятельной работы
-            </div>
-            <div>
-              Количество часов
-            </div>
-            <div>
-              Тема дисциплины
-            </div>
-            <div>
-              Управление
-            </div>
+      <div v-if="allPercent != 0">
+        <q-btn label="Добавить новую самостоятельную работу" color="teal" class="q-mb-md" @click="addIndependent"/>
+        <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
+          <div class="absolute-full flex flex-center">
+            <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
           </div>
-          <div v-for="independent in independentDisciplineWorkHour" class="independent-container__body">
-            <div v-if="independent.semester == tab"
-                 class="independent-container__body__cell text-subtitle1 text-center items-center">
+        </q-linear-progress>
+        <q-tabs
+          v-model="tab"
+          align="left"
+          narrow-indicator
+          class="q-mb-md"
+        >
+          <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`"
+                 :label="`${item.num}`"/>
+        </q-tabs>
+        <q-linear-progress class="q-mb-md" size="20px" rounded :value="allSemesterPercentValue / allSemesterPercent"
+                           color="primary">
+          <div class="absolute-full flex flex-center">
+            <q-badge color="white" text-color="black" :label="`${allSemesterPercentValue} / ${allSemesterPercent}`"/>
+          </div>
+        </q-linear-progress>
+        <q-tab-panels
+          v-model="tab"
+          animated
+          transition-prev="scale"
+          transition-next="scale"
+        >
+          <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="independent-container">
+            <div v-if="item" class="independent-container__header text-center text-subtitle1 items-center">
               <div>
-                {{ independent.name }}
+                Вид самостоятельной работы
               </div>
               <div>
-                {{ independent.hours }}
+                Количество часов
               </div>
               <div>
-                {{ disciplineThemesByValue[independent.theme_id]?.name }}
+                Тема дисциплины
               </div>
               <div>
-                <q-btn
-                  icon="mdi-delete" color="red" flat @click="deleteIndependent(independent.id)"
-                />
-                <q-btn
-                  icon="mdi-update" color="green" flat @click="updateIndependent(independent.id)"
-                />
+                Управление
               </div>
             </div>
-          </div>
-        </q-tab-panel>
-      </q-tab-panels>
+            <div v-for="independent in independentDisciplineWorkHour" class="independent-container__body">
+              <div v-if="independent.semester == tab"
+                   class="independent-container__body__cell text-subtitle1 text-center items-center">
+                <div>
+                  {{ independent.name }}
+                </div>
+                <div>
+                  {{ independent.hours }}
+                </div>
+                <div>
+                  {{ disciplineThemesByValue[independent.theme_id]?.name }}
+                </div>
+                <div>
+                  <q-btn
+                    icon="mdi-delete" color="red" flat @click="deleteIndependent(independent.id)"
+                  />
+                  <q-btn
+                    icon="mdi-update" color="green" flat @click="updateIndependent(independent.id)"
+                  />
+                </div>
+              </div>
+            </div>
+          </q-tab-panel>
+        </q-tab-panels>
+        </div>
+        <div v-else>
+          <p class="text-h6">Нет часов по практическим занятиям</p>
+        </div>
+      </div>
     </div>
-  </div>
 </template>
 
 <style scoped>

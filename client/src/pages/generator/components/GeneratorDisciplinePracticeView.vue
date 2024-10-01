@@ -106,71 +106,77 @@ const disciplineThemesByValue = computed(() => {
       <span class="text-h6 q-pl-lg">Перечень практических работ по дисциплине</span>
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
-      <q-btn label="Добавить новую практическую рработу" color="teal" class="q-mb-md" @click="addPractice"/>
-      <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
-        <div class="absolute-full flex flex-center">
-          <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
-        </div>
-      </q-linear-progress>
-      <q-tabs
-        v-model="tab"
-        align="left"
-        narrow-indicator
-        class="q-mb-md"
-      >
-        <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`" :label="`${item.num}`"/>
-      </q-tabs>
-      <q-linear-progress class="q-mb-md" size="20px" rounded :value="allSemesterPercentValue / allSemesterPercent"
-                         color="primary">
-        <div class="absolute-full flex flex-center">
-          <q-badge color="white" text-color="black" :label="`${allSemesterPercentValue} / ${allSemesterPercent}`"/>
-        </div>
-      </q-linear-progress>
-      <q-tab-panels
-        v-model="tab"
-        animated
-        transition-prev="scale"
-        transition-next="scale"
-      >
-        <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="practice-container">
-          <div v-if="item" class="practice-container__header text-center text-subtitle1 items-center">
-            <div>
-              Наименование раздела
-            </div>
-            <div>
-              Количество часов
-            </div>
-            <div>
-              Тема дисциплины
-            </div>
-            <div>
-              Управление
-            </div>
+      <div v-if="allPercent != 0">
+        <q-btn label="Добавить новую практическую рработу" color="teal" class="q-mb-md" @click="addPractice"/>
+        <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
+          <div class="absolute-full flex flex-center">
+            <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
           </div>
-          <div v-for="practice in practiceDisciplineWorkHour" class="practice-container__body">
-            <div v-if="practice.semester == tab"
-                 class="practice-container__body__cell text-subtitle1 text-center items-center">
+        </q-linear-progress>
+        <q-tabs
+          v-model="tab"
+          align="left"
+          narrow-indicator
+          class="q-mb-md"
+        >
+          <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`"
+                 :label="`${item.num}`"/>
+        </q-tabs>
+        <q-linear-progress class="q-mb-md" size="20px" rounded :value="allSemesterPercentValue / allSemesterPercent"
+                           color="primary">
+          <div class="absolute-full flex flex-center">
+            <q-badge color="white" text-color="black" :label="`${allSemesterPercentValue} / ${allSemesterPercent}`"/>
+          </div>
+        </q-linear-progress>
+        <q-tab-panels
+          v-model="tab"
+          animated
+          transition-prev="scale"
+          transition-next="scale"
+        >
+          <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="practice-container">
+            <div v-if="item" class="practice-container__header text-center text-subtitle1 items-center">
               <div>
-                {{ practice.name }}
+                Наименование раздела
               </div>
               <div>
-                {{ practice.hours }}
+                Количество часов
               </div>
               <div>
-                {{ disciplineThemesByValue[practice.theme_id]?.name }}
+                Тема дисциплины
               </div>
               <div>
-                <q-btn
-                  icon="mdi-delete" color="red" flat @click="deletePractice(practice.id)"
-                />
-                <q-btn
-                  icon="mdi-update" color="green" flat @click="updatePractice(practice.id)"
-                />
+                Управление
               </div>
             </div>
-          </div>
-        </q-tab-panel>
-      </q-tab-panels>
+            <div v-for="practice in practiceDisciplineWorkHour" class="practice-container__body">
+              <div v-if="practice.semester == tab"
+                   class="practice-container__body__cell text-subtitle1 text-center items-center">
+                <div>
+                  {{ practice.name }}
+                </div>
+                <div>
+                  {{ practice.hours }}
+                </div>
+                <div>
+                  {{ disciplineThemesByValue[practice.theme_id]?.name }}
+                </div>
+                <div>
+                  <q-btn
+                    icon="mdi-delete" color="red" flat @click="deletePractice(practice.id)"
+                  />
+                  <q-btn
+                    icon="mdi-update" color="green" flat @click="updatePractice(practice.id)"
+                  />
+                </div>
+              </div>
+            </div>
+          </q-tab-panel>
+        </q-tab-panels>
+      </div>
+      <div v-else>
+        <p class="text-h6">Нет часов по практическим занятиям</p>
+      </div>
     </div>
   </div>
 </template>
