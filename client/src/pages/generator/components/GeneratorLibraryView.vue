@@ -76,8 +76,9 @@ async function searchBook() {
 
 async function saveLibary() {
   $q.loading.show()
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-library/`, {
-    library: {
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+    type: "library",
+    value: {
       mainBook: mainBook.value,
       dopBook: dopBook.value,
     }
@@ -95,25 +96,19 @@ async function addBook() {
     timeout: 3500,
   })
 
-    $q.dialog({
-      component: GeneratorAddBookDialog,
-    }).onOk(() => {
-      saveLibary()
-    })
+  $q.dialog({
+    component: GeneratorAddBookDialog,
+  }).onOk(() => {
+    saveLibary()
+  })
 }
 
 watch(disciplineLibrary, () => {
-  if (disciplineLibrary.value?.mainBook?.length)
-    mainBook.value = disciplineLibrary.value?.mainBook
-  if (disciplineLibrary.value?.dopBook?.length)
-    dopBook.value = disciplineLibrary.value?.dopBook
+  console.log(disciplineLibrary.value)
 })
 
 onBeforeMount(() => {
-  if (disciplineLibrary.value?.mainBook?.length)
-    mainBook.value = disciplineLibrary.value?.mainBook
-  if (disciplineLibrary.value?.dopBook?.length)
-    dopBook.value = disciplineLibrary.value?.dopBook
+  console.log(disciplineLibrary.value)
 })
 
 
@@ -121,6 +116,7 @@ onBeforeMount(() => {
 
 <template>
   <div>
+    {{ disciplineLibrary }}
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Учебная литература для дисциплины</span>
       <p>бла бла бла</p>

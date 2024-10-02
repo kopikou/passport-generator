@@ -22,6 +22,7 @@ import GeneratorLibraryView from "pages/generator/components/GeneratorLibraryVie
 import GeneratorSoftwareView from "pages/generator/components/GeneratorSoftwareView.vue";
 import GeneratorLogisticsView from "pages/generator/components/GeneratorLogisticsView.vue";
 import GeneratorDisciplineLecturesView from "pages/generator/components/GeneratorDisciplineLecturesView.vue";
+import GeneratorResourcesView from "pages/generator/components/GeneratorResourcesView.vue";
 
 
 const routes: RouteRecordRaw[] = [
@@ -112,6 +113,11 @@ const routes: RouteRecordRaw[] = [
             path: "logistics",
             name: "GeneratorLogisticsView",
             component: GeneratorLogisticsView,
+          },
+          {
+            path: "resources",
+            name: "GeneratorResourcesView",
+            component: GeneratorResourcesView,
           },
         ]
       },

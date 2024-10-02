@@ -7,10 +7,11 @@ from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
-from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours
+from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
+    DefaultsResources
 from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
     DisciplineIndicatorsAddSerializer, PlanLinesLinkSaveGeneratorDisciplineDataSerializer, DisciplineThemeSerializer, \
-    DisciplineWorkHoursSerializer
+    DisciplineWorkHoursSerializer, AdditionalInfoSerializer
 from rpd.models import LinesData
 
 
@@ -40,9 +41,12 @@ class GeneratorViewSet(
         other_discipline = LinesData.objects.filter(plan_id=serializer.data['planlines']['plan_id'],
                                                     synchronize=True).values("disid", "dis")
 
+        resources = DefaultsResources.objects.all().values("id", "name", "type", "url")
+
         result = {
             "admission": admission_info[0],
             "other_discipline": [i for i in other_discipline],
+            "resources": [i for i in resources],
             **serializer.data,
         }
 
@@ -248,5 +252,16 @@ class GeneratorViewSet(
 
         instance.interactive_methods = serializer_data.data['interactive_methods']
         instance.save()
+
+        return Response(serializer_data.data)
+
+    @action(methods=['POST'], url_path="save-additional-info", detail=True)
+    def save_additional_info(self, request, *args, **kwargs):
+
+        data = self.request.data
+
+        serializer_data = AdditionalInfoSerializer(data={"planlineslink_id": self.kwargs['pk'], "type": data['type'], "value": str(data['value'])})
+        serializer_data.is_valid(raise_exception=True)
+        serializer_data.save()
 
         return Response(serializer_data.data)

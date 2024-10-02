@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from generator.models import PlanLinesLink, DisciplineIndicators, DisciplineThemes, DisciplineWorkHours
+from generator.models import PlanLinesLink, DisciplineIndicators, DisciplineThemes, DisciplineWorkHours, AdditionalInfo
 from rpd.models import LinesData, LinesIndicators
 from rpd.serializer import LinesDataSerializer, SemesterDataSerializer, LinesIndicatorsSerializer, PlanDataSerializer
 
@@ -72,7 +72,6 @@ class GeneratorLinesIndicatorsSerializer(serializers.ModelSerializer):
 
     discipline_indicator = DisciplineIndicatorsSerializer(many=True)
 
-
     class Meta:
         model = LinesIndicators
         fields = [
@@ -123,6 +122,34 @@ class DisciplineThemeSerializer(serializers.Serializer):
         return discipline_themes
 
 
+class AdditionalInfoSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    planlineslink_id = serializers.IntegerField()
+    type = serializers.CharField()
+    value = serializers.JSONField(allow_null=True)
+
+    class Meta:
+        model = AdditionalInfo
+        fields = [
+            'id',
+            'planlineslink_id',
+            'type',
+            'value',
+        ]
+
+    def create(self, validated_data):
+        additional_info, created = AdditionalInfo.objects.update_or_create(
+            planlineslink_id=validated_data['planlineslink_id'],
+            type=validated_data['type'],
+            defaults={
+                "type": validated_data['type'],
+                "value": validated_data['value'],
+                "planlineslink_id": validated_data['planlineslink_id'],
+            }
+        )
+
+        return additional_info
+
 class PlanLinesLinkSaveGeneratorDisciplineDataSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     precedence_discipline = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
@@ -146,7 +173,6 @@ class PlanLinesLinkSaveGeneratorDisciplineDataSerializer(serializers.Serializer)
             'interactive_methods',
         ]
 
-
 class DisciplineWorkHoursSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False, allow_null=True)
     planlineslink_id = serializers.IntegerField()
@@ -169,14 +195,13 @@ class DisciplineWorkHoursSerializer(serializers.Serializer):
             'semester',
         ]
 
-    def create(self, validate_data):
-        discipline_themes, created = DisciplineWorkHours.objects.update_or_create(
-            id=validate_data['id'],
-            defaults=validate_data,
-        )
+        def create(self, validate_data):
+            discipline_themes, created = DisciplineWorkHours.objects.update_or_create(
+                id=validate_data['id'],
+                defaults=validate_data,
+            )
 
-        return discipline_themes
-
+            return discipline_themes
 
 class PlanLinesLinkSerializer(serializers.Serializer):
     planlines = GeneratorLinesDataSerializer(read_only=True)
@@ -186,13 +211,17 @@ class PlanLinesLinkSerializer(serializers.Serializer):
     person = serializers.IntegerField()
     status = serializers.IntegerField()
     status_verbose = serializers.CharField(read_only=True)
-    precedence_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True, allow_empty=True,
+    precedence_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True,
+                                                  allow_empty=True,
                                                   required=False)
-    subsequent_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True, allow_empty=True,
+    subsequent_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True,
+                                                  allow_empty=True,
                                                   required=False)
 
     discipline_themes = DisciplineThemeSerializer(many=True)
     discipline_work_hour = DisciplineWorkHoursSerializer(many=True)
+
+    additional_info = AdditionalInfoSerializer(many=True)
 
     library = serializers.JSONField(allow_null=True, required=False)
     software = serializers.JSONField(allow_null=True, required=False)
@@ -215,6 +244,8 @@ class PlanLinesLinkSerializer(serializers.Serializer):
 
             'discipline_themes',
             'discipline_work_hour',
+            'additional_info',
+
             'library',
             'software',
             'logistics',

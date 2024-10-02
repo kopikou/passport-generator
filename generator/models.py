@@ -87,3 +87,9 @@ class DefaultsResources(TimestampsModel):
     name = models.TextField(verbose_name="Наименование ресурса")
     url = models.TextField(verbose_name="Ссылка на ресурс", null=True, blank=True)
     type = models.IntegerField(choices=TypeChoices.choices)
+
+
+class AdditionalInfo(TimestampsModel):
+    planlineslink = models.ForeignKey("PlanLinesLink", on_delete=models.CASCADE, related_name="additional_info")
+    type = models.TextField()
+    value = models.JSONField()
