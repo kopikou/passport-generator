@@ -9,35 +9,39 @@ import {useQuasar} from "quasar";
 const generatorViewStore = useGeneratorViewStore();
 const $q = useQuasar()
 
-const{
+const {
   rpdData,
   activeRpdId,
   semestersData,
-
-}=storeToRefs(generatorViewStore)
+  interactiveMethods,
+} = storeToRefs(generatorViewStore)
 
 const tab = ref<string>('')
 const methods = ref<string>('')
 
 async function saveMethods() {
-  let interactive_methods = methods.value
   $q.loading.show()
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-interactive-methods/`, {
-    interactive_methods
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+    type: "interactiveMethods",
+    value: {
+      "interactiveMethods": methods.value
+    }
   })
   $q.loading.hide()
 }
 
 watch(semestersData, () => {
   tab.value = `${semestersData.value[0].num}`
-    if (rpdData.value.interactive_methods)
-      methods.value = rpdData.value.interactive_methods
+})
+
+watch(interactiveMethods, () => {
+  methods.value = interactiveMethods.value[0]?.value['interactiveMethods']
+
 })
 
 onBeforeMount(() => {
   tab.value = `${semestersData.value[0]?.num}`
-    if (rpdData.value.interactive_methods)
-      methods.value = rpdData.value.interactive_methods
+  methods.value = interactiveMethods.value[0]?.value['interactiveMethods']
 })
 
 </script>
@@ -55,7 +59,7 @@ onBeforeMount(() => {
           narrow-indicator
           class="q-mb-md"
       >
-        <q-tab class="text-teal bg-grey-4"  v-for="item in semestersData" :name="`${item.num}`" :label="`${item.num}`"/>
+        <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`" :label="`${item.num}`"/>
       </q-tabs>
 
       <q-tab-panels
@@ -93,7 +97,8 @@ onBeforeMount(() => {
               </template>
             </q-field>
 
-            <div class="text-subtitle1">Самостоятельные работы <span class="text-grey-6">(в том числе курсовое проектирование)</span></div>
+            <div class="text-subtitle1">Самостоятельные работы <span class="text-grey-6">(в том числе курсовое проектирование)</span>
+            </div>
             <q-field outlined dense>
               <template v-slot:control>
                 <div class="self-center full-width no-outline text-center">
@@ -149,18 +154,18 @@ onBeforeMount(() => {
         </q-tab-panel>
       </q-tab-panels>
       <div class="q-gutter-md">
-      <q-input
-        label="Интерактивные методы обучения"
-        filled
-        stack-label
-        v-model="methods"
-        clearable
-      />
-      <q-btn
-        label="Сохранить"
-        color="primary"
-        @click="saveMethods"
-      />
+        <q-input
+            label="Интерактивные методы обучения"
+            filled
+            stack-label
+            v-model="methods"
+            clearable
+        />
+        <q-btn
+            label="Сохранить"
+            color="primary"
+            @click="saveMethods"
+        />
       </div>
     </div>
   </div>

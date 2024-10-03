@@ -150,17 +150,6 @@ class AdditionalInfoSerializer(serializers.Serializer):
 
         return additional_info
 
-class PlanLinesLinkSaveGeneratorDisciplineDataSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    interactive_methods = serializers.CharField(allow_null=True, allow_blank=True, required=False)
-
-    class Meta:
-        model = PlanLinesLink
-        fields = [
-            'id',
-            'interactive_methods',
-        ]
-
 class DisciplineWorkHoursSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False, allow_null=True)
     planlineslink_id = serializers.IntegerField()
@@ -205,8 +194,6 @@ class PlanLinesLinkSerializer(serializers.Serializer):
 
     additional_info = AdditionalInfoSerializer(many=True)
 
-    interactive_methods = serializers.CharField(allow_null=True, required=False)
-
     class Meta:
         model = PlanLinesLink
         fields = [
@@ -222,6 +209,4 @@ class PlanLinesLinkSerializer(serializers.Serializer):
             'discipline_themes',
             'discipline_work_hour',
             'additional_info',
-
-            'interactive_methods',
         ]

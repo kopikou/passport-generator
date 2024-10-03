@@ -19,7 +19,6 @@ class PlanLinesLink(TimestampsModel):
     mira_id = models.IntegerField(verbose_name='')
     person = models.IntegerField(verbose_name='')
     status = models.IntegerField(choices=StatusChoices.choices, default=StatusChoices.appointed)
-    interactive_methods = models.TextField(blank=True, null=True)
 
     @property
     def status_verbose(self):

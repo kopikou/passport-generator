@@ -10,7 +10,7 @@ from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
     DefaultsResources
 from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
-    DisciplineIndicatorsAddSerializer, PlanLinesLinkSaveGeneratorDisciplineDataSerializer, DisciplineThemeSerializer, \
+    DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer
 from rpd.models import LinesData
 
@@ -143,22 +143,6 @@ class GeneratorViewSet(
 
         return Response(serializer_data.data)
 
-    @action(methods=['POST'], url_path="save-prec-sub-discipline", detail=True)
-    def seve_prec_sub_discipline(self, request, *args, **kwargs):
-
-        data = self.request.data
-
-        serializer_data = PlanLinesLinkSaveGeneratorDisciplineDataSerializer(data=data)
-        serializer_data.is_valid(raise_exception=True)
-
-        instance = self.get_object()
-
-        instance.subsequent_discipline = serializer_data.data['subsequent_discipline']
-        instance.precedence_discipline = serializer_data.data['precedence_discipline']
-        instance.save()
-
-        return Response(serializer_data.data)
-
     @action(methods=['POST'], url_path="save-discipline-themes", detail=False)
     def save_discipline_themes(self, request, *args, **kwargs):
 
@@ -196,50 +180,6 @@ class GeneratorViewSet(
         DisciplineWorkHours.objects.filter(id=pk).delete()
 
         return Response({"success": True})
-
-
-    @action(methods=['POST'], url_path="save-discipline-software", detail=True)
-    def update_discipline_software(self, request, *args, **kwargs):
-
-        data = self.request.data
-
-        serializer_data = PlanLinesLinkSaveGeneratorDisciplineDataSerializer(data=data)
-        serializer_data.is_valid(raise_exception=True)
-
-        instance = self.get_object()
-
-        instance.software = serializer_data.data['software']
-        instance.save()
-
-        return Response(serializer_data.data)
-
-    @action(methods=['POST'], url_path="save-discipline-logistics", detail=True)
-    def update_discipline_software(self, request, *args, **kwargs):
-        data = self.request.data
-
-        serializer_data = PlanLinesLinkSaveGeneratorDisciplineDataSerializer(data=data)
-        serializer_data.is_valid(raise_exception=True)
-
-        instance = self.get_object()
-
-        instance.logistics = serializer_data.data['logistics']
-        instance.save()
-
-        return Response(serializer_data.data)
-
-    @action(methods=['POST'], url_path="save-interactive-methods", detail=True)
-    def save_interactive_methods(self, request, *args, **kwargs):
-        data = self.request.data
-
-        serializer_data = PlanLinesLinkSaveGeneratorDisciplineDataSerializer(data=data)
-        serializer_data.is_valid(raise_exception=True)
-
-        instance = self.get_object()
-
-        instance.interactive_methods = serializer_data.data['interactive_methods']
-        instance.save()
-
-        return Response(serializer_data.data)
 
     @action(methods=['POST'], url_path="save-additional-info", detail=True)
     def save_additional_info(self, request, *args, **kwargs):
