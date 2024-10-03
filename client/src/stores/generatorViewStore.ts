@@ -42,7 +42,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
   const disciplineSoftware = computed<GeneratorSoftwareData[]>(() => {
-    return rpdData.value.software || []
+    return _.filter(rpdData.value.additional_info, (x) => x.type == "software")
   })
 
   const disciplineLogistics = computed<GeneratorOborudData[]>(() => {

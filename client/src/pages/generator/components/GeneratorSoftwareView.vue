@@ -37,10 +37,10 @@ function deleteSoftware(id) {
 }
 
 async function saveSoftware() {
-  let software = softwareData.value
   $q.loading.show()
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-software/`, {
-    software
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+    type: "software",
+    value: softwareData.value,
   })
   $q.loading.hide()
 }
@@ -62,12 +62,12 @@ async function searchSoft() {
 
 onBeforeMount(() => {
   if (disciplineSoftware.value.length)
-    softwareData.value = disciplineSoftware.value
+    softwareData.value = disciplineSoftware.value[0]?.value
 })
 
 watch(disciplineSoftware, () => {
   if (disciplineSoftware.value.length)
-    softwareData.value = disciplineSoftware.value
+    softwareData.value = disciplineSoftware.value[0]?.value
 })
 
 </script>
