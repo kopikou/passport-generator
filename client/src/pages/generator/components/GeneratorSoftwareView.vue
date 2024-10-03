@@ -61,13 +61,11 @@ async function searchSoft() {
 }
 
 onBeforeMount(() => {
-  if (disciplineSoftware.value.length)
-    softwareData.value = disciplineSoftware.value[0]?.value
+  softwareData.value = disciplineSoftware.value[0]?.value || []
 })
 
 watch(disciplineSoftware, () => {
-  if (disciplineSoftware.value.length)
-    softwareData.value = disciplineSoftware.value[0]?.value
+  softwareData.value = disciplineSoftware.value[0]?.value || []
 })
 
 </script>

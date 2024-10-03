@@ -21,7 +21,6 @@ class PlanLinesLink(TimestampsModel):
     status = models.IntegerField(choices=StatusChoices.choices, default=StatusChoices.appointed)
     precedence_discipline = ArrayField(models.IntegerField(verbose_name=''), default=list, null=True, blank=True)
     subsequent_discipline = ArrayField(models.IntegerField(verbose_name=''), default=list, null=True, blank=True)
-    logistics = models.JSONField(default=dict, blank=True, null=True)
     interactive_methods = models.TextField(blank=True, null=True)
 
     @property

@@ -46,7 +46,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
   const disciplineLogistics = computed<GeneratorOborudData[]>(() => {
-    return rpdData.value.logistics || []
+    return _.filter(rpdData.value.additional_info, (x) => x.type == "logistics")
   })
 
   const lecturesDisciplineWorkHour = computed<DisciplineWorkHour[]>(() => {

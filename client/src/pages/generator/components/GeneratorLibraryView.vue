@@ -87,6 +87,11 @@ async function saveLibary() {
 }
 
 async function addBook() {
+  if (!disciplineLibrary.value[0]) {
+    _.set(disciplineLibrary.value, "[0].value['mainBook']", [])
+    _.set(disciplineLibrary.value, "[0].value['dopBook']", [])
+    saveLibary()
+  }
   $q.notify({
     message: "Убедитесь, что выбранный источник доступен всем студентам и в достаточном количестве.",
     color: "secondary",
@@ -99,18 +104,20 @@ async function addBook() {
   $q.dialog({
     component: GeneratorAddBookDialog,
   }).onOk(() => {
+    mainBook.value = disciplineLibrary.value[0]?.value['mainBook'] || []
+    dopBook.value = disciplineLibrary.value[0]?.value['dopBook'] || []
     saveLibary()
   })
 }
 
 watch(disciplineLibrary, () => {
-  mainBook.value = disciplineLibrary.value[0]?.value['mainBook']
-  dopBook.value = disciplineLibrary.value[0]?.value['dopBook']
+  mainBook.value = disciplineLibrary.value[0]?.value['mainBook'] || []
+  dopBook.value = disciplineLibrary.value[0]?.value['dopBook'] || []
 })
 
 onBeforeMount(() => {
-  mainBook.value = disciplineLibrary.value[0]?.value['mainBook']
-  dopBook.value = disciplineLibrary.value[0]?.value['dopBook']
+  mainBook.value = disciplineLibrary.value[0]?.value['mainBook'] || []
+  dopBook.value = disciplineLibrary.value[0]?.value['dopBook'] || []
 })
 
 

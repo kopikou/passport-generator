@@ -41,10 +41,10 @@ function deleteOborud(id) {
 }
 
 async function saveOborud() {
-  let logistics = oborudData.value
   $q.loading.show()
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-logistics/`, {
-    logistics
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+    type: "logistics",
+    value: oborudData.value,
   })
   $q.loading.hide()
 }
@@ -69,14 +69,16 @@ async function searchOborud() {
   }
 }
 
+function checkTaken(id) {
+  return _.map(oborudData.value, (x) => x.id).includes(id);
+}
+
 onBeforeMount(() => {
-  if (disciplineLogistics.value.length)
-    oborudData.value = disciplineLogistics.value
+  oborudData.value = disciplineLogistics.value[0]?.value || []
 })
 
 watch(disciplineLogistics, () => {
-  if (disciplineLogistics.value.length)
-    oborudData.value = disciplineLogistics.value
+  oborudData.value = disciplineLogistics.value[0]?.value || []
 })
 
 </script>
@@ -130,7 +132,7 @@ watch(disciplineLogistics, () => {
                                                                                                  :label="`${item.caud__name}`"/></span>
                 </div>
                 <div class="q-gutter-x-md q-mt-md">
-                  <q-btn color="primary" label="Добавить" @click="addOborud(item)"/>
+                  <q-btn color="primary" label="Добавить" @click="addOborud(item)" :disable="checkTaken(item.id)"/>
                 </div>
               </template>
             </q-field>

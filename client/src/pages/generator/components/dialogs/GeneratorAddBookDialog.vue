@@ -35,7 +35,6 @@ const type = ref<number>(0)
 
 async function onOKClick() {
   $q.loading.show({message: "Сохранение"})
-  console.log(disciplineLibrary.value[0])
   if (type.value == 0) {
     disciplineLibrary.value[0].value['dopBook'].push({
       id: Math.floor(Math.random() * 100000),
@@ -54,7 +53,6 @@ async function onOKClick() {
   $q.loading.hide()
   onDialogOK()
 }
-
 
 </script>
 
