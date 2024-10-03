@@ -41,6 +41,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return _.filter(rpdData.value.additional_info, (x) => x.type == "library")
   })
 
+  const disciplinePlace = computed(() => {
+    return _.filter(rpdData.value.additional_info, (x) => x.type == "disciplinePlace")
+  })
+
   const disciplineSoftware = computed<GeneratorSoftwareData[]>(() => {
     return _.filter(rpdData.value.additional_info, (x) => x.type == "software")
   })
@@ -129,6 +133,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     disciplineLibrary,
     disciplineSoftware,
     disciplineLogistics,
+    disciplinePlace,
 
     activeRpdId,
     rpdData,

@@ -152,18 +152,12 @@ class AdditionalInfoSerializer(serializers.Serializer):
 
 class PlanLinesLinkSaveGeneratorDisciplineDataSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
-    precedence_discipline = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
-                                                       allow_empty=True, required=False)
-    subsequent_discipline = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
-                                                       allow_empty=True, required=False)
     interactive_methods = serializers.CharField(allow_null=True, allow_blank=True, required=False)
 
     class Meta:
         model = PlanLinesLink
         fields = [
             'id',
-            'precedence_discipline',
-            'subsequent_discipline',
             'interactive_methods',
         ]
 
@@ -205,12 +199,6 @@ class PlanLinesLinkSerializer(serializers.Serializer):
     person = serializers.IntegerField()
     status = serializers.IntegerField()
     status_verbose = serializers.CharField(read_only=True)
-    precedence_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True,
-                                                  allow_empty=True,
-                                                  required=False)
-    subsequent_discipline = serializers.ListField(child=serializers.IntegerField(), allow_null=True,
-                                                  allow_empty=True,
-                                                  required=False)
 
     discipline_themes = DisciplineThemeSerializer(many=True)
     discipline_work_hour = DisciplineWorkHoursSerializer(many=True)
@@ -230,8 +218,6 @@ class PlanLinesLinkSerializer(serializers.Serializer):
             'person',
             'status',
             'status_verbose',
-            'precedence_discipline',
-            'subsequent_discipline',
 
             'discipline_themes',
             'discipline_work_hour',

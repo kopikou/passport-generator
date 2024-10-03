@@ -15,32 +15,36 @@ const generatorViewStore = useGeneratorViewStore();
 const {
   otherDiscipline,
   activeRpdId,
-  rpdData,
+  disciplinePlace,
 } = storeToRefs(generatorViewStore)
 
-const precedence = ref(rpdData.value.precedence_discipline)
-const subsequent = ref(rpdData.value.subsequent_discipline)
+const precedence = ref([])
+const subsequent = ref([])
 
 const listDiscipline = ref(otherDiscipline)
 const filteredDiscipline = ref(listDiscipline.value)
 
 async function savePrecSubDiscipline() {
   $q.loading.show({message: "Сохранение"})
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-prec-sub-discipline/`, {
-    id: activeRpdId.value,
-    precedence_discipline: precedence.value,
-    subsequent_discipline: subsequent.value,
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+    type: "disciplinePlace",
+    value: {
+      "precedence": precedence.value,
+      "subsequent": subsequent.value,
+    }
   })
-
-  rpdData.value.subsequent_discipline = r.data.subsequent_discipline
-  rpdData.value.precedence_discipline = r.data.precedence_discipline
 
   $q.loading.hide()
 }
 
-watch(rpdData, () => {
-  precedence.value = rpdData.value.precedence_discipline
-  subsequent.value = rpdData.value.subsequent_discipline
+watch(disciplinePlace, () => {
+  precedence.value = disciplinePlace.value[0]?.value['precedence'] || []
+  subsequent.value = disciplinePlace.value[0]?.value['subsequent'] || []
+})
+
+onBeforeMount(() => {
+  precedence.value = disciplinePlace.value[0]?.value['precedence'] || []
+  subsequent.value = disciplinePlace.value[0]?.value['subsequent'] || []
 })
 
 
