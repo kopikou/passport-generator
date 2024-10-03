@@ -79,8 +79,8 @@ async function saveLibary() {
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "library",
     value: {
-      mainBook: mainBook.value,
-      dopBook: dopBook.value,
+      "mainBook": mainBook.value,
+      "dopBook": dopBook.value,
     }
   })
   $q.loading.hide()
@@ -104,11 +104,13 @@ async function addBook() {
 }
 
 watch(disciplineLibrary, () => {
-  console.log(disciplineLibrary.value)
+  mainBook.value = disciplineLibrary.value[0]?.value['mainBook']
+  dopBook.value = disciplineLibrary.value[0]?.value['dopBook']
 })
 
 onBeforeMount(() => {
-  console.log(disciplineLibrary.value)
+  mainBook.value = disciplineLibrary.value[0]?.value['mainBook']
+  dopBook.value = disciplineLibrary.value[0]?.value['dopBook']
 })
 
 
@@ -116,7 +118,6 @@ onBeforeMount(() => {
 
 <template>
   <div>
-    {{ disciplineLibrary }}
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Учебная литература для дисциплины</span>
       <p>бла бла бла</p>

@@ -156,7 +156,6 @@ class PlanLinesLinkSaveGeneratorDisciplineDataSerializer(serializers.Serializer)
                                                        allow_empty=True, required=False)
     subsequent_discipline = serializers.ListSerializer(child=serializers.IntegerField(), allow_null=True,
                                                        allow_empty=True, required=False)
-    library = serializers.JSONField(allow_null=True, required=False)
     software = serializers.JSONField(allow_null=True, required=False)
     logistics = serializers.JSONField(allow_null=True, required=False)
     interactive_methods = serializers.CharField(allow_null=True, allow_blank=True, required=False)
@@ -167,7 +166,6 @@ class PlanLinesLinkSaveGeneratorDisciplineDataSerializer(serializers.Serializer)
             'id',
             'precedence_discipline',
             'subsequent_discipline',
-            'library',
             'software',
             'logistics',
             'interactive_methods',
@@ -223,7 +221,7 @@ class PlanLinesLinkSerializer(serializers.Serializer):
 
     additional_info = AdditionalInfoSerializer(many=True)
 
-    library = serializers.JSONField(allow_null=True, required=False)
+    ry = serializers.JSONField(allow_null=True, required=False)
     software = serializers.JSONField(allow_null=True, required=False)
     logistics = serializers.JSONField(allow_null=True, required=False)
     interactive_methods = serializers.CharField(allow_null=True, required=False)
@@ -246,7 +244,6 @@ class PlanLinesLinkSerializer(serializers.Serializer):
             'discipline_work_hour',
             'additional_info',
 
-            'library',
             'software',
             'logistics',
             'interactive_methods',

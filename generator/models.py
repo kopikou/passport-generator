@@ -21,7 +21,6 @@ class PlanLinesLink(TimestampsModel):
     status = models.IntegerField(choices=StatusChoices.choices, default=StatusChoices.appointed)
     precedence_discipline = ArrayField(models.IntegerField(verbose_name=''), default=list, null=True, blank=True)
     subsequent_discipline = ArrayField(models.IntegerField(verbose_name=''), default=list, null=True, blank=True)
-    library = models.JSONField(default=dict, blank=True, null=True)
     software = models.JSONField(default=dict, blank=True, null=True)
     logistics = models.JSONField(default=dict, blank=True, null=True)
     interactive_methods = models.TextField(blank=True, null=True)
@@ -92,4 +91,4 @@ class DefaultsResources(TimestampsModel):
 class AdditionalInfo(TimestampsModel):
     planlineslink = models.ForeignKey("PlanLinesLink", on_delete=models.CASCADE, related_name="additional_info")
     type = models.TextField()
-    value = models.JSONField()
+    value = models.JSONField(default=dict)

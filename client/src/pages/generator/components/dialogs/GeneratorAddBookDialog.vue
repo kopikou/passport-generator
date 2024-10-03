@@ -35,15 +35,16 @@ const type = ref<number>(0)
 
 async function onOKClick() {
   $q.loading.show({message: "Сохранение"})
+  console.log(disciplineLibrary.value[0])
   if (type.value == 0) {
-    disciplineLibrary.value.dopBook.push({
+    disciplineLibrary.value[0].value['dopBook'].push({
       id: Math.floor(Math.random() * 100000),
       http_link: htppLink.value,
       bib_disc: bibDisc.value,
       izd_type: yearIzd.value,
     })
   } else {
-    disciplineLibrary.value.mainBook.push({
+    disciplineLibrary.value[0].value['mainBook'].push({
       id: Math.floor(Math.random() * 100000),
       http_link: htppLink.value,
       bib_disc: bibDisc.value,

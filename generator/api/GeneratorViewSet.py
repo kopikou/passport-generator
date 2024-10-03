@@ -197,20 +197,6 @@ class GeneratorViewSet(
 
         return Response({"success": True})
 
-    @action(methods=['POST'], url_path="save-discipline-library", detail=True)
-    def update_discipline_library(self, request, *args, **kwargs):
-
-        data = self.request.data
-
-        serializer_data = PlanLinesLinkSaveGeneratorDisciplineDataSerializer(data=data)
-        serializer_data.is_valid(raise_exception=True)
-
-        instance = self.get_object()
-
-        instance.library = serializer_data.data['library']
-        instance.save()
-
-        return Response(serializer_data.data)
 
     @action(methods=['POST'], url_path="save-discipline-software", detail=True)
     def update_discipline_software(self, request, *args, **kwargs):
@@ -260,7 +246,7 @@ class GeneratorViewSet(
 
         data = self.request.data
 
-        serializer_data = AdditionalInfoSerializer(data={"planlineslink_id": self.kwargs['pk'], "type": data['type'], "value": str(data['value'])})
+        serializer_data = AdditionalInfoSerializer(data={"planlineslink_id": self.kwargs['pk'], "type": data['type'], "value": data['value']})
         serializer_data.is_valid(raise_exception=True)
         serializer_data.save()
 
