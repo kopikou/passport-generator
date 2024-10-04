@@ -5,6 +5,7 @@ import {onAuthenticated} from "src/composables/onAuthenticated";
 import {useQuasar} from "quasar";
 import _ from "lodash";
 import {
+    DefaultRecources,
     DisciplineThemesData, DisciplineWorkHour, GeneratorBookData,
     GeneratorData, GeneratorFormControlData, GeneratorIndependentTypesData, GeneratorOborudData,
     GeneratorPlanLineData, GeneratorSoftwareData, OtherDiscipline, PlanIndicatorData, PlanSemestrData,
@@ -57,6 +58,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         return _.filter(rpdData.value.additional_info, (x) => x.type == "logistics")
     })
 
+    const recources = computed(() => {
+        return _.filter(rpdData.value.additional_info, (x) => x.type == "recources")
+    })
+
     const lecturesDisciplineWorkHour = computed<DisciplineWorkHour[]>(() => {
         return _.filter(rpdData.value.discipline_work_hour, (x) => x.type == 0) || []
     })
@@ -71,6 +76,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
     const practiceDisciplineWorkHour = computed<DisciplineWorkHour[]>(() => {
         return _.filter(rpdData.value.discipline_work_hour, (x) => x.type == 1) || []
+    })
+
+    const defaultResources = computed<DefaultRecources[]>(() => {
+        return rpdData.value.resources || []
     })
 
     const $q = useQuasar()
@@ -139,6 +148,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         disciplineLogistics,
         disciplinePlace,
         interactiveMethods,
+        defaultResources,
+        recources,
 
         activeRpdId,
         rpdData,

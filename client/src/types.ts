@@ -204,6 +204,7 @@ export interface GeneratorData {
   library: GeneratorBookData[],
   software: GeneratorSoftwareData[],
   logistics: GeneratorOborudData[],
+  recources: DefaultRecources[],
   interactive_methods: string,
 }
 
@@ -263,4 +264,11 @@ export interface DisciplineWorkHour {
   name: string,
   hours: number,
   semester: number,
+}
+
+export interface DefaultRecources {
+    id: number,
+    name: string,
+    type: number,
+    url: string,
 }
