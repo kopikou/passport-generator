@@ -30,7 +30,6 @@ const menuItems = [
   <q-list
     bordered
     separator
-    style="width: 95%;"
   >
     <q-item
       v-for="item in menuItems"

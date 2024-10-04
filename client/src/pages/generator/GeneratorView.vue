@@ -57,8 +57,8 @@ watch(() => props.id,
       <div class="text-subtitle1 q-pl-md">{{ rpdData.planlines?.plan.abbrprofile }} {{ rpdData.planlines?.plan.startyear }} {{ rpdData.planlines?.dis }}</div>
       <generator-left-menu :id="props.id"/>
     </div>
-    <div class="generator-container__content">
-      <router-view/>
+    <div class="generator-container__content q-ml-md">
+      <router-view />
     </div>
   </div>
 </template>
