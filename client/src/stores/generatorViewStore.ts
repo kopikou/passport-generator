@@ -62,6 +62,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         return _.filter(rpdData.value.additional_info, (x) => x.type == "recources")
     })
 
+    const additionalInfo = computed(() => {
+        return rpdData.value.additional_info || []
+    })
+
     const lecturesDisciplineWorkHour = computed<DisciplineWorkHour[]>(() => {
         return _.filter(rpdData.value.discipline_work_hour, (x) => x.type == 0) || []
     })
@@ -81,6 +85,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     const defaultResources = computed<DefaultRecources[]>(() => {
         return rpdData.value.resources || []
     })
+
 
     const $q = useQuasar()
 
@@ -150,6 +155,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         interactiveMethods,
         defaultResources,
         recources,
+        additionalInfo,
 
         activeRpdId,
         rpdData,

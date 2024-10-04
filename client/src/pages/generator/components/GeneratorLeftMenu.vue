@@ -17,6 +17,7 @@ const menuItems = [
   {title: '->Содержание лабораторных работ', url: 'discipline-lab'},
   {title: '->Содержание практических работ', url: 'discipline-practice'},
   {title: '->Содержание самостоятельных работ', url: 'discipline-independent'},
+  {title: 'Методические указания', url: 'guidelines'},
   {title: 'Другие ресурсы', url: 'resources'},
   {title: 'Литература', url: 'library'},
   {title: 'Использованное программное обеспечение', url: 'soft'},

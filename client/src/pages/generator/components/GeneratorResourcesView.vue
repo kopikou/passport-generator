@@ -67,15 +67,11 @@ onBeforeMount(() => {
 
 <template>
   <div style="width: 95%">
-    <span class="text-h6 q-pl-lg">Другие ресурсы РПД</span>
+    <span class="text-h6 q-pl-lg">Другие ресурсы используемые по дисциплине</span>
     <p>бла бла бла</p>
     <q-separator class="q-mt-md q-mb-md"/>
     <div class="q-pt-xs q-gutter-md">
-      <q-btn
-          label="Сохранить"
-          color="primary"
-          @click="saveData"
-      />
+
       <q-input
           label="Ресурсы сети интернет"
           type="textarea"
@@ -90,6 +86,11 @@ onBeforeMount(() => {
           filled
           stack-label
           v-model="recources_bd"
+      />
+      <q-btn
+          label="Сохранить"
+          color="primary"
+          @click="saveData"
       />
     </div>
   </div>

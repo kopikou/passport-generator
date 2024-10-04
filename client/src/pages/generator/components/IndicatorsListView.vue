@@ -92,7 +92,7 @@ onBeforeMount(() => {
         v-model="methods"
       />
     </div>
-    <div class="flex justify-end q-mt-md">
+    <div class="flex justify-start q-mt-md">
       <q-btn label="Сохранить" color="primary" @click="saveData"/>
     </div>
   </div>

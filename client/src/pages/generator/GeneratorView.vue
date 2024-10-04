@@ -88,11 +88,12 @@ watch(() => props.id,
 }
 
 .generator-container__menu {
+  overflow-y: auto;
   grid-area: c;
 }
 
 .generator-container__content {
-  overflow-y: scroll;
+  overflow-y: auto;
   grid-area: d;
 }
 
