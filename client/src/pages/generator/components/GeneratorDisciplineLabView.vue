@@ -8,6 +8,7 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import _ from "lodash";
 import {api} from "boot/axios";
+import GeneratorFOSView from "pages/generator/components/discipline/GeneratorFOSView.vue";
 
 
 const generatorViewStore = useGeneratorViewStore();
@@ -172,6 +173,12 @@ const disciplineThemesByValue = computed(() => {
                   />
                 </div>
               </div>
+            </div>
+
+            <div>
+              <q-separator class="q-mt-md q-mb-xs"/>
+              <p class="text-h6">Фонд оценочных средств для контроля текущей успеваемости</p>
+              <generator-f-o-s-view />
             </div>
           </q-tab-panel>
         </q-tab-panels>

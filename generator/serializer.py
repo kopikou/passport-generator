@@ -172,13 +172,13 @@ class DisciplineWorkHoursSerializer(serializers.Serializer):
             'semester',
         ]
 
-        def create(self, validate_data):
-            discipline_themes, created = DisciplineWorkHours.objects.update_or_create(
-                id=validate_data['id'],
-                defaults=validate_data,
-            )
+    def create(self, validate_data):
+        discipline_themes, created = DisciplineWorkHours.objects.update_or_create(
+            id=validate_data['id'],
+            defaults=validate_data,
+        )
 
-            return discipline_themes
+        return discipline_themes
 
 class PlanLinesLinkSerializer(serializers.Serializer):
     planlines = GeneratorLinesDataSerializer(read_only=True)
