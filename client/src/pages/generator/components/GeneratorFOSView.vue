@@ -5,14 +5,15 @@ import {storeToRefs} from "pinia";
 import {computed} from "vue";
 import _ from "lodash";
 import GeneratorFOSItem from "pages/generator/components/FOS/GeneratorFOSItem.vue";
+import EmptyIcon from "components/EmptyIcon.vue";
 
 const generatorViewStore = useGeneratorViewStore();
 
-const{
+const {
   activeRpdId,
   additionalInfo,
   independentDisciplineWorkHour,
-}=storeToRefs(generatorViewStore)
+} = storeToRefs(generatorViewStore)
 
 const choicesName = computed(() => {
   return _.uniq(_.map(independentDisciplineWorkHour.value, (x) => x.name)) || []
@@ -27,16 +28,17 @@ const choicesName = computed(() => {
     <q-separator class="q-mt-md q-mb-md"/>
     <div v-if="choicesName.length > 0">
       <q-list
-      bordered
-      style="border-bottom: none;"
+        bordered
+        style="border-bottom: none;"
       >
         <div v-for="n in choicesName">
-          <generator-f-o-s-item :title="n" :type="n.replaceAll(' ', '')" />
+          <generator-f-o-s-item :title="n" :type="n.replaceAll(' ', '')"/>
         </div>
       </q-list>
     </div>
     <div v-else>
-       <p class="text-h6">Не выбраны формы текущего контроля</p>
+      <p class="text-h6">Не выбраны формы текущего контроля</p>
+      <empty-icon />
     </div>
   </div>
 </template>

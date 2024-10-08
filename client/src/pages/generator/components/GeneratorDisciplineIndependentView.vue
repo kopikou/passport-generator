@@ -7,6 +7,7 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import _ from "lodash";
 import {api} from "boot/axios";
+import EmptyIcon from "components/EmptyIcon.vue";
 
 const $q = useQuasar()
 
@@ -176,7 +177,8 @@ const disciplineThemesByValue = computed(() => {
         </q-tab-panels>
       </div>
       <div v-else>
-        <p class="text-h6">Нет часов по практическим занятиям</p>
+        <p class="text-h6">Нет часов по самостоятельным занятиям</p>
+              <empty-icon />
       </div>
     </div>
   </div>

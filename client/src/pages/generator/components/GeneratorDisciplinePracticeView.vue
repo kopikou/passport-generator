@@ -7,6 +7,7 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import {api} from "boot/axios";
 import _ from "lodash";
+import EmptyIcon from "components/EmptyIcon.vue";
 
 const $q = useQuasar()
 
@@ -176,6 +177,7 @@ const disciplineThemesByValue = computed(() => {
       </div>
       <div v-else>
         <p class="text-h6">Нет часов по практическим занятиям</p>
+        <empty-icon />
       </div>
     </div>
   </div>

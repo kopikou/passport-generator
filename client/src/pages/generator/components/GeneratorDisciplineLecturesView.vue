@@ -7,6 +7,7 @@ import {storeToRefs} from "pinia";
 import GeneratorAddLecturesDialog from "pages/generator/components/dialogs/GeneratorAddLecturesDialog.vue";
 import _ from "lodash";
 import {api} from "boot/axios";
+import EmptyIcon from "components/EmptyIcon.vue";
 
 const $q = useQuasar()
 
@@ -176,7 +177,8 @@ onBeforeMount(() => {
         </q-tab-panels>
       </div>
       <div v-else>
-        <p class="text-h6">Нет часов по практическим занятиям</p>
+        <p class="text-h6">Нет часов по лекционным занятиям</p>
+              <empty-icon />
       </div>
     </div>
   </div>
