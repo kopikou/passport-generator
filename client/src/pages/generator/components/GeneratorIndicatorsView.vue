@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
-import IndicatorsListView from "pages/generator/components/IndicatorsListView.vue";
+import IndicatorsListView from "pages/generator/components/indicators/IndicatorsListView.vue";
 
 const generatorViewStore = useGeneratorViewStore()
 

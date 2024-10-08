@@ -7,7 +7,6 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import {api} from "boot/axios";
 import _ from "lodash";
-import GeneratorFOSView from "pages/generator/components/discipline/GeneratorFOSView.vue";
 
 const $q = useQuasar()
 
@@ -108,7 +107,7 @@ const disciplineThemesByValue = computed(() => {
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div v-if="allPercent != 0">
-        <q-btn label="Добавить новую практическую рработу" color="teal" class="q-mb-md" @click="addPractice"/>
+        <q-btn label="Добавить новую практическую работу" color="teal" class="q-mb-md" @click="addPractice"/>
         <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
           <div class="absolute-full flex flex-center">
             <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
@@ -171,12 +170,6 @@ const disciplineThemesByValue = computed(() => {
                   />
                 </div>
               </div>
-            </div>
-
-            <div>
-              <q-separator class="q-mt-md q-mb-xs"/>
-              <p class="text-h6">Фонд оценочных средств для контроля текущей успеваемости</p>
-              <generator-f-o-s-view />
             </div>
           </q-tab-panel>
         </q-tab-panels>

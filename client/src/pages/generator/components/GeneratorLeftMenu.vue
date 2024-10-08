@@ -18,6 +18,8 @@ const menuItems = [
   {title: '->Содержание практических работ', url: 'discipline-practice'},
   {title: '->Содержание самостоятельных работ', url: 'discipline-independent'},
   {title: 'Методические указания', url: 'guidelines'},
+  {title: 'Фонд оценочных средств', url: 'fos'},
+  {title: 'Типовые оценочные средства', url: 'tat'},
   {title: 'Другие ресурсы', url: 'resources'},
   {title: 'Литература', url: 'library'},
   {title: 'Использованное программное обеспечение', url: 'soft'},
@@ -37,6 +39,8 @@ const menuItems = [
       v-ripple
       active-class="bg-amber-4 text-black"
       :to="`/generator/${id}/${item.url}`"
+      dense
+      style="padding: 12px;"
     >
       <q-item-section>
         <q-item-label>{{ item.title }}</q-item-label>
