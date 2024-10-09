@@ -34,7 +34,6 @@ const krCheck = computed(() => {
   return _.some(semestersData.value, {'kr': true})
 })
 
-
 </script>
 
 <template>

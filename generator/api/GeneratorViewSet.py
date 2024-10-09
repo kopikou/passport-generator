@@ -1,6 +1,7 @@
+from django.http import HttpResponse
+from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.mixins import RetrieveModelMixin, ListModelMixin, DestroyModelMixin, CreateModelMixin
-from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from app.utils import UserProfileHasPermission
@@ -12,6 +13,7 @@ from generator.models import PlanLinesLink, FormControl, IndependentTypes, Disci
 from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer
+from generator.services import ReportService
 from rpd.models import LinesData
 
 
@@ -191,3 +193,20 @@ class GeneratorViewSet(
         serializer_data.save()
 
         return Response(serializer_data.data)
+
+    @action(methods=['GET'], url_path="get-rpd-report", detail=True)
+    def get_rpd_report(self, request, *args, **kwargs):
+
+        result = self.retrieve(request, *args, **kwargs).data
+
+        filename = f"РПД_{result['admission']['abbr']}-{result['admission']['yr']}.docx"
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        doc = ReportService.get_rpd_docx(result)
+
+        doc.save(response)
+
+        return response
