@@ -1,4 +1,5 @@
 from django.http import HttpResponse
+from django.utils.encoding import escape_uri_path
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.mixins import RetrieveModelMixin, ListModelMixin, DestroyModelMixin, CreateModelMixin
@@ -203,7 +204,7 @@ class GeneratorViewSet(
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
 
         doc = ReportService.get_rpd_docx(result)
 
