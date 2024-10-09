@@ -21,6 +21,29 @@ class Catadmission(models.Model):
     cuchplan = models.ForeignKey("UchPlanPlan", on_delete=models.CASCADE, null=True, blank=True, db_column="cuchplan")
     spec_name = models.CharField(max_length=250, null=True, blank=True)
     direct_name = models.CharField(max_length=150, null=True, blank=True)
+    cfac = models.ForeignKey("CatFaculty", on_delete=models.CASCADE, db_column="cfac")
+    ckaf = models.ForeignKey("CatKaf", on_delete=models.CASCADE, db_column="ckaf")
+
+
+class CatKaf(models.Model):
+    class Meta:
+        db_table = "catkaf"
+        managed = False
+
+    name = models.CharField(max_length=128)
+    zav = models.CharField(max_length=50)
+    cfac = models.ForeignKey("CatFaculty", on_delete=models.CASCADE, db_column="cfac")
+    czav = models.IntegerField()
+
+
+class CatFaculty(models.Model):
+    class Meta:
+        db_table = "catfaculty"
+        managed = False
+
+    name = models.CharField(max_length=64)
+    dean = models.CharField(max_length=128)
+    cdean = models.IntegerField()
 
 
 class UchPlanKaf(models.Model):

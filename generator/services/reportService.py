@@ -14,10 +14,6 @@ class ReportService(object):
         path = f"{BASE_DIR}{Path("/templates/docxRPD/rpd.docx")}"
         doc = DocxTemplate(path)
 
-        context = {
-            'name': "SkyFall",
-        }
-
-        doc.render(context)
+        doc.render(data)
 
         return doc

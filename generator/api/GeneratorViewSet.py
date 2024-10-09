@@ -202,12 +202,13 @@ class GeneratorViewSet(
 
         filename = f"РПД_{result['admission']['abbr']}-{result['admission']['yr']}.docx"
 
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        # response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
-        response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
+        # response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
 
-        doc = ReportService.get_rpd_docx(result)
+        # doc = ReportService.get_rpd_docx(result)
 
-        doc.save(response)
+        # doc.save(response)
 
-        return response
+        return Response(result)
+        # return response
