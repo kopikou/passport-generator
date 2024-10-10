@@ -69,15 +69,21 @@ class ReportService(object):
         precedence_names = ", ".join([f"«{other_disciplines[item]}»" for item in precedence])
         subsequent_names = ", ".join([f"«{other_disciplines[item]}»" for item in subsequent])
 
+        tic_all = {}
+        for item in data['planlines']['semesters']:
+            tic_all[item['num']] = ", ".join(get_tic_name(item))
+
         semester_hours_all = {
             "aud_hours_all": sum([i['lekc'] for i in data['planlines']['semesters'] if i['lekc'] is not None]),
             "lab_hours_all": sum([i['lab'] for i in data['planlines']['semesters'] if i['lab'] is not None]),
             "pr_hours_all": sum([i['pr'] for i in data['planlines']['semesters'] if i['pr'] is not None]),
             "srs_hours_all": sum([i['srs'] for i in data['planlines']['semesters'] if i['srs'] is not None]),
-            "tic_all": get_tic_name([i['semesters'] for i in data['planlines']]),
         }
         semester_hours_all.update({
             "hours_all": sum([item for key, item in semester_hours_all.items()]),
+        })
+        semester_hours_all.update({
+            "tic_all": ", ".join([item for key, item in tic_all.items()]),
         })
 
         semester_hours = {
@@ -85,7 +91,6 @@ class ReportService(object):
             "lab_hours": 0,
             "pr_hours": 0,
             "srs_hours": 0,
-            "tic": get_tic_name([i['semesters'] for i in data['planlines']]),
         }
 
         context = {
