@@ -9,6 +9,22 @@ from app.settings import BASE_DIR
 from arim.models import CatPerson
 
 
+def get_tic_name(data):
+    result = []
+
+    if data['zach']:
+        result.append('Зачет')
+    if data['ekz']:
+        result.append('Экзамен')
+    if data['zacho']:
+        result.append('Зачет с оценкой')
+    if data['kp']:
+        result.append('Курсовой проект')
+    if data['kr']:
+        result.append('Курсовая работа')
+
+    return result
+
 class ReportService(object):
 
     @staticmethod
@@ -53,6 +69,25 @@ class ReportService(object):
         precedence_names = ", ".join([f"«{other_disciplines[item]}»" for item in precedence])
         subsequent_names = ", ".join([f"«{other_disciplines[item]}»" for item in subsequent])
 
+        semester_hours_all = {
+            "aud_hours_all": sum([i['lekc'] for i in data['planlines']['semesters'] if i['lekc'] is not None]),
+            "lab_hours_all": sum([i['lab'] for i in data['planlines']['semesters'] if i['lab'] is not None]),
+            "pr_hours_all": sum([i['pr'] for i in data['planlines']['semesters'] if i['pr'] is not None]),
+            "srs_hours_all": sum([i['srs'] for i in data['planlines']['semesters'] if i['srs'] is not None]),
+            "tic_all": get_tic_name([i['semesters'] for i in data['planlines']]),
+        }
+        semester_hours_all.update({
+            "hours_all": sum([item for key, item in semester_hours_all.items()]),
+        })
+
+        semester_hours = {
+            "aud_hours": 0,
+            "lab_hours": 0,
+            "pr_hours": 0,
+            "srs_hours": 0,
+            "tic": get_tic_name([i['semesters'] for i in data['planlines']]),
+        }
+
         context = {
             "now": pendulum.now().start_of("day"),
             "current_year": pendulum.now().year,
@@ -72,6 +107,9 @@ class ReportService(object):
             "indicators": indicators,
             "precedence": precedence_names,
             "subsequent": subsequent_names,
+            "sum_zet": int(sum([i['zet'] for i in data['planlines']['semesters']])),
+            "sh": semester_hours,
+            "sha": semester_hours_all,
         }
 
         doc.render(context)
