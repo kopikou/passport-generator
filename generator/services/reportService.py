@@ -42,6 +42,17 @@ class ReportService(object):
                     'methods'] else '',
             })
 
+        precedence = []
+        subsequent = []
+        for item in data['additional_info']:
+            if item['type'] == 'disciplinePlace':
+                precedence = item['value']['precedence']
+                subsequent = item['value']['subsequent']
+
+        other_disciplines = {item['disid']: item['dis'] for item in data['other_discipline']}
+        precedence_names = ", ".join([f"«{other_disciplines[item]}»" for item in precedence])
+        subsequent_names = ", ".join([f"«{other_disciplines[item]}»" for item in subsequent])
+
         context = {
             "now": pendulum.now().start_of("day"),
             "current_year": pendulum.now().year,
@@ -59,6 +70,8 @@ class ReportService(object):
             "person_name": CatPerson.objects.get(id=data['person']).name,
             "competence": competence,
             "indicators": indicators,
+            "precedence": precedence_names,
+            "subsequent": subsequent_names,
         }
 
         doc.render(context)
