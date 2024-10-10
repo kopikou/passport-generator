@@ -24,10 +24,19 @@ class AISServices(object):
             'cuchplan_id',
             'spec_name',
             'direct_name',
+            'kvalif_name',
             'ckaf_id',
             'cfac_id',
             'ckaf__name',
-
+            'cfac__name',
+            'cadmkind',
+            'cadmkind__name',
+            'cadmkind__name_prof',
+            'cdirection',
+            'cdirection__name',
+            'cdirection__cod',
+            'cfob',
+            'cfob__name',
         )
 
         return data

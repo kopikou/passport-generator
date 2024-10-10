@@ -10,6 +10,15 @@ class BoolChoice(TextChoices):
     t = 't', "True"
     f = 'f', "False"
 
+class CatPerson(models.Model):
+    class Meta:
+        db_table = "catperson"
+        managed = False
+
+    name = models.CharField(max_length=128)
+    ckaf = models.ForeignKey("CatKaf", on_delete=models.CASCADE, db_column="ckaf")
+    prepod = models.CharField(max_length=1, choices=BoolChoice, default=BoolChoice.f)
+
 
 class Catadmission(models.Model):
     class Meta:
@@ -19,10 +28,39 @@ class Catadmission(models.Model):
     yr = models.IntegerField()
     abbr = models.CharField(max_length=10)
     cuchplan = models.ForeignKey("UchPlanPlan", on_delete=models.CASCADE, null=True, blank=True, db_column="cuchplan")
+    cdirection = models.ForeignKey("CLDirection", on_delete=models.CASCADE, null=True, blank=True, db_column="cdirection")
     spec_name = models.CharField(max_length=250, null=True, blank=True)
     direct_name = models.CharField(max_length=150, null=True, blank=True)
     cfac = models.ForeignKey("CatFaculty", on_delete=models.CASCADE, db_column="cfac")
     ckaf = models.ForeignKey("CatKaf", on_delete=models.CASCADE, db_column="ckaf")
+    kvalif_name = models.CharField(max_length=100)
+    cadmkind = models.ForeignKey("CLAdmKind", on_delete=models.CASCADE, db_column="cadmkind")
+    cfob = models.ForeignKey("CLFob", on_delete=models.CASCADE, db_column="cfob")
+
+
+class CLFob(models.Model):
+    class Meta:
+        db_table = "cl$fob"
+        managed = False
+
+    name = models.CharField(max_length=32)
+
+class CLDirection(models.Model):
+    class Meta:
+        db_table = "cl$direction"
+        managed = False
+
+    name = models.CharField(max_length=150)
+    cod = models.CharField(max_length=8)
+
+
+class CLAdmKind(models.Model):
+    class Meta:
+        db_table = "cl$admkind"
+        managed = False
+
+    name = models.CharField(max_length=50)
+    name_prof = models.CharField(max_length=50)
 
 
 class CatKaf(models.Model):
