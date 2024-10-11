@@ -70,28 +70,43 @@ class ReportService(object):
         subsequent_names = ", ".join([f"«{other_disciplines[item]}»" for item in subsequent])
 
         tic_all = {}
+        semester_hours = []
+        semesters = []
         for item in data['planlines']['semesters']:
             tic_all[item['num']] = ", ".join(get_tic_name(item))
+            semesters.append(item['num'])
+            semester_hours.append({
+                "num": item['num'],
+                "aud_hours": sum([
+                    item['lekc'] or 0,
+                    item['lab'] or 0,
+                    item['pr'] or 0,
+                ]),
+                "lekc_hours": item['lekc'] or 0,
+                "lab_hours": item['lab'] or 0,
+                "pr_hours": item['pr'] or 0,
+                "srs_hours": item['srs'] or 0,
+                "ekz_hours": item['ekzhour'] or 0,
+                "tic": tic_all[item['num']],
+            })
 
         semester_hours_all = {
-            "aud_hours_all": sum([i['lekc'] for i in data['planlines']['semesters'] if i['lekc'] is not None]),
+            "lekc_hours_all": sum([i['lekc'] for i in data['planlines']['semesters'] if i['lekc'] is not None]),
             "lab_hours_all": sum([i['lab'] for i in data['planlines']['semesters'] if i['lab'] is not None]),
             "pr_hours_all": sum([i['pr'] for i in data['planlines']['semesters'] if i['pr'] is not None]),
             "srs_hours_all": sum([i['srs'] for i in data['planlines']['semesters'] if i['srs'] is not None]),
+            "ekz_hours_all": sum([i['ekzhour'] for i in data['planlines']['semesters'] if i['ekzhour'] is not None]),
         }
         semester_hours_all.update({
-            "hours_all": sum([item for key, item in semester_hours_all.items()]),
+            "aud_hours_all": sum([
+                semester_hours_all['lekc_hours_all'] or 0,
+                semester_hours_all['lab_hours_all'] or 0,
+                semester_hours_all['pr_hours_all'] or 0,
+            ]),
         })
         semester_hours_all.update({
-            "tic_all": ", ".join([item for key, item in tic_all.items()]),
+            "tic_all": ", ".join(set([item for key, item in tic_all.items()])),
         })
-
-        semester_hours = {
-            "aud_hours": 0,
-            "lab_hours": 0,
-            "pr_hours": 0,
-            "srs_hours": 0,
-        }
 
         context = {
             "now": pendulum.now().start_of("day"),
@@ -113,6 +128,7 @@ class ReportService(object):
             "precedence": precedence_names,
             "subsequent": subsequent_names,
             "sum_zet": int(sum([i['zet'] for i in data['planlines']['semesters']])),
+            "semesters": semesters,
             "sh": semester_hours,
             "sha": semester_hours_all,
         }
