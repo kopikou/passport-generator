@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
         for i in data:
             plan_data = PlanData.objects.filter(file_id=i.id).values()
-            line_data = LinesData.objects.filter(synchronize=True, plan__file_id=i.id).values()
+            line_data = LinesData.objects.filter(plan__file_id=i.id).values()
             semester_data = SemesterData.objects.filter(planlineid__synchronize=True, planlineid__plan__file_id=i.id).values()
             files_data = PlanDocuments.objects.filter(plan__file_id=i.id).values()
 
@@ -99,7 +99,7 @@ class Command(BaseCommand):
                     "kafcode_id": line['caf'],
                     "ckaf": kaf_codes.get(line['caf'], {}).get("ckaf2istu"),
                     "nocalccontrol": line['nocalccontrol'],
-                    "fordel": "f",
+                    "fordel": "t" if line['synchronize'] else 'f',
                     "type": line['type'],
                     "viewpract": line['viewpract'],
                     "viewobject": line['viewobject'],

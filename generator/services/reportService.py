@@ -108,6 +108,18 @@ class ReportService(object):
             "tic_all": ", ".join(set([item for key, item in tic_all.items()])),
         })
 
+        discipline_themes = {item['id']: item for item in data['discipline_themes']}
+
+        work_hour = []
+        for item in data['discipline_work_hour']:
+            work_hour.append({
+                "num": item['semester'],
+                "theme": discipline_themes[item['theme_id']]['NAME'],
+                "type": item['type'],
+                "content": item['name'],
+                "hours": item['hours'],
+            })
+
         context = {
             "now": pendulum.now().start_of("day"),
             "current_year": pendulum.now().year,
@@ -131,6 +143,7 @@ class ReportService(object):
             "semesters": semesters,
             "sh": semester_hours,
             "sha": semester_hours_all,
+            "wk": work_hour,
         }
 
         doc.render(context)
