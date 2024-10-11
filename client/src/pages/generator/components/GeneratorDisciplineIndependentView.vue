@@ -139,6 +139,9 @@ const disciplineThemesByValue = computed(() => {
           <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="independent-container">
             <div v-if="item" class="independent-container__header text-center text-subtitle1 items-center">
               <div>
+                Номер
+              </div>
+              <div>
                 Вид самостоятельной работы
               </div>
               <div>
@@ -154,6 +157,9 @@ const disciplineThemesByValue = computed(() => {
             <div v-for="independent in independentDisciplineWorkHour" class="independent-container__body">
               <div v-if="independent.semester == tab"
                    class="independent-container__body__cell text-subtitle1 text-center items-center">
+                <div>
+                  {{ independent.num }}
+                </div>
                 <div>
                   {{ independent.name }}
                 </div>
@@ -178,7 +184,7 @@ const disciplineThemesByValue = computed(() => {
       </div>
       <div v-else>
         <p class="text-h6">Нет часов по самостоятельным занятиям</p>
-              <empty-icon />
+        <empty-icon/>
       </div>
     </div>
   </div>
@@ -188,14 +194,14 @@ const disciplineThemesByValue = computed(() => {
 .independent-container {
   > .independent-container__header {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     font-weight: bold;
   }
 
   > .independent-container__body {
     > .independent-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
     }
   }
 }

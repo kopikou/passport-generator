@@ -34,12 +34,13 @@ const props = defineProps({
 const name = ref('')
 const hourCount = ref(0)
 const theme = ref()
-
+const num = ref()
 const correct = computed(() => {
 
   if (!name.value || name.value.length < 3) return true
   else if (!hourCount.value || hourCount.value <= 0) return true
   else if (!theme.value) return true
+  else if (!num.value || num.value <= 0) return true
 
   return false
 })
@@ -54,6 +55,7 @@ async function onOKClick() {
     hours: hourCount.value,
     semester: props.sem,
     id: props.id,
+    num: num.value,
   })
 
   if (!props.id) {
@@ -72,6 +74,7 @@ onBeforeMount(() => {
     name.value = data[props.id].name
     hourCount.value = data[props.id].hours
     theme.value = data[props.id].theme_id
+    num.value = data[props.id].num
   }
 })
 </script>
@@ -81,12 +84,21 @@ onBeforeMount(() => {
     <q-card class="q-dialog-plugin" style="width: 700px;">
       <div class="q-pa-md q-gutter-md">
         <q-chip color="teal" class="text-subtitle1">Семестр {{ sem }}</q-chip>
+
         <q-input
           v-model="name"
           stack-label
           label="Наименование практического занятия"
           filled
           :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
+        />
+        <q-input
+          stack-label
+          label="Номер"
+          v-model="num"
+          filled
+          :rules="[ val => val > 0 || 'Введите значение больше 0']"
+          type="number"
         />
         <q-input
           stack-label

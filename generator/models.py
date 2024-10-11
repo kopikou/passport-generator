@@ -49,6 +49,7 @@ class DisciplineThemes(TimestampsModel):
     semester = models.IntegerField()
     formcontrol = models.ForeignKey("FormControl", on_delete=models.CASCADE)
     comment = models.TextField()
+    num = models.IntegerField()
 
 
 class DisciplineWorkHours(TimestampsModel):
@@ -66,6 +67,7 @@ class DisciplineWorkHours(TimestampsModel):
     name = models.TextField()
     hours = models.FloatField()
     semester = models.IntegerField()
+    num = models.IntegerField()
 
     @property
     def type_verbose(self):

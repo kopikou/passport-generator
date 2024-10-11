@@ -137,6 +137,9 @@ const disciplineThemesByValue = computed(() => {
         >
           <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="practice-container">
             <div v-if="item" class="practice-container__header text-center text-subtitle1 items-center">
+            <div>
+              Номер
+            </div>
               <div>
                 Наименование раздела
               </div>
@@ -153,6 +156,9 @@ const disciplineThemesByValue = computed(() => {
             <div v-for="practice in practiceDisciplineWorkHour" class="practice-container__body">
               <div v-if="practice.semester == tab"
                    class="practice-container__body__cell text-subtitle1 text-center items-center">
+                <div>
+                  {{ practice.num }}
+                </div>
                 <div>
                   {{ practice.name }}
                 </div>
@@ -187,14 +193,14 @@ const disciplineThemesByValue = computed(() => {
 .practice-container {
   > .practice-container__header {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     font-weight: bold;
   }
 
   > .practice-container__body {
     > .practice-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
     }
   }
 }

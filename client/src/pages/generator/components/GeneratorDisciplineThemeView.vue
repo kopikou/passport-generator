@@ -105,6 +105,9 @@ onBeforeMount(() => {
         <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="theme-container">
           <div v-if="item" class="theme-container__header text-center text-subtitle1 items-center">
             <div>
+              Номер
+            </div>
+            <div>
               Наименование темы
             </div>
             <div>
@@ -120,6 +123,9 @@ onBeforeMount(() => {
           <div v-for="item in disciplineThemes" class="theme-container__body">
             <div v-if="item.semester == tab"
                  class="theme-container__body__cell text-subtitle1 text-center items-center">
+              <div>
+                {{ item.num }}
+              </div>
               <div>
                 {{ item.name }}
               </div>
@@ -150,14 +156,14 @@ onBeforeMount(() => {
 .theme-container {
   > .theme-container__header {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     font-weight: bold;
   }
 
   > .theme-container__body {
     > .theme-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
     }
   }
 }

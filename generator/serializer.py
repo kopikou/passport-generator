@@ -101,6 +101,7 @@ class DisciplineThemeSerializer(serializers.Serializer):
     semester = serializers.IntegerField()
     formcontrol_id = serializers.IntegerField()
     comment = serializers.CharField()
+    num = serializers.IntegerField()
 
     class Meta:
         model = DisciplineThemes
@@ -111,6 +112,7 @@ class DisciplineThemeSerializer(serializers.Serializer):
             'semester',
             'formcontrol_id',
             'comment',
+            'num',
         ]
 
     def create(self, validate_data):
@@ -158,6 +160,7 @@ class DisciplineWorkHoursSerializer(serializers.Serializer):
     name = serializers.CharField()
     hours = serializers.FloatField()
     semester = serializers.IntegerField()
+    num = serializers.IntegerField()
 
     class Meta:
         model = DisciplineWorkHours
@@ -170,6 +173,7 @@ class DisciplineWorkHoursSerializer(serializers.Serializer):
             'name',
             'hours',
             'semester',
+            'num',
         ]
 
     def create(self, validate_data):
