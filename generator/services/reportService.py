@@ -111,13 +111,24 @@ class ReportService(object):
         discipline_themes = {item['id']: item for item in data['discipline_themes']}
 
         work_hour = []
-        for item in data['discipline_work_hour']:
+        for e, item in enumerate(data['discipline_work_hour']):
             work_hour.append({
                 "num": item['semester'],
-                "theme": discipline_themes[item['theme_id']]['NAME'],
+                "theme": discipline_themes[item['theme_id']]['name'],
                 "type": item['type'],
                 "content": item['name'],
                 "hours": item['hours'],
+            })
+        work_hour_sorted = sorted(work_hour, key=lambda item: item['num'])
+        work_hour_grouped = {key: list(items) for key, items in
+                               groupby(work_hour_sorted, key=lambda item: item['num'])}
+        wk = []
+        for key, item in work_hour_grouped.items():
+            item_sorted = sorted(item, key=lambda i: i['theme'])
+            item_grouped = {k: list(i) for k, i in groupby(item_sorted, key=lambda i: i['theme'])}
+            wk.append({
+                "num": key,
+                "it": item_grouped,
             })
 
         context = {
@@ -143,7 +154,7 @@ class ReportService(object):
             "semesters": semesters,
             "sh": semester_hours,
             "sha": semester_hours_all,
-            "wk": work_hour,
+            "wk": wk,
         }
 
         doc.render(context)
