@@ -118,6 +118,7 @@ class ReportService(object):
                 "type": item['type'],
                 "content": item['name'],
                 "hours": item['hours'],
+                "number": item['num'],
             })
         work_hour_sorted = sorted(work_hour, key=lambda item: item['num'])
         work_hour_grouped = {key: list(items) for key, items in
