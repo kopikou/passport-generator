@@ -124,6 +124,19 @@ class ReportService(object):
         wk = {key: list(items) for key, items in
                                groupby(work_hour_sorted, key=lambda item: item['num'])}
 
+        for key, items in wk.items():
+            items_sorted = sorted(items, key=lambda q: q['theme'])
+            items_grouped = {k: list(i) for k, i in groupby(items_sorted, key=lambda q: q['theme'])}
+            q = 0
+            tmp_arr = []
+            for k, i in items_grouped.items():
+                q += 1
+                tmp_arr.append({
+                    "index": (k, q),
+                    "items": i
+                })
+            wk[key] = {i['index']: list(i['items']) for i in tmp_arr}
+
         context = {
             "now": pendulum.now().start_of("day"),
             "current_year": pendulum.now().year,
