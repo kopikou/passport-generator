@@ -115,10 +115,13 @@ class ReportService(object):
             work_hour.append({
                 "num": item['semester'],
                 "theme": discipline_themes[item['theme_id']]['name'],
+                "formcontrol": discipline_themes[item['theme_id']]['formcontrol_verbose'],
                 "type": item['type'],
                 "content": item['name'],
                 "hours": item['hours'],
                 "number": item['num'],
+                "tic": [s['ekz_hours'] for s in semester_hours if s['num'] == item['semester']],
+                "tic_all": [s['tic'] for s in semester_hours if s['num'] == item['semester']]
             })
         work_hour_sorted = sorted(work_hour, key=lambda item: item['num'])
         wk = {key: list(items) for key, items in
@@ -131,11 +134,47 @@ class ReportService(object):
             tmp_arr = []
             for k, i in items_grouped.items():
                 q += 1
+                i_sorted = sorted(i, key=lambda val: val['type'])
+                i_grouped = {v: list(val) for v, val in groupby(i_sorted, key=lambda val: val['type'])},
                 tmp_arr.append({
                     "index": (k, q),
-                    "items": i
+                    "lec": int(sum([s['hours'] for s in i if s['type'] == 0])) or '',
+                    "lec_nums": ", ".join([str(s['number']) for s in i if s['type'] == 0]),
+                    "labs": int(sum([s['hours'] for s in i if s['type'] == 3])) or '',
+                    "labs_nums": ", ".join([str(s['number']) for s in i if s['type'] == 3]),
+                    "pr": int(sum([s['hours'] for s in i if s['type'] == 1])) or '',
+                    "pr_nums": ", ".join([str(s['number']) for s in i if s['type'] == 1]),
+                    "srs": int(sum([s['hours'] for s in i if s['type'] == 2])) or '',
+                    "srs_nums": ", ".join([str(s['number']) for s in i if s['type'] == 2]),
+                    "formcontrol": i[0]['formcontrol'],
+                    "tic": i[0]['tic'][0] or '',
+                    "tic_all": ", ".join(i[0]['tic_all']),
                 })
-            wk[key] = {i['index']: list(i['items']) for i in tmp_arr}
+            tmp_arr.append({
+                "index": ("Промежуточная аттестация", ''),
+                "lec": '',
+                "lec_nums": '',
+                "labs": '',
+                "labs_nums": '',
+                "pr": '',
+                "pr_nums": '',
+                "srs": i[0]['tic'][0] or '',
+                "srs_nums": '',
+                "formcontrol": ", ".join(i[0]['tic_all']),
+            })
+            tmp_arr.append({
+                "index": ("Всего", ''),
+                "lec": sum([int(i['lec']) for i in tmp_arr if i['lec']]) or '',
+                "lec_nums": '',
+                "labs": sum([int(i['labs']) for i in tmp_arr if i['labs']]) or '',
+                "labs_nums": '',
+                "pr": sum([int(i['pr']) for i in tmp_arr if i['pr']]) or '',
+                "pr_nums": '',
+                "srs": sum([int(i['srs']) for i in tmp_arr if i['srs']]) or '',
+                "srs_nums": '',
+                "formcontrol": '',
+            })
+            wk[key] = {i['index']: i for i in tmp_arr}
 
         context = {
             "now": pendulum.now().start_of("day"),

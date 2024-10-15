@@ -100,6 +100,7 @@ class DisciplineThemeSerializer(serializers.Serializer):
     name = serializers.CharField()
     semester = serializers.IntegerField()
     formcontrol_id = serializers.IntegerField()
+    formcontrol_verbose = serializers.CharField(read_only=True)
     comment = serializers.CharField()
     num = serializers.IntegerField()
 
@@ -111,6 +112,7 @@ class DisciplineThemeSerializer(serializers.Serializer):
             'name',
             'semester',
             'formcontrol_id',
+            'formcontrol_verbose',
             'comment',
             'num',
         ]

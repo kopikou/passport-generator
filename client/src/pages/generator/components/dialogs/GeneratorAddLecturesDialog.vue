@@ -52,7 +52,7 @@ async function onOKClick() {
   let r = await api.post('/api/generator/save-discipline-work-hour/', {
     planlineslink_id: rpdData.value.id,
     theme_id: theme.value,
-    type: 0,  // Лабораторные
+    type: 0,  // Лекции
     name: name.value,
     hours: hourCount.value,
     semester: props.sem,

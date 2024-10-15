@@ -51,6 +51,9 @@ class DisciplineThemes(TimestampsModel):
     comment = models.TextField()
     num = models.IntegerField()
 
+    @property
+    def formcontrol_verbose(self):
+        return FormControl.objects.get(id=self.formcontrol_id).name
 
 class DisciplineWorkHours(TimestampsModel):
 
