@@ -121,16 +121,8 @@ class ReportService(object):
                 "number": item['num'],
             })
         work_hour_sorted = sorted(work_hour, key=lambda item: item['num'])
-        work_hour_grouped = {key: list(items) for key, items in
+        wk = {key: list(items) for key, items in
                                groupby(work_hour_sorted, key=lambda item: item['num'])}
-        wk = []
-        for key, item in work_hour_grouped.items():
-            item_sorted = sorted(item, key=lambda i: i['theme'])
-            item_grouped = {k: list(i) for k, i in groupby(item_sorted, key=lambda i: i['theme'])}
-            wk.append({
-                "num": key,
-                "it": item_grouped,
-            })
 
         context = {
             "now": pendulum.now().start_of("day"),
