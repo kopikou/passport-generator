@@ -109,6 +109,8 @@ class ReportService(object):
         })
 
         discipline_themes = {item['id']: item for item in data['discipline_themes']}
+        discipline_sorted = sorted(data['discipline_themes'], key=lambda item: (item['semester'], item['num']))
+        discipline_grouped = {key: list(item) for key, item in groupby(discipline_sorted, key=lambda item: item['semester'])}
 
         work_hour = []
         for e, item in enumerate(data['discipline_work_hour']):
@@ -126,6 +128,19 @@ class ReportService(object):
         work_hour_sorted = sorted(work_hour, key=lambda item: item['num'])
         wk = {key: list(items) for key, items in
                                groupby(work_hour_sorted, key=lambda item: item['num'])}
+
+        lab_work = []
+        for i in work_hour:
+            if i['type'] == 3:
+                lab_work.append({
+                    "num": i['num'],
+                    "number": i['number'],
+                    "hours": int(i['hours']),
+                    "content": i['content'],
+                    "type": i['type'],
+                })
+        lab_work_sorted = sorted(lab_work, key=lambda item: (item['num'], item['number']))
+        lab_work_grouped = {key: list(item) for key, item in groupby(lab_work_sorted, key=lambda item: item['num'])}
 
         for key, items in wk.items():
             items_sorted = sorted(items, key=lambda q: q['theme'])
@@ -200,6 +215,8 @@ class ReportService(object):
             "sh": semester_hours,
             "sha": semester_hours_all,
             "wk": wk,
+            "dg": discipline_grouped,
+            "labw": lab_work_grouped,
         }
 
         doc.render(context)
