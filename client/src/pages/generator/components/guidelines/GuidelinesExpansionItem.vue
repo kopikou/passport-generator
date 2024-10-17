@@ -12,6 +12,7 @@ const generatorViewStore = useGeneratorViewStore();
 const {
   activeRpdId,
   additionalInfo,
+  guidelines,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -23,31 +24,26 @@ const props = defineProps({
   }
 })
 const $q = useQuasar()
-const guidelines = ref<string>('')
+const guidelines_text = ref<string>('')
 
 async function saveData() {
   $q.loading.show("Сохранение данных")
+  _.set(guidelines.value, `[0].${props.type}`, guidelines_text.value)
+  console.log(guidelines.value)
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
-    type: `guidelines_${props.type}`,
-    value: {
-      "text": guidelines.value,
-    }
+    "type": 'guidelines',
+    "value": guidelines.value,
   })
-  let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
-  if (key === undefined) {
-    additionalInfo.value.push(r.data)
-  } else {
-    _.set(additionalInfo.value, `[${key}].value['text']`, r.data.value['text'])
-  }
   $q.loading.hide()
 }
 
 watch(additionalInfo, () => {
-  guidelines.value = _.filter(additionalInfo.value, (x) => x.type == `guidelines_${props.type}`)[0]?.value['text']
+  guidelines_text.value = _.get(guidelines.value, `[0].${props.type}`)
+
 })
 
 onBeforeMount(() => {
-  guidelines.value = _.filter(additionalInfo.value, (x) => x.type == `guidelines_${props.type}`)[0]?.value['text']
+  guidelines_text.value = _.get(guidelines.value, `[0].${props.type}`)
 })
 
 </script>
@@ -63,7 +59,7 @@ onBeforeMount(() => {
             label="Методические указания"
             type="textarea"
             filled
-            v-model="guidelines"
+            v-model="guidelines_text"
         />
 
         <q-btn
