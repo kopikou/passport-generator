@@ -26,12 +26,12 @@ class RPDFile(TimestampsModel):
 
 class PlanData(TimestampsModel):
     file = models.ForeignKey(RPDFile, verbose_name="Файл", on_delete=models.CASCADE)
-    subtype = models.TextField( )
+    subtype = models.TextField()
     shifr = models.TextField()
     abbrprofile = models.TextField(null=True, blank=True)
     studyform = models.TextField()
-    studylevel = models.TextField( )
-    studyprog = models.TextField( )
+    studylevel = models.TextField()
+    studyprog = models.TextField()
     elementsinweek = models.IntegerField()
     species = models.TextField()
     usernum = models.IntegerField()
@@ -126,7 +126,7 @@ class AllowedNames(TimestampsModel):
 
 
 class BaseDocuments(TimestampsModel):
-    name = models.TextField( verbose_name='Наименование файла')
+    name = models.TextField(verbose_name='Наименование файла')
     type = models.IntegerField(verbose_name='Тип')
     specialist = models.BooleanField(verbose_name='Специалитет')
     bachelor = models.BooleanField(verbose_name='Бакалавр')
@@ -136,4 +136,3 @@ class BaseDocuments(TimestampsModel):
 
     def __str__(self):
         return f"{self.name}"
-

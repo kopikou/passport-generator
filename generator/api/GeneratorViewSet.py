@@ -174,6 +174,8 @@ class GeneratorViewSet(
         serializer_data.is_valid(raise_exception=True)
         serializer_data.save()
 
+
+
         return Response(serializer_data.data)
 
     @action(methods=['GET'], url_path="delete-discipline-work-hour", detail=False)

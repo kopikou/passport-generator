@@ -25,6 +25,21 @@ def get_tic_name(data):
 
     return result
 
+def get_work_hours(data, type):
+    result = []
+
+    for item in data:
+        if item['type'] == type:
+            result.append({
+                "num": item['num'],
+                "number": item['number'],
+                "hours": int(item['hours']),
+                "content": item['content'],
+                "type": item['type'],
+            })
+
+    return result
+
 class ReportService(object):
 
     @staticmethod
@@ -61,6 +76,8 @@ class ReportService(object):
         precedence = []
         subsequent = []
         for item in data['additional_info']:
+            if item['type'] == 'interactiveMethods':
+                interactive_methods = item['value']['interactiveMethods']
             if item['type'] == 'disciplinePlace':
                 precedence = item['value']['precedence']
                 subsequent = item['value']['subsequent']
@@ -129,18 +146,17 @@ class ReportService(object):
         wk = {key: list(items) for key, items in
                                groupby(work_hour_sorted, key=lambda item: item['num'])}
 
-        lab_work = []
-        for i in work_hour:
-            if i['type'] == 3:
-                lab_work.append({
-                    "num": i['num'],
-                    "number": i['number'],
-                    "hours": int(i['hours']),
-                    "content": i['content'],
-                    "type": i['type'],
-                })
+        lab_work = get_work_hours(work_hour, 3)
         lab_work_sorted = sorted(lab_work, key=lambda item: (item['num'], item['number']))
         lab_work_grouped = {key: list(item) for key, item in groupby(lab_work_sorted, key=lambda item: item['num'])}
+
+        pr_work = get_work_hours(work_hour, 1)
+        pr_work_sorted = sorted(pr_work, key=lambda item: (item['num'], item['number']))
+        pr_work_grouped = {key: list(item) for key, item in groupby(pr_work_sorted, key=lambda item: item['num'])}
+
+        srs_work = get_work_hours(work_hour, 2)
+        srs_work_sorted = sorted(srs_work, key=lambda item: (item['num'], item['number']))
+        srs_work_grouped = {key: list(item) for key, item in groupby(srs_work_sorted, key=lambda item: item['num'])}
 
         for key, items in wk.items():
             items_sorted = sorted(items, key=lambda q: q['theme'])
@@ -217,6 +233,9 @@ class ReportService(object):
             "wk": wk,
             "dg": discipline_grouped,
             "labw": lab_work_grouped,
+            "prw": pr_work_grouped,
+            "srsw": srs_work_grouped,
+            "interactive_methods": interactive_methods,
         }
 
         doc.render(context)
