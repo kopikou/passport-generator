@@ -66,6 +66,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return _.filter(rpdData.value.additional_info, (x) => x.type == "guidelines")[0]?.value || []
   })
 
+  const fosInfo = computed(() => {
+    return _.filter(rpdData.value.additional_info, (x) => x.type == "fos")[0]?.value || []
+  })
+
   const additionalInfo = computed(() => {
     return rpdData.value.additional_info || []
   })
@@ -93,7 +97,6 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   const defaultResources = computed<DefaultRecources[]>(() => {
     return rpdData.value.resources || []
   })
-
 
 
   const $q = useQuasar()
@@ -166,6 +169,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     defaultResources,
     recources,
     guidelines,
+    fosInfo,
     additionalInfo,
 
     activeRpdId,

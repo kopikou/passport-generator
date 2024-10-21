@@ -4,54 +4,52 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import {useQuasar} from "quasar";
 import {onBeforeMount, ref, watch} from "vue";
-import _ from "lodash";
+import _, {forEach} from "lodash";
 import {api} from "boot/axios";
+import {laObjectGroup} from "@quasar/extras/line-awesome";
 
 const generatorViewStore = useGeneratorViewStore();
 
-const $q = useQuasar()
 const {
   activeRpdId,
   additionalInfo,
+  fosInfo,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
-  title: {},
+  title: {
+    required: true,
+  },
   type: {
     required: true,
   }
 })
 
+const $q = useQuasar()
 const about = ref('')
 const criteria = ref('')
 
 async function saveData() {
   $q.loading.show("Сохранение данных")
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
-    type: `fos_${props.type}`,
-    value: {
-      "about": about.value,
-      "criteria": criteria.value,
-    }
+  _.set(fosInfo.value, `[0].${props.type}`, {
+    "about": about.value,
+    "criteria": criteria.value,
   })
-  let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
-  if (key === undefined) {
-    additionalInfo.value.push(r.data)
-  } else {
-    _.set(additionalInfo.value, `[${key}].value['about']`, r.data.value['about'])
-    _.set(additionalInfo.value, `[${key}].value['criteria']`, r.data.value['criteria'])
-  }
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+    "type": "fos",
+    "value": fosInfo.value,
+  })
   $q.loading.hide()
 }
 
 watch(additionalInfo, () => {
-  about.value = _.filter(additionalInfo.value, (x) => x.type == `fos_${props.type}`)[0]?.value['about']
-  criteria.value = _.filter(additionalInfo.value, (x) => x.type == `fos_${props.type}`)[0]?.value['criteria']
+  about.value = _.get(fosInfo.value, `[0].${props.type}.about`)
+  criteria.value = _.get(fosInfo.value, `[0].${props.type}.criteria`)
 })
 
 onBeforeMount(() => {
-  about.value = _.filter(additionalInfo.value, (x) => x.type == `fos_${props.type}`)[0]?.value['about']
-  criteria.value = _.filter(additionalInfo.value, (x) => x.type == `fos_${props.type}`)[0]?.value['criteria']
+  about.value = _.get(fosInfo.value, `[0].${props.type}.about`)
+  criteria.value = _.get(fosInfo.value, `[0].${props.type}.criteria`)
 })
 
 </script>

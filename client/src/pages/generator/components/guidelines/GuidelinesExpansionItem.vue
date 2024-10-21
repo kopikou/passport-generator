@@ -29,7 +29,6 @@ const guidelines_text = ref<string>('')
 async function saveData() {
   $q.loading.show("Сохранение данных")
   _.set(guidelines.value, `[0].${props.type}`, guidelines_text.value)
-  console.log(guidelines.value)
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'guidelines',
     "value": guidelines.value,
@@ -39,7 +38,6 @@ async function saveData() {
 
 watch(additionalInfo, () => {
   guidelines_text.value = _.get(guidelines.value, `[0].${props.type}`)
-
 })
 
 onBeforeMount(() => {

@@ -40,6 +40,7 @@ def get_work_hours(data, type):
 
     return result
 
+
 class ReportService(object):
 
     @staticmethod
@@ -50,6 +51,7 @@ class ReportService(object):
         competences_sorted = sorted(data['planlines']['indicators'], key=lambda item: item['competence_index'])
         competences_grouped = {key: list(items) for key, items in
                                groupby(competences_sorted, key=lambda item: item['competence_index'])}
+
         competence = []
         for key, item in competences_grouped.items():
             competence.append({
@@ -63,13 +65,11 @@ class ReportService(object):
             indicators.append({
                 'index': item['indicator_index'],
                 'content': item['indicator'],
-                'know': item['discipline_indicator'][0]['know'] if item['discipline_indicator'][0]['know'] else '',
-                'able': item['discipline_indicator'][0]['able'] if item['discipline_indicator'][0]['able'] else '',
-                'own': item['discipline_indicator'][0]['own'] if item['discipline_indicator'][0]['own'] else '',
-                'criteria': item['discipline_indicator'][0]['criteria'] if item['discipline_indicator'][0][
-                    'criteria'] else '',
-                'methods': item['discipline_indicator'][0]['methods'] if item['discipline_indicator'][0][
-                    'methods'] else '',
+                'know': item['discipline_indicator'][0]['know'] if item['discipline_indicator'] else '',
+                'able': item['discipline_indicator'][0]['able'] if item['discipline_indicator'] else '',
+                'own': item['discipline_indicator'][0]['own'] if item['discipline_indicator'] else '',
+                'criteria': item['discipline_indicator'][0]['criteria'] if item['discipline_indicator'] else '',
+                'methods': item['discipline_indicator'][0]['methods'] if item['discipline_indicator'] else '',
             })
 
         guidelines_titles = {
@@ -256,6 +256,7 @@ class ReportService(object):
             "prw": pr_work_grouped,
             "srsw": srs_work_grouped,
             "interactive_methods": interactive_methods,
+            "guidelines": guidelines,
         }
 
         doc.render(context)

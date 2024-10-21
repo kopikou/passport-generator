@@ -124,14 +124,14 @@ class GeneratorViewSet(
     @action(methods=['GET'], url_path="get-form-control-data", detail=False)
     def get_form_control_data(self, request, *args, **kwargs):
 
-        data = FormControl.objects.all().values("id", "name")
+        data = FormControl.objects.all().values("id", "name", "type")
 
         return Response(data)
 
     @action(methods=['GET'], url_path="get-independent-types-data", detail=False)
     def get_independent_types_data(self, request, *args, **kwargs):
 
-        data = IndependentTypes.objects.all().values("id", "name")
+        data = IndependentTypes.objects.all().values("id", "name", "type")
 
         return Response(data)
 
