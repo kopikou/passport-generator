@@ -12,6 +12,7 @@ const $q = useQuasar()
 const {
   activeRpdId,
   additionalInfo,
+  tatInfo,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -33,48 +34,37 @@ const unsatisfactory = ref('')
 
 async function saveData() {
   $q.loading.show("Сохранение данных")
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
-    type: `tat_${props.type}`,
-    value: {
-      "main": main.value,
-      "about": about.value,
-      "great": great.value,
-      "good": good.value,
-      "satisfactorily": satisfactorily.value,
-      "unsatisfactory": unsatisfactory.value,
-
-    }
+  _.set(tatInfo.value, `[0].${props.type}`, {
+    "main": main.value,
+    "about": about.value,
+    "great": great.value,
+    "good": good.value,
+    "satisfactorily": satisfactorily.value,
+    "unsatisfactory": unsatisfactory.value,
   })
-  let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
-  if (key === undefined) {
-    additionalInfo.value.push(r.data)
-  } else {
-    _.set(additionalInfo.value, `[${key}].value['main']`, r.data.value['main'])
-    _.set(additionalInfo.value, `[${key}].value['about']`, r.data.value['about'])
-    _.set(additionalInfo.value, `[${key}].value['great']`, r.data.value['great'])
-    _.set(additionalInfo.value, `[${key}].value['good']`, r.data.value['good'])
-    _.set(additionalInfo.value, `[${key}].value['satisfactorily']`, r.data.value['satisfactorily'])
-    _.set(additionalInfo.value, `[${key}].value['unsatisfactory']`, r.data.value['unsatisfactory'])
-  }
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+    "type": 'tat',
+    "value": tatInfo.value,
+  })
   $q.loading.hide()
 }
 
 watch(additionalInfo, () => {
-  main.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['main']
-  about.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['about']
-  great.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['great']
-  good.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['good']
-  satisfactorily.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['satisfactorily']
-  unsatisfactory.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['unsatisfactory']
+  main.value = _.get(tatInfo.value, `[0].${props.type}.main`)
+  about.value = _.get(tatInfo.value, `[0].${props.type}.about`)
+  great.value = _.get(tatInfo.value, `[0].${props.type}.great`)
+  good.value = _.get(tatInfo.value, `[0].${props.type}.good`)
+  satisfactorily.value = _.get(tatInfo.value, `[0].${props.type}.satisfactorily`)
+  unsatisfactory.value = _.get(tatInfo.value, `[0].${props.type}.unsatisfactory`)
 })
 
 onBeforeMount(() => {
-  main.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['main']
-  about.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['about']
-  great.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['great']
-  good.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['good']
-  satisfactorily.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['satisfactorily']
-  unsatisfactory.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['unsatisfactory']
+  main.value = _.get(tatInfo.value, `[0].${props.type}.main`)
+  about.value = _.get(tatInfo.value, `[0].${props.type}.about`)
+  great.value = _.get(tatInfo.value, `[0].${props.type}.great`)
+  good.value = _.get(tatInfo.value, `[0].${props.type}.good`)
+  satisfactorily.value = _.get(tatInfo.value, `[0].${props.type}.satisfactorily`)
+  unsatisfactory.value = _.get(tatInfo.value, `[0].${props.type}.unsatisfactory`)
 })
 
 </script>

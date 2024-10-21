@@ -66,6 +66,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return _.filter(rpdData.value.additional_info, (x) => x.type == "guidelines")[0]?.value || []
   })
 
+  const tatInfo = computed(() => {
+    return _.filter(rpdData.value.additional_info, (x) => x.type == "tat")[0]?.value || []
+  })
+
   const fosInfo = computed(() => {
     return _.filter(rpdData.value.additional_info, (x) => x.type == "fos")[0]?.value || []
   })
@@ -170,6 +174,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     recources,
     guidelines,
     fosInfo,
+    tatInfo,
     additionalInfo,
 
     activeRpdId,

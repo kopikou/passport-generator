@@ -12,6 +12,7 @@ const $q = useQuasar()
 const {
   activeRpdId,
   additionalInfo,
+  tatInfo,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -31,39 +32,31 @@ const unpassed = ref('')
 
 async function saveData() {
   $q.loading.show("Сохранение данных")
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
-    type: `tat_${props.type}`,
-    value: {
-      "main": main.value,
-      "about": about.value,
-      "passed": passed.value,
-      "unpassed": unpassed.value,
-    }
+  _.set(tatInfo.value, `[0].${props.type}`, {
+    "main": main.value,
+    "about": about.value,
+    "passed": passed.value,
+    "unpassed": unpassed.value,
   })
-  let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
-  if (key === undefined) {
-    additionalInfo.value.push(r.data)
-  } else {
-    _.set(additionalInfo.value, `[${key}].value['main']`, r.data.value['main'])
-    _.set(additionalInfo.value, `[${key}].value['about']`, r.data.value['about'])
-    _.set(additionalInfo.value, `[${key}].value['passed']`, r.data.value['passed'])
-    _.set(additionalInfo.value, `[${key}].value['unpassed']`, r.data.value['unpassed'])
-  }
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+    "type": 'tat',
+    "value": tatInfo.value,
+  })
   $q.loading.hide()
 }
 
 watch(additionalInfo, () => {
-  main.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['main']
-  about.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['about']
-  passed.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['passed']
-  unpassed.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['unpassed']
+  main.value = _.get(tatInfo.value, `[0].${props.type}.main`)
+  about.value = _.get(tatInfo.value, `[0].${props.type}.about`)
+  passed.value = _.get(tatInfo.value, `[0].${props.type}.passed`)
+  unpassed.value = _.get(tatInfo.value, `[0].${props.type}.unpassed`)
 })
 
 onBeforeMount(() => {
-  main.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['main']
-  about.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['about']
-  passed.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['passed']
-  unpassed.value = _.filter(additionalInfo.value, (x) => x.type == `tat_${props.type}`)[0]?.value['unpassed']
+  main.value = _.get(tatInfo.value, `[0].${props.type}.main`)
+  about.value = _.get(tatInfo.value, `[0].${props.type}.about`)
+  passed.value = _.get(tatInfo.value, `[0].${props.type}.passed`)
+  unpassed.value = _.get(tatInfo.value, `[0].${props.type}.unpassed`)
 })
 
 </script>
