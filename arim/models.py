@@ -1,6 +1,5 @@
 from django.db import models
 from django.db.models import TextChoices
-from mssql import features
 
 from rpd.utils import TimestampsModel
 
