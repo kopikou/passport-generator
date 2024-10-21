@@ -37,6 +37,7 @@ async function saveData() {
     "about": about.value,
     "passed": passed.value,
     "unpassed": unpassed.value,
+    "title": props.title,
   })
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'tat',

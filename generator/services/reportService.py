@@ -25,6 +25,7 @@ def get_tic_name(data):
 
     return result
 
+
 def get_work_hours(data, type):
     result = []
 
@@ -79,6 +80,7 @@ class ReportService(object):
             'course': 'Методические указания для обучающихся по курсовому проектированию/работе:',
         }
 
+        fos = []
         guidelines = []
         precedence = []
         subsequent = []
@@ -100,6 +102,18 @@ class ReportService(object):
                         'type': k,
                         'title': guidelines_titles[k],
                         'content': i,
+                    })
+
+            if item['type'] == 'fos':
+                q = 0
+                for k, i in item['value'][0].items():
+                    q += 1
+                    fos.append({
+                        'number': q,
+                        'type': k,
+                        'title': i['title'],
+                        'about': i['about'] if 'about' in i else '',
+                        'criteria': i['criteria'] if 'criteria' in i else '',
                     })
 
         other_disciplines = {item['disid']: item['dis'] for item in data['other_discipline']}
@@ -147,7 +161,8 @@ class ReportService(object):
 
         discipline_themes = {item['id']: item for item in data['discipline_themes']}
         discipline_sorted = sorted(data['discipline_themes'], key=lambda item: (item['semester'], item['num']))
-        discipline_grouped = {key: list(item) for key, item in groupby(discipline_sorted, key=lambda item: item['semester'])}
+        discipline_grouped = {key: list(item) for key, item in
+                              groupby(discipline_sorted, key=lambda item: item['semester'])}
 
         work_hour = []
         for e, item in enumerate(data['discipline_work_hour']):
@@ -164,7 +179,7 @@ class ReportService(object):
             })
         work_hour_sorted = sorted(work_hour, key=lambda item: item['num'])
         wk = {key: list(items) for key, items in
-                               groupby(work_hour_sorted, key=lambda item: item['num'])}
+              groupby(work_hour_sorted, key=lambda item: item['num'])}
 
         lab_work = get_work_hours(work_hour, 3)
         lab_work_sorted = sorted(lab_work, key=lambda item: (item['num'], item['number']))
@@ -257,6 +272,7 @@ class ReportService(object):
             "srsw": srs_work_grouped,
             "interactive_methods": interactive_methods,
             "guidelines": guidelines,
+            "fos": fos,
         }
 
         doc.render(context)

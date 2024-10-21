@@ -34,6 +34,7 @@ async function saveData() {
   _.set(fosInfo.value, `[0].${props.type}`, {
     "about": about.value,
     "criteria": criteria.value,
+    "title": props.title,
   })
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": "fos",

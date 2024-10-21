@@ -41,6 +41,7 @@ async function saveData() {
     "good": good.value,
     "satisfactorily": satisfactorily.value,
     "unsatisfactory": unsatisfactory.value,
+    "title": props.title,
   })
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'tat',
