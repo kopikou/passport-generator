@@ -50,7 +50,6 @@ class ReportService(object):
         competences_sorted = sorted(data['planlines']['indicators'], key=lambda item: item['competence_index'])
         competences_grouped = {key: list(items) for key, items in
                                groupby(competences_sorted, key=lambda item: item['competence_index'])}
-
         competence = []
         for key, item in competences_grouped.items():
             competence.append({
@@ -73,14 +72,35 @@ class ReportService(object):
                     'methods'] else '',
             })
 
+        guidelines_titles = {
+            'laboratory': 'Методические указания для обучающихся по лабораторным работам:',
+            'practice': 'Методические указания для обучающихся по практическим занятиям',
+            'independent': 'Методические указания для обучающихся по самостоятельной работе:',
+            'course': 'Методические указания для обучающихся по курсовому проектированию/работе:',
+        }
+
+        guidelines = []
         precedence = []
         subsequent = []
+        interactive_methods = None
         for item in data['additional_info']:
             if item['type'] == 'interactiveMethods':
                 interactive_methods = item['value']['interactiveMethods']
+
             if item['type'] == 'disciplinePlace':
                 precedence = item['value']['precedence']
                 subsequent = item['value']['subsequent']
+
+            if item['type'] == 'guidelines':
+                q = 0
+                for k, i in item['value'][0].items():
+                    q += 1
+                    guidelines.append({
+                        'number': q,
+                        'type': k,
+                        'title': guidelines_titles[k],
+                        'content': i,
+                    })
 
         other_disciplines = {item['disid']: item['dis'] for item in data['other_discipline']}
         precedence_names = ", ".join([f"«{other_disciplines[item]}»" for item in precedence])
