@@ -66,11 +66,11 @@ class ReportService(object):
             indicators.append({
                 'index': item['indicator_index'],
                 'content': item['indicator'],
-                'know': item['discipline_indicator'][0]['know'] if item['discipline_indicator'] else '',
-                'able': item['discipline_indicator'][0]['able'] if item['discipline_indicator'] else '',
-                'own': item['discipline_indicator'][0]['own'] if item['discipline_indicator'] else '',
-                'criteria': item['discipline_indicator'][0]['criteria'] if item['discipline_indicator'] else '',
-                'methods': item['discipline_indicator'][0]['methods'] if item['discipline_indicator'] else '',
+                'know': item['discipline_indicator'][0]['know'] or '',
+                'able': item['discipline_indicator'][0]['able'] or '',
+                'own': item['discipline_indicator'][0]['own'] or '',
+                'criteria': item['discipline_indicator'][0]['criteria'] or '',
+                'methods': item['discipline_indicator'][0]['methods'] or '',
             })
 
         guidelines_titles = {
@@ -80,6 +80,19 @@ class ReportService(object):
             'course': 'Методические указания для обучающихся по курсовому проектированию/работе:',
         }
 
+        tat_titles = {
+            'ekz': 'Типовые оценочные средства для проведения экзамена по дисциплине',
+            'zacho': 'Типовые оценочные средства для проведения дифференцированного зачета по дисциплине',
+            'zach': 'Типовые оценочные средства для проведения зачета по дисциплине',
+            'krkp': 'Типовые оценочные средства для курсовой работы/курсового проектирования по дисциплине',
+        }
+
+        additional_library = []
+        main_library = []
+        resources = []
+        software = []
+        logistics = []
+        tat = []
         fos = []
         guidelines = []
         precedence = []
@@ -115,6 +128,66 @@ class ReportService(object):
                         'about': i['about'] if 'about' in i else '',
                         'criteria': i['criteria'] if 'criteria' in i else '',
                     })
+
+            if item['type'] == 'resources':
+                resources = item['value']
+
+            if item['type'] == 'library':
+                for k, i in enumerate(item['value']['dopBook'], start=1):
+                    additional_library.append({
+                        "number": k,
+                        "bib_disc": i['bib_disc'],
+                    })
+
+                for k, i in enumerate(item['value']['mainBook'], start=1):
+                    main_library.append({
+                        "number": k,
+                        "bib_disc": i['bib_disc'],
+                    })
+
+            if item['type'] == 'software':
+                for k, i in enumerate(item['value'], start=1):
+                    software.append({
+                        'number': k,
+                        'content': i['clicense__name'],
+                        'cnt': i['cnt'],
+                    })
+
+            if item['type'] == 'logistics':
+                for k, i in enumerate(item['value'], start=1):
+                    logistics.append({
+                        'number': k,
+                        'inv': i['inv'],
+                        'name': i['name'],
+                    })
+
+            if item['type'] == 'tat':
+                q = 0
+                for k, i in item['value'][0].items():
+                    q += 1
+                    if k == 'zach':
+                        tat.append({
+                            'number': q,
+                            'type': k,
+                            'title': tat_titles[k],
+                            'main': i['main'],
+                            'about': i['about'],
+                            'passed': i['passed'],
+                            'unpassed': i['unpassed'],
+                        })
+                    else:
+                        tat.append({
+                            'number': q,
+                            'type': k,
+                            'title': tat_titles[k],
+                            'main': i['main'],
+                            'about': i['about'],
+                            'great': i['great'],
+                            'good': i['good'],
+                            'satisfactorily': i['satisfactorily'],
+                            'unsatisfactory': i['unsatisfactory'],
+                        })
+
 
         other_disciplines = {item['disid']: item['dis'] for item in data['other_discipline']}
         precedence_names = ", ".join([f"«{other_disciplines[item]}»" for item in precedence])
@@ -273,6 +346,12 @@ class ReportService(object):
             "interactive_methods": interactive_methods,
             "guidelines": guidelines,
             "fos": fos,
+            "tat": tat,
+            'additional_library': additional_library,
+            'main_library': main_library,
+            "resources": resources,
+            "software": software,
+            "logistics": logistics,
         }
 
         doc.render(context)

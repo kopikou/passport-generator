@@ -27,12 +27,12 @@ class PlanLinesLink(TimestampsModel):
 
 class FormControl(TimestampsModel):
     name = models.CharField(max_length=64)
-    type = models.CharField(max_length=64)
+    type = models.CharField(max_length=64, unique=True)
 
 
 class IndependentTypes(TimestampsModel):
     name = models.CharField(max_length=128)
-    type = models.CharField(max_length=64)
+    type = models.CharField(max_length=64, unique=True)
 
 
 class DisciplineIndicators(TimestampsModel):

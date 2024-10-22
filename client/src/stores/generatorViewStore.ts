@@ -58,8 +58,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return _.filter(rpdData.value.additional_info, (x) => x.type == "logistics")
   })
 
-  const recources = computed(() => {
-    return _.filter(rpdData.value.additional_info, (x) => x.type == "recources")
+  const resources = computed(() => {
+    return _.filter(rpdData.value.additional_info, (x) => x.type == "resources")
   })
 
   const guidelines = computed(() => {
@@ -171,7 +171,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     disciplinePlace,
     interactiveMethods,
     defaultResources,
-    recources,
+    resources,
     guidelines,
     fosInfo,
     tatInfo,

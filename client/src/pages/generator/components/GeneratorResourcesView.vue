@@ -10,20 +10,20 @@ const generatorViewStore = useGeneratorViewStore();
 
 const {
   defaultResources,
-  recources,
+  resources,
   activeRpdId,
   additionalInfo,
 } = storeToRefs(generatorViewStore)
 
-const recources_web = ref('')
-const recources_bd = ref('')
+const resources_web = ref('')
+const resources_bd = ref('')
 
 async function saveData() {
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
-    type: "recources",
+    type: "resources",
     value: {
-      "web": recources_web.value,
-      "bd": recources_bd.value,
+      "web": resources_web.value,
+      "bd": resources_bd.value,
     }
   })
   let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
@@ -34,47 +34,47 @@ async function saveData() {
   }
 }
 
-watch(recources, () => {
-  if (!recources.value[0]?.value['web']) {
+watch(resources, () => {
+  if (!resources.value[0]?.value['web']) {
     let text = ''
     _.forEach(_.filter(defaultResources.value, (x) => x.type == 0), (value, key) => {
       text += key + 1 + '. ' + value['url'] + '\n'
     })
-    recources_web.value = text
+    resources_web.value = text
     text = ''
   } else {
-    recources_web.value = recources.value[0]?.value['web']
+    resources_web.value = resources.value[0]?.value['web']
   }
-  if (!recources.value[0]?.value['bd']) {
+  if (!resources.value[0]?.value['bd']) {
     let text = ''
     _.forEach(_.filter(defaultResources.value, (x) => x.type == 1), (value, key) => {
       text += key + 1 + '. ' + value['url'] + '\n'
     })
-    recources_bd.value = text
+    resources_bd.value = text
   } else {
-    recources_bd.value = recources.value[0]?.value['bd']
+    resources_bd.value = resources.value[0]?.value['bd']
   }
 })
 
 onBeforeMount(() => {
-  if (!recources.value[0]?.value['web']) {
+  if (!resources.value[0]?.value['web']) {
     let text = ''
     _.forEach(_.filter(defaultResources.value, (x) => x.type == 0), (value, key) => {
       text += key + 1 + '. ' + value['url'] + '\n'
     })
-    recources_web.value = text
+    resources_web.value = text
     text = ''
   } else {
-    recources_web.value = recources.value[0]?.value['web']
+    resources_web.value = resources.value[0]?.value['web']
   }
-  if (!recources.value[0]?.value['bd']) {
+  if (!resources.value[0]?.value['bd']) {
     let text = ''
     _.forEach(_.filter(defaultResources.value, (x) => x.type == 1), (value, key) => {
       text += key + 1 + '. ' + value['url'] + '\n'
     })
-    recources_bd.value = text
+    resources_bd.value = text
   } else {
-    recources_bd.value = recources.value[0]?.value['bd']
+    resources_bd.value = resources.value[0]?.value['bd']
   }
 })
 
@@ -92,7 +92,7 @@ onBeforeMount(() => {
         type="textarea"
         filled
         stack-label
-        v-model="recources_web"
+        v-model="resources_web"
       />
 
       <q-input
@@ -100,7 +100,7 @@ onBeforeMount(() => {
         type="textarea"
         filled
         stack-label
-        v-model="recources_bd"
+        v-model="resources_bd"
       />
       <q-btn
         label="Сохранить"
