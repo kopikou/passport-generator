@@ -195,7 +195,6 @@ class ReportService(object):
                     software.append({
                         'number': k,
                         'content': i['clicense__name'],
-                        'cnt': i['cnt'],
                     })
 
             if item['type'] == 'logistics':
