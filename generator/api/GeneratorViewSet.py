@@ -207,7 +207,23 @@ class GeneratorViewSet(
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
 
-        doc = ReportService.get_rpd_docx(result)
+        doc = ReportService.get_rpd_report(result)
+        doc.save(response)
+
+        # return Response(result)
+        return response
+
+    @action(methods=['GET'], url_path="get-rpd-annotation", detail=True)
+    def get_rpd_annotation(self, request, *args, **kwargs):
+
+        result = self.retrieve(request, *args, **kwargs).data
+
+        filename = f"Аннотация_{result['admission']['abbr']}-{result['admission']['yr']}.docx"
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
+
+        doc = ReportService.get_rpd_annotation(result)
         doc.save(response)
 
         # return Response(result)

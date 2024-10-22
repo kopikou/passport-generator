@@ -16,6 +16,7 @@ const {
   otherDiscipline,
   activeRpdId,
   disciplinePlace,
+  additionalInfo,
 } = storeToRefs(generatorViewStore)
 
 const precedence = ref([])
@@ -33,6 +34,10 @@ async function savePrecSubDiscipline() {
       "subsequent": subsequent.value,
     }
   })
+
+  let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
+  _.set(additionalInfo.value, `[${key}].value.precedence`, precedence.value)
+  _.set(additionalInfo.value, `[${key}].value.subsequent`, subsequent.value)
 
   $q.loading.hide()
 }
@@ -57,33 +62,33 @@ onBeforeMount(() => {
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-select-filterable
-        label="Обеспечивающие (предшествующие) дисциплины и практики"
-        v-model="precedence"
-        option-label="dis"
-        option-value="disid"
-        stack-label
-        filled
-        use-chips
-        clearable
-        multiple
-        map-options
-        emit-value
-        :options="otherDiscipline"
+          label="Обеспечивающие (предшествующие) дисциплины и практики"
+          v-model="precedence"
+          option-label="dis"
+          option-value="disid"
+          stack-label
+          filled
+          use-chips
+          clearable
+          multiple
+          map-options
+          emit-value
+          :options="otherDiscipline"
       />
       <br/>
       <q-select-filterable
-        label="Обеспечиваемые (последующие) дисциплины и практики"
-        v-model="subsequent"
-        option-label="dis"
-        option-value="disid"
-        stack-label
-        filled
-        use-chips
-        clearable
-        multiple
-        map-options
-        emit-value
-        :options="otherDiscipline"
+          label="Обеспечиваемые (последующие) дисциплины и практики"
+          v-model="subsequent"
+          option-label="dis"
+          option-value="disid"
+          stack-label
+          filled
+          use-chips
+          clearable
+          multiple
+          map-options
+          emit-value
+          :options="otherDiscipline"
       />
       <q-btn label="Сохранить" color="primary" class="q-mt-sm" @click="savePrecSubDiscipline"/>
     </div>

@@ -45,7 +45,20 @@ def get_work_hours(data, type):
 class ReportService(object):
 
     @staticmethod
-    def get_rpd_docx(data):
+    def get_rpd_annotation(data):
+        path = f"{BASE_DIR}{Path("/templates/docxRPD/rpd.docx")}"
+        doc = DocxTemplate(path)
+
+
+
+        context = {}
+
+        doc.render(context)
+        return doc
+
+
+    @staticmethod
+    def get_rpd_report(data):
         path = f"{BASE_DIR}{Path("/templates/docxRPD/rpd.docx")}"
         doc = DocxTemplate(path)
 

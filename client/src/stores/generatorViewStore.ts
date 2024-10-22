@@ -74,6 +74,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return _.filter(rpdData.value.additional_info, (x) => x.type == "fos")[0]?.value || []
   })
 
+  const disciplineGoal = computed(() => {
+    return _.filter(rpdData.value.additional_info, (x) => x.type == "disciplineGoal")[0]?.value || ''
+  })
+
   const additionalInfo = computed(() => {
     return rpdData.value.additional_info || []
   })
@@ -175,6 +179,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     guidelines,
     fosInfo,
     tatInfo,
+    disciplineGoal,
     additionalInfo,
 
     activeRpdId,

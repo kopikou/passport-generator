@@ -5,6 +5,7 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
+import _ from "lodash";
 
 const generatorViewStore = useGeneratorViewStore();
 const $q = useQuasar()
@@ -14,6 +15,7 @@ const {
   activeRpdId,
   semestersData,
   interactiveMethods,
+  additionalInfo,
 } = storeToRefs(generatorViewStore)
 
 const tab = ref<string>('')
@@ -27,6 +29,8 @@ async function saveMethods() {
       "interactiveMethods": methods.value
     }
   })
+  let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
+  _.set(additionalInfo.value, `[${key}].value.interactiveMethods`, methods.value)
   $q.loading.hide()
 }
 
