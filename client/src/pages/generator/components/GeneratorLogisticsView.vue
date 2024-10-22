@@ -7,6 +7,7 @@ import {storeToRefs} from "pinia";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {GeneratorOborudData} from "src/types";
 import _ from "lodash";
+import GeneratorAddLogisticsDialog from "pages/generator/components/dialogs/GeneratorAddLogisticsDialog.vue";
 
 const $q = useQuasar()
 
@@ -73,6 +74,28 @@ function checkTaken(id) {
   return _.map(oborudData.value, (x) => x.id).includes(id);
 }
 
+function addMTO() {
+  if (!disciplineLogistics.value[0]) {
+    _.set(disciplineLogistics.value, "[0].value", [])
+    saveOborud()
+  }
+  $q.notify({
+    message: "Убедитесь, что выбранный источник доступен всем студентам и в достаточном количестве.",
+    color: "secondary",
+    type: "info",
+    position: "center",
+    progress: true,
+    timeout: 3500,
+  })
+
+    $q.dialog({
+    component: GeneratorAddLogisticsDialog,
+  }).onOk(() => {
+    oborudData.value = disciplineLogistics.value[0]?.value || []
+    saveOborud()
+  })
+}
+
 onBeforeMount(() => {
   oborudData.value = disciplineLogistics.value[0]?.value || []
 })
@@ -89,20 +112,26 @@ watch(disciplineLogistics, () => {
       <span class="text-h6 q-pl-lg">Перечень материально-технического обеспечения для дисциплины</span>
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
+      <q-btn
+          class="q-mb-md"
+          label="Добавить МТО"
+          color="secondary"
+          @click="addMTO"
+      />
       <q-option-group
-        :options="typeOptions"
-        type="radio"
-        v-model="searchType"
-        inline
+          :options="typeOptions"
+          type="radio"
+          v-model="searchType"
+          inline
       />
       <div class="row q-gutter-x-md q-mb-md">
         <q-input
-          label="Введите текст для поиска"
-          stack-label
-          v-model="searchVal"
-          filled
-          class="col"
-          :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
+            label="Введите текст для поиска"
+            stack-label
+            v-model="searchVal"
+            filled
+            class="col"
+            :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
         />
         <q-btn color="secondary" @click="searchOborud" label="Поиск"/>
       </div>

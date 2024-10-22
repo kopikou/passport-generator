@@ -7,6 +7,7 @@ import {GeneratorSoftwareData} from "src/types";
 import _ from "lodash";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
+import GeneratorAddSoftwareDialog from "pages/generator/components/dialogs/GeneratorAddSoftwareDialog.vue";
 
 const $q = useQuasar()
 const generatorViewStore = useGeneratorViewStore()
@@ -60,6 +61,28 @@ async function searchSoft() {
   }
 }
 
+function addPO() {
+  if (!disciplineSoftware.value[0]) {
+    _.set(disciplineSoftware.value, "[0].value", [])
+    saveSoftware()
+  }
+  $q.notify({
+    message: "Убедитесь, что выбранный источник доступен всем студентам и в достаточном количестве.",
+    color: "secondary",
+    type: "info",
+    position: "center",
+    progress: true,
+    timeout: 3500,
+  })
+
+    $q.dialog({
+    component: GeneratorAddSoftwareDialog,
+  }).onOk(() => {
+    softwareData.value = disciplineSoftware.value[0]?.value || []
+    saveSoftware()
+  })
+}
+
 onBeforeMount(() => {
   softwareData.value = disciplineSoftware.value[0]?.value || []
 })
@@ -76,7 +99,12 @@ watch(disciplineSoftware, () => {
       <span class="text-h6 q-pl-lg">Перечень лицензионного программного обеспечения для дисциплины</span>
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
-
+      <q-btn
+          class="q-mb-md"
+          label="Добавить ПО"
+          color="secondary"
+          @click="addPO"
+      />
       <div class="row q-gutter-x-md q-mb-md">
         <q-input
           label="Введите текст для поиска"

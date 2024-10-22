@@ -10,7 +10,7 @@ import {api} from "boot/axios";
 const generatorViewStore = useGeneratorViewStore();
 
 const {
-
+  disciplineSoftware,
 } = storeToRefs(generatorViewStore)
 
 defineEmits([
@@ -30,6 +30,11 @@ const clicense__name = ref<string>('')
 
 async function onOKClick() {
   $q.loading.show({message: "Сохранение"})
+
+  disciplineSoftware.value[0]?.value.push({
+    id: Math.floor(Math.random() * 100000),
+    clicense__name: clicense__name.value,
+  })
 
   $q.loading.hide()
   onDialogOK()
