@@ -46,16 +46,49 @@ class ReportService(object):
 
     @staticmethod
     def get_rpd_annotation(data):
-        path = f"{BASE_DIR}{Path("/templates/docxRPD/rpd.docx")}"
+        path = f"{BASE_DIR}{Path("/templates/docxRPD/annotation.docx")}"
         doc = DocxTemplate(path)
 
+        competences_sorted = sorted(data['planlines']['indicators'], key=lambda item: item['competence_index'])
+        competences_grouped = {key: list(items) for key, items in
+                               groupby(competences_sorted, key=lambda item: item['competence_index'])}
+        competence = []
+        for key, item in competences_grouped.items():
+            competence.append({
+                "index": key,
+                "content": item[0]['competence'],
+            })
 
+        discipline_themes = {key: item for key, item in enumerate(data['discipline_themes'], start=1)}
 
-        context = {}
+        discipline_goal = ''
+        main_library = []
+        for item in data['additional_info']:
+            if item['type'] == 'disciplineGoal':
+                discipline_goal = item['value']
+
+            if item['type'] == 'library':
+                for k, i in enumerate(item['value']['mainBook'], start=1):
+                    main_library.append({
+                        "number": k,
+                        "bib_disc": i['bib_disc'],
+                    })
+
+        tic_all = []
+        for item in data['planlines']['semesters']:
+            tic_all.append(", ".join(get_tic_name(item)))
+
+        context = {
+            "disciplGoal": discipline_goal,
+            "discpl": data['planlines']['dis'],
+            "competences": competence,
+            "discipline_themes": discipline_themes,
+            "tic_all": ", ".join(tic_all),
+            "main_library": main_library,
+        }
 
         doc.render(context)
         return doc
-
 
     @staticmethod
     def get_rpd_report(data):
@@ -65,7 +98,6 @@ class ReportService(object):
         competences_sorted = sorted(data['planlines']['indicators'], key=lambda item: item['competence_index'])
         competences_grouped = {key: list(items) for key, items in
                                groupby(competences_sorted, key=lambda item: item['competence_index'])}
-
         competence = []
         for key, item in competences_grouped.items():
             competence.append({
@@ -200,7 +232,6 @@ class ReportService(object):
                             'satisfactorily': i['satisfactorily'],
                             'unsatisfactory': i['unsatisfactory'],
                         })
-
 
         other_disciplines = {item['disid']: item['dis'] for item in data['other_discipline']}
         precedence_names = ", ".join([f"«{other_disciplines[item]}»" for item in precedence])
