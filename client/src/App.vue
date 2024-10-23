@@ -59,6 +59,9 @@ onBeforeMount(async () => {
         </q-toolbar-title>
 
         <q-tabs inline-label dense shrink stretch v-if="isAuthenticated">
+          <q-route-tab icon="mdi-upload-box" label="Загрузка файлов программ" to="/upload"
+                       v-permissions-required="Permissions.can_use_generator"
+          />
           <q-route-tab icon="mdi-generator-portable" label="Генератор РПД" to="/generator"
                        v-permissions-required="Permissions.can_use_generator"
           />

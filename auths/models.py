@@ -12,6 +12,7 @@ class Permissions(TextChoices):
     can_upload_plx_files = "can_upload_plx_files", "Может загружать plx файлы"
     can_edit_rpd = "can_edit_rpd", "Может редактировать РПД"
     can_use_generator = "can_use_generator", "Может использовать генератор"
+    can_upload_files = "can_upload_files", "Может загружать файлы Программы"
 
 
 # Create your models here.

@@ -26,6 +26,7 @@ import GeneratorResourcesView from "pages/generator/components/GeneratorResource
 import GeneratorGuidelinesView from "pages/generator/components/GeneratorGuidelinesView.vue";
 import GeneratorFOSView from "pages/generator/components/GeneratorFOSView.vue";
 import GeneratorTATView from "pages/generator/components/GeneratorTATView.vue";
+import UploadView from "pages/upload/UploadView.vue";
 
 
 const routes: RouteRecordRaw[] = [
@@ -180,6 +181,20 @@ const routes: RouteRecordRaw[] = [
             component: PlxSemesterView
           }
         ]
+      },
+    ]
+  },
+  {
+    path: "/upload",
+    name: "UploadMainPage",
+    meta: {
+      permissions: [Permissions.can_upload_files]
+    },
+    children: [
+      {
+        path: '',
+        name: 'UploadView',
+        component: UploadView,
       },
     ]
   },

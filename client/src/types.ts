@@ -1,6 +1,7 @@
 export enum Permissions {
   can_upload_plx_files = 'can_upload_plx_files',
   can_use_generator = 'can_use_generator',
+  can_upload_files = 'can_upload_files',
 }
 
 export interface PlanLineItem {

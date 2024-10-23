@@ -48,7 +48,6 @@ onBeforeMount(async () => {
         <div>Составитель</div>
         <div>Кафедра</div>
         <div>Статус</div>
-        <div></div>
       </div>
       <div class="rpd-row rpd-row__body" v-for="item in listData" @click="router.push(`/generator/${item.id}/main`)">
         <div>{{ item.abbr }} {{ item.yr }}</div>
@@ -57,7 +56,6 @@ onBeforeMount(async () => {
         <div>{{ item.person }}</div>
         <div>{{ cafDataById[item.kafcode]?.label }}</div>
         <div>{{ item.status_verbose }}</div>
-        <div>Тырым пырым</div>
       </div>
     </div>
   </div>
@@ -66,7 +64,7 @@ onBeforeMount(async () => {
 <style scoped lang="scss">
 .rpd-container {
   display: grid;
-  grid-template-columns: auto auto repeat(3, 1fr) auto auto;
+  grid-template-columns: auto auto repeat(3, 1fr) auto;
 }
 
 .rpd-row {
