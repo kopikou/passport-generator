@@ -201,7 +201,6 @@ class ReportService(object):
                 for k, i in enumerate(item['value'], start=1):
                     logistics.append({
                         'number': k,
-                        'inv': i['inv'],
                         'name': i['name'],
                     })
 

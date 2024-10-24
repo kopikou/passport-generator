@@ -6,6 +6,7 @@ from arim.api import ArimViewSet
 from auths.views import LoginView, LogoutView, BitrixAuthView
 from auths.api import UserApiViewSet
 from generator.api.GeneratorViewSet import GeneratorViewSet
+from generator.api.UploadFileViewSet import UploadFileViewSet
 from rpd.api.AccreditationInfoViewSet import AccreditationInfoViewSet
 from rpd.api.PlxUploadViewSet import PlxUploadViewSet
 
@@ -16,6 +17,7 @@ router.register(r'plx', PlxUploadViewSet, basename="plx")
 router.register(r'arim', ArimViewSet, basename="arim")
 router.register(r'accreditation', AccreditationInfoViewSet, basename="accreditation")
 router.register(r'generator', GeneratorViewSet, basename="generator")
+router.register(r'upload', UploadFileViewSet, basename="upload")
 
 urlpatterns = [
     path('api/', include(router.urls)),

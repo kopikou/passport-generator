@@ -6,7 +6,7 @@ from django.conf import settings
 from django.db.models import Q
 
 from app.utils import cache_function
-from arim.models import UistLicense, OborudData, BoolChoice, UchPlanKaf, Catadmission
+from arim.models import UistLicense, OborudData, BoolChoice, UchPlanKaf, Catadmission, CatFaculty
 
 
 class AISServices(object):
@@ -68,6 +68,16 @@ class AISServices(object):
         # data = r.json()['RecordSet']
 
         return data
+
+    @staticmethod
+    def get_admission_list_by_person(id):
+
+        cfac = CatFaculty.objects.filter(cdean=id)
+
+        cadmissions = Catadmission.objects.filter(cfac__in=[i.id for i in cfac]).values()
+
+        return cadmissions
+
 
     @staticmethod
     # @cache_function(timeout=10 * 1)
