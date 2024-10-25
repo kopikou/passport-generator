@@ -6,10 +6,9 @@ from arim.api import ArimViewSet
 from auths.views import LoginView, LogoutView, BitrixAuthView
 from auths.api import UserApiViewSet
 from generator.api.GeneratorViewSet import GeneratorViewSet
-from generator.api.UploadFileViewSet import UploadFileViewSet
 from rpd.api.AccreditationInfoViewSet import AccreditationInfoViewSet
 from rpd.api.PlxUploadViewSet import PlxUploadViewSet
-
+from uplfile.api import UploadFileViewSet
 
 router = routers.DefaultRouter()
 router.register(r'user', UserApiViewSet, basename="user")

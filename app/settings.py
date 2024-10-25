@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
     'rpd',
     'generator',
+    'uplfile',
     'auths',
     'arim',
     'arim_library',
