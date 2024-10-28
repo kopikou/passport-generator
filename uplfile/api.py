@@ -6,6 +6,7 @@ from rest_framework.viewsets import GenericViewSet
 from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from auths.models import Permissions
+from rpd.models import PlanData
 
 
 class UploadFileViewSet(
@@ -26,4 +27,11 @@ class UploadFileViewSet(
         mira_id = 16236
         data = AISServices.get_admission_list_by_person(mira_id)
 
-        return Response(data)
+        abbrprofile_list = list(set([i['abbr'] for i in data]))
+        startyear_list = list(set([i['yr'] for i in data]))
+
+        filtered_data = PlanData.objects.filter(abbrprofile__in=abbrprofile_list, startyear__in=startyear_list).values()
+
+        result = [i for i in filtered_data]
+
+        return Response(result)

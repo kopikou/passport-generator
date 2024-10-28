@@ -62,11 +62,19 @@ class GeneratorViewSet(
         user = 2103
         data = AISServices.get_disciplines_by_person(user)
 
+        discpl_list = [i['discpl'] for i in data]
+        abbrprofile_list = [i['abbr'] for i in data]
+        startyear_list = [i['yr'] for i in data]
+
+        filtered_data = LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
+                                            plan__startyear__in=startyear_list, plan__file__status=4).select_related("plan")
+
+        filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.plan.startyear}": i for i in filtered_data}
+
         result = []
         for item in data:
 
-            line = LinesData.objects.filter(dis=item['discpl'], plan__abbrprofile=item['abbr'],
-                                            plan__startyear=item['yr'], plan__file__status=4).first()
+            line = filtered_data_sorted.get(f"{item['discpl']}_{item['abbr']}_{item['yr']}")
 
             if line:
                 lines, created = PlanLinesLink.objects.get_or_create(
