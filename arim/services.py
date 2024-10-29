@@ -75,15 +75,23 @@ class AISServices(object):
 
         cfac = CatFaculty.objects.filter(cdean=id)
         ckaf = CatKaf.objects.filter(czav=id)
-        adm_user = RpdUsers.objects.filter(cperson=id)
+        adm_user = RpdUsers.objects.filter(cperson=id).first()
 
         now = pendulum.now().start_of("day")
-
+        left_time = now.add(years=-6).year
         data = None
         if adm_user:
-            data = UchPlanPlan.objects.filter(fordel='f', startyear__gte=now.add(years=-6).year).values()
+            if adm_user.isadmin == 't':
+                data = UchPlanPlan.objects.filter(fordel='f', startyear__gte=left_time).values()
+            elif adm_user.isspo == 't':
+                data = UchPlanPlan.objects.filter(fordel='f', startyear__gte=left_time, ckaf__in=[1988587, 1988517, 1988516])
+        elif cfac:
+            uchplans = [i.cuchplan for i in Catadmission.objects.filter(cfac__in=[j.id for j in cfac], active='t', yr__gte=left_time, cuchplan__isnull=False)]
+            data = UchPlanPlan.objects.filter(fordel='f', id__in=[i.id for i in uchplans]).values()
+        elif ckaf:
+            data = UchPlanPlan.objects.filter(fordel='f', ckaf__in=[i.id for i in ckaf], startyear__gte=left_time).values()
         else:
-            data = Catadmission.objects.filter(cfac__in=[i.id for i in cfac], active='t').values()
+            data = UchPlanPlan.objects.filter(fordel='f', cperson=id, startyear__gte=left_time).values()
 
         return data
 
