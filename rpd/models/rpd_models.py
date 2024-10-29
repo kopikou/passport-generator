@@ -106,9 +106,18 @@ class PlanDocuments(TimestampsModel):
     plan = models.ForeignKey(PlanData, on_delete=models.CASCADE, related_name="plan_documents")
     name = models.TextField()
     type = models.IntegerField()
+    new_type = models.ForeignKey("DocumentsTypes", on_delete=models.CASCADE, default=None, null=True)
     synchronize = models.BooleanField()
     manual = models.BooleanField(default=False)
     mira_id = models.IntegerField(null=True, blank=True)
+
+    @property
+    def new_type_verbose(self):
+        return DocumentsTypes.objects.get(id=self.new_type).name
+
+
+class DocumentsTypes(TimestampsModel):
+    name = models.TextField()
 
 
 class ExceptionNames(TimestampsModel):
@@ -128,6 +137,7 @@ class AllowedNames(TimestampsModel):
 class BaseDocuments(TimestampsModel):
     name = models.TextField(verbose_name='Наименование файла')
     type = models.IntegerField(verbose_name='Тип')
+    new_type = models.ForeignKey("DocumentsTypes", on_delete=models.CASCADE, default=None, null=True)
     specialist = models.BooleanField(verbose_name='Специалитет')
     bachelor = models.BooleanField(verbose_name='Бакалавр')
     magistrate = models.BooleanField(verbose_name='Магистратура')
