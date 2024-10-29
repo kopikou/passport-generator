@@ -5,16 +5,30 @@ import {storeToRefs} from "pinia";
 
 const uploadFileViewStore = useUploadFileViewStore();
 
-const{
+const {
   admissionData,
-}=storeToRefs(uploadFileViewStore)
+} = storeToRefs(uploadFileViewStore)
 
 </script>
 
 <template>
   <div class="q-pa-lg">
+    {{admissionData}}
     <div class="text-center text-h6 q-mb-md">Список рабочих программ ИРНИТУ</div>
-    {{ admissionData }}
+    <q-list bordered>
+      <q-expansion-item
+          v-for="item in admissionData"
+          expand-separator
+          :caption="item.plan_name"
+          :label="`Учебный план ${item.abbrprofile} ${item.startyear}`"
+      >
+        <q-card>
+          <q-card-section>
+            hello world!
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
+    </q-list>
   </div>
 </template>
 

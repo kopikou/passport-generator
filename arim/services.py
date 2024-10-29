@@ -6,7 +6,8 @@ from django.conf import settings
 from django.db.models import Q
 
 from app.utils import cache_function
-from arim.models import UistLicense, OborudData, BoolChoice, UchPlanKaf, Catadmission, CatFaculty
+from arim.models import UistLicense, OborudData, BoolChoice, UchPlanKaf, Catadmission, CatFaculty, CatKaf, RpdUsers, \
+    UchPlanPlan
 
 
 class AISServices(object):
@@ -73,10 +74,18 @@ class AISServices(object):
     def get_admission_list_by_person(id):
 
         cfac = CatFaculty.objects.filter(cdean=id)
+        ckaf = CatKaf.objects.filter(czav=id)
+        adm_user = RpdUsers.objects.filter(cperson=id)
 
-        cadmissions = Catadmission.objects.filter(cfac__in=[i.id for i in cfac]).values()
+        now = pendulum.now().start_of("day")
 
-        return cadmissions
+        data = None
+        if adm_user:
+            data = UchPlanPlan.objects.filter(fordel='f', startyear__gte=now.add(years=-6).year).values()
+        else:
+            data = Catadmission.objects.filter(cfac__in=[i.id for i in cfac], active='t').values()
+
+        return data
 
 
     @staticmethod

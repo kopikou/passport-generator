@@ -30,6 +30,8 @@ class Catadmission(models.Model):
     cdirection = models.ForeignKey("CLDirection", on_delete=models.CASCADE, null=True, blank=True, db_column="cdirection")
     spec_name = models.CharField(max_length=250, null=True, blank=True)
     direct_name = models.CharField(max_length=150, null=True, blank=True)
+    active = models.CharField(max_length=1, choices=BoolChoice)
+    onsite = models.CharField(max_length=1, choices=BoolChoice)
     cfac = models.ForeignKey("CatFaculty", on_delete=models.CASCADE, db_column="cfac")
     ckaf = models.ForeignKey("CatKaf", on_delete=models.CASCADE, db_column="ckaf")
     kvalif_name = models.CharField(max_length=100)
@@ -219,3 +221,17 @@ class CatAud(models.Model):
     name = models.CharField(max_length=16, null=True, blank=True)
     ckaf = models.IntegerField(null=True)
     cnazn = models.IntegerField(null=True)
+
+
+class RpdUsers(models.Model):
+    class Meta:
+        db_table = "rpdusers"
+        managed = False
+
+    name = models.CharField(max_length=50)
+    cperson = models.ForeignKey("CatPerson", on_delete=models.CASCADE, db_column="cperson")
+    isadmin = models.CharField(max_length=1, choices=BoolChoice)
+    isspo = models.CharField(max_length=1, choices=BoolChoice)
+    cfac = models.ForeignKey("CatFaculty", on_delete=models.CASCADE, db_column="cfac")
+    isspoadm = models.CharField(max_length=1, choices=BoolChoice)
+

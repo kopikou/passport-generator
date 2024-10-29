@@ -27,15 +27,15 @@ class UploadFileViewSet(
         mira_id = 16236
         data = AISServices.get_admission_list_by_person(mira_id)
 
-        abbrprofile_list = list(set([i['abbr'] for i in data]))
-        startyear_list = list(set([i['yr'] for i in data]))
+        abbrprofile_list = list(set([i['abbrprofile'] for i in data]))
+        startyear_list = list(set([i['startyear'] for i in data]))
 
         filtered_data = PlanData.objects.filter(abbrprofile__in=abbrprofile_list, startyear__in=startyear_list)
         filtered_data_sorted = {f"{i.abbrprofile}_{i.startyear}": i for i in filtered_data}
 
         result = []
         for item in data:
-            res = filtered_data_sorted.get(f"{item['abbr']}_{item['yr']}")
+            res = filtered_data_sorted.get(f"{item['abbrprofile']}_{item['startyear']}")
             if res:
                 result.append({
                     **item,
