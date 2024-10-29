@@ -36,6 +36,14 @@ const {
                 {{ i.name }}
               </div>
               <div>
+                <q-btn
+                  icon="upload"
+                  class="q-mr-xs"
+                  color="secondary"
+                  filled
+                />
+              </div>
+              <div class="flex items-center">
                 files
               </div>
             </div>
@@ -57,7 +65,7 @@ const {
 
   .card-container {
     display: grid;
-    grid-template-columns: 4fr 1fr;
+    grid-template-columns: 4fr auto 1fr;
     padding: 5px;
   }
 }
