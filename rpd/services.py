@@ -507,7 +507,7 @@ class PLXParser:
 
         for item in documents_data:
             item['plan_id'] = plan_id
-            if not documents_by_id.get(f"{item['plan_id']}_{item['name']}"):
+            if not documents_by_id.get(f"{item['plan_id']}_{item['name'].strip()}"):
                 obj = PlanDocumentsSerializer(data=item)
 
                 obj.is_valid(raise_exception=True)
@@ -515,7 +515,7 @@ class PLXParser:
 
                 result.append(obj.data)
             else:
-                result.append(documents_by_id.get(f"{item['plan_id']}_{item['name']}"))
+                result.append(documents_by_id.get(f"{item['plan_id']}_{item['name'].strip()}"))
 
         for item in documents:
             if item['manual']:

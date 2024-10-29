@@ -30,15 +30,17 @@ class UploadFileViewSet(
         abbrprofile_list = list(set([i['abbrprofile'] for i in data]))
         startyear_list = list(set([i['startyear'] for i in data]))
 
-        filtered_data = PlanData.objects.filter(abbrprofile__in=abbrprofile_list, startyear__in=startyear_list)
+        filtered_data = PlanData.objects.filter(abbrprofile__in=abbrprofile_list, startyear__in=startyear_list, file__status=4)
         filtered_data_sorted = {f"{i.abbrprofile}_{i.startyear}": i for i in filtered_data}
 
         result = []
         for item in data:
             res = filtered_data_sorted.get(f"{item['abbrprofile']}_{item['startyear']}")
             if res:
+                plan_documents = [i for i in res.plan_documents.values()]
                 result.append({
                     **item,
+                    "plan_documents": plan_documents,
                     "plan_id": res.id,
                     "plan_name": res.file.title,
                 })

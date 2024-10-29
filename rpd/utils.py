@@ -25,5 +25,3 @@ class TimestampsModel(models.Model):
     def restore(self):
         self.is_deleted = False
         self.save()
-
-

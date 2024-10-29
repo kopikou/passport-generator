@@ -24,7 +24,7 @@ const {
       >
         <q-card>
           <q-card-section>
-            hello world!
+            {{ item.plan_documents }}
           </q-card-section>
         </q-card>
       </q-expansion-item>

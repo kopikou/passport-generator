@@ -67,7 +67,8 @@ class GeneratorViewSet(
         startyear_list = [i['yr'] for i in data]
 
         filtered_data = LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
-                                            plan__startyear__in=startyear_list, plan__file__status=4).select_related("plan")
+                                                 plan__startyear__in=startyear_list,
+                                                 plan__file__status=4).select_related("plan")
 
         filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.plan.startyear}": i for i in filtered_data}
 
@@ -182,8 +183,6 @@ class GeneratorViewSet(
         serializer_data.is_valid(raise_exception=True)
         serializer_data.save()
 
-
-
         return Response(serializer_data.data)
 
     @action(methods=['GET'], url_path="delete-discipline-work-hour", detail=False)
@@ -199,7 +198,8 @@ class GeneratorViewSet(
 
         data = self.request.data
 
-        serializer_data = AdditionalInfoSerializer(data={"planlineslink_id": self.kwargs['pk'], "type": data['type'], "value": data['value']})
+        serializer_data = AdditionalInfoSerializer(
+            data={"planlineslink_id": self.kwargs['pk'], "type": data['type'], "value": data['value']})
         serializer_data.is_valid(raise_exception=True)
         serializer_data.save()
 

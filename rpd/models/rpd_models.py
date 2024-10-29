@@ -103,7 +103,7 @@ class LinesIndicators(TimestampsModel):
 
 
 class PlanDocuments(TimestampsModel):
-    plan = models.ForeignKey(PlanData, on_delete=models.CASCADE)
+    plan = models.ForeignKey(PlanData, on_delete=models.CASCADE, related_name="plan_documents")
     name = models.TextField()
     type = models.IntegerField()
     synchronize = models.BooleanField()
