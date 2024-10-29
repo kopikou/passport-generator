@@ -13,7 +13,6 @@ const {
 
 <template>
   <div class="q-pa-lg">
-    {{admissionData}}
     <div class="text-center text-h6 q-mb-md">Список рабочих программ ИРНИТУ</div>
     <q-list bordered>
       <q-expansion-item
@@ -23,8 +22,23 @@ const {
           :label="`Учебный план ${item.abbrprofile} ${item.startyear}`"
       >
         <q-card>
-          <q-card-section>
-            {{ item.plan_documents }}
+          <q-card-section class="card-body">
+            <div class="card-header text-center">
+              <div>
+                Наименование
+              </div>
+              <div>
+                Загруженные файлы
+              </div>
+            </div>
+            <div class="card-container" v-for="i in item.plan_documents">
+              <div>
+                {{ i.name }}
+              </div>
+              <div>
+                files
+              </div>
+            </div>
           </q-card-section>
         </q-card>
       </q-expansion-item>
@@ -33,5 +47,19 @@ const {
 </template>
 
 <style scoped>
+
+.card-body {
+
+  .card-header {
+    display: grid;
+    grid-template-columns: 4fr 1fr;
+  }
+
+  .card-container {
+    display: grid;
+    grid-template-columns: 4fr 1fr;
+    padding: 5px;
+  }
+}
 
 </style>
