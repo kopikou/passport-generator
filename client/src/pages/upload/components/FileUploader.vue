@@ -19,6 +19,7 @@ const file = ref()
 watch(file, async () => {
   const formData = new FormData()
   formData.append('file', file.value)
+  formData.append('type', 'document')
   let r = await api.post(`/api/upload/${props.fileId}/save-file/`, formData)
 })
 

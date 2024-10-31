@@ -1,4 +1,6 @@
+from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import APIException
 from rest_framework.mixins import RetrieveModelMixin, ListModelMixin, DestroyModelMixin, CreateModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
@@ -6,7 +8,9 @@ from rest_framework.viewsets import GenericViewSet
 from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from auths.models import Permissions
-from rpd.models import PlanData
+from rpd.models import PlanData, PlanDocuments
+from uplfile.models import UploadFiles
+from uplfile.serializer import UploadFileSerializer
 
 
 class UploadFileViewSet(
@@ -49,7 +53,23 @@ class UploadFileViewSet(
 
     @action(methods=['POST'], url_path="save-file", detail=True)
     def save_file(self, request, *args, **kwargs):
-
         result = []
 
-        return Response(result)
+        for filename, file in request.FILES.items():
+            data = {}
+            if self.request.POST['type'] == 'document':
+                doc_data = PlanDocuments.objects.get(id=kwargs['pk'])
+                data = {
+                    'user_id': request.user.id,
+                    'file': file,
+                    'title': filename,
+                    'rpd_id': doc_data.plan_id,
+                    'type_id': doc_data.new_type_id,
+                    'lines_id': None,
+                }
+
+            data_serializer = UploadFileSerializer(data=data)
+            data_serializer.is_valid(raise_exception=True)
+            data_serializer.save()
+
+        return Response(data_serializer.data)
