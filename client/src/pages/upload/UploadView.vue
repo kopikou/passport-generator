@@ -2,6 +2,7 @@
 
 import useUploadFileViewStore from "stores/uploadFileViewStore";
 import {storeToRefs} from "pinia";
+import FileUploader from "pages/upload/components/FileUploader.vue";
 
 const uploadFileViewStore = useUploadFileViewStore();
 
@@ -35,16 +36,8 @@ const {
               <div>
                 {{ i.name }}
               </div>
-              <div>
-                <q-btn
-                  icon="upload"
-                  class="q-mr-xs"
-                  color="secondary"
-                  filled
-                />
-              </div>
               <div class="flex items-center">
-                files
+                <file-uploader :title="i.new_type__name" :file-id="i.id"/>
               </div>
             </div>
           </q-card-section>
@@ -65,7 +58,7 @@ const {
 
   .card-container {
     display: grid;
-    grid-template-columns: 4fr auto 1fr;
+    grid-template-columns: 4fr 1fr;
     padding: 5px;
   }
 }

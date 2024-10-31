@@ -46,3 +46,10 @@ class UploadFileViewSet(
                 })
 
         return Response(result)
+
+    @action(methods=['POST'], url_path="save-file", detail=True)
+    def save_file(self, request, *args, **kwargs):
+
+        result = []
+
+        return Response(result)
