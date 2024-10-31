@@ -67,14 +67,15 @@ class PLXParser:
 
         lnsdata = self.get_lines_data(root, planData['id'], indikators_data)
 
-        for key, item in lnsdata.items():
-            for name in exception_names:
-                if item['dis'].lower().find(name) != -1:
-                    lnsdata[key]['synchronize'] = False
-
-            for name in allowed_names:
-                if item['dis'].lower().find(name) != -1:
-                    lnsdata[key]['synchronize'] = True
+        # Убрано, добавляем практику в РПД генератор
+        # for key, item in lnsdata.items():
+        #     for name in exception_names:
+        #         if item['dis'].lower().find(name) != -1:
+        #             lnsdata[key]['synchronize'] = False
+        #
+        #     for name in allowed_names:
+        #         if item['dis'].lower().find(name) != -1:
+        #             lnsdata[key]['synchronize'] = True
 
         tmp = self.insert_lines_data(lnsdata)
 
@@ -270,6 +271,7 @@ class PLXParser:
             temp_dict['type'] = int(child.attrib.get('ТипОбъекта')) if child.attrib.get('ТипОбъекта') else None
             temp_dict['viewpract'] = int(child.attrib.get('ВидПрактики')) if child.attrib.get('ВидПрактики') else None
             temp_dict['viewobject'] = int(child.attrib.get('ВидОбъекта')) if child.attrib.get('ВидОбъекта') else None
+            temp_dict['parent_id'] = abs(int(child.attrib.get('КодРодителя'))) if child.attrib.get('КодРодителя') else None
 
             lines_code = int(child.attrib.get('Код'))
 
@@ -320,6 +322,10 @@ class PLXParser:
                 item['id'] = obj.data['id']
             else:
                 data[key] = lines.get(f"{item['plan_id']}_{item['dis']}")
+
+        for key, items in data.items():
+            if items['parent_id']:
+                LinesData.objects.filter(id=items['id']).update(parent_id=data.get(items['parent_id'])['id'])
 
         return data
 
@@ -463,17 +469,18 @@ class PLXParser:
     def get_documents_plan(self, data, plan_id, allowed_names):
 
         documents_data = []
-        for key, items in data.items():
-            for name in allowed_names:
-                if items['dis'].lower().find(name) != -1:
-                    continue
-
-            if items['dis'].lower().find('практика') != -1:
-                documents_data.append({
-                    'name': items['dis'].capitalize(),
-                    'type': items['type'],
-                    'synchronize': True,
-                })
+        # Убрано, добавляем практика будет заполняться через РПД генератор
+        # for key, items in data.items():
+        #     for name in allowed_names:
+        #         if items['dis'].lower().find(name) != -1:
+        #             continue
+        #
+        #     if items['dis'].lower().find('практика') != -1:
+        #         documents_data.append({
+        #             'name': items['dis'].capitalize(),
+        #             'type': items['type'],
+        #             'synchronize': True,
+        #         })
 
         query = Q()
         if self.studylevel == 1:

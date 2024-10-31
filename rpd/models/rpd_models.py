@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from rpd.utils import TimestampsModel
@@ -63,6 +64,7 @@ class LinesData(TimestampsModel):
     plan = models.ForeignKey(PlanData, on_delete=models.CASCADE, related_name="lines")
     disid = models.ForeignKey(Disciplines, on_delete=models.CASCADE, db_column='disid')
     dis = models.TextField()
+    parent = models.ForeignKey("LinesData", on_delete=models.CASCADE, null=True)
     newdisid = models.TextField(null=True, blank=True)
     mustbesdudied = models.IntegerField(null=True)
     hoursinzet = models.IntegerField(null=True)
