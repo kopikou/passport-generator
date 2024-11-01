@@ -53,23 +53,21 @@ class UploadFileViewSet(
 
     @action(methods=['POST'], url_path="save-file", detail=True)
     def save_file(self, request, *args, **kwargs):
-        result = []
-
+        data = {}
         for filename, file in request.FILES.items():
-            data = {}
             if self.request.POST['type'] == 'document':
                 doc_data = PlanDocuments.objects.get(id=kwargs['pk'])
                 data = {
                     'user_id': request.user.id,
                     'file': file,
-                    'title': filename,
+                    'title': f"{doc_data.name}_{doc_data.plan.abbrprofile}-{str(doc_data.plan.startyear)[-2:]}",
                     'rpd_id': doc_data.plan_id,
                     'type_id': doc_data.new_type_id,
                     'lines_id': None,
                 }
 
-            data_serializer = UploadFileSerializer(data=data)
-            data_serializer.is_valid(raise_exception=True)
-            data_serializer.save()
+        data_serializer = UploadFileSerializer(data=data)
+        data_serializer.is_valid(raise_exception=True)
+        data_serializer.save()
 
         return Response(data_serializer.data)

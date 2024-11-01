@@ -1,10 +1,12 @@
+import os
+
 from rest_framework import serializers
 
 from uplfile.models import UploadFiles
 
 
 class UploadFileSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(read_only=True)
+    id = serializers.IntegerField(required=False)
     user_id = serializers.IntegerField()
     title = serializers.CharField()
     file = serializers.FileField()
@@ -25,4 +27,20 @@ class UploadFileSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        pass
+
+        uplfile = [i for i in UploadFiles.objects.filter(
+            type_id=validated_data['type_id'],
+            rpd_id=validated_data['rpd_id'],
+        )]
+
+        if uplfile:
+            if os.path.exists(path=uplfile[0].file.path):
+                os.remove(path=uplfile[0].file.path)
+
+        result, created = UploadFiles.objects.update_or_create(
+            type_id=validated_data['type_id'],
+            rpd_id=validated_data['rpd_id'],
+            defaults=validated_data,
+        )
+
+        return result
