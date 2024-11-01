@@ -95,7 +95,7 @@ module.exports = configure(function (/* ctx */) {
          "/static/admin": {
           target: 'http://localhost:8000',
         },
-         "/static": {
+         "/uploads": {
           target: 'http://localhost:8000',
         },
       }

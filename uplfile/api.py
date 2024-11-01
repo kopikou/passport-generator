@@ -41,10 +41,10 @@ class UploadFileViewSet(
         for item in data:
             res = filtered_data_sorted.get(f"{item['abbrprofile']}_{item['startyear']}")
             if res:
-                plan_documents = [i for i in res.plan_documents.values("id", "name", "new_type", "new_type__name")]
                 result.append({
                     **item,
-                    "plan_documents": plan_documents,
+                    "plan_documents": [i for i in res.plan_documents.values("id", "name", "new_type", "new_type__name")],
+                    "documents_files": [i for i in res.uplfile.values()],
                     "plan_id": res.id,
                     "plan_name": res.file.title,
                 })

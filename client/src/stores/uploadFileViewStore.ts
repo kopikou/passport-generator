@@ -1,15 +1,15 @@
 import {defineStore} from "pinia";
 import {onAuthenticated} from "src/composables/onAuthenticated";
-import {ref} from "vue";
+import {computed, ref} from "vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
+import _ from "lodash";
 
 const useUploadFileViewStore = defineStore('UploadFileViewStore', () => {
 
     const $q = useQuasar()
 
     const admissionData = ref([])
-
 
     async function getAdmissionData() {
         $q.loading.show({message: "Загрузка данных о планах"})
@@ -24,7 +24,7 @@ const useUploadFileViewStore = defineStore('UploadFileViewStore', () => {
     })
 
     return {
-        admissionData,
+        admissionData
     }
 })
 
