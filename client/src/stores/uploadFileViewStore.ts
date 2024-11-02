@@ -7,25 +7,25 @@ import _ from "lodash";
 
 const useUploadFileViewStore = defineStore('UploadFileViewStore', () => {
 
-    const $q = useQuasar()
+  const $q = useQuasar()
 
-    const admissionData = ref([])
+  const admissionData = ref([])
 
-    async function getAdmissionData() {
-        $q.loading.show({message: "Загрузка данных о планах"})
-        let r = await api.get('/api/upload/get-admission-data/')
-        admissionData.value = r.data
-        $q.loading.hide()
-    }
+  async function getAdmissionData() {
+    $q.loading.show({message: "Загрузка данных о планах"})
+    let r = await api.get('/api/upload/get-admission-data/')
+    admissionData.value = r.data
+    $q.loading.hide()
+  }
 
 
-    onAuthenticated(() => {
-        getAdmissionData()
-    })
+  onAuthenticated(() => {
+    getAdmissionData()
+  })
 
-    return {
-        admissionData
-    }
+  return {
+    admissionData,
+  }
 })
 
 export default useUploadFileViewStore

@@ -9,6 +9,7 @@ const uploadFileViewStore = useUploadFileViewStore();
 
 const {
   admissionData,
+  admissionFileList,
 } = storeToRefs(uploadFileViewStore)
 
 async function getFile(planId, fileId) {
@@ -23,9 +24,18 @@ function getFileType(planId, fileId) {
   return _.filter(_.filter(admissionData.value, (x) => x.plan_id == planId)[0].plan_documents, (x) => x.id == fileId)[0].new_type
 }
 
+function getColor(planId, fileId) {
+  let filesIds = _.map(_.filter(admissionData.value, (x) => x.plan_id == planId)[0]?.documents_files, (x) => x.type_id)
+  let type = getFileType(planId, fileId)
+  if (filesIds.includes(type)) return 'secondary'
+  else return 'negative'
+}
+
+
 </script>
 
 <template>
+  {{ admissionFileList }}
   <div class="q-pa-lg">
     <div class="text-center text-h6 q-mb-md">Список рабочих программ ИРНИТУ</div>
     <q-list bordered>
@@ -56,7 +66,7 @@ function getFileType(planId, fileId) {
                     flat
                     dense
                     style="height: 100%"
-                    color="secondary"
+                    :color="getColor(item.plan_id, i.id)"
                     @click="getFile(item.plan_id, i.id)"
                 />
               </div>
