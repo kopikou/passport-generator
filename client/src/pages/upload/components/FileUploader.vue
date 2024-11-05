@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 
-import { ref, watch} from "vue";
+import { ref, watch } from "vue";
 import {api} from "boot/axios";
 
 const props = defineProps({
@@ -33,7 +33,8 @@ watch(file, async () => {
       dense
       style="width: 100%;"
       @update:modelValue="console.log(file)"
-  />
+  >
+  </q-file>
 </template>
 
 <style scoped>

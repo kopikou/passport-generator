@@ -9,7 +9,6 @@ const uploadFileViewStore = useUploadFileViewStore();
 
 const {
   admissionData,
-  admissionFileList,
 } = storeToRefs(uploadFileViewStore)
 
 async function getFile(planId, fileId) {
@@ -35,7 +34,6 @@ function getColor(planId, fileId) {
 </script>
 
 <template>
-  {{ admissionFileList }}
   <div class="q-pa-lg">
     <div class="text-center text-h6 q-mb-md">Список рабочих программ ИРНИТУ</div>
     <q-list bordered>
