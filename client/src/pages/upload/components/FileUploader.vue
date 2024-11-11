@@ -11,9 +11,9 @@ import {useQuasar} from "quasar";
 
 const uploadFileViewStore = useUploadFileViewStore();
 
-const{
+const {
   admissionData
-}=storeToRefs(uploadFileViewStore)
+} = storeToRefs(uploadFileViewStore)
 
 const props = defineProps({
   title: {
@@ -28,6 +28,10 @@ const props = defineProps({
 })
 const $q = useQuasar()
 const file = ref()
+
+function fileFilter(files) {
+  return files.filter(file => file.type === 'image/png')
+}
 
 watch(file, async () => {
   $q.loading.show()
@@ -49,6 +53,9 @@ watch(file, async () => {
       outlined
       stack-label
       dense
+      accept=".pdf"
+      :filter="fileFilter"
+      @rejected="$q.notify({type: 'info', message: 'Можно загрузить только файлы формата pdf'})"
       style="width: 100%;"
   >
   </q-file>
