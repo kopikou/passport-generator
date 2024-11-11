@@ -1,3 +1,5 @@
+import os
+
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException
@@ -23,6 +25,13 @@ class UploadFileViewSet(
     queryset = UploadFiles
     serializer_class = UploadFilesSerializer
     permission_classes = [UserProfileHasPermission(Permissions.can_upload_files)]
+
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        os.remove(instance.file.path)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=['GET'], url_path="get-admission-data", detail=False)
     def get_admission_data(self, request, *args, **kwargs):

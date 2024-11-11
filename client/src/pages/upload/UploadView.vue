@@ -5,7 +5,9 @@ import {storeToRefs} from "pinia";
 import FileUploader from "pages/upload/components/FileUploader.vue";
 import _ from "lodash";
 import {api} from "boot/axios";
+import {useQuasar} from "quasar";
 
+const $q = useQuasar()
 const uploadFileViewStore = useUploadFileViewStore();
 
 const {
@@ -29,8 +31,29 @@ function getFileType(planId, fileId) {
   return _.filter(_.filter(admissionData.value, (x) => x.plan_id == planId)[0].plan_documents, (x) => x.id == fileId)[0].new_type
 }
 
-async function deleteFile(id) {
-  let r = await api.delete(`/api/upload/${id}/`)
+async function deleteFile(planId, id) {
+  $q.dialog({
+    title: 'Удаление файла',
+    message: 'Вы точно хотите удалить выбранный файл?',
+    ok: {
+      label: 'Удалить',
+      flat: true,
+      color: 'red',
+    },
+    cancel: {
+      label: 'Отмена',
+      flat: true,
+      color: 'green',
+    },
+    persistent: true
+  }).onOk(async () => {
+    $q.loading.show()
+    let r = await api.delete(`/api/upload/${id}/`)
+    let admKey = _.findKey(admissionData.value, (x) => x.plan_id == planId)
+    let fileKey = _.findKey(admissionData.value[admKey].documents_files, (x) => x.id == id)
+    admissionData.value[admKey].documents_files.splice(fileKey, 1)
+    $q.loading.hide()
+  })
 }
 
 function checkFile(planId, fileId) {
@@ -69,7 +92,7 @@ function checkFile(planId, fileId) {
               </div>
               <div class="flex items-center" style="display: grid; grid-template-columns: 1fr auto">
                 <div v-if="!checkFile(item.plan_id, i.id)">
-                  <file-uploader :title="i.new_type__name" :file-id="i.id"/>
+                  <file-uploader :title="i.new_type__name" :file-id="i.id" :plan-id="item.plan_id"/>
                 </div>
                 <div v-else>
                   <q-field
@@ -94,7 +117,8 @@ function checkFile(planId, fileId) {
                     </template>
                   </q-field>
                 </div>
-                <q-btn v-show="checkFile(item.plan_id, i.id)" flat dense icon="mdi-delete" color="negative" @click="deleteFile(getFileId(item.plan_id, i.id))"/>
+                <q-btn v-show="checkFile(item.plan_id, i.id)" flat dense icon="mdi-delete" color="negative"
+                       @click="deleteFile(item.plan_id, getFileId(item.plan_id, i.id))"/>
               </div>
             </div>
           </q-card-section>
