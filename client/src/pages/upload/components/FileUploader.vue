@@ -30,7 +30,7 @@ const $q = useQuasar()
 const file = ref()
 
 function fileFilter(files) {
-  return files.filter(file => file.type === 'image/png')
+  return files.filter(file => file.type === 'application/pdf')
 }
 
 watch(file, async () => {
