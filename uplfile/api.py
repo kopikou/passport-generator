@@ -10,7 +10,7 @@ from arim.services import AISServices
 from auths.models import Permissions
 from rpd.models import PlanData, PlanDocuments
 from uplfile.models import UploadFiles
-from uplfile.serializer import UploadFileSerializer
+from uplfile.serializer import UploadFilesSerializer
 
 
 class UploadFileViewSet(
@@ -20,8 +20,8 @@ class UploadFileViewSet(
     CreateModelMixin,
     GenericViewSet,
 ):
-    queryset = None
-    serializer_class = None
+    queryset = UploadFiles
+    serializer_class = UploadFilesSerializer
     permission_classes = [UserProfileHasPermission(Permissions.can_upload_files)]
 
     @action(methods=['GET'], url_path="get-admission-data", detail=False)
@@ -66,8 +66,9 @@ class UploadFileViewSet(
                     'lines_id': None,
                 }
 
-        data_serializer = UploadFileSerializer(data=data)
+        data_serializer = UploadFilesSerializer(data=data)
         data_serializer.is_valid(raise_exception=True)
         data_serializer.save()
 
         return Response(data_serializer.data)
+

@@ -5,7 +5,7 @@ from rest_framework import serializers
 from uplfile.models import UploadFiles
 
 
-class UploadFileSerializer(serializers.ModelSerializer):
+class UploadFilesSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
     user_id = serializers.IntegerField()
     title = serializers.CharField()

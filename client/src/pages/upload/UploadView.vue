@@ -4,6 +4,7 @@ import useUploadFileViewStore from "stores/uploadFileViewStore";
 import {storeToRefs} from "pinia";
 import FileUploader from "pages/upload/components/FileUploader.vue";
 import _ from "lodash";
+import {api} from "boot/axios";
 
 const uploadFileViewStore = useUploadFileViewStore();
 
@@ -11,7 +12,7 @@ const {
   admissionData,
 } = storeToRefs(uploadFileViewStore)
 
-async function getFile(planId, fileId) {
+function getFileUrl(planId, fileId) {
   let files = _.filter(admissionData.value, (x) => x.plan_id == planId)[0]?.documents_files
   let url = _.filter(files, (x) => x.type_id == getFileType(planId, fileId))[0]?.file
   if (url) {
@@ -19,15 +20,24 @@ async function getFile(planId, fileId) {
   }
 }
 
+function getFileId(planId, fileId) {
+  let files = _.filter(admissionData.value, (x) => x.plan_id == planId)[0]?.documents_files
+  return _.filter(files, (x) => x.type_id == getFileType(planId, fileId))[0]?.id
+}
+
 function getFileType(planId, fileId) {
   return _.filter(_.filter(admissionData.value, (x) => x.plan_id == planId)[0].plan_documents, (x) => x.id == fileId)[0].new_type
 }
 
-function getColor(planId, fileId) {
+async function deleteFile(id) {
+  let r = await api.delete(`/api/upload/${id}/`)
+}
+
+function checkFile(planId, fileId) {
   let filesIds = _.map(_.filter(admissionData.value, (x) => x.plan_id == planId)[0]?.documents_files, (x) => x.type_id)
   let type = getFileType(planId, fileId)
-  if (filesIds.includes(type)) return 'secondary'
-  else return 'negative'
+  if (filesIds.includes(type)) return true
+  else return false
 }
 
 
@@ -58,15 +68,33 @@ function getColor(planId, fileId) {
                 {{ i.name }}
               </div>
               <div class="flex items-center" style="display: grid; grid-template-columns: 1fr auto">
-                <file-uploader :title="i.new_type__name" :file-id="i.id"/>
-                <q-btn
-                    icon="mdi-eye"
-                    flat
-                    dense
-                    style="height: 100%"
-                    :color="getColor(item.plan_id, i.id)"
-                    @click="getFile(item.plan_id, i.id)"
-                />
+                <div v-if="!checkFile(item.plan_id, i.id)">
+                  <file-uploader :title="i.new_type__name" :file-id="i.id"/>
+                </div>
+                <div v-else>
+                  <q-field
+                      outlined
+                      stack-label
+                      dense
+                      bg-color="green-3"
+                  >
+                    <template v-slot:control>
+                      {{ i.name }}
+                    </template>
+                    <template v-slot:append>
+                      <q-btn
+                          icon="mdi-eye"
+                          flat
+                          dense
+                          style="height: 100%"
+                          v-show="checkFile(item.plan_id, i.id)"
+                          color="secondary"
+                          @click="getFileUrl(item.plan_id, i.id)"
+                      />
+                    </template>
+                  </q-field>
+                </div>
+                <q-btn v-show="checkFile(item.plan_id, i.id)" flat dense icon="mdi-delete" color="negative" @click="deleteFile(getFileId(item.plan_id, i.id))"/>
               </div>
             </div>
           </q-card-section>
