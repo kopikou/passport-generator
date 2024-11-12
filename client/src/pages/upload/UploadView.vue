@@ -6,6 +6,7 @@ import FileUploader from "pages/upload/components/FileUploader.vue";
 import _ from "lodash";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
+import {computed, ref} from "vue";
 
 const $q = useQuasar()
 const uploadFileViewStore = useUploadFileViewStore();
@@ -13,6 +14,27 @@ const uploadFileViewStore = useUploadFileViewStore();
 const {
   admissionData,
 } = storeToRefs(uploadFileViewStore)
+
+
+const admissionList = computed(() => {
+  let result = []
+  if (!adms.value || adms.value.length == 0) result = admissionData.value
+  else result = _.filter(admissionData.value, (x) => adms.value.includes(x.abbrprofile))
+  if (!years.value || years.value.length == 0) return result
+  else result = _.filter(result, (x) => years.value.includes(x.startyear))
+  return result
+})
+
+const yearslist = computed(() => {
+  return _.uniq(_.map(admissionData.value, (x) => x.startyear))
+})
+
+const admslist = computed(() => {
+  return _.uniq(_.map(admissionData.value, (x) => x.abbrprofile))
+})
+
+const years = ref([])
+const adms = ref([])
 
 function getFileUrl(planId, fileId) {
   let files = _.filter(admissionData.value, (x) => x.plan_id == planId)[0]?.documents_files
@@ -64,16 +86,36 @@ function checkFile(planId, fileId) {
 }
 
 
-
-
 </script>
 
 <template>
   <div class="q-pa-lg">
     <div class="text-center text-h6 q-mb-md">Список рабочих программ ИРНИТУ</div>
+    <div class="row q-gutter-x-md q-mb-md">
+      <q-select
+          class="col"
+          label="Направление"
+          use-chips
+          filled
+          clearable
+          :options="admslist"
+          v-model="adms"
+          multiple
+      />
+      <q-select
+          class="col"
+          label="Год"
+          use-chips
+          filled
+          clearable
+          :options="yearslist"
+          v-model="years"
+          multiple
+      />
+    </div>
     <q-list bordered>
       <q-expansion-item
-          v-for="item in admissionData"
+          v-for="item in admissionList"
           expand-separator
           :caption="item.plan_name"
           :label="`Учебный план ${item.abbrprofile} ${item.startyear}`"

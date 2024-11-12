@@ -26,7 +26,6 @@ class UploadFileViewSet(
     serializer_class = UploadFilesSerializer
     permission_classes = [UserProfileHasPermission(Permissions.can_upload_files)]
 
-
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
