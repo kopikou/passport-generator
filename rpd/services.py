@@ -60,7 +60,7 @@ class PLXParser:
 
         self.data['plan'] = planData_result
 
-        if self.studylevel not in [4,5]:
+        if self.studylevel not in [4, 5]:
             competences_data = self.get_competences_data(root)
 
         indikators_data = self.get_indicators_data(root)
@@ -127,7 +127,6 @@ class PLXParser:
 
         semester_data_result = self.insert_semester_data(semester_data_res)
         self.data['semester'] = semester_data_result
-
 
         lines_indicators_res = []
         for key, items in group_lines_indicators.items():
@@ -272,6 +271,7 @@ class PLXParser:
             temp_dict['viewpract'] = int(child.attrib.get('ВидПрактики')) if child.attrib.get('ВидПрактики') else None
             temp_dict['viewobject'] = int(child.attrib.get('ВидОбъекта')) if child.attrib.get('ВидОбъекта') else None
             temp_dict['parent_id'] = abs(int(child.attrib.get('КодРодителя'))) if child.attrib.get('КодРодителя') else None
+            temp_dict['old_parent_id'] = abs(int(child.attrib.get('КодРодителя'))) if child.attrib.get('КодРодителя') else None
 
             lines_code = int(child.attrib.get('Код'))
 
@@ -287,8 +287,6 @@ class PLXParser:
             lines_data[abs(lines_code)] = {}
             lines_data[abs(lines_code)].update(temp_dict)
 
-
-
         return lines_data
 
     def insert_lines_data(self, data):
@@ -300,7 +298,7 @@ class PLXParser:
             query |= Q(plan_id=i['plan_id'], dis=i['dis'])
 
         lines = LinesData.objects.filter(query)
-        lines = {f"{i['plan_id']}_{i['dis']}": i for i in lines.values()}
+        lines = {f"{i['plan_id']}_{i['dis']}_{i['newdisid']}": i for i in lines.values()}
 
         for key, item in data.items():
             if not disciplines.get(item['dis']):
@@ -313,7 +311,7 @@ class PLXParser:
             else:
                 item['disid_id'] = disciplines.get(item['dis'])
 
-            if not lines.get(f"{item['plan_id']}_{item['dis']}"):
+            if not lines.get(f"{item['plan_id']}_{item['dis']}_{item['newdisid']}"):
                 obj = LinesDataSerializer(data=item)
 
                 obj.is_valid(raise_exception=True)
@@ -321,11 +319,12 @@ class PLXParser:
 
                 item['id'] = obj.data['id']
             else:
-                data[key] = lines.get(f"{item['plan_id']}_{item['dis']}")
+                data[key] = lines.get(f"{item['plan_id']}_{item['dis']}_{item['newdisid']}")
+                data[key]['old_parent_id'] = item['parent_id']
 
         for key, items in data.items():
             if items['parent_id']:
-                LinesData.objects.filter(id=items['id']).update(parent_id=data.get(items['parent_id'])['id'])
+                LinesData.objects.filter(id=items['id']).update(parent_id=data.get(items['old_parent_id'])['id'])
 
         return data
 
