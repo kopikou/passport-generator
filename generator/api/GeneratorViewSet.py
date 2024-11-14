@@ -1,3 +1,5 @@
+from itertools import groupby
+
 from django.http import HttpResponse
 from django.utils.encoding import escape_uri_path
 from rest_framework.response import Response
@@ -36,6 +38,10 @@ class GeneratorViewSet(
                     .prefetch_related("planlines__semesters", "planlines__indicators",
                                       "planlines__indicators__discipline_indicator", "discipline_themes",
                                       "discipline_work_hour").first())
+
+        if instance.status == PlanLinesLink.StatusChoices.appointed:
+            instance.status = PlanLinesLink.StatusChoices.is_filled
+            instance.save()
 
         serializer = self.get_serializer(instance)
 
@@ -99,9 +105,10 @@ class GeneratorViewSet(
                     "kafcode": lines.planlines.caf,
                     "discode": lines.planlines.newdisid,
                 })
-
+        sorted_result = sorted(result, key=lambda x: (x['abbr'], x['yr'], x['discpl']))
+        grouped_result = {f"{key[0]}-{key[1]}": list(items) for key, items in groupby(sorted_result, key=lambda x: (x['abbr'], x['yr']))}
         return Response(
-            data=result
+            data=[{i: grouped_result[i]} for i in grouped_result],
         )
 
     @action(methods=['GET'], url_path="search-book", detail=False)

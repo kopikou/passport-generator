@@ -1,4 +1,5 @@
 import os
+from itertools import groupby
 
 from rest_framework import status
 from rest_framework.decorators import action
@@ -56,7 +57,6 @@ class UploadFileViewSet(
                     "plan_id": res.id,
                     "plan_name": res.file.title,
                 })
-
         return Response(result)
 
     @action(methods=['POST'], url_path="save-file", detail=True)

@@ -36,7 +36,7 @@ const {
 function acceptPlan() {
   $q.dialog({
     title: 'Предупреждение',
-    message: "<p style='font-size: 16px'>Вы уверены, что хотите синхронизировать план? <br/> В дальнейшем план нельзя будет изменить <br/> <span class='text-red-9'>Для продолжения введите \"Подтвердить\"</span></p>",
+    message: "<p style='font-size: 16px'>Вы уверены, что хотите синхронизировать план? <br/> В дальнейшем план нельзя будет изменить</p>",
     cancel: {
       label: 'Отмена',
       flat: true,
@@ -46,11 +46,6 @@ function acceptPlan() {
       flat: true,
     },
     html: true,
-    prompt: {
-      model: '',
-      isValid: val => val.toLowerCase() == 'подтвердить',
-      type: "text",
-    }
   }).onOk(async () => {
     let r = await api.get('/api/plx/accept-file/', {params: {id: props.id}})
 

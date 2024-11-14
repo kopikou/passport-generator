@@ -30,7 +30,7 @@ const columns = [
   {name: 'hoursinzet', field: 'hoursinzet', label: 'Часов в ЗЕТ', align: 'center'},
   {name: 'caf', field: 'caf', label: 'Кафедра', align: 'center'},
   {name: 'kompetences', field: 'kompetences', label: 'Компетенции', align: 'center'},
-  {name: 'synchronize', field: 'synchronize', label: 'Синхронизировать с АИС', align: 'center'},
+  // {name: 'synchronize', field: 'synchronize', label: 'Синхронизировать с АИС', align: 'center'},
 ]
 
 async function updateLines(values) {
@@ -156,23 +156,23 @@ async function changeCaf() {
         </q-td>
       </template>
 
-      <template v-slot:body-cell-synchronize="props">
-        <q-td key="synchronize" :props :class="props.row.synchronize ? 'bg-green-2' : 'bg-red-2'">
-          {{ synctDataByValue[props.row.synchronize]?.label }}
-          <q-popup-edit v-model="props.row.synchronize" v-slot="scope" @update:modelValue="updateLines(props.row)">
-            <q-select
-              v-model="scope.value"
-              emit-value
-              map-options
-              :options="sync_option"
-              @popup-hide="scope.set"
-              filled
-              :readonly="disabled"
-            >
-            </q-select>
-          </q-popup-edit>
-        </q-td>
-      </template>
+<!--      <template v-slot:body-cell-synchronize="props">-->
+<!--        <q-td key="synchronize" :props :class="props.row.synchronize ? 'bg-green-2' : 'bg-red-2'">-->
+<!--          {{ synctDataByValue[props.row.synchronize]?.label }}-->
+<!--          <q-popup-edit v-model="props.row.synchronize" v-slot="scope" @update:modelValue="updateLines(props.row)">-->
+<!--            <q-select-->
+<!--              v-model="scope.value"-->
+<!--              emit-value-->
+<!--              map-options-->
+<!--              :options="sync_option"-->
+<!--              @popup-hide="scope.set"-->
+<!--              filled-->
+<!--              :readonly="disabled"-->
+<!--            >-->
+<!--            </q-select>-->
+<!--          </q-popup-edit>-->
+<!--        </q-td>-->
+<!--      </template>-->
     </q-table>
   </div>
 </template>

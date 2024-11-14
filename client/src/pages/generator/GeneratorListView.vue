@@ -3,10 +3,15 @@
 import useGeneratorViewStore from "stores/generatorViewStore";
 
 const generatorViewStore = useGeneratorViewStore();
+const mainStore = useMainStore();
 
 const{
   cafData,
 }=storeToRefs(generatorViewStore)
+
+const{
+  mira_id,
+}=storeToRefs(mainStore)
 
 import {computed, onBeforeMount, ref} from "vue";
 import {api} from "boot/axios";
@@ -15,10 +20,18 @@ import {GeneratorListData} from "src/types";
 import {useRouter} from "vue-router";
 import {storeToRefs} from "pinia";
 import _ from "lodash";
+import useMainStore from "stores/mainStore";
 
 const $q = useQuasar()
 const router = useRouter()
 const listData = ref<GeneratorListData[]>([])
+
+const myListData = computed(() => {
+  return _.filter(listData.value, (x) => x.mira_id === mira_id.value)
+})
+const otherListData = computed(() => {
+  return _.filter(listData.value, (x) => x.mira_id !== mira_id.value)
+})
 
 async function getProgramData() {
   let r = await api.get("api/generator/get-program-list/")
@@ -39,25 +52,51 @@ onBeforeMount(async () => {
 
 <template>
   <div class="q-pa-lg">
+    {{ myListData }}
     <div class="text-center text-h6 q-mb-md">Список рабочих программ дисциплин ИРНИТУ</div>
-    <div class="rpd-container">
-      <div class="rpd-row rpd-row__header text-weight-bold">
-        <div>Аббревиатура</div>
-        <div>Код</div>
-        <div>Дисциплина</div>
-        <div>Составитель</div>
-        <div>Кафедра</div>
-        <div>Статус</div>
+      <div v-if="myListData.length != 0">
+      <div class="text-center text-subtitle1">Ваши планы</div>
+        <div class="rpd-container">
+          <div class="rpd-row rpd-row__header text-weight-bold">
+            <div>Аббревиатура</div>
+            <div>Код</div>
+            <div>Дисциплина</div>
+            <div>Составитель</div>
+            <div>Кафедра</div>
+            <div>Статус</div>
+          </div>
+          <div class="rpd-row rpd-row__body" v-for="item in myListData"
+               @click="router.push(`/generator/${item.id}/main`)">
+            <div>{{ item.abbr }} {{ item.yr }}</div>
+            <div>{{ item.discode }}</div>
+            <div>{{ item.discpl }}</div>
+            <div>{{ item.person }}</div>
+            <div>{{ cafDataById[item.kafcode]?.label }}</div>
+            <div>{{ item.status_verbose }}</div>
+          </div>
+        </div>
       </div>
-      <div class="rpd-row rpd-row__body" v-for="item in listData" @click="router.push(`/generator/${item.id}/main`)">
-        <div>{{ item.abbr }} {{ item.yr }}</div>
-        <div>{{ item.discode }}</div>
-        <div>{{ item.discpl }}</div>
-        <div>{{ item.person }}</div>
-        <div>{{ cafDataById[item.kafcode]?.label }}</div>
-        <div>{{ item.status_verbose }}</div>
+      <div v-if="otherListData.length != 0">
+        <div class="text-center text-subtitle1">Остальные планы</div>
+        <div class="rpd-container">
+          <div class="rpd-row rpd-row__header text-weight-bold">
+            <div>Аббревиатура</div>
+            <div>Код</div>
+            <div>Дисциплина</div>
+            <div>Составитель</div>
+            <div>Кафедра</div>
+            <div>Статус</div>
+          </div>
+          <div class="rpd-row rpd-row__body" v-for="item in otherListData">
+            <div>{{ item.abbr }} {{ item.yr }}</div>
+            <div>{{ item.discode }}</div>
+            <div>{{ item.discpl }}</div>
+            <div>{{ item.person }}</div>
+            <div>{{ cafDataById[item.kafcode]?.label }}</div>
+            <div>{{ item.status_verbose }}</div>
+          </div>
+        </div>
       </div>
-    </div>
   </div>
 </template>
 
@@ -92,7 +131,7 @@ onBeforeMount(async () => {
   &.rpd-row__body {
     &:hover {
       > div {
-        background: $pink-5;
+        background: $pink-3;
         cursor: pointer;
       }
     }

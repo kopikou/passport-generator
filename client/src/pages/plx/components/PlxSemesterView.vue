@@ -3,8 +3,7 @@
 import {useQuasar} from "quasar";
 import usePlanViewStore from "stores/planViewStore";
 import {storeToRefs} from "pinia";
-import {computed, ref} from "vue";
-import {api} from "boot/axios";
+import {computed, onBeforeMount, ref, watch} from "vue";
 import _ from "lodash";
 
 const $q = useQuasar()
@@ -12,7 +11,6 @@ const $q = useQuasar()
 const planViewStore = usePlanViewStore()
 const {
   cafData,
-  sync_option,
   semesterData,
   linesDataById,
 } = storeToRefs(planViewStore);
@@ -34,27 +32,17 @@ const columns = [
   {name: 'eios', field: 'eios', label: 'ЭИОС', align: 'center'},
 ]
 
-async function updateDocuments(values) {
-  $q.loading.show()
-  let r = await api.post("/api/plx/update-document-data/", values)
-  $q.loading.hide()
-}
-
-const synctDataByValue = computed(() => {
-  return _.keyBy(sync_option.value, 'value')
-})
-
 </script>
 
 <template>
   <q-table
-    title="Информация о семестрах"
-    :rows="semesterData"
-    :columns="columns"
-    row-key="id"
-    :rows-per-page-options="[0]"
-    wrap-cells
-    hide-bottom
+      title="Информация о семестрах"
+      :rows="semesterData"
+      :columns="columns"
+      row-key="id"
+      :rows-per-page-options="[0]"
+      wrap-cells
+      hide-bottom
   >
     <template v-slot:top-right>
       <q-input outlined dense debounce="300" v-model="filter" placeholder="Поиск" class="bg-grey-2">

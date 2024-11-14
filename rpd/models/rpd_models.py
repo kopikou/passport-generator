@@ -17,7 +17,7 @@ class RPDFile(TimestampsModel):
 
     user = models.ForeignKey(User, verbose_name="Пользователь", on_delete=models.PROTECT)
     title = models.TextField(verbose_name="Наименование файла")
-    file = models.FileField(upload_to="uploads/rpd_plan/%Y-%m-%d/", verbose_name="Файл РПД")
+    file = models.FileField(upload_to="rpd_plan/%Y-%m-%d/", verbose_name="Файл РПД")
     status = models.IntegerField(choices=StatusChoice.choices, default=StatusChoice.download)
 
     @property
@@ -48,7 +48,7 @@ class PlanData(TimestampsModel):
     gosdate = models.DateField(null=True)
     gostype = models.FloatField(null=True)
     gosdocument = models.IntegerField(null=True)
-    lastshifr = models.TextField( )
+    lastshifr = models.TextField()
     napr_e = models.TextField()
     napr_t = models.TextField()
     vuzname = models.TextField()

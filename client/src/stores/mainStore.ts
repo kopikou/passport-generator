@@ -8,6 +8,7 @@ const useMainStore = defineStore("MainStore", () => {
   const userId = ref(-1);
   const firstName = ref("");
   const lastName = ref("");
+  const mira_id = ref(-1)
   const isAuthenticated = ref(false);
   const isSuperuser = ref(false);
   const isStaff = ref(false);
@@ -29,6 +30,7 @@ const useMainStore = defineStore("MainStore", () => {
     userId.value = data.user_id;
     firstName.value = data.first_name;
     lastName.value = data.last_name;
+    mira_id.value = data.mira_id
     permissions.value = data.permissions;
     BITRIX_CLIENT_ID.value = r.data.BITRIX_CLIENT_ID
     VISIT_TOKEN_TIMEOUT.value = r.data.VISIT_TOKEN_TIMEOUT
@@ -48,6 +50,7 @@ const useMainStore = defineStore("MainStore", () => {
     isStaff,
     firstName,
     lastName,
+    mira_id,
     userId,
     BITRIX_CLIENT_ID,
     VISIT_TOKEN_TIMEOUT,

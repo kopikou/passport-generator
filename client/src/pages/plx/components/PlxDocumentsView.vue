@@ -23,7 +23,7 @@ const filter = ref('')
 const columns = [
   {name: 'name', field: 'name', label: 'Наименование', align: 'center'},
   {name: 'type', field: 'type', label: 'Тип', align: 'center'},
-  {name: 'synchronize', field: 'synchronize', label: 'Синхронизация с АИС', align: 'center'},
+  // {name: 'synchronize', field: 'synchronize', label: 'Синхронизация с АИС', align: 'center'},
 ]
 
 async function updateDocuments(values) {
@@ -87,22 +87,22 @@ const synctDataByValue = computed(() => {
             {{ props.row.type }}
           </q-td>
 
-          <q-td key="synchronize" :props :class="props.row.synchronize ? 'bg-green-2' : 'bg-red-2'">
-            {{ synctDataByValue[props.row.synchronize]?.label }}
-            <q-popup-edit v-model="props.row.synchronize" v-slot="scope"
-                          @update:modelValue="updateDocuments(props.row)">
-              <q-select
-                v-model="scope.value"
-                emit-value
-                map-options
-                :options="sync_option"
-                @popup-hide="scope.set"
-                filled
-                :readonly="disabled"
-              >
-              </q-select>
-            </q-popup-edit>
-          </q-td>
+<!--          <q-td key="synchronize" :props :class="props.row.synchronize ? 'bg-green-2' : 'bg-red-2'">-->
+<!--            {{ synctDataByValue[props.row.synchronize]?.label }}-->
+<!--            <q-popup-edit v-model="props.row.synchronize" v-slot="scope"-->
+<!--                          @update:modelValue="updateDocuments(props.row)">-->
+<!--              <q-select-->
+<!--                v-model="scope.value"-->
+<!--                emit-value-->
+<!--                map-options-->
+<!--                :options="sync_option"-->
+<!--                @popup-hide="scope.set"-->
+<!--                filled-->
+<!--                :readonly="disabled"-->
+<!--              >-->
+<!--              </q-select>-->
+<!--            </q-popup-edit>-->
+<!--          </q-td>-->
         </q-tr>
       </template>
     </q-table>

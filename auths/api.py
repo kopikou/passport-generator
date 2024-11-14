@@ -36,6 +36,7 @@ class UserApiViewSet(ListModelMixin, GenericViewSet):
                 "username": self.request.user.username,
                 "first_name": self.request.user.first_name,
                 "last_name": self.request.user.last_name,
+                "mira_id": self.request.user.userprofile.mira_id,
                 'is_superuser': self.request.user.is_superuser,
                 'is_staff': self.request.user.is_staff,
                 'is_student': self.request.user.userprofile.is_student,
