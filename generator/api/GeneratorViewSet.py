@@ -108,7 +108,7 @@ class GeneratorViewSet(
         sorted_result = sorted(result, key=lambda x: (x['abbr'], x['yr'], x['discpl']))
         grouped_result = {f"{key[0]}-{key[1]}": list(items) for key, items in groupby(sorted_result, key=lambda x: (x['abbr'], x['yr']))}
         return Response(
-            data=[{i: grouped_result[i]} for i in grouped_result],
+            data=grouped_result,
         )
 
     @action(methods=['GET'], url_path="search-book", detail=False)

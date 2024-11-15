@@ -5,13 +5,13 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 const generatorViewStore = useGeneratorViewStore();
 const mainStore = useMainStore();
 
-const{
+const {
   cafData,
-}=storeToRefs(generatorViewStore)
+} = storeToRefs(generatorViewStore)
 
-const{
+const {
   mira_id,
-}=storeToRefs(mainStore)
+} = storeToRefs(mainStore)
 
 import {computed, onBeforeMount, ref} from "vue";
 import {api} from "boot/axios";
@@ -29,9 +29,18 @@ const listData = ref<GeneratorListData[]>([])
 const myListData = computed(() => {
   return _.filter(listData.value, (x) => x.mira_id === mira_id.value)
 })
+
 const otherListData = computed(() => {
-  return _.filter(listData.value, (x) => x.mira_id !== mira_id.value)
+  return _.filter(listData.value, (x) => x.mira_id != mira_id.value)
 })
+
+function filterMyList(data) {
+  return _.filter(data, (x) => x.mira_id === mira_id.value)
+}
+
+function filterOtherList(data) {
+  return _.filter(data, (x) => x.mira_id != mira_id.value)
+}
 
 async function getProgramData() {
   let r = await api.get("/api/generator/get-program-list/")
@@ -52,51 +61,78 @@ onBeforeMount(async () => {
 
 <template>
   <div class="q-pa-lg">
-    {{ myListData }}
     <div class="text-center text-h6 q-mb-md">Список рабочих программ дисциплин ИРНИТУ</div>
-      <div v-if="myListData.length != 0">
+    <div>
       <div class="text-center text-subtitle1">Ваши планы</div>
-        <div class="rpd-container">
-          <div class="rpd-row rpd-row__header text-weight-bold">
-            <div>Аббревиатура</div>
-            <div>Код</div>
-            <div>Дисциплина</div>
-            <div>Составитель</div>
-            <div>Кафедра</div>
-            <div>Статус</div>
-          </div>
-          <div class="rpd-row rpd-row__body" v-for="item in myListData"
-               @click="router.push(`/generator/${item.id}/main`)">
-            <div>{{ item.abbr }} {{ item.yr }}</div>
-            <div>{{ item.discode }}</div>
-            <div>{{ item.discpl }}</div>
-            <div>{{ item.person }}</div>
-            <div>{{ cafDataById[item.kafcode]?.label }}</div>
-            <div>{{ item.status_verbose }}</div>
-          </div>
-        </div>
-      </div>
-      <div v-if="otherListData.length != 0">
-        <div class="text-center text-subtitle1">Остальные планы</div>
-        <div class="rpd-container">
-          <div class="rpd-row rpd-row__header text-weight-bold">
-            <div>Аббревиатура</div>
-            <div>Код</div>
-            <div>Дисциплина</div>
-            <div>Составитель</div>
-            <div>Кафедра</div>
-            <div>Статус</div>
-          </div>
-          <div class="rpd-row rpd-row__body" v-for="item in otherListData">
-            <div>{{ item.abbr }} {{ item.yr }}</div>
-            <div>{{ item.discode }}</div>
-            <div>{{ item.discpl }}</div>
-            <div>{{ item.person }}</div>
-            <div>{{ cafDataById[item.kafcode]?.label }}</div>
-            <div>{{ item.status_verbose }}</div>
-          </div>
-        </div>
-      </div>
+      <q-list
+        bordered
+        separator
+      >
+        <q-expansion-item
+          v-for="items, key in listData"
+          :label="key"
+        >
+          <q-card>
+            <q-card-section>
+              <div class="rpd-container">
+                <div class="rpd-row rpd-row__header text-weight-bold">
+                  <div>Аббревиатура</div>
+                  <div>Код</div>
+                  <div>Дисциплина</div>
+                  <div>Составитель</div>
+                  <div>Кафедра</div>
+                  <div>Статус</div>
+                </div>
+                <div class="rpd-row rpd-row__body" v-for="item in filterMyList(items)"
+                     @click="router.push(`/generator/${item.id}/main`)">
+                  <div>{{ item.abbr }} {{ item.yr }}</div>
+                  <div>{{ item.discode }}</div>
+                  <div>{{ item.discpl }}</div>
+                  <div>{{ item.person }}</div>
+                  <div>{{ cafDataById[item.kafcode]?.label }}</div>
+                  <div>{{ item.status_verbose }}</div>
+                </div>
+              </div>
+            </q-card-section>
+          </q-card>
+        </q-expansion-item>
+      </q-list>
+    </div>
+    <div>
+      <div class="text-center text-subtitle1">Остальные планы</div>
+      <q-list
+        bordered
+        separator
+      >
+        <q-expansion-item
+          v-for="items, key in listData"
+          :label="key"
+        >
+          <q-card>
+            <q-card-section>
+              <div class="rpd-container">
+                <div class="rpd-row rpd-row__header text-weight-bold">
+                  <div>Аббревиатура</div>
+                  <div>Код</div>
+                  <div>Дисциплина</div>
+                  <div>Составитель</div>
+                  <div>Кафедра</div>
+                  <div>Статус</div>
+                </div>
+                <div class="rpd-row rpd-row__body" v-for="item in filterOtherList(items)">
+                  <div>{{ item.abbr }} {{ item.yr }}</div>
+                  <div>{{ item.discode }}</div>
+                  <div>{{ item.discpl }}</div>
+                  <div>{{ item.person }}</div>
+                  <div>{{ cafDataById[item.kafcode]?.label }}</div>
+                  <div>{{ item.status_verbose }}</div>
+                </div>
+              </div>
+            </q-card-section>
+          </q-card>
+        </q-expansion-item>
+      </q-list>
+    </div>
   </div>
 </template>
 
