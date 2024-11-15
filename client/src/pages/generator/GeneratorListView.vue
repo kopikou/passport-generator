@@ -34,7 +34,7 @@ const otherListData = computed(() => {
 })
 
 async function getProgramData() {
-  let r = await api.get("api/generator/get-program-list/")
+  let r = await api.get("/api/generator/get-program-list/")
   listData.value = r.data
 }
 
