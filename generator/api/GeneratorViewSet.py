@@ -65,7 +65,7 @@ class GeneratorViewSet(
     def get_program_list(self, request, *args, **kwargs):
 
         user = self.request.user.userprofile.mira_id
-        user = 5779
+
         data = AISServices.get_disciplines_by_person(user)
 
         discpl_list = [i['discpl'] for i in data]
