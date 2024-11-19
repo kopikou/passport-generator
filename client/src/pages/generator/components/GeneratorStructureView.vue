@@ -78,7 +78,7 @@ onBeforeMount(() => {
             <div class="text-subtitle1">Лекции</div>
             <q-field outlined dense>
               <template v-slot:control>
-                <div class="self-center full-width no-outline text-center">{{ item.num }}</div>
+                <div class="self-center full-width no-outline text-center">{{ item.lekc }}</div>
               </template>
             </q-field>
 

@@ -63,7 +63,7 @@ onBeforeMount(async () => {
   <div class="q-pa-lg">
     <div class="text-center text-h6 q-mb-md">Список рабочих программ дисциплин ИРНИТУ</div>
     <div>
-      <div class="text-center text-subtitle1">Ваши планы</div>
+      <div class="text-center text-subtitle1">Ваши РПД</div>
       <q-list
         bordered
         separator
@@ -99,7 +99,7 @@ onBeforeMount(async () => {
       </q-list>
     </div>
     <div>
-      <div class="text-center text-subtitle1">Остальные планы</div>
+      <div class="text-center text-subtitle1">Остальные РПД</div>
       <q-list
         bordered
         separator
