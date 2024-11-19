@@ -11,17 +11,16 @@ const generatorViewStore = useGeneratorViewStore();
 
 const {
   activeRpdId,
-  additionalInfo,
-  independentDisciplineWorkHour,
-  independentTypes,
+  disciplineThemes,
+  formControl,
 } = storeToRefs(generatorViewStore)
 
 const choicesName = computed(() => {
-  return _.uniq(_.map(independentDisciplineWorkHour.value, (x) => x.name)) || []
+  return _.uniq(_.map(disciplineThemes.value, (x) => x.formcontrol_verbose)) || []
 })
 
 function getType(value) {
-  return _.filter(independentTypes.value, (x) => x.name == value)[0]?.type
+  return _.filter(formControl.value, (x) => x.name == value)[0]?.type
 }
 
 </script>
