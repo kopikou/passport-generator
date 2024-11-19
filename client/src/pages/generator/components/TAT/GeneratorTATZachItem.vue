@@ -13,6 +13,7 @@ const {
   activeRpdId,
   additionalInfo,
   tatInfo,
+  disabled,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -75,6 +76,7 @@ onBeforeMount(() => {
             filled
             stack-label
             v-model="main"
+            :readonly="disabled"
           />
           <q-input
             label="Описание процедуры"
@@ -82,6 +84,7 @@ onBeforeMount(() => {
             filled
             stack-label
             v-model="about"
+            :readonly="disabled"
           />
           <p class="text-subtitle1">Критерии оценивания</p>
           <div class="row justify-between">
@@ -92,6 +95,7 @@ onBeforeMount(() => {
               stack-label
               v-model="passed"
               class="col q-mr-sm"
+              :readonly="disabled"
             />
             <q-input
               label="Не зачтено"
@@ -100,6 +104,7 @@ onBeforeMount(() => {
               stack-label
               v-model="unpassed"
               class="col q-ml-sm"
+              :readonly="disabled"
             />
           </div>
 
@@ -107,6 +112,7 @@ onBeforeMount(() => {
             label="Сохранить"
             color="primary"
             @click="saveData"
+            v-show="!disabled"
           />
         </div>
       </q-card-section>

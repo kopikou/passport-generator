@@ -13,6 +13,7 @@ const {
   resources,
   activeRpdId,
   additionalInfo,
+  disabled,
 } = storeToRefs(generatorViewStore)
 
 const resources_web = ref('')
@@ -93,6 +94,7 @@ onBeforeMount(() => {
         filled
         stack-label
         v-model="resources_web"
+        :readonly="disabled"
       />
 
       <q-input
@@ -101,11 +103,13 @@ onBeforeMount(() => {
         filled
         stack-label
         v-model="resources_bd"
+        :readonly="disabled"
       />
       <q-btn
         label="Сохранить"
         color="primary"
         @click="saveData"
+        v-show="!disabled"
       />
     </div>
   </div>

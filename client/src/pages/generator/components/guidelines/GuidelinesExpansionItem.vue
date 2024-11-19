@@ -13,6 +13,7 @@ const {
   activeRpdId,
   additionalInfo,
   guidelines,
+  disabled,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -58,6 +59,7 @@ onBeforeMount(() => {
             type="textarea"
             filled
             v-model="guidelines_text"
+            :readonly="disabled"
         />
 
         <q-btn
@@ -65,6 +67,7 @@ onBeforeMount(() => {
             label="Сохранить"
             color="primary"
             @click="saveData"
+            v-show="!disabled"
         />
 
       </q-card-section>

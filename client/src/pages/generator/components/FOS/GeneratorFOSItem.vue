@@ -14,6 +14,7 @@ const {
   activeRpdId,
   additionalInfo,
   fosInfo,
+  disabled,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -68,6 +69,7 @@ onBeforeMount(() => {
             filled
             stack-label
             v-model="about"
+            :readonly="disabled"
           />
           <q-input
             label="Критерии оценивания"
@@ -75,11 +77,13 @@ onBeforeMount(() => {
             filled
             stack-label
             v-model="criteria"
+            :readonly="disabled"
           />
           <q-btn
             label="Сохранить"
             color="primary"
             @click="saveData"
+            v-show="!disabled"
           />
         </div>
       </q-card-section>

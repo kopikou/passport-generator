@@ -17,6 +17,7 @@ const {
   activeRpdId,
   disciplineLibrary,
   rpdData,
+  disabled,
 } = storeToRefs(generatorViewStore)
 
 
@@ -134,8 +135,9 @@ onBeforeMount(() => {
         label="Добавить книгу"
         color="secondary"
         @click="addBook"
+        v-show="!disabled"
       />
-      <div class="row q-gutter-x-md q-mb-md">
+      <div class="row q-gutter-x-md q-mb-md" v-show="!disabled">
         <q-input
           label="Введите текст для поиска"
           stack-label
@@ -155,7 +157,7 @@ onBeforeMount(() => {
                 <div class="text-subtitle1 self-center full-width no-outline">
                   <a v-if="item.http_link" :href="`${item.http_link}`" target="_blank">{{ item.bib_disc }}</a>
                   <span v-else>{{ item.bib_disc }}</span>
-                  <div class="q-gutter-x-md q-mt-md">
+                  <div class="q-gutter-x-md q-mt-md" v-show="!disabled">
                     <q-btn color="red" label="Убрать"
                            @click="deleteMainBook(item.id)"/>
                   </div>

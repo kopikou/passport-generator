@@ -16,6 +16,7 @@ const {
   activeRpdId,
   disciplineSoftware,
   rpdData,
+  disabled,
 } = storeToRefs(generatorViewStore)
 
 const searchVal = ref('')
@@ -104,8 +105,9 @@ watch(disciplineSoftware, () => {
           label="Добавить ПО"
           color="secondary"
           @click="addPO"
+          v-show="!disabled"
       />
-      <div class="row q-gutter-x-md q-mb-md">
+      <div class="row q-gutter-x-md q-mb-md" v-show="!disabled">
         <q-input
           label="Введите текст для поиска"
           stack-label
@@ -124,7 +126,7 @@ watch(disciplineSoftware, () => {
               <template #control>
                 <div class="text-subtitle1 self-center full-width no-outline">
                   <span>{{ item.clicense__name }}</span>
-                  <div class="q-gutter-x-md q-mt-md">
+                  <div class="q-gutter-x-md q-mt-md" v-show="!disabled">
                     <q-btn color="red" label="Убрать"
                            @click="deleteSoftware(item.id)"/>
                   </div>

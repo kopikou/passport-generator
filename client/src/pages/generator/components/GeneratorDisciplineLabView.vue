@@ -18,6 +18,7 @@ const {
   labDisciplineWorkHour,
   disciplineThemes,
   rpdData,
+  disabled,
 } = storeToRefs(generatorViewStore)
 
 const $q = useQuasar()
@@ -110,7 +111,7 @@ const disciplineThemesByValue = computed(() => {
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div v-if="allPercent != 0">
-        <q-btn label="Добавить новую лабораторную работу" color="teal" class="q-mb-md" @click="addLab"/>
+        <q-btn label="Добавить новую лабораторную работу" color="teal" class="q-mb-md" @click="addLab" :disabled="disabled"/>
         <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
           <div class="absolute-full flex flex-center">
             <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
@@ -151,7 +152,7 @@ const disciplineThemesByValue = computed(() => {
               <div>
                 Тема дисциплины
               </div>
-              <div>
+              <div v-show="!disabled">
                 Управление
               </div>
             </div>
@@ -170,7 +171,7 @@ const disciplineThemesByValue = computed(() => {
                 <div>
                   {{ disciplineThemesByValue[lab.theme_id]?.name }}
                 </div>
-                <div>
+                <div v-show="!disabled">
                   <q-btn
                     icon="mdi-delete" color="red" flat @click="deleteLab(lab.id)"
                   />
@@ -196,14 +197,14 @@ const disciplineThemesByValue = computed(() => {
 .lab-container {
   > .lab-container__header {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr) auto;
     font-weight: bold;
   }
 
   > .lab-container__body {
     > .lab-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(4, 1fr) auto;
     }
   }
 }

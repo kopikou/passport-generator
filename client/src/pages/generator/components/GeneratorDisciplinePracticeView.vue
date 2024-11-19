@@ -18,6 +18,7 @@ const {
   practiceDisciplineWorkHour,
   rpdData,
   disciplineThemes,
+  disabled,
 } = storeToRefs(generatorViewStore)
 const tab = ref(0)
 
@@ -108,7 +109,7 @@ const disciplineThemesByValue = computed(() => {
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div v-if="allPercent != 0">
-        <q-btn label="Добавить новую практическую работу" color="teal" class="q-mb-md" @click="addPractice"/>
+        <q-btn label="Добавить новую практическую работу" color="teal" class="q-mb-md" @click="addPractice" :disabled="disabled"/>
         <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
           <div class="absolute-full flex flex-center">
             <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
@@ -149,7 +150,7 @@ const disciplineThemesByValue = computed(() => {
               <div>
                 Тема дисциплины
               </div>
-              <div>
+              <div v-show="!disabled">
                 Управление
               </div>
             </div>
@@ -168,7 +169,7 @@ const disciplineThemesByValue = computed(() => {
                 <div>
                   {{ disciplineThemesByValue[practice.theme_id]?.name }}
                 </div>
-                <div>
+                <div v-show="!disabled">
                   <q-btn
                     icon="mdi-delete" color="red" flat @click="deletePractice(practice.id)"
                   />
@@ -193,14 +194,14 @@ const disciplineThemesByValue = computed(() => {
 .practice-container {
   > .practice-container__header {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr) auto;
     font-weight: bold;
   }
 
   > .practice-container__body {
     > .practice-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(4, 1fr) auto;
     }
   }
 }

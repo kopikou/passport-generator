@@ -43,6 +43,7 @@ const $q = useQuasar()
 async function sendToReview() {
   $q.loading.show()
   let r = await api.get(`/api/generator/${activeRpdId.value}/send-rpd-on-review/`)
+
   $q.loading.hide()
 }
 

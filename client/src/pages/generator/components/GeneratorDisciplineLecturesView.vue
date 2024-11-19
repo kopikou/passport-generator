@@ -18,6 +18,7 @@ const {
   semestersData,
   lecturesDisciplineWorkHour,
   disciplineThemes,
+  disabled,
 } = storeToRefs(generatorViewStore)
 
 const tab = ref(0)
@@ -109,7 +110,7 @@ onBeforeMount(() => {
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div v-if="allPercent != 0">
-        <q-btn label="Добавить новую лекционную работу" color="teal" class="q-mb-md" @click="addLectures"/>
+        <q-btn label="Добавить новую лекционную работу" color="teal" class="q-mb-md" @click="addLectures" :disable="disabled"/>
         <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
           <div class="absolute-full flex flex-center">
             <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
@@ -150,7 +151,7 @@ onBeforeMount(() => {
               <div>
                 Тема дисциплины
               </div>
-              <div>
+              <div v-show="!disabled">
                 Управление
               </div>
             </div>
@@ -169,7 +170,7 @@ onBeforeMount(() => {
                 <div>
                   {{ disciplineThemesByValue[lectures.theme_id]?.name }}
                 </div>
-                <div>
+                <div v-show="!disabled">
                   <q-btn
                     icon="mdi-delete" color="red" flat @click="deleteLectures(lectures.id)"
                   />
@@ -195,14 +196,14 @@ onBeforeMount(() => {
 .lectures-container {
   > .lectures-container__header {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr) auto;
     font-weight: bold;
   }
 
   > .lectures-container__body {
     > .lectures-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(4, 1fr) auto;
     }
   }
 }

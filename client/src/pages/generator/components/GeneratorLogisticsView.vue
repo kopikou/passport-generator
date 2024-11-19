@@ -28,6 +28,7 @@ const {
   planlinesData,
   disciplineLogistics,
   activeRpdId,
+  disabled,
 } = storeToRefs(generatorViewStore)
 
 function addOborud(data) {
@@ -117,14 +118,16 @@ watch(disciplineLogistics, () => {
           label="Добавить МТО"
           color="secondary"
           @click="addMTO"
+          v-show="!disabled"
       />
       <q-option-group
           :options="typeOptions"
           type="radio"
           v-model="searchType"
           inline
+          v-show="!disabled"
       />
-      <div class="row q-gutter-x-md q-mb-md">
+      <div class="row q-gutter-x-md q-mb-md" v-show="!disabled">
         <q-input
             label="Введите текст для поиска"
             stack-label
@@ -137,7 +140,7 @@ watch(disciplineLogistics, () => {
       </div>
       <div class="row">
         <div class="col-5">
-          <div class="text-h6">выбрано</div>
+          <div class="text-h6">Выбранное МТО</div>
           <div v-for="item in oborudData" style="width: 95%">
             <q-field label="Название" stack-label filled class="q-mb-md">
               <template #control>
@@ -145,7 +148,7 @@ watch(disciplineLogistics, () => {
                   <span>{{ item.name }} <q-chip v-if="item.inv" :label="`${item.inv}`"/> <q-chip v-if="item.caud__name"
                                                                                                  :label="`${item.caud__name}`"/></span>
                 </div>
-                <div class="q-gutter-x-md q-mt-md">
+                <div class="q-gutter-x-md q-mt-md" v-show="!disabled">
                   <q-btn color="red" label="Удалить" @click="deleteOborud(item.id)"/>
                 </div>
               </template>
