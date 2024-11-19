@@ -18,6 +18,18 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   const independentTypes = ref<GeneratorIndependentTypesData[]>([])
   const activeRpdId = ref(null)
 
+  const status = computed(() => {
+    return rpdData.value?.status || -1
+  })
+
+  const statusVerbose = computed(() => {
+    return rpdData.value?.status_verbose
+  })
+
+  const disabled = computed(() => {
+    return [2, 3, 4].includes(rpdData.value?.status)
+  })
+
   const indicatorsData = computed<PlanIndicatorData[]>(() => {
     return rpdData.value.planlines?.indicators || []
   })
@@ -181,6 +193,9 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     tatInfo,
     disciplineGoal,
     additionalInfo,
+    status,
+    statusVerbose,
+    disabled,
 
     activeRpdId,
     rpdData,

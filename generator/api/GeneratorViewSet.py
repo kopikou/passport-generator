@@ -243,3 +243,27 @@ class GeneratorViewSet(
 
         # return Response(result)
         return response
+
+    @action(methods=['GET'], url_path="send-rpd-on-review", detail=True)
+    def send_rpd_on_review(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.status = PlanLinesLink.StatusChoices.on_review
+        instance.save()
+
+        return Response({"success": True})
+
+    @action(methods=['GET'], url_path="accept-rpd", detail=True)
+    def accept_rpd(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.status = PlanLinesLink.StatusChoices.accepted
+        instance.save()
+
+        return Response({"success": True})
+
+    @action(methods=['GET'], url_path="send-rpd-on-refile", detail=True)
+    def send_rpd_on_refile(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.status = PlanLinesLink.StatusChoices.on_refile
+        instance.save()
+
+        return Response({"success": True})

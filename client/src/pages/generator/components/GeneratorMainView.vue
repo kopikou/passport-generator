@@ -16,6 +16,7 @@ const {
   activeRpdId,
   additionalInfo,
   disciplineGoal,
+  disabled,
 } = storeToRefs(generatorViewStore)
 
 const displGoal = ref('')
@@ -101,11 +102,13 @@ onBeforeMount(() => {
             stack-label
             v-model="displGoal"
             class="q-mb-md"
+            :readonly="disabled"
         />
         <q-btn
             color="primary"
             label="Сохранить"
             @click="saveDiscplineGoal"
+            v-show="!disabled"
         />
       </div>
     </div>

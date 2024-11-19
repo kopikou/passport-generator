@@ -15,6 +15,7 @@ const {
   disciplineThemes,
   formControl,
   rpdData,
+  disabled,
 } = storeToRefs(generatorViewStore)
 
 const tab = ref(0)
@@ -87,7 +88,7 @@ onBeforeMount(() => {
       <span class="text-h6 q-pl-lg">Содержание разделов и тем по дисциплине</span>
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
-      <q-btn label="Добавить тему дисциплины" color="teal" class="q-mb-md" @click="addTheme"/>
+      <q-btn label="Добавить тему дисциплины" color="teal" class="q-mb-md" @click="addTheme" :disabled="disabled"/>
       <q-tabs
         v-model="tab"
         align="left"
@@ -116,7 +117,7 @@ onBeforeMount(() => {
             <div>
               Краткое описание темы
             </div>
-            <div>
+            <div v-show="!disabled">
               Управление
             </div>
           </div>
@@ -135,7 +136,7 @@ onBeforeMount(() => {
               <div>
                 {{ item.comment }}
               </div>
-              <div>
+              <div v-show="!disabled">
                 <q-btn
                   icon="mdi-delete" color="red" flat @click="deleteTheme(item.id)"
                 />
@@ -156,14 +157,14 @@ onBeforeMount(() => {
 .theme-container {
   > .theme-container__header {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr) auto;
     font-weight: bold;
   }
 
   > .theme-container__body {
     > .theme-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(4, 1fr) auto;
     }
   }
 }

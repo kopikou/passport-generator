@@ -16,6 +16,7 @@ const {
   semestersData,
   interactiveMethods,
   additionalInfo,
+  disabled,
 } = storeToRefs(generatorViewStore)
 
 const tab = ref<string>('')
@@ -164,11 +165,13 @@ onBeforeMount(() => {
             stack-label
             v-model="methods"
             clearable
+            :readonly="disabled"
         />
         <q-btn
             label="Сохранить"
             color="primary"
             @click="saveMethods"
+            v-show="!disabled"
         />
       </div>
     </div>

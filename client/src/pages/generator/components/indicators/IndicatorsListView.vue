@@ -4,8 +4,16 @@ import {PlanIndicatorData} from "src/types";
 import {onBeforeMount, ref} from "vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
+import useGeneratorViewStore from "stores/generatorViewStore";
+import {storeToRefs} from "pinia";
 
 const $q = useQuasar()
+const generatorViewStore = useGeneratorViewStore();
+
+const{
+  disabled,
+}=storeToRefs(generatorViewStore)
+
 const props = defineProps({
   data: {
     type: Object as () => PlanIndicatorData,
@@ -58,6 +66,7 @@ onBeforeMount(() => {
         type="textarea"
         class="col"
         v-model="know"
+        :readonly="disabled"
       />
       <q-input
         filled
@@ -66,6 +75,7 @@ onBeforeMount(() => {
         type="textarea"
         class="col"
         v-model="able"
+        :readonly="disabled"
       />
       <q-input
         filled
@@ -74,6 +84,7 @@ onBeforeMount(() => {
         type="textarea"
         class="col"
         v-model="own"
+        :readonly="disabled"
       />
       <q-input
         filled
@@ -82,6 +93,7 @@ onBeforeMount(() => {
         type="textarea"
         class="col"
         v-model="criteria"
+        :readonly="disabled"
       />
       <q-input
         filled
@@ -90,10 +102,11 @@ onBeforeMount(() => {
         type="textarea"
         class="col"
         v-model="methods"
+        :readonly="disabled"
       />
     </div>
     <div class="flex justify-start q-mt-md">
-      <q-btn label="Сохранить" color="primary" @click="saveData"/>
+      <q-btn label="Сохранить" color="primary" @click="saveData" v-show="!disabled"/>
     </div>
   </div>
 </template>

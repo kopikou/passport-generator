@@ -1,10 +1,23 @@
 <script setup lang="ts">
 
+import useGeneratorViewStore from "stores/generatorViewStore";
+import {storeToRefs} from "pinia";
+import {useQuasar} from "quasar";
+import {api} from "boot/axios";
+
 const props = defineProps({
   id: {
     required: true,
   }
 })
+
+const generatorViewStore = useGeneratorViewStore();
+
+const{
+  activeRpdId,
+  statusVerbose,
+  disabled,
+}=storeToRefs(generatorViewStore)
 
 const menuItems = [
   {title: 'Титульный лист', url: 'main'},
@@ -26,6 +39,13 @@ const menuItems = [
   {title: 'Используемое материально-техническое обеспечение', url: 'logistics'},
 ]
 
+const $q = useQuasar()
+async function sendToReview() {
+  $q.loading.show()
+  let r = await api.get(`/api/generator/${activeRpdId.value}/send-rpd-on-review/`)
+  $q.loading.hide()
+}
+
 </script>
 
 <template>
@@ -44,11 +64,32 @@ const menuItems = [
     >
       <q-item-section>
         <q-item-label>{{ item.title }}</q-item-label>
-<!--        <q-item-label caption>Основная информация о программе</q-item-label>-->
+        <!--        <q-item-label caption>Основная информация о программе</q-item-label>-->
       </q-item-section>
     </q-item>
 
   </q-list>
+  <div v-if="!disabled">
+    <q-btn
+      class="q-mt-xs"
+      color="secondary"
+      dense
+      @click="sendToReview"
+      style="width: 100%"
+      label="Отправить на согласование"
+    />
+  </div>
+  <div v-else class="text-center">
+    <q-btn
+      class="q-mt-xs"
+      color="secondary"
+      dense
+      disable
+      style="width: 100%"
+      :label="statusVerbose"
+    />
+  </div>
+
 </template>
 
 <style scoped>

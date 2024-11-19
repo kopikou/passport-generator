@@ -17,6 +17,7 @@ const {
   activeRpdId,
   disciplinePlace,
   additionalInfo,
+  disabled,
 } = storeToRefs(generatorViewStore)
 
 const precedence = ref([])
@@ -74,6 +75,7 @@ onBeforeMount(() => {
           map-options
           emit-value
           :options="otherDiscipline"
+          :readonly="disabled"
       />
       <br/>
       <q-select-filterable
@@ -89,8 +91,9 @@ onBeforeMount(() => {
           map-options
           emit-value
           :options="otherDiscipline"
+          :readonly="disabled"
       />
-      <q-btn label="Сохранить" color="primary" class="q-mt-sm" @click="savePrecSubDiscipline"/>
+      <q-btn label="Сохранить" color="primary" class="q-mt-sm" @click="savePrecSubDiscipline" v-show="!disabled"/>
     </div>
   </div>
 </template>
