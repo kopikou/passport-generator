@@ -14,11 +14,14 @@ class PlanLinesLink(TimestampsModel):
         accepted = 3, "Подтвержден"
         on_refile = 4, "Требуются правки"
 
-    cadmission = models.IntegerField(verbose_name='')
-    planlines = models.ForeignKey(LinesData, on_delete=models.CASCADE, verbose_name='')
-    mira_id = models.IntegerField(verbose_name='')
-    person = models.IntegerField(verbose_name='')
+    cadmission = models.IntegerField()
+    planlines = models.ForeignKey(LinesData, on_delete=models.CASCADE, )
+    mira_id = models.IntegerField()
+    person = models.IntegerField()
     status = models.IntegerField(choices=StatusChoices.choices, default=StatusChoices.appointed)
+    comment = models.TextField(null=True, blank=True)
+    protocol_number = models.IntegerField(null=True, blank=True)
+    protocol_date = models.DateField(null=True, blank=True)
 
     @property
     def status_verbose(self):
