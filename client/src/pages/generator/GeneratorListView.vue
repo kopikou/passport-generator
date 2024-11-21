@@ -21,6 +21,7 @@ import {useRouter} from "vue-router";
 import {storeToRefs} from "pinia";
 import _ from "lodash";
 import useMainStore from "stores/mainStore";
+import GeneratorManageDialog from "pages/generator/components/dialogs/GeneratorManageDialog.vue";
 
 const $q = useQuasar()
 const router = useRouter()
@@ -33,6 +34,15 @@ const myListData = computed(() => {
 const otherListData = computed(() => {
   return _.filter(listData.value, (x) => x.mira_id != mira_id.value)
 })
+
+function openManageDialog(id) {
+  $q.dialog({
+    component: GeneratorManageDialog,
+    componentProps: {
+      id: id,
+    }
+  })
+}
 
 function filterMyList(data) {
   return _.filter(data, (x) => x.mira_id === mira_id.value)
@@ -50,6 +60,11 @@ async function getProgramData() {
 const cafDataById = computed(() => {
   return _.keyBy(cafData.value, 'value')
 })
+
+
+function getRowColor(number) {
+  return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
+}
 
 onBeforeMount(async () => {
   $q.loading.show()
@@ -77,21 +92,19 @@ onBeforeMount(async () => {
               <q-card-section>
                 <div class="rpd-container">
                   <div class="rpd-row rpd-row__header text-weight-bold">
-                    <div>Аббревиатура</div>
                     <div>Код</div>
                     <div>Дисциплина</div>
                     <div>Составитель</div>
                     <div>Кафедра</div>
                     <div>Статус</div>
                   </div>
-                  <div class="rpd-row rpd-row__body" v-for="item in filterMyList(items)"
+                  <div class="rpd-row rpd-row__body" v-for="item, key in filterMyList(items)"
                        @click="router.push(`/generator/${item.id}/main`)">
-                    <div>{{ item.abbr }} {{ item.yr }}</div>
-                    <div>{{ item.discode }}</div>
-                    <div>{{ item.discpl }}</div>
-                    <div>{{ item.person }}</div>
-                    <div>{{ cafDataById[item.kafcode]?.label }}</div>
-                    <div>{{ item.status_verbose }}</div>
+                    <div :class="getRowColor(key)">{{ item.discode }}</div>
+                    <div :class="getRowColor(key)">{{ item.discpl }}</div>
+                    <div :class="getRowColor(key)">{{ item.person }}</div>
+                    <div :class="getRowColor(key)">{{ cafDataById[item.kafcode]?.label }}</div>
+                    <div :class="getRowColor(key)">{{ item.status_verbose }}</div>
                   </div>
                 </div>
               </q-card-section>
@@ -100,7 +113,7 @@ onBeforeMount(async () => {
         </q-list>
       </div>
       <div>
-        <div class="text-center text-subtitle1">Остальные РПД</div>
+        <div class="text-center text-subtitle1">Все РПД</div>
         <q-list
           bordered
           separator
@@ -113,20 +126,19 @@ onBeforeMount(async () => {
               <q-card-section>
                 <div class="rpd-container">
                   <div class="rpd-row rpd-row__header text-weight-bold">
-                    <div>Аббревиатура</div>
                     <div>Код</div>
                     <div>Дисциплина</div>
                     <div>Составитель</div>
                     <div>Кафедра</div>
                     <div>Статус</div>
                   </div>
-                  <div class="rpd-row rpd-row__body" v-for="item in filterOtherList(items)">
-                    <div>{{ item.abbr }} {{ item.yr }}</div>
-                    <div>{{ item.discode }}</div>
-                    <div>{{ item.discpl }}</div>
-                    <div>{{ item.person }}</div>
-                    <div>{{ cafDataById[item.kafcode]?.label }}</div>
-                    <div>{{ item.status_verbose }}</div>
+                  <div class="rpd-row rpd-row__body" v-for="item, key in items"
+                       @click="openManageDialog(item.id)">
+                    <div :class="getRowColor(key)">{{ item.discode }}</div>
+                    <div :class="getRowColor(key)">{{ item.discpl }}</div>
+                    <div :class="getRowColor(key)">{{ item.person }}</div>
+                    <div :class="getRowColor(key)">{{ cafDataById[item.kafcode]?.label }}</div>
+                    <div :class="getRowColor(key)">{{ item.status_verbose }}</div>
                   </div>
                 </div>
               </q-card-section>
@@ -141,7 +153,7 @@ onBeforeMount(async () => {
 <style scoped lang="scss">
 .rpd-container {
   display: grid;
-  grid-template-columns: auto auto repeat(3, 1fr) auto;
+  grid-template-columns: auto repeat(3, 1fr) auto;
 }
 
 .rpd-row {
@@ -169,7 +181,7 @@ onBeforeMount(async () => {
   &.rpd-row__body {
     &:hover {
       > div {
-        background: $pink-3;
+        background: $info !important;
         cursor: pointer;
       }
     }
