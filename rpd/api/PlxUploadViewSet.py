@@ -9,7 +9,7 @@ from urllib3 import request
 from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from auths.models import Permissions
-from rpd.models import RPDFile, PlanData, LinesData, PlanDocuments
+from rpd.models import RPDFile, PlanData, LinesData, PlanDocuments, DocumentsTypes
 from rpd.serializer import RpdFileSerializer, PlanDataSerializer, LinesDataSerializer, PlanDocumentsSerializer, \
     BatchUpdateCafLinesSerializer
 from rpd.services import PLXParser
@@ -158,3 +158,10 @@ class PlxUploadViewSet(
         return Response({
             "items": [i for i in data],
         }, status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], url_path='get-document-types', detail=False)
+    def get_document_types(self, request, *args, **kwargs):
+
+        data = DocumentsTypes.objects.all().values()
+
+        return Response([i for i in data], status=status.HTTP_200_OK)

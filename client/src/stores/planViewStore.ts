@@ -10,6 +10,7 @@ import {onAuthenticated} from "src/composables/onAuthenticated";
 
 const usePlanViewStore = defineStore('PlanViewStore', () => {
   const cafData = ref([])
+  const docTypes = ref([])
   const sync_option = ref([
     {value: true, label: 'Да'},
     {value: false, label: 'Нет'},
@@ -56,15 +57,19 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
     return _.keyBy(indicatorsData.value, 'indicator_index')
   })
 
-  async function getData() {
+  async function getCafData() {
     let r = await api.get("/api/arim/kafs/")
     cafData.value = r.data
+  }
+
+  async function getDocTypesData() {
+    let r = await api.get("/api/plx/get-document-types/")
+    docTypes.value = r.data
   }
 
   async function getLinesData() {
     let r = await api.get("/api/plx/get-lines-data", {params: {id: activeFileId.value}})
     let data = r.data
-
     linesData.value = r.data.items
   }
 
@@ -104,7 +109,8 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
       message: 'Загрузка данных плана',
     })
 
-    await getData()
+    await getCafData()
+    await getDocTypesData()
     await fetchPlxFiles();
 
     loadingData()
@@ -136,6 +142,7 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
     indicatorsDataById,
     fileData,
     cafData,
+    docTypes,
     sync_option,
     disabled,
     files,

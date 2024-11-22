@@ -15,6 +15,7 @@ const {
   cafData,
   sync_option,
   documentsData,
+  docTypes,
   disabled,
 } = storeToRefs(planViewStore);
 
@@ -22,7 +23,7 @@ const filter = ref('')
 
 const columns = [
   {name: 'name', field: 'name', label: 'Наименование', align: 'center'},
-  {name: 'type', field: 'type', label: 'Тип', align: 'center'},
+  {name: 'new_type_id', field: 'new_type_id', label: 'Тип', align: 'center'},
   // {name: 'synchronize', field: 'synchronize', label: 'Синхронизация с АИС', align: 'center'},
 ]
 
@@ -44,6 +45,10 @@ function removeRow(id) {
 
 const synctDataByValue = computed(() => {
   return _.keyBy(sync_option.value, 'value')
+})
+
+const docNameByBalue = computed(() => {
+  return _.keyBy(docTypes.value, 'id')
 })
 
 </script>
@@ -83,8 +88,8 @@ const synctDataByValue = computed(() => {
             {{ props.row.name }}
           </q-td>
 
-          <q-td key="type" :props>
-            {{ props.row.type }}
+          <q-td key="new_type_id" :props>
+            {{ docNameByBalue[props.row.new_type_id]?.name }}
           </q-td>
 
 <!--          <q-td key="synchronize" :props :class="props.row.synchronize ? 'bg-green-2' : 'bg-red-2'">-->

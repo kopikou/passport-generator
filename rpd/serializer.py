@@ -197,6 +197,7 @@ class PlanDocumentsSerializer(serializers.ModelSerializer):
     plan_id = serializers.IntegerField()
     name = serializers.CharField()
     type = serializers.IntegerField()
+    new_type_id = serializers.IntegerField()
     synchronize = serializers.BooleanField()
     manual = serializers.BooleanField(required=False)
 
@@ -207,6 +208,7 @@ class PlanDocumentsSerializer(serializers.ModelSerializer):
             'plan_id',
             'name',
             'type',
+            'new_type_id',
             'synchronize',
             'manual',
         ]

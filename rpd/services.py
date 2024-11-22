@@ -12,7 +12,7 @@ from lxml import etree
 import re
 
 from rpd.models import PlanData, LinesData, Disciplines, SemesterData, LinesIndicators, ExceptionNames, AllowedNames, \
-    PlanDocuments, BaseDocuments
+    PlanDocuments, BaseDocuments, DocumentsTypes
 from rpd.serializer import PlanDataSerializer, DisciplinesSerializer, LinesDataSerializer, SemesterDataSerializer, \
     LinesIndicatorsSerializer, PlanDocumentsSerializer
 
@@ -498,19 +498,22 @@ class PLXParser:
             query = Q(aspirant=True)
 
         base_documents = BaseDocuments.objects.filter(query).values()
+        document_types = {i.name: i.id for i in DocumentsTypes.objects.all()}
 
         for item in base_documents:
             documents_data.append({
                 'name': item['name'],
                 'type': item['type'],
+                'new_type_id': document_types.get(f"{item['name']}"),
                 'synchronize': True,
             })
 
         query = Q()
 
         result = []
-        for item in documents_data:
-            query |= Q(plan_id=plan_id)
+        query |= Q(plan_id=plan_id)
+        # for item in documents_data:
+        #     query |= Q(plan_id=plan_id)
 
         documents = PlanDocuments.objects.filter(query).values()
         documents_by_id = {f"{plan_id}_{i['name']}": i for i in documents}
