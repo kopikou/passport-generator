@@ -2,6 +2,7 @@
 
 
 import {useDialogPluginComponent} from "quasar";
+import {api} from "boot/axios";
 
 const {dialogRef, onDialogHide, onDialogOK, onDialogCancel} = useDialogPluginComponent()
 
@@ -11,6 +12,14 @@ const props = defineProps({
     type: Number,
   }
 })
+
+async function getRPD() {
+  window.location.href = `/api/generator/${props.id}/get-rpd-report/`
+}
+
+async function getAnnot() {
+  window.location.href = `/api/generator/${props.id}/get-rpd-annotation/`
+}
 
 async function onOKClick() {
   onDialogOK()
@@ -26,10 +35,12 @@ async function onOKClick() {
         <q-btn
           class="col"
           label="РПД"
+          @click="getRPD"
         />
         <q-btn
           class="col"
           label="Аннотация"
+          @click="getAnnot"
         />
       </div>
       <q-input

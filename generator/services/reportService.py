@@ -111,11 +111,11 @@ class ReportService(object):
             indicators.append({
                 'index': item['indicator_index'],
                 'content': item['indicator'],
-                'know': item['discipline_indicator'][0]['know'] or '',
-                'able': item['discipline_indicator'][0]['able'] or '',
-                'own': item['discipline_indicator'][0]['own'] or '',
-                'criteria': item['discipline_indicator'][0]['criteria'] or '',
-                'methods': item['discipline_indicator'][0]['methods'] or '',
+                'know': item['discipline_indicator'][0]['know'] if item['discipline_indicator'] else '',
+                'able': item['discipline_indicator'][0]['able'] if item['discipline_indicator'] else '',
+                'own': item['discipline_indicator'][0]['own'] if item['discipline_indicator'] else '',
+                'criteria': item['discipline_indicator'][0]['criteria'] if item['discipline_indicator'] else '',
+                'methods': item['discipline_indicator'][0]['methods'] if item['discipline_indicator'] else '',
             })
 
         guidelines_titles = {
