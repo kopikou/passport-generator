@@ -79,7 +79,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <q-dialog ref="dialogRef" @hide="onDialogHide">
+  <q-dialog ref="dialogRef" @hide="onDialogHide" persistent>
     <q-card class="q-dialog-plugin" style="width: 700px;">
       <div class="q-pa-md q-gutter-md">
         <q-chip color="teal" class="text-subtitle1">Семестр {{ sem }}</q-chip>

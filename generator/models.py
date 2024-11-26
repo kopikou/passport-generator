@@ -15,17 +15,22 @@ class PlanLinesLink(TimestampsModel):
         on_refile = 4, "Требуются правки"
 
     cadmission = models.IntegerField()
-    planlines = models.ForeignKey(LinesData, on_delete=models.CASCADE, )
+    planlines = models.ForeignKey(LinesData, on_delete=models.CASCADE)
     mira_id = models.IntegerField()
     person = models.IntegerField()
     status = models.IntegerField(choices=StatusChoices.choices, default=StatusChoices.appointed)
-    comment = models.TextField(null=True, blank=True)
     protocol_number = models.IntegerField(null=True, blank=True)
     protocol_date = models.DateField(null=True, blank=True)
 
     @property
     def status_verbose(self):
         return PlanLinesLink.StatusChoices.labels[self.status]
+
+
+class PlanLinesLinkComments(TimestampsModel):
+
+    planlineslink = models.ForeignKey(PlanLinesLink, on_delete=models.CASCADE)
+    comment = models.TextField()
 
 
 class FormControl(TimestampsModel):

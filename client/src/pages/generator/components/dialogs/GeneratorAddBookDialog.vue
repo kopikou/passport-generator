@@ -57,7 +57,7 @@ async function onOKClick() {
 </script>
 
 <template>
-  <q-dialog ref="dialogRef" @hide="onDialogHide">
+  <q-dialog ref="dialogRef" @hide="onDialogHide" persistent>
     <q-card class="q-dialog-plugin" style="width: 700px;">
       <div class="q-ma-md">
         <p>Библиографическая ссылка заполняется в соответствии с ГОСТ Р 7.0.5 2008</p>

@@ -43,7 +43,7 @@ async function onOKClick() {
 </script>
 
 <template>
-  <q-dialog ref="dialogRef" @hide="onDialogHide">
+  <q-dialog ref="dialogRef" @hide="onDialogHide" persistent>
     <q-card class="q-dialog-plugin" style="width: 700px;">
       <div class="q-ma-md">
         <div class="q-mt-md q-gutter-md">

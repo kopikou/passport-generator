@@ -12,7 +12,7 @@ from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
-    DefaultsResources
+    DefaultsResources, PlanLinesLinkComments
 from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer
@@ -260,10 +260,12 @@ class GeneratorViewSet(
 
         return Response({"success": True})
 
-    @action(methods=['GET'], url_path="send-rpd-on-refile", detail=True)
+    @action(methods=['POST'], url_path="send-rpd-on-refile", detail=True)
     def send_rpd_on_refile(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.on_refile
         instance.save()
+
+        PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], planlineslink_id=instance.id)
 
         return Response({"success": True})
