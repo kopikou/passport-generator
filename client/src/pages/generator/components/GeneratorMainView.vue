@@ -2,7 +2,7 @@
 
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
-import {computed, onBeforeMount, ref, watch} from "vue";
+import {computed, onBeforeMount, ref, watch, watchEffect} from "vue";
 import _ from "lodash";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
@@ -43,6 +43,10 @@ watch(additionalInfo, () => {
 
 onBeforeMount(() => {
   displGoal.value = disciplineGoal.value
+})
+
+watch(displGoal, () => {
+  saveDiscplineGoal()
 })
 
 </script>
@@ -103,12 +107,8 @@ onBeforeMount(() => {
             v-model="displGoal"
             class="q-mb-md"
             :readonly="disabled"
-        />
-        <q-btn
-            color="primary"
-            label="Сохранить"
-            @click="saveDiscplineGoal"
-            v-show="!disabled"
+            hint="Для аннотации"
+            debounce="1000"
         />
       </div>
     </div>
