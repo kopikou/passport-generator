@@ -59,19 +59,20 @@ onBeforeMount(() => {
         плана.</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-tabs
-          v-model="tab"
-          align="left"
-          narrow-indicator
-          class="q-mb-md"
+        v-model="tab"
+        align="left"
+        narrow-indicator
+        class="q-mb-md"
       >
-        <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`" :label="`Семестр ${item.num}`"/>
+        <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`"
+               :label="`Семестр ${item.num}`"/>
       </q-tabs>
 
       <q-tab-panels
-          v-model="tab"
-          animated
-          transition-prev="scale"
-          transition-next="scale"
+        v-model="tab"
+        animated
+        transition-prev="scale"
+        transition-next="scale"
       >
         <q-tab-panel v-for="item in semestersData" :name="`${item.num}`">
           <div class="structure-form q-gutter-md">
@@ -108,6 +109,17 @@ onBeforeMount(() => {
               <template v-slot:control>
                 <div class="self-center full-width no-outline text-center">
                   <span v-if="item.srs">{{ item.srs }}</span>
+                  <span v-else>Отсутствует</span>
+                </div>
+              </template>
+            </q-field>
+
+            <div class="text-subtitle1">Электронное информационная образовательная среда
+            </div>
+            <q-field outlined dense>
+              <template v-slot:control>
+                <div class="self-center full-width no-outline text-center">
+                  <span v-if="item.eios">{{ item.eios }}</span>
                   <span v-else>Отсутствует</span>
                 </div>
               </template>
@@ -160,18 +172,18 @@ onBeforeMount(() => {
       </q-tab-panels>
       <div class="q-gutter-md">
         <q-input
-            label="Интерактивные методы обучения"
-            filled
-            stack-label
-            v-model="methods"
-            clearable
-            :readonly="disabled"
+          label="Интерактивные методы обучения"
+          filled
+          stack-label
+          v-model="methods"
+          clearable
+          :readonly="disabled"
         />
         <q-btn
-            label="Сохранить"
-            color="primary"
-            @click="saveMethods"
-            v-show="!disabled"
+          label="Сохранить"
+          color="primary"
+          @click="saveMethods"
+          v-show="!disabled"
         />
       </div>
     </div>
