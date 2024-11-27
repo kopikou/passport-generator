@@ -27,29 +27,18 @@ const $q = useQuasar()
 const router = useRouter()
 const listData = ref<GeneratorListData[]>([])
 
-const myListData = computed(() => {
-  return _.filter(listData.value, (x) => x.mira_id === mira_id.value)
-})
-
-const otherListData = computed(() => {
-  return _.filter(listData.value, (x) => x.mira_id != mira_id.value)
-})
-
-function openManageDialog(id) {
+function openManageDialog(id, item) {
   $q.dialog({
     component: GeneratorManageDialog,
     componentProps: {
       id: id,
+      data: item,
     }
   })
 }
 
 function filterMyList(data) {
   return _.filter(data, (x) => x.mira_id === mira_id.value)
-}
-
-function filterOtherList(data) {
-  return _.filter(data, (x) => x.mira_id != mira_id.value)
 }
 
 async function getProgramData() {
@@ -133,7 +122,7 @@ onBeforeMount(async () => {
                     <div>Статус</div>
                   </div>
                   <div class="rpd-row rpd-row__body" v-for="item, key in items"
-                       @click="openManageDialog(item.id)">
+                       @click="openManageDialog(item.id, item)">
                     <div :class="getRowColor(key)">{{ item.discode }}</div>
                     <div :class="getRowColor(key)">{{ item.discpl }}</div>
                     <div :class="getRowColor(key)">{{ item.person }}</div>

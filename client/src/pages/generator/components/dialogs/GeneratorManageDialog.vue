@@ -3,14 +3,23 @@
 
 import {useDialogPluginComponent, useQuasar} from "quasar";
 import {api} from "boot/axios";
-import {ref} from "vue";
+import {computed, ref} from "vue";
+import useGeneratorViewStore from "stores/generatorViewStore";
+import {storeToRefs} from "pinia";
+import EmptyIcon from "components/EmptyIcon.vue";
+import NoCommentsIcon from "components/NoCommentsIcon.vue";
 
 const {dialogRef, onDialogHide, onDialogOK, onDialogCancel} = useDialogPluginComponent()
+
+const generatorViewStore = useGeneratorViewStore();
 
 const props = defineProps({
   id: {
     required: true,
     type: Number,
+  },
+  data: {
+    required: true,
   }
 })
 
@@ -18,6 +27,12 @@ const comment = ref('')
 const oldCommentView = ref(false)
 const oldComments = ref([])
 
+const disabled = computed(() => {
+  if (!protocolNumber.value) return true
+  if (!protocolDate.value) return true
+
+  return false
+})
 const protocolNumber = ref()
 const protocolDate = ref()
 const acceptRPD = ref(false)
@@ -32,6 +47,7 @@ async function getAnnot() {
 }
 
 async function onAcceptClick() {
+  let r = await api.post(`/api/generator/${props.id}/accept-rpd/`, {date: protocolDate.value, number: protocolNumber.value})
   onDialogOK()
 }
 
@@ -53,14 +69,26 @@ function translateDate(date) {
   return result
 }
 
+function getStatusColor(status) {
+  switch (status) {
+    case 0: return ''
+    case 1: return 'bg-accent text-white'
+    case 2: return 'bg-secondary text-white'
+    case 3: return 'bg-positive text-white'
+    case 4: return 'bg-warning text-white'
+  }
+}
+
 </script>
 
 <template>
-
   <q-dialog ref="dialogRef" @hide="onDialogHide" persistent>
     <q-card class="q-dialog-plugin" style="width: 700px;">
       <q-card-section>
-        <div class="text-h6">Просмотр РПД</div>
+        <div class="text-h6">Просмотр РПД
+        <q-chip square>{{ props.data.abbr }}-{{ props.data.yr }} {{props.data.discpl}}</q-chip></div>
+        <div class="text-subtitle2">Составитель: <q-chip square>{{ props.data.person }}</q-chip></div>
+        <div class="text-subtitle2">Текущий статус: <q-chip :class="getStatusColor(props.data.status)" square>{{ props.data.status_verbose }}</q-chip></div>
       </q-card-section>
 
       <q-card-section>
@@ -121,6 +149,7 @@ function translateDate(date) {
         <div class="text-subtitle1">
           Комментариев нет
         </div>
+        <no-comments-icon />
       </q-card-section>
 
       <q-card-actions align="right" class="bg-white text-teal">
@@ -130,12 +159,32 @@ function translateDate(date) {
   </q-dialog>
 
   <q-dialog v-model="acceptRPD">
-    <q-card>
+    <q-card  style="width: 500px">
       <q-card-section>
-
+        <div class="text-h6">
+          Утверждение РПД
+        </div>
+      </q-card-section>
+      <q-card-section>
+        <div class="q-gutter-md">
+          <q-input
+            v-model="protocolNumber"
+            type="text"
+            stack-label
+            label="Номер протокола"
+            filled
+          />
+          <q-input
+            v-model="protocolDate"
+            type="date"
+            stack-label
+            label="Дата протокола"
+            filled
+          />
+        </div>
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn flat color="secondary" label="Утвердить"/>
+        <q-btn flat color="secondary" label="Утвердить" :disable="disabled" @click="onAcceptClick" v-close-popup/>
         <q-btn flat color="negative" label="Отмена" v-close-popup/>
       </q-card-actions>
     </q-card>

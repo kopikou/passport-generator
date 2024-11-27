@@ -11,7 +11,7 @@ class PlanLinesLink(TimestampsModel):
         appointed = 0, "Назначен"
         is_filled = 1, "Заполняется"
         on_review = 2, "Отправлен на проверку"
-        accepted = 3, "Подтвержден"
+        accepted = 3, "Утвержден"
         on_refile = 4, "Требуются правки"
 
     cadmission = models.IntegerField()
@@ -19,7 +19,7 @@ class PlanLinesLink(TimestampsModel):
     mira_id = models.IntegerField()
     person = models.IntegerField()
     status = models.IntegerField(choices=StatusChoices.choices, default=StatusChoices.appointed)
-    protocol_number = models.IntegerField(null=True, blank=True)
+    protocol_number = models.TextField(null=True, blank=True)
     protocol_date = models.DateField(null=True, blank=True)
 
     @property

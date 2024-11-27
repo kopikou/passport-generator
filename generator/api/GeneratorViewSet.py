@@ -52,10 +52,13 @@ class GeneratorViewSet(
 
         resources = DefaultsResources.objects.all().values("id", "name", "type", "url")
 
+        comment = PlanLinesLinkComments.objects.filter(planlineslink_id=instance.id).values().last()
+
         result = {
             "admission": admission_info[0],
             "other_discipline": [i for i in other_discipline],
             "resources": [i for i in resources],
+            "comment": comment,
             **serializer.data,
         }
 
@@ -107,7 +110,8 @@ class GeneratorViewSet(
                 })
 
         sorted_result = sorted(result, key=lambda x: (x['abbr'], x['yr'], x['discpl']))
-        grouped_result = {f"{key[0]}-{key[1]}": list(items) for key, items in groupby(sorted_result, key=lambda x: (x['abbr'], x['yr']))}
+        grouped_result = {f"{key[0]}-{key[1]}": list(items) for key, items in
+                          groupby(sorted_result, key=lambda x: (x['abbr'], x['yr']))}
         return Response(
             data=grouped_result,
         )
@@ -251,12 +255,14 @@ class GeneratorViewSet(
         instance.status = PlanLinesLink.StatusChoices.on_review
         instance.save()
 
-        return Response({"success": True})
+        return Response([i for i in instance.values()])
 
-    @action(methods=['GET'], url_path="accept-rpd", detail=True)
+    @action(methods=['POST'], url_path="accept-rpd", detail=True)
     def accept_rpd(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.accepted
+        instance.protocol_number = self.request.data['number']
+        instance.protocol_date = self.request.data['date']
         instance.save()
 
         return Response({"success": True})
@@ -269,8 +275,7 @@ class GeneratorViewSet(
 
         PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], planlineslink_id=instance.id)
 
-        return Response({"success": True})
-
+        return Response([i for i in instance.values()])
 
     @action(methods=['GET'], url_path="get-old-comments", detail=True)
     def get_old_comments(self, request, *args, **kwargs):

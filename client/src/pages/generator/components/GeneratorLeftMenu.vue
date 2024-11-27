@@ -13,11 +13,12 @@ const props = defineProps({
 
 const generatorViewStore = useGeneratorViewStore();
 
-const{
+const {
   activeRpdId,
   statusVerbose,
+  comment,
   disabled,
-}=storeToRefs(generatorViewStore)
+} = storeToRefs(generatorViewStore)
 
 const menuItems = [
   {title: 'Титульный лист', url: 'main'},
@@ -40,12 +41,20 @@ const menuItems = [
 ]
 
 const $q = useQuasar()
+
 async function sendToReview() {
   $q.loading.show()
   let r = await api.get(`/api/generator/${activeRpdId.value}/send-rpd-on-review/`)
 
   $q.loading.hide()
 }
+
+
+function translateDate(date) {
+  let result = new Date(date).toLocaleString('ru')
+  return result
+}
+
 
 </script>
 
@@ -70,6 +79,17 @@ async function sendToReview() {
     </q-item>
 
   </q-list>
+  <div>
+    <div class="text-h6">Последний комментарий</div>
+    <div>
+      <div class="bg-grey-2 q-ma-xs text-subtitle1">
+        <div class="text-subtitle1 text-bold">{{ translateDate(comment.created_at) }}</div>
+        <div>
+          {{ comment.comment }}
+        </div>
+      </div>
+    </div>
+  </div>
   <div v-if="!disabled">
     <q-btn
       class="q-mt-xs"
@@ -90,6 +110,7 @@ async function sendToReview() {
       :label="statusVerbose"
     />
   </div>
+
 
 </template>
 

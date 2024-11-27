@@ -32,7 +32,7 @@ const props = defineProps({
 })
 
 const name = ref('')
-const hourCount = ref(0)
+const hourCount = ref(2)
 const theme = ref()
 const num = ref()
 
@@ -105,6 +105,7 @@ onBeforeMount(() => {
           stack-label
           label="Количество часов"
           v-model="hourCount"
+          readonly
           filled
           type="number"
           :rules="[ val => val > 0 || 'Введите значение больше 0']"

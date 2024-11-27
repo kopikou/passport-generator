@@ -27,7 +27,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
   const disabled = computed(() => {
-    return [2, 3, 4].includes(rpdData.value?.status)
+    return [2, 3].includes(rpdData.value?.status)
   })
 
   const indicatorsData = computed<PlanIndicatorData[]>(() => {
@@ -36,6 +36,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   const planlinesData = computed<GeneratorPlanLineData[]>(() => {
     return rpdData.value?.planlines || []
+  })
+
+  const comment = computed(() => {
+    return rpdData.value?.comment || []
   })
 
   const semestersData = computed<PlanSemestrData[]>(() => {
@@ -188,6 +192,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     interactiveMethods,
     defaultResources,
     resources,
+    comment,
     guidelines,
     fosInfo,
     tatInfo,

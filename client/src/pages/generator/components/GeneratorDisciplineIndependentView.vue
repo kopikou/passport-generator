@@ -123,7 +123,7 @@ const disciplineThemesByValue = computed(() => {
           class="q-mb-md"
         >
           <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`"
-                 :label="`${item.num}`"/>
+                 :label="`Семестр ${item.num}`"/>
         </q-tabs>
         <q-linear-progress class="q-mb-md" size="20px" rounded :value="allSemesterPercentValue / allSemesterPercent"
                            color="primary">
