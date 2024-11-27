@@ -19,7 +19,7 @@ const {
   disabled,
 } = storeToRefs(generatorViewStore)
 
-const displGoal = ref('')
+const displGoal = ref(disciplineGoal.value)
 
 async function saveDiscplineGoal() {
   $q.loading.show()
@@ -38,10 +38,6 @@ const cafDataById = computed(() => {
 })
 
 watch(additionalInfo, () => {
-  displGoal.value = disciplineGoal.value
-})
-
-onBeforeMount(() => {
   displGoal.value = disciplineGoal.value
 })
 
