@@ -26,6 +26,13 @@ async function saveDiscplineGoal() {
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "disciplineGoal",
     value: displGoal.value,
+  }).finally(() => {
+    $q.notify({
+      message: "Данные <span class='text-bold'>цели освоения дисциплины</span> сохранены!",
+      color: "secondary",
+      position: "bottom",
+      html: true,
+    })
   })
   let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
   _.set(additionalInfo.value, `[${key}].value`, displGoal.value)
