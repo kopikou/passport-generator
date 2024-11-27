@@ -105,6 +105,7 @@ class GeneratorViewSet(
                     "kafcode": lines.planlines.caf,
                     "discode": lines.planlines.newdisid,
                 })
+
         sorted_result = sorted(result, key=lambda x: (x['abbr'], x['yr'], x['discpl']))
         grouped_result = {f"{key[0]}-{key[1]}": list(items) for key, items in groupby(sorted_result, key=lambda x: (x['abbr'], x['yr']))}
         return Response(
@@ -269,3 +270,12 @@ class GeneratorViewSet(
         PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], planlineslink_id=instance.id)
 
         return Response({"success": True})
+
+
+    @action(methods=['GET'], url_path="get-old-comments", detail=True)
+    def get_old_comments(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        data = PlanLinesLinkComments.objects.filter(planlineslink_id=instance.id).values()
+
+        return Response([i for i in data])
