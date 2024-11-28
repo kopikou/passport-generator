@@ -29,9 +29,24 @@ async function saveMethods() {
     value: {
       "interactiveMethods": methods.value
     }
+  }).then((v) => {
+    $q.notify({
+      message: "Данные <span class='text-bold'>о структуре дисциплины</span> сохранены!",
+      color: "secondary",
+      position: "bottom",
+      html: true,
+    })
+    let key = _.findKey(additionalInfo.value, (x) => x.id == v.data.id)
+    _.set(additionalInfo.value, `[${key}].value.interactiveMethods`, methods.value)
+  }, (rej) => {
+    $q.notify({
+      message: "Данные <span class='text-bold'>о структуре дисциплины</span> не сохранены!",
+      color: "negative",
+      position: "bottom",
+      html: true,
+    })
   })
-  let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
-  _.set(additionalInfo.value, `[${key}].value.interactiveMethods`, methods.value)
+
   $q.loading.hide()
 }
 
@@ -41,7 +56,6 @@ watch(semestersData, () => {
 
 watch(interactiveMethods, () => {
   methods.value = interactiveMethods.value[0]?.value['interactiveMethods']
-
 })
 
 onBeforeMount(() => {
@@ -178,13 +192,16 @@ onBeforeMount(() => {
           v-model="methods"
           clearable
           :readonly="disabled"
+          hint="Для РПД"
+          @update:modelValue="saveMethods"
+          debounce="1000"
         />
-        <q-btn
-          label="Сохранить"
-          color="primary"
-          @click="saveMethods"
-          v-show="!disabled"
-        />
+<!--        <q-btn-->
+<!--          label="Сохранить"-->
+<!--          color="primary"-->
+<!--          @click="saveMethods"-->
+<!--          v-show="!disabled"-->
+<!--        />-->
       </div>
     </div>
   </div>

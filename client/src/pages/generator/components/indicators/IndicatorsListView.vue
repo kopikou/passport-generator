@@ -6,6 +6,7 @@ import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
+import _ from "lodash";
 
 const $q = useQuasar()
 const generatorViewStore = useGeneratorViewStore();
@@ -37,9 +38,23 @@ async function saveData() {
     own: own.value,
     criteria: criteria.value,
     methods: methods.value,
+  }).then((v) => {
+    $q.notify({
+      message: "Данные <span class='text-bold'>о компетенциях</span> сохранены!",
+      color: "secondary",
+      position: "bottom",
+      html: true,
+    })
+    props.data.discipline_indicator[0] = v.data
+  }, (rej) => {
+    $q.notify({
+      message: "Данные <span class='text-bold'>о компетенциях</span> не сохранены!",
+      color: "negative",
+      position: "bottom",
+      html: true,
+    })
   })
 
-  props.data.discipline_indicator[0] = r.data
   $q.loading.hide()
 }
 
@@ -67,6 +82,8 @@ onBeforeMount(() => {
         class="col"
         v-model="know"
         :readonly="disabled"
+        debounce="1000"
+        @update:modelValue="saveData"
       />
       <q-input
         filled
@@ -76,6 +93,8 @@ onBeforeMount(() => {
         class="col"
         v-model="able"
         :readonly="disabled"
+        debounce="1000"
+        @update:modelValue="saveData"
       />
       <q-input
         filled
@@ -85,6 +104,8 @@ onBeforeMount(() => {
         class="col"
         v-model="own"
         :readonly="disabled"
+        debounce="1000"
+        @update:modelValue="saveData"
       />
       <q-input
         filled
@@ -94,6 +115,8 @@ onBeforeMount(() => {
         class="col"
         v-model="criteria"
         :readonly="disabled"
+        debounce="1000"
+        @update:modelValue="saveData"
       />
       <q-input
         filled
@@ -103,11 +126,14 @@ onBeforeMount(() => {
         class="col"
         v-model="methods"
         :readonly="disabled"
+        debounce="1000"
+        @update:modelValue="saveData"
       />
     </div>
-    <div class="flex justify-start q-mt-md">
-      <q-btn label="Сохранить" color="primary" @click="saveData" v-show="!disabled"/>
-    </div>
+    <div class="q-field__bottom">Для РПД</div>
+<!--    <div class="flex justify-start q-mt-md">-->
+<!--      <q-btn label="Сохранить" color="primary" @click="saveData" v-show="!disabled"/>-->
+<!--    </div>-->
   </div>
 </template>
 

@@ -34,7 +34,7 @@ const satisfactorily = ref('')
 const unsatisfactory = ref('')
 
 async function saveData() {
-  $q.loading.show("Сохранение данных")
+  $q.loading.show({message: "Сохранение данных"})
   _.set(tatInfo.value, `[0].${props.type}`, {
     "main": main.value,
     "about": about.value,
@@ -47,6 +47,20 @@ async function saveData() {
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'tat',
     "value": tatInfo.value,
+  }).then((v) => {
+    $q.notify({
+      message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> сохранены!",
+      color: "secondary",
+      position: "bottom",
+      html: true,
+    })
+  }, (rej) => {
+    $q.notify({
+      message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> не сохранены!",
+      color: "negative",
+      position: "bottom",
+      html: true,
+    })
   })
   $q.loading.hide()
 }
@@ -85,6 +99,8 @@ onBeforeMount(() => {
             stack-label
             v-model="main"
             :readonly="disabled"
+            debounce="1000"
+            @update:modelValue="saveData"
           />
           <q-input
             label="Описание процедуры"
@@ -93,6 +109,8 @@ onBeforeMount(() => {
             stack-label
             v-model="about"
             :readonly="disabled"
+            debounce="1000"
+            @update:modelValue="saveData"
           />
           <p class="text-subtitle1">Критерии оценивания</p>
           <div class="row justify-between">
@@ -104,6 +122,8 @@ onBeforeMount(() => {
               v-model="great"
               class="col q-mr-sm"
               :readonly="disabled"
+              debounce="1000"
+              @update:modelValue="saveData"
             />
             <q-input
               label="Хорошо"
@@ -113,6 +133,8 @@ onBeforeMount(() => {
               v-model="good"
               class="col q-ml-sm"
               :readonly="disabled"
+              debounce="1000"
+              @update:modelValue="saveData"
             />
           </div>
           <div class="row justify-between">
@@ -124,6 +146,9 @@ onBeforeMount(() => {
               v-model="satisfactorily"
               class="col q-mr-sm"
               :readonly="disabled"
+              hint="Для РПД"
+              debounce="1000"
+              @update:modelValue="saveData"
             />
             <q-input
               label="Неудовлетворительно"
@@ -133,14 +158,16 @@ onBeforeMount(() => {
               v-model="unsatisfactory"
               class="col q-ml-sm"
               :readonly="disabled"
+              debounce="1000"
+              @update:modelValue="saveData"
             />
           </div>
-          <q-btn
-            label="Сохранить"
-            color="primary"
-            @click="saveData"
-            v-show="!disabled"
-          />
+          <!--          <q-btn-->
+          <!--            label="Сохранить"-->
+          <!--            color="primary"-->
+          <!--            @click="saveData"-->
+          <!--            v-show="!disabled"-->
+          <!--          />-->
         </div>
       </q-card-section>
     </q-card>

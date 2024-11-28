@@ -5,6 +5,7 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import {api} from "boot/axios";
 import _ from "lodash";
+import {useQuasar} from "quasar";
 
 const generatorViewStore = useGeneratorViewStore();
 
@@ -19,20 +20,38 @@ const {
 const resources_web = ref('')
 const resources_bd = ref('')
 
+const $q = useQuasar()
+
 async function saveData() {
+  $q.loading.show({message: "Сохранение данных"})
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "resources",
     value: {
       "web": resources_web.value,
       "bd": resources_bd.value,
     }
-  })
-  let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
+  }).then((v) => {
+    $q.notify({
+      message: "Данные <span class='text-bold'>об используемых ресурсах</span> сохранены!",
+      color: "secondary",
+      position: "bottom",
+      html: true,
+    })
+  let key = _.findKey(additionalInfo.value, (x) => x.id == v.data.id)
   if (key === undefined) {
-    additionalInfo.value.push(r.data)
+    additionalInfo.value.push(v.data)
   } else {
-    _.set(additionalInfo.value, `[${key}].value`, r.data.value)
+    _.set(additionalInfo.value, `[${key}].value`, v.data.value)
   }
+  }, (rej) => {
+    $q.notify({
+      message: "Данные <span class='text-bold'>об используемых ресурсах</span> не сохранены!",
+      color: "negative",
+      position: "bottom",
+      html: true,
+    })
+  })
+  $q.loading.hide()
 }
 
 watch(resources, () => {
@@ -95,6 +114,8 @@ onBeforeMount(() => {
         stack-label
         v-model="resources_web"
         :readonly="disabled"
+        debounce="1000"
+        @update:modelValue="saveData"
       />
 
       <q-input
@@ -104,13 +125,16 @@ onBeforeMount(() => {
         stack-label
         v-model="resources_bd"
         :readonly="disabled"
+        debounce="1000"
+        hint="Для РПД"
+        @update:modelValue="saveData"
       />
-      <q-btn
-        label="Сохранить"
-        color="primary"
-        @click="saveData"
-        v-show="!disabled"
-      />
+<!--      <q-btn-->
+<!--        label="Сохранить"-->
+<!--        color="primary"-->
+<!--        @click="saveData"-->
+<!--        v-show="!disabled"-->
+<!--      />-->
     </div>
   </div>
 </template>

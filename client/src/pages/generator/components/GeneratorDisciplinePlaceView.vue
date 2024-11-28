@@ -34,11 +34,25 @@ async function savePrecSubDiscipline() {
       "precedence": precedence.value,
       "subsequent": subsequent.value,
     }
-  })
+  }).then((v) => {
+    $q.notify({
+      message: "Данные <span class='text-bold'>о месте дисциплины в структуре ООП</span> сохранены!",
+      color: "secondary",
+      position: "bottom",
+      html: true,
+    })
 
-  let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
-  _.set(additionalInfo.value, `[${key}].value.precedence`, precedence.value)
-  _.set(additionalInfo.value, `[${key}].value.subsequent`, subsequent.value)
+    let key = _.findKey(additionalInfo.value, (x) => x.id == v.data.id)
+    _.set(additionalInfo.value, `[${key}].value.precedence`, precedence.value)
+    _.set(additionalInfo.value, `[${key}].value.subsequent`, subsequent.value)
+  }, (rej) => {
+    $q.notify({
+      message: "Данные <span class='text-bold'>о месте дисциплины в структуре ООП</span> не сохранены!",
+      color: "negative",
+      position: "bottom",
+      html: true,
+    })
+  })
 
   $q.loading.hide()
 }
@@ -63,37 +77,40 @@ onBeforeMount(() => {
       <p>бла бла бла</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-select-filterable
-          label="Обеспечивающие (предшествующие) дисциплины и практики"
-          v-model="precedence"
-          option-label="dis"
-          option-value="disid"
-          stack-label
-          filled
-          use-chips
-          clearable
-          multiple
-          map-options
-          emit-value
-          :options="otherDiscipline"
-          :readonly="disabled"
+        label="Обеспечивающие (предшествующие) дисциплины и практики"
+        v-model="precedence"
+        option-label="dis"
+        option-value="disid"
+        stack-label
+        filled
+        use-chips
+        clearable
+        multiple
+        map-options
+        emit-value
+        :options="otherDiscipline"
+        :readonly="disabled"
+        @update:modelValue="savePrecSubDiscipline"
       />
       <br/>
       <q-select-filterable
-          label="Обеспечиваемые (последующие) дисциплины и практики"
-          v-model="subsequent"
-          option-label="dis"
-          option-value="disid"
-          stack-label
-          filled
-          use-chips
-          clearable
-          multiple
-          map-options
-          emit-value
-          :options="otherDiscipline"
-          :readonly="disabled"
+        label="Обеспечиваемые (последующие) дисциплины и практики"
+        v-model="subsequent"
+        option-label="dis"
+        option-value="disid"
+        stack-label
+        filled
+        use-chips
+        clearable
+        multiple
+        map-options
+        emit-value
+        :options="otherDiscipline"
+        :readonly="disabled"
+        @update:modelValue="savePrecSubDiscipline"
+        hint="Для РПД"
       />
-      <q-btn label="Сохранить" color="primary" class="q-mt-sm" @click="savePrecSubDiscipline" v-show="!disabled"/>
+      <!--      <q-btn label="Сохранить" color="primary" class="q-mt-sm" @click="savePrecSubDiscipline" v-show="!disabled"/>-->
     </div>
   </div>
 </template>

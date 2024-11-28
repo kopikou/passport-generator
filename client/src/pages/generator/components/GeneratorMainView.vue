@@ -26,17 +26,23 @@ async function saveDiscplineGoal() {
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "disciplineGoal",
     value: displGoal.value,
-  }).finally(() => {
+  }).then((v) => {
     $q.notify({
-      message: "Данные <span class='text-bold'>цели освоения дисциплины</span> сохранены!",
+      message: "Данные <span class='text-bold'>о цели освоения дисциплины</span> сохранены!",
       color: "secondary",
       position: "bottom",
       html: true,
     })
+    let key = _.findKey(additionalInfo.value, (x) => x.id == v.data.id)
+    _.set(additionalInfo.value, `[${key}].value`, displGoal.value)
+  }, (rej) => {
+    $q.notify({
+      message: "Данные <span class='text-bold'>о цели освоения дисциплины</span> не сохранены!",
+      color: "negative",
+      position: "bottom",
+      html: true,
+    })
   })
-  let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
-  _.set(additionalInfo.value, `[${key}].value`, displGoal.value)
-
   $q.loading.hide()
 }
 
@@ -46,10 +52,6 @@ const cafDataById = computed(() => {
 
 watch(additionalInfo, () => {
   displGoal.value = disciplineGoal.value
-})
-
-watch(displGoal, () => {
-  saveDiscplineGoal()
 })
 
 </script>
@@ -103,15 +105,16 @@ watch(displGoal, () => {
       <q-separator class="q-mt-md q-mb-md"/>
       <div>
         <q-input
-            label="Цель освоения дисциплины"
-            type="textarea"
-            filled
-            stack-label
-            v-model="displGoal"
-            class="q-mb-md"
-            :readonly="disabled"
-            hint="Для аннотации"
-            debounce="1000"
+          label="Цель освоения дисциплины"
+          type="textarea"
+          filled
+          stack-label
+          v-model="displGoal"
+          class="q-mb-md"
+          :readonly="disabled"
+          hint="Для аннотации"
+          debounce="1000"
+          @update:modelValue="saveDiscplineGoal"
         />
       </div>
     </div>
