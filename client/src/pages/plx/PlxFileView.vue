@@ -55,7 +55,7 @@ function acceptPlan() {
       message: `Успешно, отправляем данные в АИС! :)`,
     })
 
-    await router.push('/plx/list/')
+    await router.push('/plx/')
   })
 }
 

@@ -1,8 +1,7 @@
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
-from rpd.utils import TimestampsModel
+from app.utils import TimestampsModel
 
 
 # Create your models here.

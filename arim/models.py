@@ -1,7 +1,7 @@
 from django.db import models, connections
 from django.db.models import TextChoices
 
-from rpd.utils import TimestampsModel
+from app.utils import TimestampsModel
 
 class Mira:
     @classmethod

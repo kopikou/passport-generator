@@ -1,13 +1,35 @@
-from django import forms
+from django.db import models
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField
-from django.contrib.postgres.forms import SimpleArrayField
 from django.core.cache import cache
-from django.core.exceptions import ValidationError
 from django.forms import CheckboxSelectMultiple, MultipleChoiceField
 from rest_framework.permissions import BasePermission
 
-from auths.models import Permissions
+
+class BaseQuerySet(models.QuerySet):
+    def delete(self):
+        self.update(is_deleted=True)
+
+class BaseModelManager(models.Manager):
+
+    def get_queryset(self):
+        return BaseQuerySet(model=self.model, using=self._db, hints=self._hints).filter(is_deleted=False)
+
+
+class TimestampsModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, editable=False, null=True)
+    updated_at = models.DateTimeField(auto_now=True, editable=False, null=True)
+    is_deleted = models.BooleanField(default=False)
+
+    objects = BaseModelManager()
+    default_objects = models.Manager()
+
+
+    class Meta:
+        abstract = True
+
+    def restore(self):
+        self.is_deleted = False
+        self.save()
 
 
 def cache_function(timeout=60 * 15):
@@ -45,4 +67,3 @@ class UserProfileHasPermission(BasePermission):
 
     def has_permission(self, request, view):
         return self.permission in request.user.userprofile.permissions
-

@@ -5,7 +5,7 @@ from django.db.models import TextChoices
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from rpd.utils import TimestampsModel
+from app.utils import TimestampsModel
 
 
 class Permissions(TextChoices):

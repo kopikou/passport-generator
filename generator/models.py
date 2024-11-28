@@ -1,9 +1,8 @@
 from django.db import models
 
 from rpd.models import LinesData, LinesIndicators
-from rpd.utils import TimestampsModel
+from app.utils import TimestampsModel
 
-from django.contrib.postgres.fields import ArrayField
 
 # Create your models here.
 class PlanLinesLink(TimestampsModel):

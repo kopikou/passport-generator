@@ -3,7 +3,7 @@ from django.db import models
 
 from generator.models import PlanLinesLink
 from rpd.models import DocumentsTypes, PlanData
-from rpd.utils import TimestampsModel
+from app.utils import TimestampsModel
 
 def get_upload_dir(instance, filename):
     plan_data = PlanData.objects.get(id=instance.rpd_id)
