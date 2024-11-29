@@ -108,7 +108,6 @@ onBeforeMount(() => {
         :options="otherDiscipline"
         :readonly="disabled"
         @update:modelValue="savePrecSubDiscipline"
-        hint="Для РПД"
       />
       <!--      <q-btn label="Сохранить" color="primary" class="q-mt-sm" @click="savePrecSubDiscipline" v-show="!disabled"/>-->
     </div>

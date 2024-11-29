@@ -146,7 +146,6 @@ onBeforeMount(() => {
               v-model="satisfactorily"
               class="col q-mr-sm"
               :readonly="disabled"
-              hint="Для РПД"
               debounce="1000"
               @update:modelValue="saveData"
             />

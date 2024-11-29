@@ -192,7 +192,6 @@ onBeforeMount(() => {
           v-model="methods"
           clearable
           :readonly="disabled"
-          hint="Для РПД"
           @update:modelValue="saveMethods"
           debounce="1000"
         />

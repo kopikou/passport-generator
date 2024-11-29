@@ -130,7 +130,6 @@ onBeforeMount(() => {
         @update:modelValue="saveData"
       />
     </div>
-    <div class="q-field__bottom">Для РПД</div>
 <!--    <div class="flex justify-start q-mt-md">-->
 <!--      <q-btn label="Сохранить" color="primary" @click="saveData" v-show="!disabled"/>-->
 <!--    </div>-->

@@ -126,7 +126,6 @@ onBeforeMount(() => {
         v-model="resources_bd"
         :readonly="disabled"
         debounce="1000"
-        hint="Для РПД"
         @update:modelValue="saveData"
       />
 <!--      <q-btn-->

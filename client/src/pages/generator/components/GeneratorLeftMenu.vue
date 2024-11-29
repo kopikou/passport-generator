@@ -34,8 +34,8 @@ const menuItems = [
   {title: 'Методические указания', url: 'guidelines'},
   {title: 'Фонд оценочных средств', url: 'fos'},
   {title: 'Типовые оценочные средства', url: 'tat'},
-  {title: 'Другие ресурсы', url: 'resources'},
   {title: 'Литература', url: 'library'},
+  {title: 'Другие ресурсы', url: 'resources'},
   {title: 'Использованное программное обеспечение', url: 'soft'},
   {title: 'Используемое материально-техническое обеспечение', url: 'logistics'},
 ]
@@ -59,6 +59,22 @@ function translateDate(date) {
 </script>
 
 <template>
+    <div class="bg-pink-4">
+    <div class="text-h6">Комментарий от РОПа</div>
+    <div>
+      <div class="q-ma-xs text-subtitle1">
+        <div v-if="comment.length != 0">
+          <div class="text-subtitle1 text-bold">{{ translateDate(comment.created_at) }}</div>
+          <div>
+            {{ comment.comment }}
+          </div>
+        </div>
+        <div v-else>
+          <div class="text-subtitle text-bold">Комментариев нет</div>
+        </div>
+      </div>
+    </div>
+  </div>
   <q-list
     bordered
     separator
@@ -79,22 +95,6 @@ function translateDate(date) {
     </q-item>
 
   </q-list>
-  <div>
-    <div class="text-h6">Последний комментарий</div>
-    <div>
-      <div class="bg-grey-2 q-ma-xs text-subtitle1">
-        <div v-if="comment.length != 0">
-          <div class="text-subtitle1 text-bold">{{ translateDate(comment.created_at) }}</div>
-          <div>
-            {{ comment.comment }}
-          </div>
-        </div>
-        <div v-else>
-          <div class="text-subtitle text-bold">Комментариев нет</div>
-        </div>
-      </div>
-    </div>
-  </div>
   <div v-if="!disabled" class="q-mb-md">
     <q-btn
       class="q-mt-xs"

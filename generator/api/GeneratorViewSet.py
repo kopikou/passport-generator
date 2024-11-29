@@ -257,7 +257,7 @@ class GeneratorViewSet(
         instance.status = PlanLinesLink.StatusChoices.on_review
         instance.save()
 
-        return Response([i for i in instance.values()])
+        return Response({"success": True})
 
     @action(methods=['POST'], url_path="accept-rpd", detail=True)
     def accept_rpd(self, request, *args, **kwargs):
@@ -283,6 +283,6 @@ class GeneratorViewSet(
     def get_old_comments(self, request, *args, **kwargs):
         instance = self.get_object()
 
-        data = PlanLinesLinkComments.objects.filter(planlineslink_id=instance.id).values()
+        data = PlanLinesLinkComments.objects.filter(planlineslink_id=instance.id).order_by('-created_at').values()
 
         return Response([i for i in data])

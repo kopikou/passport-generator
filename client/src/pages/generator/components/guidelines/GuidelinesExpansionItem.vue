@@ -75,7 +75,6 @@ onBeforeMount(() => {
             filled
             v-model="guidelines_text"
             :readonly="disabled"
-            hint="Для РПД"
             debounce="1000"
             @update:modelValue="saveData"
         />

@@ -96,7 +96,6 @@ onBeforeMount(() => {
             :readonly="disabled"
             debounce="1000"
             @update:modelValue="saveData"
-            hint="Для РПД"
           />
           <!--          <q-btn-->
           <!--            label="Сохранить"-->

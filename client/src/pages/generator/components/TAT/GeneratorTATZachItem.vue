@@ -113,7 +113,6 @@ onBeforeMount(() => {
               stack-label
               v-model="passed"
               class="col q-mr-sm"
-              hint="Для РПД"
               :readonly="disabled"
               debounce="1000"
               @update:modelValue="saveData"
