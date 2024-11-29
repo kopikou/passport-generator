@@ -83,14 +83,19 @@ function translateDate(date) {
     <div class="text-h6">Последний комментарий</div>
     <div>
       <div class="bg-grey-2 q-ma-xs text-subtitle1">
-        <div class="text-subtitle1 text-bold">{{ translateDate(comment.created_at) }}</div>
-        <div>
-          {{ comment.comment }}
+        <div v-if="comment.length != 0">
+          <div class="text-subtitle1 text-bold">{{ translateDate(comment.created_at) }}</div>
+          <div>
+            {{ comment.comment }}
+          </div>
+        </div>
+        <div v-else>
+          <div class="text-subtitle text-bold">Комментариев нет</div>
         </div>
       </div>
     </div>
   </div>
-  <div v-if="!disabled">
+  <div v-if="!disabled" class="q-mb-md">
     <q-btn
       class="q-mt-xs"
       color="secondary"
@@ -100,7 +105,7 @@ function translateDate(date) {
       label="Отправить на согласование"
     />
   </div>
-  <div v-else class="text-center">
+  <div v-else class="text-center q-mb-md">
     <q-btn
       class="q-mt-xs"
       color="secondary"

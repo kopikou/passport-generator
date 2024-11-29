@@ -277,7 +277,7 @@ class GeneratorViewSet(
 
         PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], planlineslink_id=instance.id)
 
-        return Response([i for i in instance.values()])
+        return Response({"success": True})
 
     @action(methods=['GET'], url_path="get-old-comments", detail=True)
     def get_old_comments(self, request, *args, **kwargs):
