@@ -47,7 +47,10 @@ async function getAnnot() {
 }
 
 async function onAcceptClick() {
-  let r = await api.post(`/api/generator/${props.id}/accept-rpd/`, {date: protocolDate.value, number: protocolNumber.value})
+  let r = await api.post(`/api/generator/${props.id}/accept-rpd/`, {
+    date: protocolDate.value,
+    number: protocolNumber.value
+  })
   onDialogOK()
 }
 
@@ -71,11 +74,16 @@ function translateDate(date) {
 
 function getStatusColor(status) {
   switch (status) {
-    case 0: return ''
-    case 1: return 'bg-accent text-white'
-    case 2: return 'bg-secondary text-white'
-    case 3: return 'bg-positive text-white'
-    case 4: return 'bg-warning text-white'
+    case 0:
+      return ''
+    case 1:
+      return 'bg-accent text-white'
+    case 2:
+      return 'bg-secondary text-white'
+    case 3:
+      return 'bg-positive text-white'
+    case 4:
+      return 'bg-warning text-white'
   }
 }
 
@@ -86,9 +94,26 @@ function getStatusColor(status) {
     <q-card class="q-dialog-plugin" style="width: 700px;">
       <q-card-section>
         <div class="text-h6">Просмотр РПД
-        <q-chip square>{{ props.data.abbr }}-{{ props.data.yr }} {{props.data.discpl}}</q-chip></div>
-        <div class="text-subtitle2">Составитель: <q-chip square>{{ props.data.person }}</q-chip></div>
-        <div class="text-subtitle2">Текущий статус: <q-chip :class="getStatusColor(props.data.status)" square>{{ props.data.status_verbose }}</q-chip></div>
+          <q-chip style="max-width: 500px" :label="`${props.data.abbr}-${props.data.yr} ${props.data.discpl}`" square>
+            <q-tooltip>
+              {{ props.data.abbr }}-{{ props.data.yr }} {{ props.data.discpl }}
+            </q-tooltip>
+          </q-chip>
+        </div>
+        <div class="text-subtitle2">Составитель:
+          <q-chip style="max-width: 500px" square :label="props.data.person">
+            <q-tooltip>
+              {{ props.data.person }}
+            </q-tooltip>
+          </q-chip>
+        </div>
+        <div class="text-subtitle2">Текущий статус:
+          <q-chip style="max-width: 500px" :class="getStatusColor(props.data.status)" square :label="props.data.status_verbose">
+            <q-tooltip>
+              {{ props.data.status_verbose }}
+            </q-tooltip>
+          </q-chip>
+        </div>
       </q-card-section>
 
       <q-card-section>
@@ -149,7 +174,7 @@ function getStatusColor(status) {
         <div class="text-subtitle1">
           Комментариев нет
         </div>
-        <no-comments-icon />
+        <no-comments-icon/>
       </q-card-section>
 
       <q-card-actions align="right" class="bg-white text-teal">
@@ -159,7 +184,7 @@ function getStatusColor(status) {
   </q-dialog>
 
   <q-dialog v-model="acceptRPD">
-    <q-card  style="width: 500px">
+    <q-card style="width: 500px">
       <q-card-section>
         <div class="text-h6">
           Утверждение РПД

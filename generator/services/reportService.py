@@ -248,11 +248,18 @@ class ReportService(object):
                     item['lab'] or 0,
                     item['pr'] or 0,
                 ]),
+                "contact_hours": sum([
+                    item['lekc'] or 0,
+                    item['lab'] or 0,
+                    item['pr'] or 0,
+                    item['eios'] or 0,
+                ]),
                 "lekc_hours": item['lekc'] or 0,
                 "lab_hours": item['lab'] or 0,
                 "pr_hours": item['pr'] or 0,
                 "srs_hours": item['srs'] or 0,
                 "ekz_hours": item['ekzhour'] or 0,
+                "eios_hours": item['eios'] or 0,
                 "tic": tic_all[item['num']],
             })
 
@@ -262,12 +269,19 @@ class ReportService(object):
             "pr_hours_all": sum([i['pr'] for i in data['planlines']['semesters'] if i['pr'] is not None]),
             "srs_hours_all": sum([i['srs'] for i in data['planlines']['semesters'] if i['srs'] is not None]),
             "ekz_hours_all": sum([i['ekzhour'] for i in data['planlines']['semesters'] if i['ekzhour'] is not None]),
+            "eios_hours_all": sum([i['eios'] for i in data['planlines']['semesters'] if i['eios'] is not None]),
         }
         semester_hours_all.update({
             "aud_hours_all": sum([
                 semester_hours_all['lekc_hours_all'] or 0,
                 semester_hours_all['lab_hours_all'] or 0,
                 semester_hours_all['pr_hours_all'] or 0,
+            ]),
+        })
+        semester_hours_all.update({
+            "contact_hours_all": sum([
+                semester_hours_all['aud_hours_all'] or 0,
+                semester_hours_all['eios_hours_all'] or 0,
             ]),
         })
         semester_hours_all.update({

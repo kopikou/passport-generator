@@ -220,9 +220,10 @@ class GeneratorViewSet(
     @action(methods=['GET'], url_path="get-rpd-report", detail=True)
     def get_rpd_report(self, request, *args, **kwargs):
 
+        instance = self.get_object()
         result = self.retrieve(request, *args, **kwargs).data
 
-        filename = f"РПД_{result['admission']['abbr']}-{result['admission']['yr']}.docx"
+        filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx"
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
@@ -236,9 +237,10 @@ class GeneratorViewSet(
     @action(methods=['GET'], url_path="get-rpd-annotation", detail=True)
     def get_rpd_annotation(self, request, *args, **kwargs):
 
+        instance = self.get_object()
         result = self.retrieve(request, *args, **kwargs).data
 
-        filename = f"Аннотация_{result['admission']['abbr']}-{result['admission']['yr']}.docx"
+        filename = f"Аннотация_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx"
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
