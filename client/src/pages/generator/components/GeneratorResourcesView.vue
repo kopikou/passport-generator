@@ -106,7 +106,7 @@ onBeforeMount(() => {
     <p>бла бла бла</p>
     <q-separator class="q-mt-md q-mb-md"/>
     <div class="q-pt-xs q-gutter-md">
-
+      <div class="text-h6">Используемые ресурсы сети интернет</div>
       <q-input
         label="Ресурсы сети интернет"
         type="textarea"
@@ -118,6 +118,7 @@ onBeforeMount(() => {
         @update:modelValue="saveData"
       />
 
+      <div class="text-h6">Используемые профессиональные базы данных</div>
       <q-input
         label="Профессиональные базы данных"
         type="textarea"
