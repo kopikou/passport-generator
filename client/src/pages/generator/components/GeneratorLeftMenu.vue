@@ -27,10 +27,10 @@ const menuItems = [
   {title: 'Место дисциплины в структуре ООП', url: 'discipline-place'},
   {title: 'Структура дисциплины', url: 'structure'},
   {title: 'Содержание тем дисциплины', url: 'discipline-theme'},
-  {title: '->Содержание лекционных работ', url: 'discipline-lectures'},
-  {title: '->Содержание лабораторных работ', url: 'discipline-lab'},
-  {title: '->Содержание практических работ', url: 'discipline-practice'},
-  {title: '->Содержание самостоятельных работ', url: 'discipline-independent'},
+  {title: 'Содержание лекционных работ', url: 'discipline-lectures', 'right': true},
+  {title: 'Содержание лабораторных работ', url: 'discipline-lab', 'right': true},
+  {title: 'Содержание практических работ', url: 'discipline-practice', 'right': true},
+  {title: 'Содержание самостоятельных работ', url: 'discipline-independent', 'right': true},
   {title: 'Перечень учебно-методическоего обеспечение', url: 'guidelines'},
   {title: 'Фонд оценочных средств для контроля текущей успеваемости', url: 'fos'},
   {title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat'},
@@ -59,18 +59,15 @@ function translateDate(date) {
 </script>
 
 <template>
-    <div class="bg-pink-4">
-    <div class="text-h6">Комментарий от РОПа</div>
+    <div class="bg-pink-3 rounded-borders" v-if="comment.length != 0">
+    <div class="text-subtitle1">{{comment.user__last_name}} {{ comment.user__first_name }} оставил комментарий</div>
     <div>
-      <div class="q-ma-xs text-subtitle1">
-        <div v-if="comment.length != 0">
+      <div class="q-ma-xs text-subtitle2">
+        <div>
           <div class="text-subtitle1 text-bold">{{ translateDate(comment.created_at) }}</div>
           <div>
             {{ comment.comment }}
           </div>
-        </div>
-        <div v-else>
-          <div class="text-subtitle text-bold">Комментариев нет</div>
         </div>
       </div>
     </div>
@@ -89,7 +86,7 @@ function translateDate(date) {
       style="padding: 12px;"
     >
       <q-item-section>
-        <q-item-label>{{ item.title }}</q-item-label>
+        <q-item-label :class="item.right ? 'q-ml-lg' : ''">{{ item.title }}</q-item-label>
         <!--        <q-item-label caption>Основная информация о программе</q-item-label>-->
       </q-item-section>
     </q-item>

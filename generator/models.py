@@ -1,5 +1,7 @@
+from django.contrib.auth.models import User
 from django.db import models
 
+from auths.models import UserProfile
 from rpd.models import LinesData, LinesIndicators
 from app.utils import TimestampsModel
 
@@ -20,6 +22,7 @@ class PlanLinesLink(TimestampsModel):
     status = models.IntegerField(choices=StatusChoices.choices, default=StatusChoices.appointed)
     protocol_number = models.TextField(null=True, blank=True)
     protocol_date = models.DateField(null=True, blank=True)
+    user_accepted = models.IntegerField(null=True, blank=True)
 
     @property
     def status_verbose(self):
@@ -30,6 +33,10 @@ class PlanLinesLinkComments(TimestampsModel):
 
     planlineslink = models.ForeignKey(PlanLinesLink, on_delete=models.CASCADE)
     comment = models.TextField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+
+    def get_user_full_name(self):
+        return f"{self.user.last_name} {self.user.first_name}"
 
 
 class FormControl(TimestampsModel):

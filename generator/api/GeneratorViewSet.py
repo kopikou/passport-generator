@@ -52,7 +52,14 @@ class GeneratorViewSet(
 
         resources = DefaultsResources.objects.all().values("id", "name", "type", "url")
 
-        comment = PlanLinesLinkComments.objects.filter(planlineslink_id=instance.id).values().last()
+        comment = PlanLinesLinkComments.objects.filter(planlineslink_id=instance.id).values(
+            "id",
+            "created_at",
+            "comment",
+            "user_id",
+            "user__first_name",
+            "user__last_name",
+        ).last()
 
         result = {
             "admission": admission_info[0],
@@ -261,10 +268,12 @@ class GeneratorViewSet(
 
     @action(methods=['POST'], url_path="accept-rpd", detail=True)
     def accept_rpd(self, request, *args, **kwargs):
+
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.accepted
         instance.protocol_number = self.request.data['number']
         instance.protocol_date = self.request.data['date']
+        instance.user_accepted = self.request.user.id
         instance.save()
 
         return Response({"success": True})
@@ -275,7 +284,7 @@ class GeneratorViewSet(
         instance.status = PlanLinesLink.StatusChoices.on_refile
         instance.save()
 
-        PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], planlineslink_id=instance.id)
+        PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], user_id=self.request.user.id, planlineslink_id=instance.id)
 
         return Response({"success": True})
 
