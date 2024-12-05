@@ -22,11 +22,18 @@ const {dialogRef, onDialogHide, onDialogOK, onDialogCancel} = useDialogPluginCom
 
 const correct = computed(() => {
   if (clicense__name.value == '') return true
+  if (clicense__type.value == '') return true
 
   return false
 })
 
 const clicense__name = ref<string>('')
+const clicense__type = ref<string>('')
+
+const clicense__type_options = ref([
+  'Свободное',
+  'Лицензионное',
+])
 
 async function onOKClick() {
   $q.loading.show({message: "Сохранение"})
@@ -34,6 +41,7 @@ async function onOKClick() {
   disciplineSoftware.value[0]?.value.push({
     id: Math.floor(Math.random() * 100000),
     clicense__name: clicense__name.value,
+    clicense__type: clicense__type.value,
   })
 
   $q.loading.hide()
@@ -50,6 +58,14 @@ async function onOKClick() {
           <q-input
               label="Наименование ПО"
               v-model="clicense__name"
+              stack-label
+              filled
+              type="text"
+          />
+          <q-select
+              label="Тип распространения ПО"
+              v-model="clicense__type"
+              :options="clicense__type_options"
               stack-label
               filled
               type="text"

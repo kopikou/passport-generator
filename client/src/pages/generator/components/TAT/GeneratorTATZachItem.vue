@@ -27,6 +27,7 @@ const props = defineProps({
 
 const main = ref('')
 const about = ref('')
+const example = ref('')
 
 const passed = ref('')
 const unpassed = ref('')
@@ -36,6 +37,7 @@ async function saveData() {
   _.set(tatInfo.value, `[0].${props.type}`, {
     "main": main.value,
     "about": about.value,
+    "example": example.value,
     "passed": passed.value,
     "unpassed": unpassed.value,
     "title": props.title,
@@ -100,6 +102,16 @@ onBeforeMount(() => {
             filled
             stack-label
             v-model="about"
+            :readonly="disabled"
+            debounce="1000"
+            @update:modelValue="saveData"
+          />
+          <q-input
+            label="Пример билета"
+            type="textarea"
+            filled
+            stack-label
+            v-model="example"
             :readonly="disabled"
             debounce="1000"
             @update:modelValue="saveData"

@@ -22,7 +22,7 @@ class PlanLinesLink(TimestampsModel):
     status = models.IntegerField(choices=StatusChoices.choices, default=StatusChoices.appointed)
     protocol_number = models.TextField(null=True, blank=True)
     protocol_date = models.DateField(null=True, blank=True)
-    user_accepted = models.IntegerField(null=True, blank=True)
+    user_accepted = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     @property
     def status_verbose(self):
