@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import {computed, onBeforeMount, ref, watch} from "vue";
+import {computed, nextTick, onBeforeMount, ref, watch} from "vue";
 import {useQuasar} from "quasar";
 import GeneratorDialogAddTheme from "pages/generator/components/dialogs/GeneratorAddThemeDialog.vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import _, {sumBy} from "lodash";
 import {api} from "boot/axios";
+import {moveArrayElement, useSortable} from "@vueuse/integrations/useSortable";
+
 
 const $q = useQuasar()
 const generatorViewStore = useGeneratorViewStore();
@@ -80,6 +82,11 @@ onBeforeMount(() => {
   tab.value = `${semestersData.value[0]?.num}`
 })
 
+const maxNumberInSemester = computed(() => {
+  let data = _.filter(disciplineThemes.value, (x) => x.semester == tab.value)
+  return _.max(_.map(data, (x) => x.num))
+})
+
 </script>
 
 <template>
@@ -90,18 +97,19 @@ onBeforeMount(() => {
       <q-separator class="q-mt-md q-mb-md"/>
       <q-btn label="Добавить тему дисциплины" color="teal" class="q-mb-md" @click="addTheme" :disabled="disabled"/>
       <q-tabs
-        v-model="tab"
-        align="left"
-        narrow-indicator
-        class="q-mb-md"
+          v-model="tab"
+          align="left"
+          narrow-indicator
+          class="q-mb-md"
       >
-        <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`" :label="`Семестр ${item.num}`"/>
+        <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`"
+               :label="`Семестр ${item.num}`"/>
       </q-tabs>
       <q-tab-panels
-        v-model="tab"
-        animated
-        transition-prev="scale"
-        transition-next="scale"
+          v-model="tab"
+          animated
+          transition-prev="scale"
+          transition-next="scale"
       >
         <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="theme-container">
           <div v-if="item" class="theme-container__header text-center text-subtitle1 items-center">
@@ -117,7 +125,7 @@ onBeforeMount(() => {
             <div>
               Краткое описание темы
             </div>
-            <div v-show="!disabled">
+            <div>
               Управление
             </div>
           </div>
@@ -136,16 +144,23 @@ onBeforeMount(() => {
               <div>
                 {{ item.comment }}
               </div>
-              <div v-show="!disabled">
+              <div>
                 <q-btn
-                  icon="mdi-delete" color="red" flat @click="deleteTheme(item.id)"
+                    icon="mdi-delete" color="red" flat @click="deleteTheme(item.id)" :disabled="disabled"
                 />
                 <q-btn
-                  icon="mdi-update" color="green" flat @click="updateTheme(item.id)"
+                    icon="mdi-update" color="green" flat @click="updateTheme(item.id)" :disabled="disabled"
+                />
+                <q-btn v-if="item.num != 1"
+                       icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
+                />
+                <q-btn v-if="item.num != maxNumberInSemester"
+                    icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
                 />
               </div>
             </div>
           </div>
+
         </q-tab-panel>
       </q-tab-panels>
     </div>
@@ -157,14 +172,14 @@ onBeforeMount(() => {
 .theme-container {
   > .theme-container__header {
     display: grid;
-    grid-template-columns: repeat(4, 1fr) auto;
+    grid-template-columns: repeat(4, 1fr) 1fr;
     font-weight: bold;
   }
 
   > .theme-container__body {
     > .theme-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(4, 1fr) auto;
+      grid-template-columns: repeat(4, 1fr) 1fr;
     }
   }
 }
