@@ -215,6 +215,7 @@ class ReportService(object):
                             'title': tat_titles[k],
                             'main': i['main'],
                             'about': i['about'],
+                            'example': i['example'],
                             'passed': i['passed'],
                             'unpassed': i['unpassed'],
                         })
@@ -225,6 +226,7 @@ class ReportService(object):
                             'title': tat_titles[k],
                             'main': i['main'],
                             'about': i['about'],
+                            'example': i['example'],
                             'great': i['great'],
                             'good': i['good'],
                             'satisfactorily': i['satisfactorily'],

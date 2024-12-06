@@ -133,23 +133,23 @@ watch(additionalInfo, () => {
       </div>
       <q-separator class="q-mt-md q-mb-md"/>
       <div>
-                <q-input
-                  label="Цель освоения дисциплины"
-                  type="textarea"
-                  filled
-                  stack-label
-                  v-model="displGoal"
-                  class="q-mb-md"
-                  :readonly="disabled"
-                  hint="Для аннотации"
-                  debounce="1000"
-                  @update:modelValue="saveDiscplineGoal"
-                />
-<!--        <q-editor-->
-<!--          v-model="displGoal"-->
-<!--          :toolbar="toolbar"-->
-<!--          @update:modelValue="saveData"-->
-<!--        />-->
+        <q-input
+          label="Цель освоения дисциплины"
+          type="textarea"
+          filled
+          stack-label
+          v-model="displGoal"
+          class="q-mb-md"
+          :readonly="disabled"
+          hint="Для аннотации"
+          debounce="1000"
+          @update:modelValue="saveDiscplineGoal"
+        />
+        <!--        <q-editor-->
+        <!--          v-model="displGoal"-->
+        <!--          :toolbar="toolbar"-->
+        <!--          @update:modelValue="saveData"-->
+        <!--        />-->
 
       </div>
     </div>
