@@ -19,7 +19,36 @@ const {
   disabled,
 } = storeToRefs(generatorViewStore)
 
-const displGoal = ref(disciplineGoal.value)
+const displGoal = ref()
+const saveData = _.debounce(async () => {
+  console.log(displGoal)
+  saveDiscplineGoal()
+}, 1000)
+
+const toolbar = ref([
+  ['bold', 'italic', 'strike', 'underline', 'subscript', 'superscript'],
+  [
+    {
+      label: 'Стиль текста',
+      icon: 'mdi-format-color-text',
+      fixedLabel: true,
+      options: ['h4', 'h5', 'h6', 'p', 'code'],
+    },
+  ],
+  [
+    {
+      label: 'Размер текста',
+      icon: 'mdi-format-size',
+      fixedLabel: true,
+      list: 'no-icons',
+      options: ['size-1', 'size-2', 'size-3', 'size-4', 'size-5'],
+    },
+    'removeFormat'
+  ],
+  ['quote', 'unordered', 'ordered', 'outdent', 'indent'],
+  ['undo', 'redo'],
+  ['fullscreen'],
+])
 
 async function saveDiscplineGoal() {
   $q.loading.show()
@@ -52,7 +81,7 @@ const cafDataById = computed(() => {
 
 watch(additionalInfo, () => {
   displGoal.value = disciplineGoal.value
-})
+}, {immediate: true})
 
 </script>
 
@@ -104,18 +133,24 @@ watch(additionalInfo, () => {
       </div>
       <q-separator class="q-mt-md q-mb-md"/>
       <div>
-        <q-input
-          label="Цель освоения дисциплины"
-          type="textarea"
-          filled
-          stack-label
-          v-model="displGoal"
-          class="q-mb-md"
-          :readonly="disabled"
-          hint="Для аннотации"
-          debounce="1000"
-          @update:modelValue="saveDiscplineGoal"
-        />
+                <q-input
+                  label="Цель освоения дисциплины"
+                  type="textarea"
+                  filled
+                  stack-label
+                  v-model="displGoal"
+                  class="q-mb-md"
+                  :readonly="disabled"
+                  hint="Для аннотации"
+                  debounce="1000"
+                  @update:modelValue="saveDiscplineGoal"
+                />
+<!--        <q-editor-->
+<!--          v-model="displGoal"-->
+<!--          :toolbar="toolbar"-->
+<!--          @update:modelValue="saveData"-->
+<!--        />-->
+
       </div>
     </div>
   </div>
