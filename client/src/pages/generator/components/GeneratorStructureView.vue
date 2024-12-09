@@ -185,7 +185,7 @@ onBeforeMount(() => {
         </q-tab-panel>
       </q-tab-panels>
       <div class="q-gutter-md">
-        <div class="text-subtitle1">
+        <div class="text-h6">
           Интерактивные методы обучения можно посмотреть по <a target="_blank" href="https://edu.itmo.ru/ru/edutech_iteractiv/">ссылке</a> или этой <a target="_blank" href="https://sberuniversity.ru/edutech-club/lab/glossary/937/">ссылке</a>
         </div>
         <q-input

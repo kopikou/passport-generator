@@ -106,7 +106,7 @@ const disciplineThemesByValue = computed(() => {
   <div>
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Перечень практических работ по дисциплине</span>
-      <p>бла бла бла</p>
+      <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div v-if="allPercent != 0">
         <q-btn label="Добавить новую практическую работу" color="teal" class="q-mb-md" @click="addPractice" :disabled="disabled"/>

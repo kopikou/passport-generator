@@ -93,7 +93,7 @@ const maxNumberInSemester = computed(() => {
   <div>
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Содержание разделов и тем по дисциплине</span>
-      <p>бла бла бла</p>
+      <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-btn label="Добавить тему дисциплины" color="teal" class="q-mb-md" @click="addTheme" :disabled="disabled"/>
       <q-tabs

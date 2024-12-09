@@ -28,7 +28,7 @@ function getType(value) {
 <template>
   <div style="width: 95%">
     <span class="text-h6 q-pl-lg">Фонд оценочных средств дисциплины</span>
-    <p>бла бла бла</p>
+    <p></p>
     <q-separator class="q-mt-md q-mb-md"/>
     <div v-if="choicesName.length > 0">
       <q-list

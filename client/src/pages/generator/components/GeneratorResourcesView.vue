@@ -103,7 +103,7 @@ onBeforeMount(() => {
 <template>
   <div style="width: 95%">
     <span class="text-h6 q-pl-lg">Другие ресурсы используемые по дисциплине</span>
-    <p>бла бла бла</p>
+    <p></p>
     <q-separator class="q-mt-md q-mb-md"/>
     <div class="q-pt-xs q-gutter-md">
       <div class="text-h6">Используемые ресурсы сети интернет</div>
