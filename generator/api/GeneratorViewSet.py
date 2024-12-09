@@ -187,7 +187,7 @@ class GeneratorViewSet(
 
     @action(methods=['GET'], url_path="delete-discipline-themes", detail=False)
     def delete_discipline_themes(self, request, *args, **kwargs):
-        pk = self.request.query_params.get('id')
+        pk = self.request.query_params['id']
 
         DisciplineThemes.objects.filter(id=pk).delete()
 
@@ -205,7 +205,7 @@ class GeneratorViewSet(
         return Response(serializer_data.data)
 
     @action(methods=['GET'], url_path="delete-discipline-work-hour", detail=False)
-    def delete_discipline_themes(self, request, *args, **kwargs):
+    def delete_discipline_work_hour(self, request, *args, **kwargs):
         pk = self.request.query_params.get('id')
 
         DisciplineWorkHours.objects.filter(id=pk).delete()

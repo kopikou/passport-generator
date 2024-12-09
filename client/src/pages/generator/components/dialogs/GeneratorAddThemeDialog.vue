@@ -33,19 +33,28 @@ const props = defineProps({
 const themeName = ref('')
 const control = ref()
 const comment = ref('')
-const num = ref()
+// const num = ref()
 
 const correct = computed(() => {
   if (!themeName.value || themeName.value.length < 3) return true
   else if (!control.value) return true
   else if (!comment.value || comment.value.length < 10) return true
-  else if (!num.value || num.value <= 0) return true
+  // else if (!num.value || num.value <= 0) return true
 
   return false
 })
 
 async function onOKClick() {
   $q.loading.show({message: "Сохранение"})
+
+
+  let maxNum = _.max(_(disciplineThemes.value)
+      .filter((x) => x.semester == props.sem)
+      .map((q) => q.num).value())
+
+  if (!maxNum) maxNum = 1
+  else maxNum += 1
+
   let r = await api.post('/api/generator/save-discipline-themes/', {
     planlineslink_id: rpdData.value.id,
     name: themeName.value,
@@ -53,7 +62,7 @@ async function onOKClick() {
     formcontrol_id: control.value,
     comment: comment.value,
     id: props.id,
-    num: num.value,
+    num: maxNum,
   })
 
   if (!props.id) {
@@ -72,8 +81,9 @@ onBeforeMount(() => {
     themeName.value = data[props.id].name
     control.value = data[props.id].formcontrol_id
     comment.value = data[props.id].comment
-    num.value = data[props.id].num
+    // num.value = data[props.id].num
   }
+
 })
 
 </script>
@@ -91,14 +101,14 @@ onBeforeMount(() => {
           :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
           type="num"
         />
-        <q-input
-          stack-label
-          label="Номер"
-          v-model="num"
-          filled
-          :rules="[ val => val > 0 || 'Введите значение больше 0']"
-          type="number"
-        />
+<!--        <q-input-->
+<!--          stack-label-->
+<!--          label="Номер"-->
+<!--          v-model="num"-->
+<!--          filled-->
+<!--          :rules="[ val => val > 0 || 'Введите значение больше 0']"-->
+<!--          type="number"-->
+<!--        />-->
         <q-select
           stack-label
           label="Форма контроля"
