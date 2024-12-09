@@ -93,6 +93,46 @@ const disciplineThemesByValue = computed(() => {
   return _.keyBy(disciplineThemes.value, 'id')
 })
 
+const maxNumberInSemester = computed(() => {
+  let data = _.filter(lecturesDisciplineWorkHour.value, (x) => x.semester == tab.value)
+  return _.max(_.map(data, (x) => x.num))
+})
+
+const filteredData = computed(() => {
+  return _.orderBy(lecturesDisciplineWorkHour.value, (x) => x.num, 'asc')
+})
+
+function getRowColor(number) {
+  return number % 2 == 0 ? 'bg-grey-4' : 'bg-white'
+}
+
+async function saveWorkHour(data) {
+  let r = await api.post('/api/generator/save-discipline-work-hour/', data)
+  return r.data
+}
+
+async function fieldUp(num, sem) {
+  let newKey = _.findKey(lecturesDisciplineWorkHour.value, (x) => x.num == num - 1 && x.semester == sem)
+  let oldKey = _.findKey(lecturesDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
+
+  _.set(lecturesDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
+  _.set(lecturesDisciplineWorkHour.value, `[${newKey}].num`, num)
+
+  await saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${oldKey}]`))
+  await saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
+}
+
+async function fieldDown(num, sem) {
+  let newKey = _.findKey(lecturesDisciplineWorkHour.value, (x) => x.num == num + 1 && x.semester == sem)
+  let oldKey = _.findKey(lecturesDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
+
+  _.set(lecturesDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
+  _.set(lecturesDisciplineWorkHour.value, `[${newKey}].num`, num)
+
+  await saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${oldKey}]`))
+  await saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
+}
+
 watch(semestersData, () => {
   tab.value = `${semestersData.value[0].num}`
 })
@@ -110,7 +150,8 @@ onBeforeMount(() => {
       <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div v-if="allPercent != 0">
-        <q-btn label="Добавить новую лекционную работу" color="teal" class="q-mb-md" @click="addLectures" :disable="disabled"/>
+        <q-btn label="Добавить новую лекционную работу" color="teal" class="q-mb-md" @click="addLectures"
+               :disable="disabled"/>
         <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
           <div class="absolute-full flex flex-center">
             <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
@@ -139,9 +180,9 @@ onBeforeMount(() => {
         >
           <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="lectures-container">
             <div v-if="item" class="lectures-container__header text-center text-subtitle1 items-center">
-              <div>
-                Номер
-              </div>
+              <!--                            <div>-->
+              <!--                              Номер-->
+              <!--                            </div>-->
               <div>
                 Наименование лекционного занятия
               </div>
@@ -155,12 +196,13 @@ onBeforeMount(() => {
                 Управление
               </div>
             </div>
-            <div v-for="lectures in lecturesDisciplineWorkHour" class="lectures-container__body">
+            <div v-for="lectures in filteredData" class="lectures-container__body">
               <div v-if="lectures.semester == tab"
-                   class="lectures-container__body__cell text-subtitle1 text-center items-center">
-                <div>
-                  {{ lectures.num }}
-                </div>
+                   class="lectures-container__body__cell text-subtitle1 text-center items-center"
+                   :class="getRowColor(lectures.num)">
+                <!--                <div>-->
+                <!--                  {{ lectures.num }}-->
+                <!--                </div>-->
                 <div>
                   {{ lectures.name }}
                 </div>
@@ -177,6 +219,14 @@ onBeforeMount(() => {
                   <q-btn
                     icon="mdi-update" color="green" flat @click="updateLectures(lectures.id)"
                   />
+                  <q-btn v-if="lectures.num != 1"
+                         icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
+                         @click="fieldUp(lectures.num, lectures.semester)"
+                  />
+                  <q-btn v-if="lectures.num != maxNumberInSemester"
+                         icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
+                         @click="fieldDown(lectures.num, lectures.semester)"
+                  />
                 </div>
               </div>
             </div>
@@ -191,19 +241,35 @@ onBeforeMount(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 
 .lectures-container {
+
+  $border: solid 1px silver;
+
   > .lectures-container__header {
     display: grid;
-    grid-template-columns: repeat(4, 1fr) auto;
+    grid-template-columns: repeat(3, 1fr) auto;
     font-weight: bold;
+    border: $border;
+    border-bottom: none;
+
+    &:last-child {
+      border-bottom: $border;
+    }
   }
 
   > .lectures-container__body {
     > .lectures-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(4, 1fr) auto;
+      grid-template-columns: repeat(3, 1fr) auto;
+      border: $border;
+      border-bottom: none;
+
+    }
+
+    &:last-child {
+      border-bottom: $border;
     }
   }
 }

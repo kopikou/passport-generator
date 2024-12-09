@@ -83,6 +83,8 @@ const filteredData = computed(() => {
   return _.orderBy(disciplineThemes.value, (x) => x.num, 'asc')
 })
 
+
+
 async function fieldUp(num, sem) {
   let newKey = _.findKey(disciplineThemes.value, (x) => x.num == num - 1 && x.semester == sem)
   let oldKey = _.findKey(disciplineThemes.value, (x) => x.num == num && x.semester == sem)
@@ -108,6 +110,10 @@ async function fieldDown(num, sem) {
 async function saveThemeData(data) {
   let r = await api.post('/api/generator/save-discipline-themes/', data)
   return r.data
+}
+
+function getRowColor(number) {
+  return number % 2 == 0 ? 'bg-grey-4' : 'bg-white'
 }
 
 watch(semestersData, () => {
@@ -144,9 +150,9 @@ onBeforeMount(() => {
       >
         <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="theme-container">
           <div v-if="item" class="theme-container__header text-center text-subtitle1 items-center">
-<!--            <div>-->
-<!--              Номер-->
-<!--            </div>-->
+            <!--            <div>-->
+            <!--              Номер-->
+            <!--            </div>-->
             <div>
               Наименование темы
             </div>
@@ -162,10 +168,11 @@ onBeforeMount(() => {
           </div>
           <div v-for="item in filteredData" class="theme-container__body">
             <div v-if="item.semester == tab"
-                 class="theme-container__body__cell text-subtitle1 text-center items-center">
-<!--              <div>-->
-<!--                {{ item.num }}-->
-<!--              </div>-->
+                 class="theme-container__body__cell text-subtitle1 text-center items-center"
+                 :class="getRowColor(item.num)">
+              <!--              <div>-->
+              <!--                {{ item.num }}-->
+              <!--              </div>-->
               <div>
                 {{ item.name }}
               </div>
@@ -183,10 +190,12 @@ onBeforeMount(() => {
                   icon="mdi-update" color="green" flat @click="updateTheme(item.id)" :disabled="disabled"
                 />
                 <q-btn v-if="item.num != 1"
-                       icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled" @click="fieldUp(item.num, item.semester)"
+                       icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
+                       @click="fieldUp(item.num, item.semester)"
                 />
                 <q-btn v-if="item.num != maxNumberInSemester"
-                       icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled" @click="fieldDown(item.num, item.semester)"
+                       icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
+                       @click="fieldDown(item.num, item.semester)"
                 />
               </div>
             </div>
@@ -198,19 +207,35 @@ onBeforeMount(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+
 
 .theme-container {
+
+  $border: solid 1px silver;
+
   > .theme-container__header {
     display: grid;
     grid-template-columns: repeat(3, 1fr) 1fr;
     font-weight: bold;
+    border: $border;
+    border-bottom: none;
+
+    &:last-child {
+      border-bottom: $border;
+    }
   }
 
   > .theme-container__body {
     > .theme-container__body__cell {
       display: grid;
       grid-template-columns: repeat(3, 1fr) 1fr;
+      border: $border;
+      border-bottom: none;
+    }
+
+    &:last-child {
+      border-bottom: $border;
     }
   }
 }
