@@ -83,8 +83,6 @@ const filteredData = computed(() => {
   return _.orderBy(disciplineThemes.value, (x) => x.num, 'asc')
 })
 
-
-
 async function fieldUp(num, sem) {
   let newKey = _.findKey(disciplineThemes.value, (x) => x.num == num - 1 && x.semester == sem)
   let oldKey = _.findKey(disciplineThemes.value, (x) => x.num == num && x.semester == sem)
@@ -149,7 +147,7 @@ onBeforeMount(() => {
         transition-next="scale"
       >
         <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="theme-container">
-          <div v-if="item" class="theme-container__header text-center text-subtitle1 items-center">
+          <div v-if="item" class="theme-container__header text-center text-subtitle1 items-center bg-grey-2">
             <!--            <div>-->
             <!--              Номер-->
             <!--            </div>-->

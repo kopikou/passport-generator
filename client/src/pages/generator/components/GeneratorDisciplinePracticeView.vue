@@ -100,6 +100,46 @@ const disciplineThemesByValue = computed(() => {
   return _.keyBy(disciplineThemes.value, 'id')
 })
 
+const maxNumberInSemester = computed(() => {
+  let data = _.filter(practiceDisciplineWorkHour.value, (x) => x.semester == tab.value)
+  return _.max(_.map(data, (x) => x.num))
+})
+
+const filteredData = computed(() => {
+  return _.orderBy(practiceDisciplineWorkHour.value, (x) => x.num, 'asc')
+})
+
+async function fieldUp(num, sem) {
+  let newKey = _.findKey(practiceDisciplineWorkHour.value, (x) => x.num == num - 1 && x.semester == sem)
+  let oldKey = _.findKey(practiceDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
+
+  _.set(practiceDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
+  _.set(practiceDisciplineWorkHour.value, `[${newKey}].num`, num)
+
+  await saveData(_.get(practiceDisciplineWorkHour.value, `[${oldKey}]`))
+  await saveData(_.get(practiceDisciplineWorkHour.value, `[${newKey}]`))
+}
+
+async function fieldDown(num, sem) {
+  let newKey = _.findKey(practiceDisciplineWorkHour.value, (x) => x.num == num + 1 && x.semester == sem)
+  let oldKey = _.findKey(practiceDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
+
+  _.set(practiceDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
+  _.set(practiceDisciplineWorkHour.value, `[${newKey}].num`, num)
+
+  await saveData(_.get(practiceDisciplineWorkHour.value, `[${oldKey}]`))
+  await saveData(_.get(practiceDisciplineWorkHour.value, `[${newKey}]`))
+}
+
+async function saveData(data) {
+  let r = await api.post('/api/generator/save-discipline-work-hour/', data)
+  return r.data
+}
+
+function getRowColor(number) {
+  return number % 2 == 0 ? 'bg-grey-4' : 'bg-white'
+}
+
 </script>
 
 <template>
@@ -109,7 +149,8 @@ const disciplineThemesByValue = computed(() => {
       <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div v-if="allPercent != 0">
-        <q-btn label="Добавить новую практическую работу" color="teal" class="q-mb-md" @click="addPractice" :disabled="disabled"/>
+        <q-btn label="Добавить новую практическую работу" color="teal" class="q-mb-md" @click="addPractice"
+               :disabled="disabled"/>
         <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
           <div class="absolute-full flex flex-center">
             <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
@@ -137,10 +178,10 @@ const disciplineThemesByValue = computed(() => {
           transition-next="scale"
         >
           <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="practice-container">
-            <div v-if="item" class="practice-container__header text-center text-subtitle1 items-center">
-            <div>
-              Номер
-            </div>
+            <div v-if="item" class="practice-container__header text-center text-subtitle1 items-center bg-grey-2">
+              <!--              <div>-->
+              <!--                Номер-->
+              <!--              </div>-->
               <div>
                 Наименование практической работы
               </div>
@@ -154,12 +195,13 @@ const disciplineThemesByValue = computed(() => {
                 Управление
               </div>
             </div>
-            <div v-for="practice in practiceDisciplineWorkHour" class="practice-container__body">
+            <div v-for="practice in filteredData" class="practice-container__body">
               <div v-if="practice.semester == tab"
-                   class="practice-container__body__cell text-subtitle1 text-center items-center">
-                <div>
-                  {{ practice.num }}
-                </div>
+                   class="practice-container__body__cell text-subtitle1 text-center items-center"
+                   :class="getRowColor(practice.num)">
+                <!--                <div>-->
+                <!--                  {{ practice.num }}-->
+                <!--                </div>-->
                 <div>
                   {{ practice.name }}
                 </div>
@@ -176,6 +218,14 @@ const disciplineThemesByValue = computed(() => {
                   <q-btn
                     icon="mdi-update" color="green" flat @click="updatePractice(practice.id)"
                   />
+                  <q-btn v-if="practice.num != 1"
+                         icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
+                         @click="fieldUp(practice.num, practice.semester)"
+                  />
+                  <q-btn v-if="practice.num != maxNumberInSemester"
+                         icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
+                         @click="fieldDown(practice.num, practice.semester)"
+                  />
                 </div>
               </div>
             </div>
@@ -184,24 +234,40 @@ const disciplineThemesByValue = computed(() => {
       </div>
       <div v-else>
         <p class="text-h6">Нет часов по практическим занятиям</p>
-        <empty-icon />
+        <empty-icon/>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .practice-container {
+
+  $border: 1px solid silrver;
+
   > .practice-container__header {
     display: grid;
-    grid-template-columns: repeat(4, 1fr) auto;
+    grid-template-columns: repeat(3, 1fr) 1fr;
     font-weight: bold;
+    border: $border;
+    border-bottom: none;
+
+    &:last-child {
+      border-bottom: $border;
+    }
   }
 
   > .practice-container__body {
     > .practice-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(4, 1fr) auto;
+      grid-template-columns: repeat(3, 1fr) 1fr;
+      border: $border;
+      border-bottom: none;
+
+    }
+
+    &:last-child {
+      border-bottom: $border;
     }
   }
 }

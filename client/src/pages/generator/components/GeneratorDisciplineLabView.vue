@@ -98,9 +98,49 @@ onBeforeMount(() => {
   tab.value = `${semestersData.value[0]?.num}`
 })
 
+const maxNumberInSemester = computed(() => {
+  let data = _.filter(labDisciplineWorkHour.value, (x) => x.semester == tab.value)
+  return _.max(_.map(data, (x) => x.num))
+})
+
 const disciplineThemesByValue = computed(() => {
   return _.keyBy(disciplineThemes.value, 'id')
 })
+
+const filteredData = computed(() => {
+  return _.orderBy(labDisciplineWorkHour.value, (x) => x.num, 'asc')
+})
+
+function getRowColor(number) {
+  return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
+}
+
+async function saveData(data) {
+  let r = await api.post('/api/generator/save-discipline-work-hour/', data)
+  return r.data
+}
+
+async function fieldUp(num, sem) {
+  let newKey = _.findKey(labDisciplineWorkHour.value, (x) => x.num == num - 1 && x.semester == sem)
+  let oldKey = _.findKey(labDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
+
+  _.set(labDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
+  _.set(labDisciplineWorkHour.value, `[${newKey}].num`, num)
+
+  await saveData(_.get(labDisciplineWorkHour.value, `[${oldKey}]`))
+  await saveData(_.get(labDisciplineWorkHour.value, `[${newKey}]`))
+}
+
+async function fieldDown(num, sem) {
+  let newKey = _.findKey(labDisciplineWorkHour.value, (x) => x.num == num + 1 && x.semester == sem)
+  let oldKey = _.findKey(labDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
+
+  _.set(labDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
+  _.set(labDisciplineWorkHour.value, `[${newKey}].num`, num)
+
+  await saveData(_.get(labDisciplineWorkHour.value, `[${oldKey}]`))
+  await saveData(_.get(labDisciplineWorkHour.value, `[${newKey}]`))
+}
 
 </script>
 
@@ -111,7 +151,8 @@ const disciplineThemesByValue = computed(() => {
       <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div v-if="allPercent != 0">
-        <q-btn label="Добавить новую лабораторную работу" color="teal" class="q-mb-md" @click="addLab" :disabled="disabled"/>
+        <q-btn label="Добавить новую лабораторную работу" color="teal" class="q-mb-md" @click="addLab"
+               :disabled="disabled"/>
         <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
           <div class="absolute-full flex flex-center">
             <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
@@ -139,10 +180,10 @@ const disciplineThemesByValue = computed(() => {
           transition-next="scale"
         >
           <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="lab-container">
-            <div v-if="item" class="lab-container__header text-center text-subtitle1 items-center">
-              <div>
-                Номер
-              </div>
+            <div v-if="item" class="lab-container__header text-center text-subtitle1 items-center bg-grey-2">
+              <!--              <div>-->
+              <!--                Номер-->
+              <!--              </div>-->
               <div>
                 Наименование лабораторной работы
               </div>
@@ -156,12 +197,13 @@ const disciplineThemesByValue = computed(() => {
                 Управление
               </div>
             </div>
-            <div v-for="lab in labDisciplineWorkHour" class="lab-container__body">
+            <div v-for="lab in filteredData" class="lab-container__body">
               <div v-if="lab.semester == tab"
-                   class="lab-container__body__cell text-subtitle1 text-center items-center">
-                <div>
-                  {{ lab.num }}
-                </div>
+                   class="lab-container__body__cell text-subtitle1 text-center items-center"
+                   :class="getRowColor(lab.num)">
+                <!--                <div>-->
+                <!--                  {{ lab.num }}-->
+                <!--                </div>-->
                 <div>
                   {{ lab.name }}
                 </div>
@@ -178,6 +220,14 @@ const disciplineThemesByValue = computed(() => {
                   <q-btn
                     icon="mdi-update" color="green" flat @click="updateLab(lab.id)"
                   />
+                  <q-btn v-if="lab.num != 1"
+                         icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
+                         @click="fieldUp(lab.num, lab.semester)"
+                  />
+                  <q-btn v-if="lab.num != maxNumberInSemester"
+                         icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
+                         @click="fieldDown(lab.num, lab.semester)"
+                  />
                 </div>
               </div>
             </div>
@@ -192,20 +242,35 @@ const disciplineThemesByValue = computed(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 
 .lab-container {
+
+  $border: 1px solid silver;
+
   > .lab-container__header {
     display: grid;
-    grid-template-columns: repeat(4, 1fr) auto;
+    grid-template-columns: repeat(3, 1fr) 1fr;
     font-weight: bold;
+    border: $border;
+    border-bottom: none;
+
+    &:last-child {
+      border-bottom: $border;
+    }
   }
 
   > .lab-container__body {
     > .lab-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(4, 1fr) auto;
+      grid-template-columns: repeat(3, 1fr) 1fr;
+      border: $border;
+      border-bottom: none;
+
     }
+      &:last-child {
+        border-bottom: $border;
+      }
   }
 }
 

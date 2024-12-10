@@ -101,6 +101,46 @@ const disciplineThemesByValue = computed(() => {
   return _.keyBy(disciplineThemes.value, 'id')
 })
 
+const maxNumberInSemester = computed(() => {
+  let data = _.filter(independentDisciplineWorkHour.value, (x) => x.semester == tab.value)
+  return _.max(_.map(data, (x) => x.num))
+})
+
+const filteredData = computed(() => {
+  return _.orderBy(independentDisciplineWorkHour.value, (x) => x.num, 'asc')
+})
+
+async function fieldUp(num, sem) {
+  let newKey = _.findKey(independentDisciplineWorkHour.value, (x) => x.num == num - 1 && x.semester == sem)
+  let oldKey = _.findKey(independentDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
+
+  _.set(independentDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
+  _.set(independentDisciplineWorkHour.value, `[${newKey}].num`, num)
+
+  await saveData(_.get(independentDisciplineWorkHour.value, `[${oldKey}]`))
+  await saveData(_.get(independentDisciplineWorkHour.value, `[${newKey}]`))
+}
+
+async function fieldDown(num, sem) {
+  let newKey = _.findKey(independentDisciplineWorkHour.value, (x) => x.num == num + 1 && x.semester == sem)
+  let oldKey = _.findKey(independentDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
+
+  _.set(independentDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
+  _.set(independentDisciplineWorkHour.value, `[${newKey}].num`, num)
+
+  await saveData(_.get(independentDisciplineWorkHour.value, `[${oldKey}]`))
+  await saveData(_.get(independentDisciplineWorkHour.value, `[${newKey}]`))
+}
+
+async function saveData(data) {
+  let r = await api.post('/api/generator/save-discipline-work-hour/', data)
+  return r.data
+}
+
+function getRowColor(number) {
+  return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
+}
+
 </script>
 
 <template>
@@ -110,7 +150,8 @@ const disciplineThemesByValue = computed(() => {
       <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div v-if="allPercent != 0">
-        <q-btn label="Добавить новую самостоятельную работу" color="teal" class="q-mb-md" @click="addIndependent" :disabled="disabled"/>
+        <q-btn label="Добавить новую самостоятельную работу" color="teal" class="q-mb-md" @click="addIndependent"
+               :disabled="disabled"/>
         <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
           <div class="absolute-full flex flex-center">
             <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
@@ -138,10 +179,10 @@ const disciplineThemesByValue = computed(() => {
           transition-next="scale"
         >
           <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="independent-container">
-            <div v-if="item" class="independent-container__header text-center text-subtitle1 items-center">
-              <div>
-                Номер
-              </div>
+            <div v-if="item" class="independent-container__header text-center text-subtitle1 items-center bg-grey-2">
+<!--              <div>-->
+<!--                Номер-->
+<!--              </div>-->
               <div>
                 Вид самостоятельной работы
               </div>
@@ -155,12 +196,12 @@ const disciplineThemesByValue = computed(() => {
                 Управление
               </div>
             </div>
-            <div v-for="independent in independentDisciplineWorkHour" class="independent-container__body">
+            <div v-for="independent in filteredData" class="independent-container__body">
               <div v-if="independent.semester == tab"
-                   class="independent-container__body__cell text-subtitle1 text-center items-center">
-                <div>
-                  {{ independent.num }}
-                </div>
+                   class="independent-container__body__cell text-subtitle1 text-center items-center" :class="getRowColor(independent.num)">
+<!--                <div>-->
+<!--                  {{ independent.num }}-->
+<!--                </div>-->
                 <div>
                   {{ independent.name }}
                 </div>
@@ -177,6 +218,14 @@ const disciplineThemesByValue = computed(() => {
                   <q-btn
                     icon="mdi-update" color="green" flat @click="updateIndependent(independent.id)"
                   />
+                <q-btn v-if="independent.num != 1"
+                       icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
+                       @click="fieldUp(independent.num, independent.semester)"
+                />
+                <q-btn v-if="independent.num != maxNumberInSemester"
+                       icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
+                       @click="fieldDown(independent.num, independent.semester)"
+                />
                 </div>
               </div>
             </div>
@@ -191,18 +240,34 @@ const disciplineThemesByValue = computed(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .independent-container {
+
+  $border: solid 1px silver;
+
   > .independent-container__header {
     display: grid;
-    grid-template-columns: repeat(4, 1fr) auto;
+    grid-template-columns: repeat(3, 1fr) 1fr;
     font-weight: bold;
+    border: $border;
+    border-bottom: none;
+
+    &:last-child {
+      border-bottom: $border;
+    }
   }
 
   > .independent-container__body {
     > .independent-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(4, 1fr) auto;
+      grid-template-columns: repeat(3, 1fr) 1fr;
+      border: $border;
+      border-bottom: none;
+
+    }
+
+    &:last-child {
+      border-bottom: $border;
     }
   }
 }

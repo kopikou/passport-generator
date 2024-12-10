@@ -179,7 +179,7 @@ onBeforeMount(() => {
           transition-next="scale"
         >
           <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="lectures-container">
-            <div v-if="item" class="lectures-container__header text-center text-subtitle1 items-center">
+            <div v-if="item" class="lectures-container__header text-center text-subtitle1 items-center bg-grey-2">
               <!--                            <div>-->
               <!--                              Номер-->
               <!--                            </div>-->
@@ -249,7 +249,7 @@ onBeforeMount(() => {
 
   > .lectures-container__header {
     display: grid;
-    grid-template-columns: repeat(3, 1fr) auto;
+    grid-template-columns: repeat(3, 1fr) 1fr;
     font-weight: bold;
     border: $border;
     border-bottom: none;
@@ -262,7 +262,7 @@ onBeforeMount(() => {
   > .lectures-container__body {
     > .lectures-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(3, 1fr) auto;
+      grid-template-columns: repeat(3, 1fr) 1fr;
       border: $border;
       border-bottom: none;
 

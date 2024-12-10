@@ -47,7 +47,6 @@ const correct = computed(() => {
 async function onOKClick() {
   $q.loading.show({message: "Сохранение"})
 
-
   let maxNum = _.max(_(disciplineThemes.value)
       .filter((x) => x.semester == props.sem)
       .map((q) => q.num).value())
