@@ -283,7 +283,7 @@ class GeneratorViewSet(
         instance.status = PlanLinesLink.StatusChoices.on_review
         instance.save()
 
-        return Response({"success": True})
+        return Response(data={'status_verbose': PlanLinesLink.StatusChoices.on_review.label, 'status': PlanLinesLink.StatusChoices.on_review})
 
     @action(methods=['POST'], url_path="accept-rpd", detail=True)
     def accept_rpd(self, request, *args, **kwargs):

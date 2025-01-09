@@ -126,6 +126,7 @@ watch(disciplineSoftware, () => {
               <template #control>
                 <div class="text-subtitle1 self-center full-width no-outline">
                   <span>{{ item.clicense__name }}</span>
+                  <q-chip v-if="item.clicense__type">{{ item.clicense__type }}</q-chip>
                   <div class="q-gutter-x-md q-mt-md" v-show="!disabled">
                     <q-btn color="red" label="Убрать"
                            @click="deleteSoftware(item.id)"/>

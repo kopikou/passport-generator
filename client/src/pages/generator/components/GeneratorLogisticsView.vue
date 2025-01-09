@@ -51,6 +51,7 @@ async function saveOborud() {
   $q.loading.hide()
 }
 
+
 async function searchOborud() {
   if (searchVal.value.length <= 3) {
     $q.notify({
@@ -80,6 +81,7 @@ function addMTO() {
     _.set(disciplineLogistics.value, "[0].value", [])
     saveOborud()
   }
+
   $q.notify({
     message: "Убедитесь, что выбранный источник доступен всем студентам и в достаточном количестве.",
     color: "secondary",
@@ -89,7 +91,7 @@ function addMTO() {
     timeout: 3500,
   })
 
-    $q.dialog({
+  $q.dialog({
     component: GeneratorAddLogisticsDialog,
   }).onOk(() => {
     oborudData.value = disciplineLogistics.value[0]?.value || []
@@ -114,27 +116,27 @@ watch(disciplineLogistics, () => {
       <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-btn
-          class="q-mb-md"
-          label="Добавить МТО"
-          color="secondary"
-          @click="addMTO"
-          v-show="!disabled"
+        class="q-mb-md"
+        label="Добавить МТО"
+        color="secondary"
+        @click="addMTO"
+        v-show="!disabled"
       />
       <q-option-group
-          :options="typeOptions"
-          type="radio"
-          v-model="searchType"
-          inline
-          v-show="!disabled"
+        :options="typeOptions"
+        type="radio"
+        v-model="searchType"
+        inline
+        v-show="!disabled"
       />
       <div class="row q-gutter-x-md q-mb-md" v-show="!disabled">
         <q-input
-            label="Введите текст для поиска"
-            stack-label
-            v-model="searchVal"
-            filled
-            class="col"
-            :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
+          label="Введите текст для поиска"
+          stack-label
+          v-model="searchVal"
+          filled
+          class="col"
+          :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
         />
         <q-btn color="secondary" @click="searchOborud" label="Поиск"/>
       </div>

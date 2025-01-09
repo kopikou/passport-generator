@@ -192,10 +192,18 @@ class ReportService(object):
 
             if item['type'] == 'software':
                 for k, i in enumerate(item['value'], start=1):
-                    software.append({
-                        'number': k,
-                        'content': i['clicense__name'],
-                    })
+                    if i['clicense__type']:
+                        software.append({
+                            'number': k,
+                            'content': 'Свободно распространяемое программное обеспечение ' + i['clicense__name']
+                            if i['clicense__type'] == 'Свободное'
+                            else 'Лицензионное программное обеспечение ' + i['clicense__name'],
+                        })
+                    else:
+                        software.append({
+                            'number': k,
+                            'content': i['clicense__name'],
+                        })
 
             if item['type'] == 'logistics':
                 for k, i in enumerate(item['value'], start=1):
@@ -321,8 +329,25 @@ class ReportService(object):
         pr_work_grouped = {key: list(item) for key, item in groupby(pr_work_sorted, key=lambda item: item['num'])}
 
         srs_work = get_work_hours(work_hour, 2)
-        srs_work_sorted = sorted(srs_work, key=lambda item: (item['num'], item['number']))
+        srs_work_sorted = sorted(srs_work, key=lambda item: (item['num'], item['content']))
         srs_work_grouped = {key: list(item) for key, item in groupby(srs_work_sorted, key=lambda item: item['num'])}
+
+        srs_work_res = {}
+        for key, items in srs_work_grouped.items():
+            res_sorted = sorted(items, key=lambda i: i['content'])
+            res_grouped = {k: list(i) for k, i in groupby(res_sorted, key=lambda item: item['content'])}
+
+            tmp = []
+            v = 1
+            for k, i in res_grouped.items():
+                tmp.append({
+                    "content": k,
+                    "number": v,
+                    "hours": sum([q['hours'] for q in i]),
+                })
+                v += 1
+
+            srs_work_res[key] = tmp
 
         for key, items in wk.items():
             items_sorted = sorted(items, key=lambda q: q['theme'])
@@ -400,7 +425,7 @@ class ReportService(object):
             "dg": discipline_grouped,
             "labw": lab_work_grouped,
             "prw": pr_work_grouped,
-            "srsw": srs_work_grouped,
+            "srsw": srs_work_res,
             "interactive_methods": interactive_methods,
             "guidelines": guidelines,
             "fos": fos,
