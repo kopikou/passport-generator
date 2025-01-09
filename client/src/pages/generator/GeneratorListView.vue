@@ -25,7 +25,8 @@ import GeneratorManageDialog from "pages/generator/components/dialogs/GeneratorM
 
 const $q = useQuasar()
 const router = useRouter()
-const listData = ref<GeneratorListData[]>([])
+const personListData = ref<GeneratorListData[]>([])
+const adminListData = ref<GeneratorListData[]>([])
 
 function openManageDialog(id, item) {
   $q.dialog({
@@ -38,22 +39,21 @@ function openManageDialog(id, item) {
 }
 
 function filterMyList(data) {
-  let result = _.filter(data, (x) => x.mira_id === mira_id.value)
-  return _.orderBy(result, (x) => x.status, ['desc'])
+  return _(data).orderBy(x => x.status, ['desc']).value()
 }
 function filterAllList(data) {
-  return _.orderBy(data, (x) => x.status, ['desc'])
+  return _(data).orderBy(x => x.status, ['desc']).value()
 }
 
 async function getProgramData() {
   let r = await api.get("/api/generator/get-program-list/")
-  listData.value = r.data
+  personListData.value = r.data.person
+  adminListData.value = r.data.admin
 }
 
 const cafDataById = computed(() => {
   return _.keyBy(cafData.value, 'value')
 })
-
 
 function getRowColor(number) {
   return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
@@ -78,7 +78,7 @@ onBeforeMount(async () => {
           separator
         >
           <q-expansion-item
-            v-for="items, key in listData"
+            v-for="items, key in personListData"
             :label="key"
           >
             <q-card>
@@ -112,7 +112,7 @@ onBeforeMount(async () => {
           separator
         >
           <q-expansion-item
-            v-for="items, key in listData"
+            v-for="items, key in adminListData"
             :label="key"
           >
             <q-card>

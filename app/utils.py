@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, connections
 from django.conf import settings
 from django.core.cache import cache
 from django.forms import CheckboxSelectMultiple, MultipleChoiceField
@@ -67,3 +67,32 @@ class UserProfileHasPermission(BasePermission):
 
     def has_permission(self, request, view):
         return self.permission in request.user.userprofile.permissions
+
+
+class Mira:
+    @classmethod
+    def dictfetchall(cls, cursor):
+        data = list(cursor.fetchall())
+        columns = [col[0] for col in cursor.description]
+        return [
+            dict(zip(columns, row))
+            for row in data
+        ]
+
+    @classmethod
+    def exec(cls, query, params=[]):
+        with connections['mira'].cursor() as cursor:
+            d = cursor.execute(query, params)
+            while True:
+                if cursor.description:
+                    data = d.fetchall()
+                if cursor.nextset() == False:
+                    break
+            connections['mira'].commit()
+
+    @classmethod
+    def fetch(cls, query, params=[]):
+        with connections['mira'].cursor() as cursor:
+            cursor.execute(query, params)
+            data = cls.dictfetchall(cursor)
+        return data

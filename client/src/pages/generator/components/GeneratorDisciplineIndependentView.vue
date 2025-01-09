@@ -180,9 +180,9 @@ function getRowColor(number) {
         >
           <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="independent-container">
             <div v-if="item" class="independent-container__header text-center text-subtitle1 items-center bg-grey-2">
-<!--              <div>-->
-<!--                Номер-->
-<!--              </div>-->
+              <!--              <div>-->
+              <!--                Номер-->
+              <!--              </div>-->
               <div>
                 Вид самостоятельной работы
               </div>
@@ -198,10 +198,11 @@ function getRowColor(number) {
             </div>
             <div v-for="independent in filteredData" class="independent-container__body">
               <div v-if="independent.semester == tab"
-                   class="independent-container__body__cell text-subtitle1 text-center items-center" :class="getRowColor(independent.num)">
-<!--                <div>-->
-<!--                  {{ independent.num }}-->
-<!--                </div>-->
+                   class="independent-container__body__cell text-subtitle1 text-center items-center"
+                   :class="getRowColor(independent.num)">
+                <!--                <div>-->
+                <!--                  {{ independent.num }}-->
+                <!--                </div>-->
                 <div>
                   {{ independent.name }}
                 </div>
@@ -218,14 +219,14 @@ function getRowColor(number) {
                   <q-btn
                     icon="mdi-update" color="green" flat @click="updateIndependent(independent.id)"
                   />
-                <q-btn v-if="independent.num != 1"
-                       icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
-                       @click="fieldUp(independent.num, independent.semester)"
-                />
-                <q-btn v-if="independent.num != maxNumberInSemester"
-                       icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
-                       @click="fieldDown(independent.num, independent.semester)"
-                />
+                  <q-btn v-if="independent.num != 1"
+                         icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
+                         @click="fieldUp(independent.num, independent.semester)"
+                  />
+                  <q-btn v-if="independent.num != maxNumberInSemester"
+                         icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
+                         @click="fieldDown(independent.num, independent.semester)"
+                  />
                 </div>
               </div>
             </div>

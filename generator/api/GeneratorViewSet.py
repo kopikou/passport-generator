@@ -119,8 +119,27 @@ class GeneratorViewSet(
         sorted_result = sorted(result, key=lambda x: (x['abbr'], x['yr'], x['discpl']))
         grouped_result = {f"{key[0]}-{key[1]}": list(items) for key, items in
                           groupby(sorted_result, key=lambda x: (x['abbr'], x['yr']))}
+
+        res = {
+            "admin": {},
+            "person": {},
+        }
+
+        for key, items in grouped_result.items():
+            admin_list = []
+            person_list = []
+            for item in items:
+                if item['type'] == 'admin':
+                    admin_list.append(item)
+                elif item['type'] == 'person':
+                    person_list.append(item)
+            if admin_list:
+                res['admin'].update({key: admin_list})
+            if person_list:
+                res['person'].update({key: person_list})
+
         return Response(
-            data=grouped_result,
+            data=res,
         )
 
     @action(methods=['GET'], url_path="search-book", detail=False)
@@ -284,7 +303,8 @@ class GeneratorViewSet(
         instance.status = PlanLinesLink.StatusChoices.on_refile
         instance.save()
 
-        PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], user_id=self.request.user.id, planlineslink_id=instance.id)
+        PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], user_id=self.request.user.id,
+                                             planlineslink_id=instance.id)
 
         return Response({"success": True})
 

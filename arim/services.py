@@ -5,7 +5,7 @@ import requests
 from django.conf import settings
 from django.db.models import Q
 
-from app.utils import cache_function
+from app.utils import cache_function, Mira
 from arim.models import UistLicense, OborudData, BoolChoice, UchPlanKaf, Catadmission, CatFaculty, CatKaf, RpdUsers, \
     UchPlanPlan
 
@@ -98,21 +98,22 @@ class AISServices(object):
 
         return data
 
-
     @staticmethod
     # @cache_function(timeout=10 * 1)
     def get_disciplines_by_person(id):
 
         q = f"""exec rpd_list_for_person {int(id)}"""
 
-        r = requests.get(f"{settings.ARIM_URL}/wizard.sql", {
-            "q": q
-        }, proxies={
-            "http": "",
-            "https": "",
-        })
+        # r = requests.get(f"{settings.ARIM_URL}/wizard.sql", {
+        #     "q": q
+        # }, proxies={
+        #     "http": "",
+        #     "https": "",
+        # })
+        #
+        # data = r.json()['RecordSet']
 
-        data = r.json()['RecordSet']
+        data = Mira.fetch(q)
 
         return data
 

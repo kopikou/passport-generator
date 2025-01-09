@@ -3,33 +3,6 @@ from django.db.models import TextChoices
 
 from app.utils import TimestampsModel
 
-class Mira:
-    @classmethod
-    def dictfetchall(cls, cursor):
-        data = list(cursor.fetchall())
-        columns = [col[0] for col in cursor.description]
-        return [
-            dict(zip(columns, row))
-            for row in data
-        ]
-
-    @classmethod
-    def exec(cls, query, params):
-        with connections['mira'].cursor() as cursor:
-            d = cursor.execute(query, params)
-            while True:
-                if cursor.description:
-                    data = d.fetchall()
-                if cursor.nextset() == False:
-                    break
-            connections['mira'].commit()
-
-    @classmethod
-    def fetch(cls, query, params):
-        with connections['mira'].cursor() as cursor:
-            cursor.execute(query, params)
-            data = cls.dictfetchall(cursor)
-        return data
 
 # Create your models here.
 class BoolChoice(TextChoices):
