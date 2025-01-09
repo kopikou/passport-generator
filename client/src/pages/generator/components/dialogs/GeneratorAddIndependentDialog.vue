@@ -37,6 +37,11 @@ const hourCount = ref(0)
 const theme = ref()
 // const num = ref()
 
+const disciplineThemesOptions = computed(() => {
+  return _(disciplineThemes.value)
+    .filter(x => props.sem == x.semester)
+    .value()
+})
 
 const correct = computed(() => {
   if (!name.value || name.value.length < 3) return true
@@ -56,6 +61,8 @@ async function onOKClick() {
   if (!maxNum) maxNum = 1
   else maxNum += 1
 
+  let data = _.keyBy(independentDisciplineWorkHour.value, "id")
+
   let r = await api.post('/api/generator/save-discipline-work-hour/', {
     planlineslink_id: rpdData.value.id,
     theme_id: theme.value,
@@ -64,7 +71,7 @@ async function onOKClick() {
     hours: hourCount.value,
     semester: props.sem,
     id: props.id,
-    num: maxNum,
+    num: props.id ? data[props.id].num : maxNum,
   })
 
   if (!props.id) {
@@ -125,7 +132,7 @@ onBeforeMount(() => {
           stack-label
           label="Тема дисциплины"
           filled
-          :options="disciplineThemes"
+          :options="disciplineThemesOptions"
           v-model="theme"
           option-label="name"
           option-value="id"

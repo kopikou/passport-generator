@@ -54,6 +54,8 @@ async function onOKClick() {
   if (!maxNum) maxNum = 1
   else maxNum += 1
 
+  let data = _.keyBy(disciplineThemes.value, "id")
+
   let r = await api.post('/api/generator/save-discipline-themes/', {
     planlineslink_id: rpdData.value.id,
     name: themeName.value,
@@ -61,7 +63,7 @@ async function onOKClick() {
     formcontrol_id: control.value,
     comment: comment.value,
     id: props.id,
-    num: maxNum,
+    num: props.id ? data[props.id].num : maxNum,
   })
 
   if (!props.id) {
