@@ -37,6 +37,8 @@ def get_work_hours(data, type):
                 "hours": int(item['hours']),
                 "content": item['content'],
                 "type": item['type'],
+                "theme": item['theme'],
+                "theme_id": item['theme_id'],
             })
 
     return result
@@ -273,6 +275,9 @@ class ReportService(object):
                 "tic": tic_all[item['num']],
             })
 
+        semester_hours_sorted = sorted(semester_hours, key=lambda x: x['num'])
+        semester_hours_grouped = {key: list(item) for key, item in groupby(semester_hours_sorted, key=lambda x: x['num'])}
+
         semester_hours_all = {
             "lekc_hours_all": sum([i['lekc'] for i in data['planlines']['semesters'] if i['lekc'] is not None]),
             "lab_hours_all": sum([i['lab'] for i in data['planlines']['semesters'] if i['lab'] is not None]),
@@ -308,6 +313,7 @@ class ReportService(object):
             work_hour.append({
                 "num": item['semester'],
                 "theme": discipline_themes[item['theme_id']]['name'],
+                "theme_id": item['theme_id'],
                 "formcontrol": discipline_themes[item['theme_id']]['formcontrol_verbose'],
                 "type": item['type'],
                 "content": item['name'],
@@ -319,6 +325,10 @@ class ReportService(object):
         work_hour_sorted = sorted(work_hour, key=lambda item: item['num'])
         wk = {key: list(items) for key, items in
               groupby(work_hour_sorted, key=lambda item: item['num'])}
+
+        lekc_work = get_work_hours(work_hour, 0)
+        lekc_work_sorted = sorted(lekc_work, key=lambda item: (item['num'], item['number']))
+        lekc_work_grouped = {key: list(item) for key, item in groupby(lekc_work_sorted, key=lambda item: item['num'])}
 
         lab_work = get_work_hours(work_hour, 3)
         lab_work_sorted = sorted(lab_work, key=lambda item: (item['num'], item['number']))
@@ -344,59 +354,113 @@ class ReportService(object):
                     "content": k,
                     "number": v,
                     "hours": sum([q['hours'] for q in i]),
+                    "theme": i[0]['theme'],
+                    "theme_id": i[0]['theme_id'],
                 })
                 v += 1
 
             srs_work_res[key] = tmp
 
-        for key, items in wk.items():
-            items_sorted = sorted(items, key=lambda q: q['theme'])
-            items_grouped = {k: list(i) for k, i in groupby(items_sorted, key=lambda q: q['theme'])}
-            q = 0
-            tmp_arr = []
-            for k, i in items_grouped.items():
-                q += 1
-                i_sorted = sorted(i, key=lambda val: val['type'])
-                i_grouped = {v: list(val) for v, val in groupby(i_sorted, key=lambda val: val['type'])},
-                tmp_arr.append({
-                    "index": (k, q),
-                    "lec": int(sum([s['hours'] for s in i if s['type'] == 0])) or '',
-                    "lec_nums": ", ".join([str(s['number']) for s in i if s['type'] == 0]),
-                    "labs": int(sum([s['hours'] for s in i if s['type'] == 3])) or '',
-                    "labs_nums": ", ".join([str(s['number']) for s in i if s['type'] == 3]),
-                    "pr": int(sum([s['hours'] for s in i if s['type'] == 1])) or '',
-                    "pr_nums": ", ".join([str(s['number']) for s in i if s['type'] == 1]),
-                    "srs": int(sum([s['hours'] for s in i if s['type'] == 2])) or '',
-                    "srs_nums": ", ".join([str(s['number']) for s in i if s['type'] == 2]),
-                    "formcontrol": i[0]['formcontrol'],
-                    "tic": i[0]['tic'][0] or '',
-                    "tic_all": ", ".join(i[0]['tic_all']),
+        wk_data = {}
+        for key, items in discipline_grouped.items():
+
+            res = []
+            for item in items:
+                tmp_srs = []
+                tmp_lab = []
+                tmp_pr = []
+                tmp_lekc = []
+                if srs_work_grouped:
+                    for q in srs_work_grouped[key]:
+                        if item['id'] == q['theme_id']:
+                            tmp_srs.append({
+                                "hours": q['hours'],
+                                "theme": q['theme'],
+                                "theme_id": q['theme_id'],
+                                "name": q['content'],
+                            })
+
+                if lab_work_grouped:
+                    for q in lab_work_grouped[key]:
+                        if item['id'] == q['theme_id']:
+                            tmp_lab.append({
+                                "hours": q['hours'],
+                                "theme": q['theme'],
+                                "theme_id": q['theme_id'],
+                                "name": q['content'],
+                                "number": q['number'],
+                            })
+
+                if pr_work_grouped:
+                    for q in pr_work_grouped[key]:
+                        if item['id'] == q['theme_id']:
+                            tmp_pr.append({
+                                "hours": q['hours'],
+                                "theme": q['theme'],
+                                "theme_id": q['theme_id'],
+                                "name": q['content'],
+                                "number": q['number'],
+                            })
+
+                if lekc_work_grouped:
+                    for q in lekc_work_grouped[key]:
+                        if item['id'] == q['theme_id']:
+                            tmp_lekc.append({
+                                "hours": q['hours'],
+                                "theme": q['theme'],
+                                "theme_id": q['theme_id'],
+                                "name": q['content'],
+                                "number": q['number'],
+                            })
+
+                res.append({
+                    **item,
+                    "srs": tmp_srs,
+                    "lab": tmp_lab,
+                    "pr": tmp_pr,
+                    "lekc": tmp_lekc,
                 })
-            tmp_arr.append({
-                "index": ("Промежуточная аттестация", ''),
-                "lec": '',
-                "lec_nums": '',
-                "labs": '',
-                "labs_nums": '',
-                "pr": '',
-                "pr_nums": '',
-                "srs": i[0]['tic'][0] or '',
-                "srs_nums": '',
-                "formcontrol": ", ".join(i[0]['tic_all']),
+
+            wk_data[key] = res
+
+        for key, items in wk_data.items():
+
+            tmp = []
+            for item in items:
+                res = []
+                for q in srs_work_grouped[key]:
+                    if q['theme'] == item['name']:
+                        r = list(filter(
+                                lambda x: x['content'] == q['content'], srs_work_res[key]
+                            ))
+                        res.append(str(r[0]['number']))
+
+                tmp.append({
+                    "name": item['name'],
+                    "tic": item['formcontrol_verbose'],
+                    "num": item['num'],
+                    "lekc": item['num'],
+                    "lekc_hours": sum([i['hours'] for i in item['lekc']])  if sum([i['hours'] for i in item['lekc']]) != 0 else '',
+                    "lab": ', '.join([str(i['number']) for i in item['lab']]),
+                    "lab_hours": sum([i['hours'] for i in item['lab']])  if sum([i['hours'] for i in item['lab']]) != 0 else '',
+                    "pr": ', '.join([str(i['number']) for i in item['pr']]),
+                    "pr_hours": sum([i['hours'] for i in item['pr']]) if sum([i['hours'] for i in item['pr']]) != 0 else '',
+                    "srs": ', '.join(res),
+                    "srs_hours": sum([i['hours'] for i in item['srs']])  if sum([i['hours'] for i in item['srs']]) != 0 else '',
+                })
+
+            wk_data[key] = tmp
+
+            wk_data[key].append({
+                "name": 'Промежуточная аттестация',
+                "tic": semester_hours_grouped[key][0]['tic'],
+                "srs_hours": semester_hours_grouped[key][0]['ekz_hours'] if semester_hours_grouped[key][0]['ekz_hours'] != 0 else '',
             })
-            tmp_arr.append({
-                "index": ("Всего", ''),
-                "lec": sum([int(i['lec']) for i in tmp_arr if i['lec']]) or '',
-                "lec_nums": '',
-                "labs": sum([int(i['labs']) for i in tmp_arr if i['labs']]) or '',
-                "labs_nums": '',
-                "pr": sum([int(i['pr']) for i in tmp_arr if i['pr']]) or '',
-                "pr_nums": '',
-                "srs": sum([int(i['srs']) for i in tmp_arr if i['srs']]) or '',
-                "srs_nums": '',
-                "formcontrol": '',
+
+            wk_data[key].append({
+                "name": 'Всего',
             })
-            wk[key] = {i['index']: i for i in tmp_arr}
+
 
         context = {
             "now": pendulum.now().start_of("day"),
@@ -421,7 +485,7 @@ class ReportService(object):
             "semesters": semesters,
             "sh": semester_hours,
             "sha": semester_hours_all,
-            "wk": wk,
+            "wk": wk_data,
             "dg": discipline_grouped,
             "labw": lab_work_grouped,
             "prw": pr_work_grouped,
