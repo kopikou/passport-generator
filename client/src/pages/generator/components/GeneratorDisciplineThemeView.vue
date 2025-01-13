@@ -177,7 +177,7 @@ onBeforeMount(() => {
               <div>
                 {{ formControlByValue[item.formcontrol_id]?.name }}
               </div>
-              <div>
+              <div class="text-justify">
                 {{ item.comment }}
               </div>
               <div>
@@ -219,6 +219,7 @@ onBeforeMount(() => {
     border: $border;
     border-bottom: none;
 
+
     &:last-child {
       border-bottom: $border;
     }
@@ -230,6 +231,7 @@ onBeforeMount(() => {
       grid-template-columns: repeat(3, 1fr) 1fr;
       border: $border;
       border-bottom: none;
+
     }
 
     &:last-child {

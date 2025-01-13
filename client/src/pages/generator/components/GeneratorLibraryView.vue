@@ -165,6 +165,7 @@ onBeforeMount(() => {
               </template>
             </q-field>
           </div>
+          <q-separator />
           <div class="text-h6">Дополнительная литература</div>
           <div v-for="item in dopBook" style="width: 95%">
             <q-field label="Название" stack-label filled class="q-mb-md">
