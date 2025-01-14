@@ -39,10 +39,10 @@ function openManageDialog(id, item) {
 }
 
 function filterMyList(data) {
-  return _(data).orderBy(x => x.status, ['desc']).value()
+  return _(data).orderBy(x => [x.status, x.discode], ['desc']).value()
 }
 function filterAllList(data) {
-  return _(data).orderBy(x => x.status, ['desc']).value()
+  return _(data).orderBy(x => [x.status, x.discode], ['desc']).value()
 }
 
 async function getProgramData() {
