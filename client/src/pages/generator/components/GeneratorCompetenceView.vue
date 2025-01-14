@@ -16,6 +16,10 @@ const cols = ref([
 
 const competenceList = ref([])
 
+const filteredData = computed(() => {
+  return _.orderBy(competenceList.value, x => x.competence_index)
+})
+
 watch(indicatorsData, () =>{
   competenceList.value = _.uniqBy(indicatorsData.value, (x) => x.competence_index)
 }, {immediate: true})
@@ -32,7 +36,7 @@ watch(indicatorsData, () =>{
       <div class="q-pb-md">
         <q-table
           :columns="cols"
-          :rows="competenceList"
+          :rows="filteredData"
           no-data-label="Нет данных"
           :rows-per-page-options="[]"
         >

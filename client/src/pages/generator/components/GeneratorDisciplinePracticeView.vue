@@ -179,9 +179,9 @@ function getRowColor(number) {
         >
           <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="practice-container">
             <div v-if="item" class="practice-container__header text-center text-subtitle1 items-center bg-grey-2">
-              <!--              <div>-->
-              <!--                Номер-->
-              <!--              </div>-->
+              <div>
+                №
+              </div>
               <div>
                 Наименование практической работы
               </div>
@@ -199,17 +199,17 @@ function getRowColor(number) {
               <div v-if="practice.semester == tab"
                    class="practice-container__body__cell text-subtitle1 text-center items-center"
                    :class="getRowColor(practice.num)">
-                <!--                <div>-->
-                <!--                  {{ practice.num }}-->
-                <!--                </div>-->
                 <div>
+                  {{ practice.num }}
+                </div>
+                <div class="text-justify">
                   {{ practice.name }}
                 </div>
                 <div>
                   {{ practice.hours }}
                 </div>
                 <div>
-                  {{ disciplineThemesByValue[practice.theme_id]?.name }}
+                  {{ disciplineThemesByValue[practice.theme_id]?.num }}. {{ disciplineThemesByValue[practice.theme_id]?.name }}
                 </div>
                 <div v-show="!disabled">
                   <q-btn
@@ -247,7 +247,7 @@ function getRowColor(number) {
 
   > .practice-container__header {
     display: grid;
-    grid-template-columns: repeat(3, 1fr) 1fr;
+    grid-template-columns: 4% 1fr 15% 25% 20%;
     font-weight: bold;
     border: $border;
     border-bottom: none;
@@ -260,7 +260,7 @@ function getRowColor(number) {
   > .practice-container__body {
     > .practice-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(3, 1fr) 1fr;
+      grid-template-columns: 4% 1fr 15% 25% 20%;
       border: $border;
       border-bottom: none;
 

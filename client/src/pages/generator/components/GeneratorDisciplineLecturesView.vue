@@ -180,9 +180,9 @@ onBeforeMount(() => {
         >
           <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="lectures-container">
             <div v-if="item" class="lectures-container__header text-center text-subtitle1 items-center bg-grey-2">
-              <!--                            <div>-->
-              <!--                              Номер-->
-              <!--                            </div>-->
+              <div>
+                №
+              </div>
               <div>
                 Наименование лекционного занятия
               </div>
@@ -200,17 +200,17 @@ onBeforeMount(() => {
               <div v-if="lectures.semester == tab"
                    class="lectures-container__body__cell text-subtitle1 text-center items-center"
                    :class="getRowColor(lectures.num)">
-                <!--                <div>-->
-                <!--                  {{ lectures.num }}-->
-                <!--                </div>-->
                 <div>
+                  {{ lectures.num }}
+                </div>
+                <div class="text-justify">
                   {{ lectures.name }}
                 </div>
                 <div>
                   {{ lectures.hours }}
                 </div>
                 <div>
-                  {{ disciplineThemesByValue[lectures.theme_id]?.name }}
+                  {{ disciplineThemesByValue[lectures.theme_id]?.num }}. {{ disciplineThemesByValue[lectures.theme_id]?.name }}
                 </div>
                 <div v-show="!disabled">
                   <q-btn
@@ -249,7 +249,7 @@ onBeforeMount(() => {
 
   > .lectures-container__header {
     display: grid;
-    grid-template-columns: repeat(3, 1fr) 1fr;
+    grid-template-columns: 4% 1fr 15% 25% 20%;
     font-weight: bold;
     border: $border;
     border-bottom: none;
@@ -262,7 +262,7 @@ onBeforeMount(() => {
   > .lectures-container__body {
     > .lectures-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(3, 1fr) 1fr;
+      grid-template-columns: 4% 1fr 15% 25% 20%;
       border: $border;
       border-bottom: none;
 

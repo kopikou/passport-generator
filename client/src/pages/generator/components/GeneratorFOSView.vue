@@ -42,7 +42,7 @@ function getType(value) {
     </div>
     <div v-else>
       <p class="text-h6">Не выбраны формы текущего контроля</p>
-      <empty-icon />
+      <empty-icon/>
     </div>
   </div>
 </template>

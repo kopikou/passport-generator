@@ -54,6 +54,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return rpdData.value.discipline_themes || []
   })
 
+  const disciplineThemesById = computed<DisciplineThemesData[]>(() => {
+    return _.keyBy(disciplineThemes.value, x => x.id)
+  })
+
   const disciplineLibrary = computed<GeneratorBookData[]>(() => {
     return _.filter(rpdData.value.additional_info, (x) => x.type == "library")
   })
@@ -180,6 +184,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     independentTypes,
     otherDiscipline,
     disciplineThemes,
+    disciplineThemesById,
     disciplineWorkHour,
     lecturesDisciplineWorkHour,
     labDisciplineWorkHour,

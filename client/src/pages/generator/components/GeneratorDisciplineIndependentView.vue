@@ -211,7 +211,7 @@ function getRowColor(id) {
                   {{ independent.hours }}
                 </div>
                 <div>
-                  {{ disciplineThemesByValue[independent.theme_id]?.name }}
+                  {{ disciplineThemesByValue[independent.theme_id]?.num }}. {{ disciplineThemesByValue[independent.theme_id]?.name }}
                 </div>
                 <div v-show="!disabled">
                   <q-btn
@@ -249,7 +249,7 @@ function getRowColor(id) {
 
   > .independent-container__header {
     display: grid;
-    grid-template-columns: repeat(3, 1fr) 1fr;
+    grid-template-columns: 1fr 15% 1fr 10%;
     font-weight: bold;
     border: $border;
     border-bottom: none;
@@ -262,7 +262,7 @@ function getRowColor(id) {
   > .independent-container__body {
     > .independent-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(3, 1fr) 1fr;
+      grid-template-columns: 1fr 15% 1fr 10%;
       border: $border;
       border-bottom: none;
 

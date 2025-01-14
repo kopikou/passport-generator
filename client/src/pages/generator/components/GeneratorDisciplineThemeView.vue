@@ -148,9 +148,9 @@ onBeforeMount(() => {
       >
         <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="theme-container">
           <div v-if="item" class="theme-container__header text-center text-subtitle1 items-center bg-grey-2">
-            <!--            <div>-->
-            <!--              Номер-->
-            <!--            </div>-->
+            <div>
+              №
+            </div>
             <div>
               Наименование темы
             </div>
@@ -168,9 +168,9 @@ onBeforeMount(() => {
             <div v-if="item.semester == tab"
                  class="theme-container__body__cell text-subtitle1 text-center items-center"
                  :class="getRowColor(item.num)">
-              <!--              <div>-->
-              <!--                {{ item.num }}-->
-              <!--              </div>-->
+              <div>
+                {{ item.num }}
+              </div>
               <div>
                 {{ item.name }}
               </div>
@@ -214,7 +214,7 @@ onBeforeMount(() => {
 
   > .theme-container__header {
     display: grid;
-    grid-template-columns: repeat(3, 1fr) 1fr;
+    grid-template-columns: 4% 20% 15% 1fr 20%;
     font-weight: bold;
     border: $border;
     border-bottom: none;
@@ -228,7 +228,7 @@ onBeforeMount(() => {
   > .theme-container__body {
     > .theme-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(3, 1fr) 1fr;
+      grid-template-columns: 4% 20% 15% 1fr 20%;
       border: $border;
       border-bottom: none;
 

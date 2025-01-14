@@ -74,6 +74,7 @@ watch(additionalInfo, () => {
   good.value = _.get(tatInfo.value, `[0].${props.type}.good`)
   satisfactorily.value = _.get(tatInfo.value, `[0].${props.type}.satisfactorily`)
   unsatisfactory.value = _.get(tatInfo.value, `[0].${props.type}.unsatisfactory`)
+  example.value = _.get(tatInfo.value, `[0].${props.type}.example`)
 })
 
 onBeforeMount(() => {
@@ -83,6 +84,7 @@ onBeforeMount(() => {
   good.value = _.get(tatInfo.value, `[0].${props.type}.good`)
   satisfactorily.value = _.get(tatInfo.value, `[0].${props.type}.satisfactorily`)
   unsatisfactory.value = _.get(tatInfo.value, `[0].${props.type}.unsatisfactory`)
+  example.value = _.get(tatInfo.value, `[0].${props.type}.example`)
 })
 
 </script>
@@ -123,56 +125,64 @@ onBeforeMount(() => {
             :readonly="disabled"
             debounce="1000"
             @update:modelValue="saveData"
+            hint="Оставьте пустым если не хотите отображать данный раздел в отчетном файле"
           />
           <p class="text-subtitle1">Критерии оценивания</p>
-          <div class="row justify-between">
-            <q-input
+          <q-list bordered>
+            <q-expansion-item
               label="Отлично"
-              type="textarea"
-              filled
-              stack-label
-              v-model="great"
-              class="col q-mr-sm"
-              :readonly="disabled"
-              debounce="1000"
-              @update:modelValue="saveData"
-            />
-            <q-input
-              label="Хорошо"
-              type="textarea"
-              filled
-              stack-label
-              v-model="good"
-              class="col q-ml-sm"
-              :readonly="disabled"
-              debounce="1000"
-              @update:modelValue="saveData"
-            />
-          </div>
-          <div class="row justify-between">
-            <q-input
-              label="Удовлетворительно"
-              type="textarea"
-              filled
-              stack-label
-              v-model="satisfactorily"
-              class="col q-mr-sm"
-              :readonly="disabled"
-              debounce="1000"
-              @update:modelValue="saveData"
-            />
-            <q-input
-              label="Неудовлетворительно"
-              type="textarea"
-              filled
-              stack-label
-              v-model="unsatisfactory"
-              class="col q-ml-sm"
-              :readonly="disabled"
-              debounce="1000"
-              @update:modelValue="saveData"
-            />
-          </div>
+            >
+              <q-input
+                class="q-pa-sm"
+                label="Отлично"
+                type="textarea"
+                filled
+                stack-label
+                v-model="great"
+                :readonly="disabled"
+                debounce="1000"
+                @update:modelValue="saveData"
+              />
+            </q-expansion-item>
+            <q-expansion-item label="Хорошо">
+              <q-input
+                class="q-pa-sm"
+                label="Хорошо"
+                type="textarea"
+                filled
+                stack-label
+                v-model="good"
+                :readonly="disabled"
+                debounce="1000"
+                @update:modelValue="saveData"
+              />
+            </q-expansion-item>
+            <q-expansion-item label="Удовлетворительно">
+              <q-input
+                class="q-pa-sm"
+                label="Удовлетворительно"
+                type="textarea"
+                filled
+                stack-label
+                v-model="satisfactorily"
+                debounce="1000"
+                @update:modelValue="saveData"
+              />
+            </q-expansion-item>
+            <q-expansion-item label="Неудовлетворительно">
+              <q-input
+                class="q-pa-sm"
+                label="Неудовлетворительно"
+                type="textarea"
+                filled
+                stack-label
+                v-model="unsatisfactory"
+                :readonly="disabled"
+                debounce="1000"
+                @update:modelValue="saveData"
+              />
+            </q-expansion-item>
+          </q-list>
           <!--          <q-btn-->
           <!--            label="Сохранить"-->
           <!--            color="primary"-->

@@ -3,10 +3,9 @@
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import {useQuasar} from "quasar";
-import {onBeforeMount, ref, watch} from "vue";
-import _, {forEach} from "lodash";
+import {computed, onBeforeMount, ref, watch} from "vue";
+import _ from "lodash";
 import {api} from "boot/axios";
-import {laObjectGroup} from "@quasar/extras/line-awesome";
 
 const generatorViewStore = useGeneratorViewStore();
 
@@ -15,6 +14,7 @@ const {
   additionalInfo,
   fosInfo,
   disabled,
+  disciplineThemes,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -29,6 +29,10 @@ const props = defineProps({
 const $q = useQuasar()
 const about = ref('')
 const criteria = ref('')
+
+const themes = computed(() => {
+  return _.filter(disciplineThemes.value, x => x.formcontrol_verbose == props.title)
+})
 
 async function saveData() {
   $q.loading.show({message: "Сохранение данных"})
@@ -71,9 +75,23 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <q-expansion-item
-    :label=props.title
-  >
+  <q-expansion-item>
+
+    <template #header>
+      <q-item-section>
+        {{ props.title }}
+        <div>
+          <q-chip
+            v-for="theme in themes"
+            :label="theme.name"
+            style="max-width: 60vw"
+          >
+            <q-tooltip>{{ theme.name }}</q-tooltip>
+          </q-chip>
+        </div>
+      </q-item-section>
+    </template>
+
     <q-card>
       <q-card-section>
         <div class="q-gutter-md">

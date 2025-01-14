@@ -181,9 +181,9 @@ async function fieldDown(num, sem) {
         >
           <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="lab-container">
             <div v-if="item" class="lab-container__header text-center text-subtitle1 items-center bg-grey-2">
-              <!--              <div>-->
-              <!--                Номер-->
-              <!--              </div>-->
+                            <div>
+                              №
+                            </div>
               <div>
                 Наименование лабораторной работы
               </div>
@@ -201,17 +201,17 @@ async function fieldDown(num, sem) {
               <div v-if="lab.semester == tab"
                    class="lab-container__body__cell text-subtitle1 text-center items-center"
                    :class="getRowColor(lab.num)">
-                <!--                <div>-->
-                <!--                  {{ lab.num }}-->
-                <!--                </div>-->
-                <div>
+                                <div>
+                                  {{ lab.num }}
+                                </div>
+                <div class="text-justify">
                   {{ lab.name }}
                 </div>
                 <div>
                   {{ lab.hours }}
                 </div>
                 <div>
-                  {{ disciplineThemesByValue[lab.theme_id]?.name }}
+                  {{ disciplineThemesByValue[lab.theme_id]?.num }}. {{ disciplineThemesByValue[lab.theme_id]?.name }}
                 </div>
                 <div v-show="!disabled">
                   <q-btn
@@ -250,7 +250,7 @@ async function fieldDown(num, sem) {
 
   > .lab-container__header {
     display: grid;
-    grid-template-columns: repeat(3, 1fr) 1fr;
+    grid-template-columns: 4% 1fr 15% 25% 20%;
     font-weight: bold;
     border: $border;
     border-bottom: none;
@@ -263,7 +263,7 @@ async function fieldDown(num, sem) {
   > .lab-container__body {
     > .lab-container__body__cell {
       display: grid;
-      grid-template-columns: repeat(3, 1fr) 1fr;
+      grid-template-columns: 4% 1fr 15% 25% 20%;
       border: $border;
       border-bottom: none;
 

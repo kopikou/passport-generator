@@ -68,6 +68,7 @@ watch(additionalInfo, () => {
   about.value = _.get(tatInfo.value, `[0].${props.type}.about`)
   passed.value = _.get(tatInfo.value, `[0].${props.type}.passed`)
   unpassed.value = _.get(tatInfo.value, `[0].${props.type}.unpassed`)
+  example.value = _.get(tatInfo.value, `[0].${props.type}.example`)
 })
 
 onBeforeMount(() => {
@@ -75,6 +76,7 @@ onBeforeMount(() => {
   about.value = _.get(tatInfo.value, `[0].${props.type}.about`)
   passed.value = _.get(tatInfo.value, `[0].${props.type}.passed`)
   unpassed.value = _.get(tatInfo.value, `[0].${props.type}.unpassed`)
+  example.value = _.get(tatInfo.value, `[0].${props.type}.example`)
 })
 
 </script>
@@ -115,32 +117,42 @@ onBeforeMount(() => {
             :readonly="disabled"
             debounce="1000"
             @update:modelValue="saveData"
+            hint="Оставьте пустым если не хотите отображать данный раздел в отчетном файле"
           />
           <p class="text-subtitle1">Критерии оценивания</p>
-          <div class="row justify-between">
-            <q-input
+          <q-list bordered>
+            <q-expansion-item
               label="Зачтено"
-              type="textarea"
-              filled
-              stack-label
-              v-model="passed"
-              class="col q-mr-sm"
-              :readonly="disabled"
-              debounce="1000"
-              @update:modelValue="saveData"
-            />
-            <q-input
+            >
+              <q-input
+                class="q-pa-sm"
+                label="Зачтено"
+                type="textarea"
+                filled
+                stack-label
+                v-model="passed"
+                :readonly="disabled"
+                debounce="1000"
+                @update:modelValue="saveData"
+              />
+            </q-expansion-item>
+
+            <q-expansion-item
               label="Не зачтено"
-              type="textarea"
-              filled
-              stack-label
-              v-model="unpassed"
-              class="col q-ml-sm"
-              :readonly="disabled"
-              debounce="1000"
-              @update:modelValue="saveData"
-            />
-          </div>
+            >
+              <q-input
+                class="q-pa-sm"
+                label="Не зачтено"
+                type="textarea"
+                filled
+                stack-label
+                v-model="unpassed"
+                :readonly="disabled"
+                debounce="1000"
+                @update:modelValue="saveData"
+              />
+            </q-expansion-item>
+          </q-list>
 
           <!--          <q-btn-->
           <!--            label="Сохранить"-->
