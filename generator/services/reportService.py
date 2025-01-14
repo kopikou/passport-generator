@@ -428,12 +428,13 @@ class ReportService(object):
             tmp = []
             for item in items:
                 res = []
-                for q in srs_work_grouped[key]:
-                    if q['theme'] == item['name']:
-                        r = list(filter(
-                                lambda x: x['content'] == q['content'], srs_work_res[key]
-                            ))
-                        res.append(str(r[0]['number']))
+                if srs_work_grouped:
+                    for q in srs_work_grouped[key]:
+                        if q['theme'] == item['name']:
+                            r = list(filter(
+                                    lambda x: x['content'] == q['content'], srs_work_res[key]
+                                ))
+                            res.append(str(r[0]['number']))
 
                 tmp.append({
                     "name": item['name'],
