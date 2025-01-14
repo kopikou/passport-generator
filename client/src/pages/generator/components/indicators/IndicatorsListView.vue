@@ -71,8 +71,8 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <div class="q-pb-md">
-    <span class="text-subtitle1">{{ data.indicator_index }} {{ data.indicator }}</span>
+  <div class="q-pa-sm">
+<!--    <span class="text-subtitle1">{{ data.indicator_index }} {{ data.indicator }}</span>-->
     <div class="indicators-form row justify-between q-gutter-md">
       <q-input
         filled

@@ -24,9 +24,15 @@ const filteredData = computed(() => {
       <span class="text-h6 q-pl-lg">Индикаторы по дисциплине</span>
       <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
-      <div v-for="i in filteredData">
-        <indicators-list-view  :data="i"/>
-      </div>
+      <q-list bordered>
+        <div v-for="i in filteredData">
+          <q-expansion-item
+            :label="`${i.indicator_index} ${i.indicator}`"
+          >
+            <indicators-list-view :data="i"/>
+          </q-expansion-item>
+        </div>
+      </q-list>
     </div>
   </div>
 </template>
