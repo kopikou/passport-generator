@@ -80,15 +80,20 @@ class Mira:
         ]
 
     @classmethod
-    def exec(cls, query, params):
-        with connections['mira'].cursor() as cursor:
+    def exec(cls, query, params, as_dict=False):
+        with connections[cls.key].cursor() as cursor:
             d = cursor.execute(query, params)
             while True:
                 if cursor.description:
-                    data = d.fetchall()
+                    if as_dict:
+                        data = cls.dictfetchall(d)
+                    else:
+                        data = d.fetchall()
                 if cursor.nextset() == False:
                     break
-            connections['mira'].commit()
+            connections[cls.key].commit()
+        return data
+
 
     @classmethod
     def fetch(cls, query, params=None):
