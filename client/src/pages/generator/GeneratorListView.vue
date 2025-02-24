@@ -54,10 +54,13 @@ function openManageDialog(id, item) {
       id: id,
       data: item,
     }
+  }).onOk(() => {
+    getProgramData()
   })
 }
 
 async function getProgramData() {
+  listData.value = []
   let r = await api.get("/api/generator/get-program-list/")
   listData.value = r.data
 }

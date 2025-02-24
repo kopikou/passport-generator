@@ -15,6 +15,11 @@ class PlanLinesLink(TimestampsModel):
         accepted = 3, "Утвержден"
         on_refile = 4, "Требуются правки"
 
+    class UserTypeChoices(models.IntegerChoices):
+        rop = 0, "Руководитель программы"
+        zav = 1, "Заведующий кафедрой"
+        director = 2, "Директор института"
+
     cadmission = models.IntegerField()
     planlines = models.ForeignKey(LinesData, on_delete=models.CASCADE)
     mira_id = models.IntegerField()
@@ -23,6 +28,11 @@ class PlanLinesLink(TimestampsModel):
     protocol_number = models.TextField(null=True, blank=True)
     protocol_date = models.DateField(null=True, blank=True)
     user_accepted = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    user_type = models.IntegerField(choices=UserTypeChoices.choices, default=None, null=True, blank=True)
+    meeting = models.TextField(null=True, blank=True)
+
+    review_date = models.DateField(null=True, blank=True)
+    accept_date = models.DateField(null=True, blank=True)
 
     @property
     def status_verbose(self):

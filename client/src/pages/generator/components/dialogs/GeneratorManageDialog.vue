@@ -30,12 +30,22 @@ const oldComments = ref([])
 const disabled = computed(() => {
   if (!protocolNumber.value) return true
   if (!protocolDate.value) return true
+  if (!meeting.value) return true
+  if (!userType.value) return true
 
   return false
 })
 const protocolNumber = ref()
 const protocolDate = ref()
 const acceptRPD = ref(false)
+const userType = ref(0)
+const meeting = ref()
+const userTypeOptions = [
+  {value: 0, label: 'Руководитель программы'},
+  {value: 1, label: 'Заведующий кафедрой'},
+  {value: 2, label: 'Директор института'},
+]
+
 const $q = useQuasar()
 
 async function getRPD() {
@@ -49,7 +59,9 @@ async function getAnnot() {
 async function onAcceptClick() {
   let r = await api.post(`/api/generator/${props.id}/accept-rpd/`, {
     date: protocolDate.value,
-    number: protocolNumber.value
+    number: protocolNumber.value,
+    userType: userType.value,
+    meeting: meeting.value,
   })
   onDialogOK()
 }
@@ -108,7 +120,8 @@ function getStatusColor(status) {
           </q-chip>
         </div>
         <div class="text-subtitle2">Текущий статус:
-          <q-chip style="max-width: 500px" :class="getStatusColor(props.data.status)" square :label="props.data.status_verbose">
+          <q-chip style="max-width: 500px" :class="getStatusColor(props.data.status)" square
+                  :label="props.data.status_verbose">
             <q-tooltip>
               {{ props.data.status_verbose }}
             </q-tooltip>
@@ -132,7 +145,7 @@ function getStatusColor(status) {
         </div>
       </q-card-section>
 
-      <q-card-section>
+      <q-card-section v-if="props.data.status != 3">
         <q-input
           label="Комментарий"
           v-model="comment"
@@ -151,8 +164,9 @@ function getStatusColor(status) {
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat color="teal" label="Утвердить" @click="acceptRPD = true"/>
-        <q-btn flat color="warning" label="Отправить на доработку" @click="onRefileClick"/>
+        <q-btn flat color="teal" label="Утвердить" @click="acceptRPD = true" :disable="props.data.status == 3"/>
+        <q-btn flat color="warning" label="Отправить на доработку" @click="onRefileClick"
+               :disable="props.data.status == 3"/>
         <q-btn flat color="red" label="Отмена" @click="onDialogCancel"/>
       </q-card-actions>
     </q-card>
@@ -192,6 +206,22 @@ function getStatusColor(status) {
       </q-card-section>
       <q-card-section>
         <div class="q-gutter-md">
+          <q-select
+            v-model="userType"
+            label="Кто утвердил"
+            :options="userTypeOptions"
+            stack-label
+            map-options
+            emit-value
+            filled
+          />
+          <q-input
+            v-model="meeting"
+            type="text"
+            stack-label
+            label="Заседание"
+            filled
+          />
           <q-input
             v-model="protocolNumber"
             type="text"

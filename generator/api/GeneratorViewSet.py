@@ -1,5 +1,6 @@
 from itertools import groupby
 
+import pendulum
 from django.http import HttpResponse
 from django.utils.encoding import escape_uri_path
 from rest_framework.response import Response
@@ -270,6 +271,7 @@ class GeneratorViewSet(
     def send_rpd_on_review(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.on_review
+        instance.review_date = pendulum.now()
         instance.save()
 
         return Response(data={'status_verbose': PlanLinesLink.StatusChoices.on_review.label, 'status': PlanLinesLink.StatusChoices.on_review})
@@ -281,7 +283,10 @@ class GeneratorViewSet(
         instance.status = PlanLinesLink.StatusChoices.accepted
         instance.protocol_number = self.request.data['number']
         instance.protocol_date = self.request.data['date']
-        instance.user_accepted = self.request.user.id
+        instance.user_type = self.request.data['userType']
+        instance.meeting = self.request.data['meeting']
+        instance.user_accepted = self.request.user
+        instance.accept_date = pendulum.now()
         instance.save()
 
         return Response({"success": True})

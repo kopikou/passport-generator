@@ -24,6 +24,8 @@ class UserProfile(TimestampsModel):
     is_student = models.BooleanField("Является студентом", default=True)
     is_teacher = models.BooleanField("Является преподавателем", default=False)
 
+    middle_name = models.CharField(max_length=256, null=True, blank=True)
+
     permissions = ArrayField(models.TextField(choices=Permissions.choices), default=list, blank=True)
 
     class Meta:

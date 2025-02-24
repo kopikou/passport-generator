@@ -100,6 +100,7 @@ class BitrixAuthView(APIView):
 
         user.userprofile.is_teacher = bool(result['is_teacher'])
         user.userprofile.is_student = bool(result['is_student'])
+        user.userprofile.middle_name = result['second_name']
 
         mira_id = int(result['mira_id'][0] if result['mira_id'] or 0 else 0)
         if mira_id > 2:

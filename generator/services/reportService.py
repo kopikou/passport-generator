@@ -3,10 +3,12 @@ from itertools import groupby
 from pathlib import Path
 
 import pendulum
+from django.contrib.auth.models import User
 from docxtpl import DocxTemplate
 
 from app.settings import BASE_DIR
 from arim.models import CatPerson
+from generator.models import PlanLinesLink
 
 
 def get_tic_name(data):
@@ -94,7 +96,12 @@ class ReportService(object):
 
     @staticmethod
     def get_rpd_report(data):
-        path = f"{BASE_DIR}{Path("/templates/docxRPD/rpd.docx")}"
+
+        if data['status'] == 3:
+            path = f"{BASE_DIR}{Path("/templates/docxRPD/rpd_sign.docx")}"
+        else:
+            path = f"{BASE_DIR}{Path("/templates/docxRPD/rpd.docx")}"
+
         doc = DocxTemplate(path)
 
         competences_sorted = sorted(data['planlines']['indicators'], key=lambda item: item['competence_index'])
@@ -486,6 +493,9 @@ class ReportService(object):
                 "srs_hours": sum([i['srs_hours'] for i in tmp if i['srs_hours'] != '']) if sum([i['srs_hours'] for i in tmp if i['srs_hours'] != '']) != 0 else '',
             })
 
+        protocol_date = pendulum.from_format(data['protocol_date'], "YYYY-MM-DD")
+        user_accepted = User.objects.get(id=data['user_accepted_id'])
+
         context = {
             "now": pendulum.now().start_of("day"),
             "current_year": pendulum.now().year,
@@ -523,6 +533,14 @@ class ReportService(object):
             "resources": resources,
             "software": software,
             "logistics": logistics,
+            "protocol_number": data['protocol_number'],
+            "protocol_date": f"{protocol_date.format("DD.MM.YYYY")}",
+            "protocol_year": protocol_date.year,
+            "user_accepted": f"{user_accepted.last_name} {user_accepted.first_name} {user_accepted.userprofile.middle_name}",
+            "user_type": PlanLinesLink.UserTypeChoices.labels[data['user_type']],
+            "meeting": data['meeting'],
+            "accept_date": data['accept_date'],
+            "review_date": data['review_date'],
         }
 
         doc.render(context)

@@ -195,6 +195,15 @@ class PlanLinesLinkSerializer(serializers.Serializer):
     status = serializers.IntegerField()
     status_verbose = serializers.CharField(read_only=True)
 
+    protocol_number = serializers.CharField(required=False)
+    protocol_date = serializers.DateField(required=False)
+    user_accepted_id = serializers.IntegerField(required=False)
+    user_type = serializers.IntegerField(required=False)
+    meeting = serializers.CharField(required=False)
+
+    review_date = serializers.DateField(required=False)
+    accept_date = serializers.DateField(required=False)
+
     discipline_themes = DisciplineThemeSerializer(many=True)
     discipline_work_hour = DisciplineWorkHoursSerializer(many=True)
 
@@ -211,6 +220,15 @@ class PlanLinesLinkSerializer(serializers.Serializer):
             'person',
             'status',
             'status_verbose',
+
+            'review_date',
+            'accept_date',
+
+            'protocol_number',
+            'protocol_date',
+            'user_accepted_id',
+            'user_type',
+            'meeting',
 
             'discipline_themes',
             'discipline_work_hour',

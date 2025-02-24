@@ -13,4 +13,5 @@ class UserSerializer(serializers.ModelSerializer):
             'user_id',
             "last_name",
             "first_name",
+            "middle_name",
         ]
