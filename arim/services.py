@@ -124,7 +124,7 @@ class AISServices(object):
             "id",
             "cnt",
             "clicense__name"
-        )
+        )[:100]
 
         return data
 
@@ -153,6 +153,6 @@ class AISServices(object):
             'name',
             'inv',
             'caud__name',
-        )
+        )[:100]
 
         return data

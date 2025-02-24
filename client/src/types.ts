@@ -145,7 +145,7 @@ export interface GeneratorListData {
   yr: number,
   id_admission: number,
   mira_id: number,
-  type: number,
+  type: Array,
   person: string,
   id: number,
   status: number,

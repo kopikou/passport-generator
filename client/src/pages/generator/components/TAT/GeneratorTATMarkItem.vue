@@ -125,7 +125,7 @@ onBeforeMount(() => {
             :readonly="disabled"
             debounce="1000"
             @update:modelValue="saveData"
-            hint="Оставьте пустым если не хотите отображать данный раздел в отчетном файле"
+            hint="Если Вам не нужен пример билета, оставьте поле пустым"
           />
           <p class="text-subtitle1">Критерии оценивания</p>
           <q-list bordered>

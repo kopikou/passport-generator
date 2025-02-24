@@ -33,9 +33,9 @@ const columns = ref([
 
 function checkTaken(id) {
   if (_.map(mainBook.value, (x) => x.id).includes(id))
-    return true
+    return 'main'
   if (_.map(dopBook.value, (x) => x.id).includes(id))
-    return true
+    return 'dop'
   return false
 }
 
@@ -189,10 +189,14 @@ onBeforeMount(() => {
                 <div class="text-subtitle1 self-center full-width no-outline">
                   <a v-if="item.http_link" :href="`${item.http_link}`" target="_blank">{{ item.bib_disc }}</a>
                   <span v-else>{{ item.bib_disc }}</span>
-                  <div class="q-gutter-x-md q-mt-md">
-                    <q-btn :disabled="checkTaken(item.id)" color="primary" label="В основную литературу"
+                  <div v-if="checkTaken(item.id)">
+                    <q-btn v-if="checkTaken(item.id) == 'main'"  readonly>В основной литературе</q-btn>
+                    <q-btn v-if="checkTaken(item.id) == 'dop'"  readonly>В дополнительной литературе</q-btn>
+                  </div>
+                  <div v-else class="q-gutter-x-md q-mt-md">
+                    <q-btn color="primary" label="В основную литературу"
                            @click="addMainBook(item)"/>
-                    <q-btn :disabled="checkTaken(item.id)" color="secondary" label="В дополнительную литературу"
+                    <q-btn color="secondary" label="В дополнительную литературу"
                            @click="addDopBook(item)"/>
                   </div>
                 </div>

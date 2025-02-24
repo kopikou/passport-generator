@@ -116,27 +116,16 @@ class GeneratorViewSet(
                     "discode": lines.planlines.newdisid,
                 })
 
-        sorted_result = sorted(result, key=lambda x: (x['abbr'], x['yr'], x['discpl']))
-        grouped_result = {f"{key[0]}-{key[1]}": list(items) for key, items in
-                          groupby(sorted_result, key=lambda x: (x['abbr'], x['yr']))}
+        sorted_result = sorted(result, key=lambda x: (x['planlin'], x['mira_id']))
+        grouped_result = {key: list(items) for key, items in groupby(sorted_result, key=lambda x: (x['planlin'], x['mira_id']))}
 
-        res = {
-            "admin": {},
-            "person": {},
-        }
-
+        res = []
         for key, items in grouped_result.items():
-            admin_list = []
-            person_list = []
-            for item in items:
-                if item['type'] == 'admin':
-                    admin_list.append(item)
-                elif item['type'] == 'person':
-                    person_list.append(item)
-            if admin_list:
-                res['admin'].update({key: admin_list})
-            if person_list:
-                res['person'].update({key: person_list})
+            temp = {
+                **items[0],
+                "type": [i['type'] for i in items],
+            }
+            res.append(temp)
 
         return Response(
             data=res,

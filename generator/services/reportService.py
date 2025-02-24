@@ -276,7 +276,8 @@ class ReportService(object):
             })
 
         semester_hours_sorted = sorted(semester_hours, key=lambda x: x['num'])
-        semester_hours_grouped = {key: list(item) for key, item in groupby(semester_hours_sorted, key=lambda x: x['num'])}
+        semester_hours_grouped = {key: list(item) for key, item in
+                                  groupby(semester_hours_sorted, key=lambda x: x['num'])}
 
         semester_hours_all = {
             "lekc_hours_all": sum([i['lekc'] for i in data['planlines']['semesters'] if i['lekc'] is not None]),
@@ -432,8 +433,8 @@ class ReportService(object):
                     for q in srs_work_grouped[key]:
                         if q['theme'] == item['name']:
                             r = list(filter(
-                                    lambda x: x['content'] == q['content'], srs_work_res[key]
-                                ))
+                                lambda x: x['content'] == q['content'], srs_work_res[key]
+                            ))
                             res.append(str(r[0]['number']))
 
                 tmp.append({
@@ -441,13 +442,17 @@ class ReportService(object):
                     "tic": item['formcontrol_verbose'],
                     "num": item['num'],
                     "lekc": item['num'],
-                    "lekc_hours": sum([i['hours'] for i in item['lekc']])  if sum([i['hours'] for i in item['lekc']]) != 0 else '',
+                    "lekc_hours": sum([i['hours'] for i in item['lekc']]) if sum(
+                        [i['hours'] for i in item['lekc']]) != 0 else '',
                     "lab": ', '.join([str(i['number']) for i in item['lab']]),
-                    "lab_hours": sum([i['hours'] for i in item['lab']])  if sum([i['hours'] for i in item['lab']]) != 0 else '',
+                    "lab_hours": sum([i['hours'] for i in item['lab']]) if sum(
+                        [i['hours'] for i in item['lab']]) != 0 else '',
                     "pr": ', '.join([str(i['number']) for i in item['pr']]),
-                    "pr_hours": sum([i['hours'] for i in item['pr']]) if sum([i['hours'] for i in item['pr']]) != 0 else '',
+                    "pr_hours": sum([i['hours'] for i in item['pr']]) if sum(
+                        [i['hours'] for i in item['pr']]) != 0 else '',
                     "srs": ', '.join(res),
-                    "srs_hours": sum([i['hours'] for i in item['srs']])  if sum([i['hours'] for i in item['srs']]) != 0 else '',
+                    "srs_hours": sum([i['hours'] for i in item['srs']]) if sum(
+                        [i['hours'] for i in item['srs']]) != 0 else '',
                 })
 
             wk_data[key] = tmp
@@ -455,13 +460,31 @@ class ReportService(object):
             wk_data[key].append({
                 "name": 'Промежуточная аттестация',
                 "tic": semester_hours_grouped[key][0]['tic'],
-                "srs_hours": semester_hours_grouped[key][0]['ekz_hours'] if semester_hours_grouped[key][0]['ekz_hours'] != 0 else '',
+                "num": '',
+                "lekc": '',
+                "lekc_hours": '',
+                "lab": '',
+                "lab_hours": '',
+                "pr": '',
+                "pr_hours": '',
+                "srs": '',
+                "srs_hours": semester_hours_grouped[key][0]['ekz_hours'] if semester_hours_grouped[key][0][
+                                                                                'ekz_hours'] != 0 else '',
             })
 
             wk_data[key].append({
                 "name": 'Всего',
+                "tic": '',
+                "num": '',
+                "lekc": '',
+                "lekc_hours": sum([i['lekc_hours'] for i in tmp if i['lekc_hours'] != '']) if sum([i['lekc_hours'] for i in tmp if i['lekc_hours'] != '']) != 0 else '',
+                "lab": '',
+                "lab_hours": sum([i['lab_hours'] for i in tmp if i['lab_hours'] != '']) if sum([i['lab_hours'] for i in tmp if i['lab_hours'] != '']) != 0 else '',
+                "pr": '',
+                "pr_hours": sum([i['pr_hours'] for i in tmp if i['pr_hours'] != '']) if sum([i['pr_hours'] for i in tmp if i['pr_hours'] != '']) != 0 else '',
+                "srs": '',
+                "srs_hours": sum([i['srs_hours'] for i in tmp if i['srs_hours'] != '']) if sum([i['srs_hours'] for i in tmp if i['srs_hours'] != '']) != 0 else '',
             })
-
 
         context = {
             "now": pendulum.now().start_of("day"),

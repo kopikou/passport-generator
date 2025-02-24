@@ -25,8 +25,27 @@ import GeneratorManageDialog from "pages/generator/components/dialogs/GeneratorM
 
 const $q = useQuasar()
 const router = useRouter()
-const personListData = ref<GeneratorListData[]>([])
-const adminListData = ref<GeneratorListData[]>([])
+const listData = ref<GeneratorListData[]>([])
+
+const typeFilter = [
+  {label: 'Руководитель программы', value: 'rop'},
+  {label: 'Директор', value: 'fac'},
+  {label: 'Заведующий кафедры', value: 'zav'},
+  {label: 'Преподаватель', value: 'person'},
+]
+
+const type = ref(['person'])
+
+const filteredListData = computed(() => {
+  return _(listData.value)
+    .filter(x => {
+      return x.type.some(q => type.value.includes(q));
+    })
+    .orderBy(x => x.discode, 'asc')
+    .groupBy(x => x.abbr)
+    .value()
+})
+
 
 function openManageDialog(id, item) {
   $q.dialog({
@@ -38,22 +57,24 @@ function openManageDialog(id, item) {
   })
 }
 
-function filterMyList(data) {
-  return _(data).orderBy(x => [x.status, x.discode], ['desc']).value()
-}
-function filterAllList(data) {
-  return _(data).orderBy(x => [x.status, x.discode], ['desc']).value()
-}
-
 async function getProgramData() {
   let r = await api.get("/api/generator/get-program-list/")
-  personListData.value = r.data.person
-  adminListData.value = r.data.admin
+  listData.value = r.data
 }
 
 const cafDataById = computed(() => {
   return _.keyBy(cafData.value, 'value')
 })
+
+function getEditRules(type) {
+  const rules = ['person']
+  return type.some(q => rules.includes(q))
+}
+
+function getViewRules(type) {
+  const rules = ['rop', 'fac', 'zav']
+  return type.some(q => rules.includes(q))
+}
 
 function getRowColor(number) {
   return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
@@ -72,66 +93,51 @@ onBeforeMount(async () => {
     <div class="text-center text-h6 q-mb-md">Список рабочих программ дисциплин ИРНИТУ</div>
     <div>
       <div>
-        <div class="text-center text-subtitle1">Ваши РПД</div>
+        <div class="text-center text-subtitle1">Список РПД</div>
+        <q-select
+          class="q-mb-sm"
+          v-model="type"
+          :options="typeFilter"
+          label="Фильтр"
+          option-label="label"
+          option-value="value"
+          stack-label
+          multiple
+          use-chips
+          map-options
+          emit-value
+          outlined
+        />
         <q-list
           bordered
           separator
         >
           <q-expansion-item
-            v-for="items, key in personListData"
+            v-for="items, key in filteredListData"
             :label="key"
           >
             <q-card>
               <q-card-section>
                 <div class="rpd-container">
-                  <div class="rpd-row rpd-row__header text-weight-bold">
+                  <div class="rpd-row rpd-row__header text-weight-bold text-center">
                     <div>Код</div>
                     <div>Дисциплина</div>
                     <div>Составитель</div>
                     <div>Кафедра</div>
                     <div>Статус</div>
+                    <div>Управление</div>
                   </div>
-                  <div class="rpd-row rpd-row__body" v-for="item, key in filterMyList(items)"
-                       @click="router.push(`/generator/${item.id}/main`)">
+                  <div class="rpd-row rpd-row__body text-center" v-for="item, key in items">
+<!--                       @click="router.push(`/generator/${item.id}/main`)"-->
                     <div :class="getRowColor(key)">{{ item.discode }}</div>
                     <div :class="getRowColor(key)">{{ item.discpl }}</div>
                     <div :class="getRowColor(key)">{{ item.person }}</div>
                     <div :class="getRowColor(key)">{{ cafDataById[item.kafcode]?.label }}</div>
                     <div :class="getRowColor(key)">{{ item.status_verbose }}</div>
-                  </div>
-                </div>
-              </q-card-section>
-            </q-card>
-          </q-expansion-item>
-        </q-list>
-      </div>
-      <div>
-        <div class="text-center text-subtitle1">Все РПД</div>
-        <q-list
-          bordered
-          separator
-        >
-          <q-expansion-item
-            v-for="items, key in adminListData"
-            :label="key"
-          >
-            <q-card>
-              <q-card-section>
-                <div class="rpd-container">
-                  <div class="rpd-row rpd-row__header text-weight-bold">
-                    <div>Код</div>
-                    <div>Дисциплина</div>
-                    <div>Составитель</div>
-                    <div>Кафедра</div>
-                    <div>Статус</div>
-                  </div>
-                  <div class="rpd-row rpd-row__body" v-for="item, key in filterAllList(items)"
-                       @click="openManageDialog(item.id, item)">
-                    <div :class="getRowColor(key)">{{ item.discode }}</div>
-                    <div :class="getRowColor(key)">{{ item.discpl }}</div>
-                    <div :class="getRowColor(key)">{{ item.person }}</div>
-                    <div :class="getRowColor(key)">{{ cafDataById[item.kafcode]?.label }}</div>
-                    <div :class="getRowColor(key)">{{ item.status_verbose }}</div>
+                    <div :class="getRowColor(key)">
+                      <q-btn v-if="getEditRules(item.type)" dense flat color="primary" icon="mdi-pencil" label="заполнить" @click="router.push(`/generator/${item.id}/main`)"/>
+                      <q-btn v-if="getViewRules(item.type)" dense flat color="secondary" icon="mdi-briefcase-eye" label="просмотр" @click="openManageDialog(item.id, item)"/>
+                    </div>
                   </div>
                 </div>
               </q-card-section>
@@ -146,7 +152,7 @@ onBeforeMount(async () => {
 <style scoped lang="scss">
 .rpd-container {
   display: grid;
-  grid-template-columns: auto repeat(3, 1fr) auto;
+  grid-template-columns: auto repeat(3, 1fr) auto auto;
 }
 
 .rpd-row {
@@ -172,12 +178,11 @@ onBeforeMount(async () => {
   }
 
   &.rpd-row__body {
-    &:hover {
-      > div {
-        background: $info !important;
-        cursor: pointer;
-      }
-    }
+    //&:hover {
+    //  > div {
+    //    background: $info !important;
+    //  }
+    //}
   }
 
 }
