@@ -51,7 +51,7 @@ class Command(BaseCommand):
                     defaults=transfer_plan_data,
                 )
 
-                Catadmission.objects.filter(id=cadmission.id).update(cuchplan_id=uchplan.id)
+                # Catadmission.objects.filter(id=cadmission.id).update(cuchplan_id=uchplan.id)
 
 
             for file in files_data:
@@ -104,6 +104,7 @@ class Command(BaseCommand):
                     "viewpract": line['viewpract'],
                     "viewobject": line['viewobject'],
                 }
+
                 lines, created = UchPlanLines.objects.get_or_create(
                     planid_id=uchplan.id,
                     disid_id=transfer_line_data['disid_id'],

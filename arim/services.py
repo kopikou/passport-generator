@@ -117,6 +117,19 @@ class AISServices(object):
 
         return data
 
+
+    @staticmethod
+    def get_asp_napr(year):
+
+        data = Mira.fetch(f"""
+            SELECT * FROM uchplan_plan p
+            LEFT JOIN catadmission c on p.cadmission = c.id
+            WHERE startyear = %s and c.cadmkind = 5
+            """, [year])
+
+        return data
+
+
     @staticmethod
     def search_software(val):
 

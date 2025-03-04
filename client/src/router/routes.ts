@@ -27,6 +27,8 @@ import GeneratorGuidelinesView from "pages/generator/components/GeneratorGuideli
 import GeneratorFOSView from "pages/generator/components/GeneratorFOSView.vue";
 import GeneratorTATView from "pages/generator/components/GeneratorTATView.vue";
 import UploadView from "pages/upload/UploadView.vue";
+import AspirantScientificPlansPage from "pages/scientificPlan/AspirantScientificPlansPage.vue";
+import AspirantScientificPlanView from "pages/scientificPlan/AspirantScientificPlanView.vue";
 
 
 const routes: RouteRecordRaw[] = [
@@ -34,6 +36,25 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     name: 'home',
     component: IndexPage,
+  },
+  {
+    path: '/scientific-plan',
+    meta: {
+      permissions: [Permissions.can_use_generator],
+    },
+    children: [
+      {
+        path: '',
+        name: 'ScientificPlans',
+        component: AspirantScientificPlansPage,
+      },
+      {
+        path: ':id',
+        name: 'ScientificPlan',
+        component: AspirantScientificPlanView,
+        props: true,
+      },
+    ]
   },
   {
     path: '/generator',

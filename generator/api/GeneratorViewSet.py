@@ -72,6 +72,15 @@ class GeneratorViewSet(
 
         return Response(result)
 
+    @action(methods=['get'], url_path="get-aps-program-list", detail=False)
+    def get_aps_program_list(self, request, *args, **kwargs):
+        user = self.request.user.userprofile.mira_id
+
+        data = AISServices.get_asp_napr(self.request.query_params.get('year', pendulum.now().year))
+
+        return Response(data)
+
+
     @action(methods=['GET'], url_path="get-program-list", detail=False)
     def get_program_list(self, request, *args, **kwargs):
 
