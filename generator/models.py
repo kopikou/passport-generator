@@ -81,6 +81,7 @@ class DisciplineThemes(TimestampsModel):
     def formcontrol_verbose(self):
         return FormControl.objects.get(id=self.formcontrol_id).name
 
+
 class DisciplineWorkHours(TimestampsModel):
 
     class TypeChoices(models.IntegerChoices):
@@ -118,3 +119,23 @@ class AdditionalInfo(TimestampsModel):
     planlineslink = models.ForeignKey("PlanLinesLink", on_delete=models.CASCADE, related_name="additional_info")
     type = models.TextField()
     value = models.JSONField(default=dict)
+
+
+class ScientificPlanData(TimestampsModel):
+
+    cfac = models.TextField(null=True, blank=True)
+    cfob = models.TextField(null=True, blank=True)
+    ckaf = models.TextField(null=True, blank=True)
+    director = models.TextField(null=True, blank=True)
+    fgt = models.TextField(null=True, blank=True)
+    name = models.TextField(null=True, blank=True)
+    rng = models.CharField(null=True, blank=True)
+    rop = models.TextField(null=True, blank=True)
+    startyear = models.CharField(null=True, blank=True)
+    viceRector = models.TextField(null=True, blank=True)
+    year = models.CharField(null=True, blank=True)
+    zavkaf = models.TextField(null=True, blank=True)
+    mira_id = models.IntegerField()
+
+    def __str__(self):
+        return self.name

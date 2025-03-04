@@ -13,12 +13,12 @@ from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
-    DefaultsResources, PlanLinesLinkComments
+    DefaultsResources, PlanLinesLinkComments, ScientificPlanData
 from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer
 from generator.services import ReportService
-from rpd.models import LinesData
+from rpd.models import LinesData, PlanData
 
 
 class GeneratorViewSet(
@@ -79,6 +79,52 @@ class GeneratorViewSet(
         data = AISServices.get_asp_napr(self.request.query_params.get('year', pendulum.now().year))
 
         return Response(data)
+
+
+    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True)
+    def get_asp_program_detail(self, request, *args, **kwargs):
+
+        pk = self.kwargs['pk']
+
+        mira_data = AISServices.get_asp_napr_detail(pk)
+        plan_data = PlanData.objects.filter(mira_id=pk).values()
+
+        if not mira_data or not plan_data:
+            return Response(data={"status": 'no data'})
+
+        fgt = ''
+        if plan_data[0]['gosdocument']:
+            fgt += f"№ {plan_data[0]['gosdocument']}"
+
+        if plan_data[0]['gosdate']:
+            fgt += f' от {plan_data[0]['gosdate']}'
+
+        result = {
+            "ckaf": mira_data[0]['ckaf'],
+            "name": mira_data[0]['species'],
+            "cfac": mira_data[0]['cfac'],
+            "rng": mira_data[0]['range'],
+            "cfob": mira_data[0]['cfob'],
+            "startyear": mira_data[0]['startyear'],
+            "fgt": fgt,
+            "viceRector": 'Смирнов Владимир Владимирович',
+            "director": mira_data[0]['dean'],
+            "zavkaf": mira_data[0]['zav'],
+            "rop": mira_data[0]['rop'],
+            "year": mira_data[0]['yr'],
+            "mira_id": pk,
+        }
+
+        plan, created = ScientificPlanData.objects.get_or_create(
+            mira_id=pk,
+            defaults={
+                **result,
+            }
+        )
+
+        result['id'] = plan.id
+
+        return Response(data=result)
 
 
     @action(methods=['GET'], url_path="get-program-list", detail=False)

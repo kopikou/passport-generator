@@ -117,12 +117,40 @@ class AISServices(object):
 
         return data
 
+    @staticmethod
+    def get_asp_napr_detail(id):
+
+        data = Mira.fetch(f"""
+                SELECT 
+                k.name AS ckaf, 
+                up.species, 
+                f.name AS cfac, 
+                YEAR(c.dateend) - YEAR(c.datebegin) AS range, 
+                c.datebegin, 
+                c.dateend, 
+                fo.name AS cfob,
+                up.startyear,
+                f.dean,
+                k.zav,
+                c.yr,
+                p.name AS rop
+                FROM uchplan_plan up
+                left JOIN catadmission c ON c.id = up.cadmission
+                left JOIN catkaf k ON up.ckaf = k.id
+                LEFT JOIN catfaculty f ON f.id = k.cfac
+                left JOIN cl$fob fo ON c.cfob = fo.id
+                left join cl$spec s ON c.cspec = s.id
+                LEFT join catperson p ON s.cprepod = p.id
+                where up.id = %s
+            """, [id])
+
+        return data
 
     @staticmethod
     def get_asp_napr(year):
 
         data = Mira.fetch(f"""
-            SELECT * FROM uchplan_plan p
+            SELECT c.name, p.species, p.id FROM uchplan_plan p
             LEFT JOIN catadmission c on p.cadmission = c.id
             WHERE startyear = %s and c.cadmkind = 5
             """, [year])
