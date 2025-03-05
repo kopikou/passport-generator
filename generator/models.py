@@ -139,3 +139,10 @@ class ScientificPlanData(TimestampsModel):
 
     def __str__(self):
         return self.name
+
+
+class ScientificWorkType(TimestampsModel):
+    name = models.TextField()
+
+    def __str__(self):
+        return self.name

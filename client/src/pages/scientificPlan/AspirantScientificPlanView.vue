@@ -128,6 +128,11 @@ const columns = [
 const rows = ref([])
 const mainInfo = ref()
 
+const showHelpFirstPage = ref(true)
+const showHelpSecondPage = ref(true)
+const showHelpThirdPage = ref(true)
+const showHelpFourPage = ref(true)
+
 async function fetchPlanData() {
   let r = await api.get(`/api/generator/${props.id}/get-asp-program-detail/`)
   mainInfo.value = _.get(r.data, '[0]')
@@ -168,8 +173,26 @@ onBeforeMount(async () => {
       <q-step
         :name="0"
         title="Основная информация"
-        icon=""
+        icon="mdi-text-box"
+        active-icon="mdi-text-box"
       >
+        <div class="q-gutter-y-sm q-mb-sm">
+          <q-btn @click="showHelpFirstPage = !showHelpFirstPage"
+                 :label="showHelpFirstPage ? 'Скрыть подсказку' : 'Открыть подсказку'" color="info"/>
+          <q-card class="bg-blue-2" v-if="showHelpFirstPage">
+            <q-card-section>
+              <p>
+                Данный раздел заполняется автоматически, если есть данные которые "подтянулись" у Вас есть возможность
+                их исправить.
+              </p>
+              <p>
+                После завершения работы с каждой вкладкой можно переходить к следующей. Все наработки сохранятся и в
+                дальнейшем будут выгружены в соответствующий раздел бумажного варианта плана научной деятельности
+              </p>
+            </q-card-section>
+          </q-card>
+        </div>
+
         <q-table
           :columns="columns"
           :rows="rows"
@@ -181,7 +204,8 @@ onBeforeMount(async () => {
           <template #body-cell-val="props">
             <q-td :props="props">
               <q-popup-edit v-slot="scope" v-model="props.row.val" auto-save>
-                <q-input v-model="scope.value" autofocus @focusout="scope.set" @keyup.enter="scope.set" :debounce="1000" @update:modelValue="saveMainInfo(scope.value, props.row.key)"/>
+                <q-input v-model="scope.value" autofocus @focusout="scope.set" @keyup.enter="scope.set" :debounce="1000"
+                         @update:modelValue="saveMainInfo(scope.value, props.row.key)"/>
               </q-popup-edit>
               {{ props.row.val }}
             </q-td>
@@ -192,22 +216,106 @@ onBeforeMount(async () => {
       <q-step
         :name="1"
         title="Примерный план выполнения научного исследования"
+        icon="mdi-clipboard-clock-outline"
+        active-icon="mdi-clipboard-clock-outline"
       >
-        2
+        <div class="q-gutter-y-sm">
+          <q-btn @click="showHelpSecondPage = !showHelpSecondPage"
+                 :label="showHelpSecondPage ? 'Скрыть подсказку' : 'Открыть подсказку'" color="info"/>
+          <q-card class="bg-blue-2" v-if="showHelpSecondPage">
+            <q-card-section>
+              <div>
+                <p>
+                  План на каждый семестр должен содержать виды работ, соответствующие логике проведения научного
+                  исследования
+                  в вашей предметной области. В некоторых семестрах уже имеются предложенные варианты, которые можно
+                  оставить
+                  без изменения, удалить все либо некоторые или отредактировать. При нажатии на «Добавить вид работ»
+                  можно
+                  воспользоваться вариантами из выпадающего списка (кнопка «Выбрать») или предложить свои варианты,
+                  заполнив
+                  пустое поле.
+                </p>
+                <p>
+                  После завершения работы с каждой вкладкой можно переходить к следующей. Все наработки сохранятся и в
+                  дальнейшем будут выгружены в соответствующий раздел бумажного варианта плана научной деятельности.
+                </p>
+                <p>
+                  Необходимо предложить как можно больше вариаций на каждый семестр, так как определённые Вами виды
+                  работ
+                  будут использованы аспирантами данной образовательной программы для формирования индивидуального плана
+                  работы!
+                </p>
+              </div>
+            </q-card-section>
+          </q-card>
+        </div>
       </q-step>
 
       <q-step
         :name="2"
         title="Примерный план подготовки диссертации"
+        icon="mdi-book-education"
+        active-icon="mdi-book-education"
       >
-        3
+        <div class="q-gutter-y-sm">
+          <q-btn @click="showHelpThirdPage = !showHelpThirdPage"
+                 :label="showHelpThirdPage ? 'Скрыть подсказку' : 'Открыть подсказку'" color="info"/>
+          <q-card class="bg-blue-2" v-if="showHelpThirdPage">
+            <q-card-section>
+              <div>
+                <p>
+                  При заполнении данного раздела можно воспользоваться предложенными вариантами (оставить без изменения,
+                  удалить все либо некоторые или отредактировать) либо предложить свои, нажав на кнопку «Добавить вид
+                  работ».
+
+                </p>
+                <p>
+                  После завершения работы во вкладке можно переходить к следующей. Все наработки сохранятся и в
+                  дальнейшем будут выгружены в соответствующий раздел бумажного варианта плана научной деятельности.
+                </p>
+                <p>
+                  Необходимо предложить как можно больше вариаций для выбора, так как определённые Вами виды работ будут
+                  использованы аспирантами данной образовательной программы для формирования индивидуального плана
+                  работы!
+                </p>
+              </div>
+            </q-card-section>
+          </q-card>
+        </div>
       </q-step>
 
       <q-step
         :name="3"
         title="Примерный план подготовки публикаций"
+        icon="mdi-clipboard-check-multiple"
+        active-icon="mdi-clipboard-check-multiple"
       >
-        4
+        <div class="q-gutter-y-sm">
+          <q-btn @click="showHelpFourPage = !showHelpFourPage"
+                 :label="showHelpFourPage ? 'Скрыть подсказку' : 'Открыть подсказку'" color="info"/>
+          <q-card class="bg-blue-2" v-if="showHelpFourPage">
+            <q-card-section>
+              <div>
+                <p>
+                  При заполнении данного раздела можно воспользоваться предложенными вариантами (оставить без изменения,
+                  удалить все либо некоторые или отредактировать) либо предложить свои, нажав на кнопку «Добавить вид
+                  работ».
+
+                </p>
+                <p>
+                  После завершения работы во вкладке можно переходить к следующей. Все наработки сохранятся и в
+                  дальнейшем будут выгружены в соответствующий раздел бумажного варианта плана научной деятельности.
+                </p>
+                <p>
+                  Необходимо предложить как можно больше вариаций для выбора, так как определённые Вами виды работ будут
+                  использованы аспирантами данной образовательной программы для формирования индивидуального плана
+                  работы!
+                </p>
+              </div>
+            </q-card-section>
+          </q-card>
+        </div>
       </q-step>
 
     </q-stepper>
