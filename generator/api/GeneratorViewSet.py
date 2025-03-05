@@ -16,7 +16,7 @@ from generator.models import PlanLinesLink, FormControl, IndependentTypes, Disci
     DefaultsResources, PlanLinesLinkComments, ScientificPlanData
 from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
-    DisciplineWorkHoursSerializer, AdditionalInfoSerializer
+    DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer
 from generator.services import ReportService
 from rpd.models import LinesData, PlanData
 
@@ -72,7 +72,21 @@ class GeneratorViewSet(
 
         return Response(result)
 
-    @action(methods=['get'], url_path="get-aps-program-list", detail=False)
+    @action(methods=['POST'], url_path='save-asp-program-data' , detail=True)
+    def save_asp_program_data(self, request, *args, **kwargs):
+
+        data = self.request.data
+        pk = self.kwargs['pk']
+
+        instance = ScientificPlanData.objects.get(id=pk)
+
+        serializer = ScientificPlanSerializer(instance, data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data)
+
+    @action(methods=['get'], url_path="get-asp-program-list", detail=False)
     def get_aps_program_list(self, request, *args, **kwargs):
         user = self.request.user.userprofile.mira_id
 
@@ -92,37 +106,44 @@ class GeneratorViewSet(
         if not mira_data or not plan_data:
             return Response(data={"status": 'no data'})
 
-        fgt = ''
-        if plan_data[0]['gosdocument']:
-            fgt += f"№ {plan_data[0]['gosdocument']}"
+        instance = ScientificPlanData.objects.filter(mira_id=pk).values()
 
-        if plan_data[0]['gosdate']:
-            fgt += f' от {plan_data[0]['gosdate']}'
+        if not instance:
+            fgt = ''
+            if plan_data[0]['gosdocument']:
+                fgt += f"№ {plan_data[0]['gosdocument']}"
 
-        result = {
-            "ckaf": mira_data[0]['ckaf'],
-            "name": mira_data[0]['species'],
-            "cfac": mira_data[0]['cfac'],
-            "rng": mira_data[0]['range'],
-            "cfob": mira_data[0]['cfob'],
-            "startyear": mira_data[0]['startyear'],
-            "fgt": fgt,
-            "viceRector": 'Смирнов Владимир Владимирович',
-            "director": mira_data[0]['dean'],
-            "zavkaf": mira_data[0]['zav'],
-            "rop": mira_data[0]['rop'],
-            "year": mira_data[0]['yr'],
-            "mira_id": pk,
-        }
+            if plan_data[0]['gosdate']:
+                fgt += f' от {plan_data[0]['gosdate']}'
 
-        plan, created = ScientificPlanData.objects.get_or_create(
-            mira_id=pk,
-            defaults={
-                **result,
+            result = {
+                "ckaf": mira_data[0]['ckaf'],
+                "name": mira_data[0]['species'],
+                "cfac": mira_data[0]['cfac'],
+                "rng": mira_data[0]['range'],
+                "cfob": mira_data[0]['cfob'],
+                "startyear": mira_data[0]['startyear'],
+                "fgt": fgt,
+                "viceRector": 'Смирнов Владимир Владимирович',
+                "director": mira_data[0]['dean'],
+                "zavkaf": mira_data[0]['zav'],
+                "rop": mira_data[0]['rop'],
+                "year": mira_data[0]['yr'],
+                "mira_id": pk,
             }
-        )
 
-        result['id'] = plan.id
+            plan, created = ScientificPlanData.objects.get_or_create(
+                mira_id=pk,
+                defaults={
+                    **result,
+                }
+            )
+
+            result['id'] = plan.id
+
+        else:
+            serializer = ScientificPlanSerializer(instance, many=True)
+            result = serializer.data
 
         return Response(data=result)
 

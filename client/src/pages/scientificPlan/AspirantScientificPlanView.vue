@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import {useRouter} from "vue-router";
-import {onBeforeMount, ref} from "vue";
+import {onBeforeMount, ref, watch} from "vue";
 import {useQuasar} from "quasar";
 import {api} from "boot/axios";
 import _ from "lodash";
@@ -130,8 +130,8 @@ const mainInfo = ref()
 
 async function fetchPlanData() {
   let r = await api.get(`/api/generator/${props.id}/get-asp-program-detail/`)
-  mainInfo.value = r.data
-  _.forEach(r.data, (x, key) => {
+  mainInfo.value = _.get(r.data, '[0]')
+  _.forEach(r.data[0], (x, key) => {
     if (columnsNames[key].visible) {
       rows.value.push({
         "key": key,
@@ -142,9 +142,9 @@ async function fetchPlanData() {
   })
 }
 
-async function saveMainInfo(data) {
-  console.log(mainInfo.value)
-  console.log(data)
+async function saveMainInfo(data, key) {
+  mainInfo.value[key] = data
+  let r = await api.post(`/api/generator/${mainInfo.value.id}/save-asp-program-data/`, mainInfo.value)
 }
 
 onBeforeMount(async () => {
@@ -181,8 +181,7 @@ onBeforeMount(async () => {
           <template #body-cell-val="props">
             <q-td :props="props">
               <q-popup-edit v-slot="scope" v-model="props.row.val" auto-save>
-                <q-input v-model="scope.value" autofocus @focusout="scope.set" @keyup.enter="scope.set" :debounce="500"
-                         @update:modelValue="saveMainInfo(props.row)"/>
+                <q-input v-model="scope.value" autofocus @focusout="scope.set" @keyup.enter="scope.set" :debounce="1000" @update:modelValue="saveMainInfo(scope.value, props.row.key)"/>
               </q-popup-edit>
               {{ props.row.val }}
             </q-td>

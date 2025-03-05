@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from generator.models import PlanLinesLink, DisciplineIndicators, DisciplineThemes, DisciplineWorkHours, AdditionalInfo
+from generator.models import PlanLinesLink, DisciplineIndicators, DisciplineThemes, DisciplineWorkHours, AdditionalInfo, \
+    ScientificPlanData
 from rpd.models import LinesData, LinesIndicators
 from rpd.serializer import LinesDataSerializer, SemesterDataSerializer, LinesIndicatorsSerializer, PlanDataSerializer
 
@@ -154,6 +155,7 @@ class AdditionalInfoSerializer(serializers.Serializer):
 
         return additional_info
 
+
 class DisciplineWorkHoursSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False, allow_null=True)
     planlineslink_id = serializers.IntegerField()
@@ -185,6 +187,7 @@ class DisciplineWorkHoursSerializer(serializers.Serializer):
         )
 
         return discipline_themes
+
 
 class PlanLinesLinkSerializer(serializers.Serializer):
     planlines = GeneratorLinesDataSerializer(read_only=True)
@@ -234,3 +237,47 @@ class PlanLinesLinkSerializer(serializers.Serializer):
             'discipline_work_hour',
             'additional_info',
         ]
+
+
+class ScientificPlanSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    ckaf = serializers.CharField()
+    name = serializers.CharField()
+    cfac = serializers.CharField()
+    rng = serializers.IntegerField()
+    cfob = serializers.CharField()
+    startyear = serializers.IntegerField()
+    fgt = serializers.CharField()
+    viceRector = serializers.CharField()
+    director = serializers.CharField()
+    zavkaf = serializers.CharField()
+    rop = serializers.CharField()
+    year = serializers.IntegerField()
+    mira_id = serializers.IntegerField()
+
+    class Meta:
+        model = ScientificPlanData
+        fields = [
+            'id',
+            'ckaf',
+            'name',
+            'cfac',
+            'rng',
+            'cfob',
+            'startyear',
+            'fgt',
+            'viceRector',
+            'director',
+            'zavkaf',
+            'rop',
+            'year',
+            'mira_id',
+        ]
+
+    def update(self, instance, validated_data):
+        plan_data, created = ScientificPlanData.objects.update_or_create(
+            id=instance.id,
+            defaults=validated_data,
+        )
+
+        return plan_data
