@@ -199,6 +199,7 @@ onBeforeMount(async () => {
           :rows-per-page-options="[0]"
           hide-header
           hide-bottom
+          separator="cell"
         >
 
           <template #body-cell-val="props">
