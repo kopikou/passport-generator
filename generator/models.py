@@ -141,6 +141,13 @@ class ScientificPlanData(TimestampsModel):
         return self.name
 
 
+class ScientificData(TimestampsModel):
+
+    plan = models.ForeignKey(ScientificPlanData, on_delete=models.CASCADE)
+    text = models.TextField()
+    parameters = models.JSONField()
+
+
 class ScientificWorkType(TimestampsModel):
     name = models.TextField()
 

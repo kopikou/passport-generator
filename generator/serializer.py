@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from generator.models import PlanLinesLink, DisciplineIndicators, DisciplineThemes, DisciplineWorkHours, AdditionalInfo, \
-    ScientificPlanData
+    ScientificPlanData, ScientificData
 from rpd.models import LinesData, LinesIndicators
 from rpd.serializer import LinesDataSerializer, SemesterDataSerializer, LinesIndicatorsSerializer, PlanDataSerializer
 
@@ -281,3 +281,25 @@ class ScientificPlanSerializer(serializers.Serializer):
         )
 
         return plan_data
+
+
+class ScientificDataSerializer(serializers.Serializer):
+
+    id = serializers.IntegerField()
+
+    class Meta:
+        model = ScientificData
+        fields = [
+            'id',
+            'plan_id'
+            'text',
+            'parameters',
+        ]
+
+    def create(self, validated_data):
+        data, created = ScientificData.objects.update_or_create(
+            id=validated_data['id'],
+            defaults=validated_data,
+        )
+
+        return data

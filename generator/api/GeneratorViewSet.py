@@ -16,7 +16,7 @@ from generator.models import PlanLinesLink, FormControl, IndependentTypes, Disci
     DefaultsResources, PlanLinesLinkComments, ScientificPlanData
 from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
-    DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer
+    DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
 from generator.services import ReportService
 from rpd.models import LinesData, PlanData
 
@@ -207,6 +207,17 @@ class GeneratorViewSet(
         return Response(
             data=res,
         )
+
+    @action(methods=['POST'], url_path="save-scientific-data", detail=True)
+    def save_scientific_data(self, request, *args, **kwargs):
+
+        pk = self.kwargs['pk']
+
+        serializer = ScientificDataSerializer(data={**request.data, "plan_id": pk})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data)
 
     @action(methods=['GET'], url_path="search-book", detail=False)
     def search_book(self, request, *args, **kwargs):
