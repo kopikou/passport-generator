@@ -126,7 +126,9 @@ const columns = [
 ]
 
 const rows = ref([])
+const kurs = ref(1)
 const mainInfo = ref()
+const scientificWorks = ref([])
 
 const showHelpFirstPage = ref(true)
 const showHelpSecondPage = ref(true)
@@ -147,6 +149,11 @@ async function fetchPlanData() {
   })
 }
 
+async function fetchHandbook() {
+  let r = await api.get('/api/generator/get-scientific-work/')
+  scientificWorks.value = r.data
+}
+
 async function saveMainInfo(data, key) {
   mainInfo.value[key] = data
   let r = await api.post(`/api/generator/${mainInfo.value.id}/save-asp-program-data/`, mainInfo.value)
@@ -155,6 +162,7 @@ async function saveMainInfo(data, key) {
 onBeforeMount(async () => {
   $q.loading.show({message: "Загрузка данных"})
   await fetchPlanData()
+  await fetchHandbook()
   $q.loading.hide()
 })
 
@@ -220,7 +228,7 @@ onBeforeMount(async () => {
         icon="mdi-clipboard-clock-outline"
         active-icon="mdi-clipboard-clock-outline"
       >
-        <div class="q-gutter-y-sm">
+        <div class="q-gutter-y-sm q-mb-sm">
           <q-btn @click="showHelpSecondPage = !showHelpSecondPage"
                  :label="showHelpSecondPage ? 'Скрыть подсказку' : 'Открыть подсказку'" color="info"/>
           <q-card class="bg-blue-2" v-if="showHelpSecondPage">
@@ -251,6 +259,17 @@ onBeforeMount(async () => {
             </q-card-section>
           </q-card>
         </div>
+
+        <q-stepper v-model="kurs" header-nav animated>
+          <q-step
+            v-for="kurs in parseInt(mainInfo.rng)"
+            :title="`${kurs} курс`"
+            :name="kurs"
+          >
+
+          </q-step>
+        </q-stepper>
+
       </q-step>
 
       <q-step
@@ -259,7 +278,7 @@ onBeforeMount(async () => {
         icon="mdi-book-education"
         active-icon="mdi-book-education"
       >
-        <div class="q-gutter-y-sm">
+        <div class="q-gutter-y-sm q-mb-sm">
           <q-btn @click="showHelpThirdPage = !showHelpThirdPage"
                  :label="showHelpThirdPage ? 'Скрыть подсказку' : 'Открыть подсказку'" color="info"/>
           <q-card class="bg-blue-2" v-if="showHelpThirdPage">
@@ -292,7 +311,7 @@ onBeforeMount(async () => {
         icon="mdi-clipboard-check-multiple"
         active-icon="mdi-clipboard-check-multiple"
       >
-        <div class="q-gutter-y-sm">
+        <div class="q-gutter-y-sm q-mb-sm">
           <q-btn @click="showHelpFourPage = !showHelpFourPage"
                  :label="showHelpFourPage ? 'Скрыть подсказку' : 'Открыть подсказку'" color="info"/>
           <q-card class="bg-blue-2" v-if="showHelpFourPage">

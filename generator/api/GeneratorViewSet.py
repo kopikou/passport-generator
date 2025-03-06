@@ -13,7 +13,7 @@ from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
-    DefaultsResources, PlanLinesLinkComments, ScientificPlanData
+    DefaultsResources, PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData
 from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
@@ -72,7 +72,7 @@ class GeneratorViewSet(
 
         return Response(result)
 
-    @action(methods=['POST'], url_path='save-asp-program-data' , detail=True)
+    @action(methods=['POST'], url_path='save-asp-program-data', detail=True)
     def save_asp_program_data(self, request, *args, **kwargs):
 
         data = self.request.data
@@ -93,7 +93,6 @@ class GeneratorViewSet(
         data = AISServices.get_asp_napr(self.request.query_params.get('year', pendulum.now().year))
 
         return Response(data)
-
 
     @action(methods=['GET'], url_path="get-asp-program-detail", detail=True)
     def get_asp_program_detail(self, request, *args, **kwargs):
@@ -145,8 +144,23 @@ class GeneratorViewSet(
             serializer = ScientificPlanSerializer(instance, many=True)
             result = serializer.data
 
-        return Response(data=result)
+        scientific_data = ScientificData.objects.filter(plan_id=result['id']).values()
 
+        if not scientific_data:
+
+            if result['rng'] == 3:
+
+                default_data = [
+                    {
+                        "plan_id": result['id'],
+                        "text": 'Ознакомление с тематикой исследовательских работ в выбранной области',
+                        "params": {"semester": 1, "order": 1}
+                    },
+                ]
+        elif result['rng'] == 4:
+            pass
+
+        return Response(data=result)
 
     @action(methods=['GET'], url_path="get-program-list", detail=False)
     def get_program_list(self, request, *args, **kwargs):
@@ -194,7 +208,8 @@ class GeneratorViewSet(
                 })
 
         sorted_result = sorted(result, key=lambda x: (x['planlin'], x['mira_id']))
-        grouped_result = {key: list(items) for key, items in groupby(sorted_result, key=lambda x: (x['planlin'], x['mira_id']))}
+        grouped_result = {key: list(items) for key, items in
+                          groupby(sorted_result, key=lambda x: (x['planlin'], x['mira_id']))}
 
         res = []
         for key, items in grouped_result.items():
@@ -219,180 +234,196 @@ class GeneratorViewSet(
 
         return Response(serializer.data)
 
-    @action(methods=['GET'], url_path="search-book", detail=False)
-    def search_book(self, request, *args, **kwargs):
-        val = self.request.query_params.get('val')
+    @action(methods=['GET'], url_path="get-scientific-work", detail=False)
+    def get_scientific_work(self, request, *args, **kwargs):
 
-        data = LibraryServices.search_book(val)
+        data = ScientificWorkType.objects.all().values('id', 'name')
 
-        return Response(data)
+        return Response(data=data)
 
-    @action(methods=['GET'], url_path="search-software", detail=False)
-    def search_soft(self, request, *args, **kwargs):
-        val = self.request.query_params.get('val')
 
-        data = AISServices.search_software(val)
+@action(methods=['GET'], url_path="search-book", detail=False)
+def search_book(self, request, *args, **kwargs):
+    val = self.request.query_params.get('val')
 
-        return Response(data)
+    data = LibraryServices.search_book(val)
 
-    @action(methods=['GET'], url_path="search-oborud", detail=False)
-    def search_oborud(self, request, *args, **kwargs):
-        val = self.request.query_params.get('val')
-        type = int(self.request.query_params.get('type'))
-        caf = int(self.request.query_params.get('caf'))
+    return Response(data)
 
-        data = AISServices.search_oborud(val, type, caf)
 
-        return Response(data)
+@action(methods=['GET'], url_path="search-software", detail=False)
+def search_soft(self, request, *args, **kwargs):
+    val = self.request.query_params.get('val')
 
-    @action(methods=['GET'], url_path="get-form-control-data", detail=False)
-    def get_form_control_data(self, request, *args, **kwargs):
+    data = AISServices.search_software(val)
 
-        data = FormControl.objects.all().values("id", "name", "type")
+    return Response(data)
 
-        return Response(data)
 
-    @action(methods=['GET'], url_path="get-independent-types-data", detail=False)
-    def get_independent_types_data(self, request, *args, **kwargs):
+@action(methods=['GET'], url_path="search-oborud", detail=False)
+def search_oborud(self, request, *args, **kwargs):
+    val = self.request.query_params.get('val')
+    type = int(self.request.query_params.get('type'))
+    caf = int(self.request.query_params.get('caf'))
 
-        data = IndependentTypes.objects.all().values("id", "name", "type")
+    data = AISServices.search_oborud(val, type, caf)
 
-        return Response(data)
+    return Response(data)
 
-    @action(methods=['POST'], url_path="save-discipline-indicator", detail=False)
-    def save_discipline_indicator(self, request, *args, **kwargs):
 
-        data = self.request.data
+@action(methods=['GET'], url_path="get-form-control-data", detail=False)
+def get_form_control_data(self, request, *args, **kwargs):
+    data = FormControl.objects.all().values("id", "name", "type")
 
-        serializer_data = DisciplineIndicatorsAddSerializer(data=data)
-        serializer_data.is_valid(raise_exception=True)
-        serializer_data.save()
+    return Response(data)
 
-        return Response(serializer_data.data)
 
-    @action(methods=['POST'], url_path="save-discipline-themes", detail=False)
-    def save_discipline_themes(self, request, *args, **kwargs):
+@action(methods=['GET'], url_path="get-independent-types-data", detail=False)
+def get_independent_types_data(self, request, *args, **kwargs):
+    data = IndependentTypes.objects.all().values("id", "name", "type")
 
-        data = self.request.data
+    return Response(data)
 
-        serializer_data = DisciplineThemeSerializer(data=data)
-        serializer_data.is_valid(raise_exception=True)
-        serializer_data.save()
 
-        return Response(serializer_data.data)
+@action(methods=['POST'], url_path="save-discipline-indicator", detail=False)
+def save_discipline_indicator(self, request, *args, **kwargs):
+    data = self.request.data
 
-    @action(methods=['GET'], url_path="delete-discipline-themes", detail=False)
-    def delete_discipline_themes(self, request, *args, **kwargs):
-        pk = self.request.query_params['id']
+    serializer_data = DisciplineIndicatorsAddSerializer(data=data)
+    serializer_data.is_valid(raise_exception=True)
+    serializer_data.save()
 
-        DisciplineThemes.objects.filter(id=pk).delete()
+    return Response(serializer_data.data)
 
-        return Response({"success": True})
 
-    @action(methods=['POST'], url_path="save-discipline-work-hour", detail=False)
-    def save_discipline_work(self, request, *args, **kwargs):
+@action(methods=['POST'], url_path="save-discipline-themes", detail=False)
+def save_discipline_themes(self, request, *args, **kwargs):
+    data = self.request.data
 
-        data = self.request.data
+    serializer_data = DisciplineThemeSerializer(data=data)
+    serializer_data.is_valid(raise_exception=True)
+    serializer_data.save()
 
-        serializer_data = DisciplineWorkHoursSerializer(data=data)
-        serializer_data.is_valid(raise_exception=True)
-        serializer_data.save()
+    return Response(serializer_data.data)
 
-        return Response(serializer_data.data)
 
-    @action(methods=['GET'], url_path="delete-discipline-work-hour", detail=False)
-    def delete_discipline_work_hour(self, request, *args, **kwargs):
-        pk = self.request.query_params.get('id')
+@action(methods=['GET'], url_path="delete-discipline-themes", detail=False)
+def delete_discipline_themes(self, request, *args, **kwargs):
+    pk = self.request.query_params['id']
 
-        DisciplineWorkHours.objects.filter(id=pk).delete()
+    DisciplineThemes.objects.filter(id=pk).delete()
 
-        return Response({"success": True})
+    return Response({"success": True})
 
-    @action(methods=['POST'], url_path="save-additional-info", detail=True)
-    def save_additional_info(self, request, *args, **kwargs):
 
-        data = self.request.data
+@action(methods=['POST'], url_path="save-discipline-work-hour", detail=False)
+def save_discipline_work(self, request, *args, **kwargs):
+    data = self.request.data
 
-        serializer_data = AdditionalInfoSerializer(
-            data={"planlineslink_id": self.kwargs['pk'], "type": data['type'], "value": data['value']})
-        serializer_data.is_valid(raise_exception=True)
-        serializer_data.save()
+    serializer_data = DisciplineWorkHoursSerializer(data=data)
+    serializer_data.is_valid(raise_exception=True)
+    serializer_data.save()
 
-        return Response(serializer_data.data)
+    return Response(serializer_data.data)
 
-    @action(methods=['GET'], url_path="get-rpd-report", detail=True)
-    def get_rpd_report(self, request, *args, **kwargs):
 
-        instance = self.get_object()
-        result = self.retrieve(request, *args, **kwargs).data
+@action(methods=['GET'], url_path="delete-discipline-work-hour", detail=False)
+def delete_discipline_work_hour(self, request, *args, **kwargs):
+    pk = self.request.query_params.get('id')
 
-        filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx"
+    DisciplineWorkHours.objects.filter(id=pk).delete()
 
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-        response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
+    return Response({"success": True})
 
-        doc = ReportService.get_rpd_report(result)
-        doc.save(response)
 
-        # return Response(result)
-        return response
+@action(methods=['POST'], url_path="save-additional-info", detail=True)
+def save_additional_info(self, request, *args, **kwargs):
+    data = self.request.data
 
-    @action(methods=['GET'], url_path="get-rpd-annotation", detail=True)
-    def get_rpd_annotation(self, request, *args, **kwargs):
+    serializer_data = AdditionalInfoSerializer(
+        data={"planlineslink_id": self.kwargs['pk'], "type": data['type'], "value": data['value']})
+    serializer_data.is_valid(raise_exception=True)
+    serializer_data.save()
 
-        instance = self.get_object()
-        result = self.retrieve(request, *args, **kwargs).data
+    return Response(serializer_data.data)
 
-        filename = f"Аннотация_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx"
 
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-        response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
+@action(methods=['GET'], url_path="get-rpd-report", detail=True)
+def get_rpd_report(self, request, *args, **kwargs):
+    instance = self.get_object()
+    result = self.retrieve(request, *args, **kwargs).data
 
-        doc = ReportService.get_rpd_annotation(result)
-        doc.save(response)
+    filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx"
 
-        # return Response(result)
-        return response
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
 
-    @action(methods=['GET'], url_path="send-rpd-on-review", detail=True)
-    def send_rpd_on_review(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.status = PlanLinesLink.StatusChoices.on_review
-        instance.review_date = pendulum.now()
-        instance.save()
+    doc = ReportService.get_rpd_report(result)
+    doc.save(response)
 
-        return Response(data={'status_verbose': PlanLinesLink.StatusChoices.on_review.label, 'status': PlanLinesLink.StatusChoices.on_review})
+    # return Response(result)
+    return response
 
-    @action(methods=['POST'], url_path="accept-rpd", detail=True)
-    def accept_rpd(self, request, *args, **kwargs):
 
-        instance = self.get_object()
-        instance.status = PlanLinesLink.StatusChoices.accepted
-        instance.protocol_number = self.request.data['number']
-        instance.protocol_date = self.request.data['date']
-        instance.user_type = self.request.data['userType']
-        instance.meeting = self.request.data['meeting']
-        instance.user_accepted = self.request.user
-        instance.accept_date = pendulum.now()
-        instance.save()
+@action(methods=['GET'], url_path="get-rpd-annotation", detail=True)
+def get_rpd_annotation(self, request, *args, **kwargs):
+    instance = self.get_object()
+    result = self.retrieve(request, *args, **kwargs).data
 
-        return Response({"success": True})
+    filename = f"Аннотация_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx"
 
-    @action(methods=['POST'], url_path="send-rpd-on-refile", detail=True)
-    def send_rpd_on_refile(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.status = PlanLinesLink.StatusChoices.on_refile
-        instance.save()
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
 
-        PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], user_id=self.request.user.id,
-                                             planlineslink_id=instance.id)
+    doc = ReportService.get_rpd_annotation(result)
+    doc.save(response)
 
-        return Response({"success": True})
+    # return Response(result)
+    return response
 
-    @action(methods=['GET'], url_path="get-old-comments", detail=True)
-    def get_old_comments(self, request, *args, **kwargs):
-        instance = self.get_object()
 
-        data = PlanLinesLinkComments.objects.filter(planlineslink_id=instance.id).order_by('-created_at').values()
+@action(methods=['GET'], url_path="send-rpd-on-review", detail=True)
+def send_rpd_on_review(self, request, *args, **kwargs):
+    instance = self.get_object()
+    instance.status = PlanLinesLink.StatusChoices.on_review
+    instance.review_date = pendulum.now()
+    instance.save()
 
-        return Response([i for i in data])
+    return Response(data={'status_verbose': PlanLinesLink.StatusChoices.on_review.label,
+                          'status': PlanLinesLink.StatusChoices.on_review})
+
+
+@action(methods=['POST'], url_path="accept-rpd", detail=True)
+def accept_rpd(self, request, *args, **kwargs):
+    instance = self.get_object()
+    instance.status = PlanLinesLink.StatusChoices.accepted
+    instance.protocol_number = self.request.data['number']
+    instance.protocol_date = self.request.data['date']
+    instance.user_type = self.request.data['userType']
+    instance.meeting = self.request.data['meeting']
+    instance.user_accepted = self.request.user
+    instance.accept_date = pendulum.now()
+    instance.save()
+
+    return Response({"success": True})
+
+
+@action(methods=['POST'], url_path="send-rpd-on-refile", detail=True)
+def send_rpd_on_refile(self, request, *args, **kwargs):
+    instance = self.get_object()
+    instance.status = PlanLinesLink.StatusChoices.on_refile
+    instance.save()
+
+    PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], user_id=self.request.user.id,
+                                         planlineslink_id=instance.id)
+
+    return Response({"success": True})
+
+
+@action(methods=['GET'], url_path="get-old-comments", detail=True)
+def get_old_comments(self, request, *args, **kwargs):
+    instance = self.get_object()
+
+    data = PlanLinesLinkComments.objects.filter(planlineslink_id=instance.id).order_by('-created_at').values()
+
+    return Response([i for i in data])
