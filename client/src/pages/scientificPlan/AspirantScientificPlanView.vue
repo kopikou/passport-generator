@@ -263,7 +263,10 @@ watch(kurs, () => {
 
 <template>
   <div class="q-pa-lg q-gutter-y-sm">
-    <q-btn @click="router.push('/scientific-plan')" color="primary" icon="mdi-arrow-left" label="Назад, к списку"/>
+    <div class="flex justify-between">
+        <q-btn @click="router.push('/scientific-plan')" color="primary" icon="mdi-arrow-left" label="Назад, к списку"/>
+        <q-btn color="primary" icon="mdi-content-copy" label="Печать документа"/>
+    </div>
     <q-stepper
       v-model="step"
       color="primary"
