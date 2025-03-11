@@ -1,8 +1,11 @@
 from itertools import groupby
 
 import pendulum
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from django.http import HttpResponse
 from django.utils.encoding import escape_uri_path
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.mixins import RetrieveModelMixin, ListModelMixin, DestroyModelMixin, CreateModelMixin
@@ -13,7 +16,8 @@ from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
-    DefaultsResources, PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData
+    DefaultsResources, PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
+    ScientificDataDefault
 from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
@@ -105,9 +109,10 @@ class GeneratorViewSet(
         if not mira_data or not plan_data:
             return Response(data={"status": 'no data'})
 
-        instance = ScientificPlanData.objects.filter(mira_id=pk).values()
+        try:
+            instance = ScientificPlanData.objects.get(mira_id=pk)
 
-        if not instance:
+        except ObjectDoesNotExist:
             fgt = ''
             if plan_data[0]['gosdocument']:
                 fgt += f"№ {plan_data[0]['gosdocument']}"
@@ -131,36 +136,35 @@ class GeneratorViewSet(
                 "mira_id": pk,
             }
 
-            plan, created = ScientificPlanData.objects.get_or_create(
+            instance, created = ScientificPlanData.objects.get_or_create(
                 mira_id=pk,
                 defaults={
                     **result,
                 }
             )
 
-            result['id'] = plan.id
+        serializer = ScientificPlanSerializer(instance)
+        result = serializer.data
 
-        else:
-            serializer = ScientificPlanSerializer(instance, many=True)
-            result = serializer.data
-
-        scientific_data = ScientificData.objects.filter(plan_id=result['id']).values()
+        scientific_data = ScientificData.objects.filter(plan_id=result['id']).values('id', 'text', 'parameters')
 
         if not scientific_data:
 
-            if result['rng'] == 3:
+            default_data = ScientificDataDefault.objects.filter(kurs=result['rng'])
 
-                default_data = [
-                    {
-                        "plan_id": result['id'],
-                        "text": 'Ознакомление с тематикой исследовательских работ в выбранной области',
-                        "params": {"semester": 1, "order": 1}
-                    },
-                ]
-        elif result['rng'] == 4:
-            pass
+            for item in default_data:
+                ScientificData.objects.create(
+                    plan_id=result['id'],
+                    text=item.text,
+                    parameters={'semester': item.semester, 'order': item.order, 'part': item.part},
+                )
 
-        return Response(data=result)
+            scientific_data = ScientificData.objects.filter(plan_id=result['id']).values('id', 'text', 'parameters')
+
+        return Response(data={
+            "plan": result,
+            "data": scientific_data,
+        })
 
     @action(methods=['GET'], url_path="get-program-list", detail=False)
     def get_program_list(self, request, *args, **kwargs):
@@ -240,6 +244,33 @@ class GeneratorViewSet(
         data = ScientificWorkType.objects.all().values('id', 'name')
 
         return Response(data=data)
+
+    @action(methods=['POST'], url_path="save-scientific-data", detail=True)
+    def save_scientific_data(self, request, *args, **kwargs):
+
+        pk = self.kwargs['pk']
+        res = []
+
+        for i in self.request.data:
+            res.append({
+                'id': i.get('id', None),
+                'plan_id': i.get('plan_id', None),
+                'text': i.get('text', None),
+                'parameters': i.get('parameters', None),
+            })
+
+        serializer = ScientificDataSerializer(data=res, many=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(data=serializer.data)
+
+    @action(methods=['DELETE'], url_path="del-scientific-work", detail=True)
+    def del_scientific_work(self, request, *args, **kwargs):
+
+        ScientificData.objects.get(id=self.kwargs['pk']).delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @action(methods=['GET'], url_path="search-book", detail=False)

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.enums import TextChoices, IntegerChoices
 
 from auths.models import UserProfile
 from rpd.models import LinesData, LinesIndicators
@@ -153,3 +154,21 @@ class ScientificWorkType(TimestampsModel):
 
     def __str__(self):
         return self.name
+
+
+class ScientificDataDefault(TimestampsModel):
+
+    class PartChoices(IntegerChoices):
+        science_research = 0, 'Примерный план выполнения научного исследования'
+        dissertation_preparation = 1, 'Примерный план подготовки диссертации'
+        publish_preparation = 2, 'Примерный план подготовки публикаций'
+
+
+    text = models.TextField(verbose_name='Текст')
+    semester = models.IntegerField(verbose_name='Семестр')
+    order = models.IntegerField(verbose_name='Порядок')
+    kurs = models.IntegerField(verbose_name='Сколько курсов идет программа (3 или 4)')
+    part = models.IntegerField(choices=PartChoices.choices)
+
+    def __str__(self):
+        return f"{self.kurs} | {self.semester} | {self.order} | {self.name}"

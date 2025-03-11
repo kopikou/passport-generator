@@ -1,10 +1,12 @@
 <script setup lang="ts">
 
 import {useRouter} from "vue-router";
-import {onBeforeMount, ref, watch} from "vue";
+import {computed, onBeforeMount, ref, watch} from "vue";
 import {useQuasar} from "quasar";
 import {api} from "boot/axios";
 import _ from "lodash";
+import draggable from "vuedraggable";
+
 
 const props = defineProps({
   id: {
@@ -126,9 +128,28 @@ const columns = [
 ]
 
 const rows = ref([])
-const kurs = ref(1)
+const kurs = ref()
 const mainInfo = ref()
 const scientificWorks = ref([])
+const scientificData = ref([])
+
+const work = ref()
+const addWorkDialog = ref(false)
+
+const scientificResearchAutumn = ref()
+const scientificResearchWinter = ref()
+
+const scientificResearch = computed(() => {
+  return _.filter(scientificData.value, (x) => x.parameters.part == 0)
+})
+
+// const scientificResearchByKurs = computed(() => {
+//   return _.groupBy(scientificResearch.value, x => Math.floor((x.parameters.semester + 1) / 2))
+// })
+//
+const scientificResearchBySemester = computed(() => {
+  return _.groupBy(scientificResearch.value, x => x.parameters.semester)
+})
 
 const showHelpFirstPage = ref(true)
 const showHelpSecondPage = ref(true)
@@ -137,8 +158,8 @@ const showHelpFourPage = ref(true)
 
 async function fetchPlanData() {
   let r = await api.get(`/api/generator/${props.id}/get-asp-program-detail/`)
-  mainInfo.value = _.get(r.data, '[0]')
-  _.forEach(r.data[0], (x, key) => {
+  mainInfo.value = _.get(r.data, 'plan')
+  _.forEach(r.data.plan, (x, key) => {
     if (columnsNames[key].visible) {
       rows.value.push({
         "key": key,
@@ -147,6 +168,8 @@ async function fetchPlanData() {
       })
     }
   })
+
+  scientificData.value = r.data.data
 }
 
 async function fetchHandbook() {
@@ -159,12 +182,82 @@ async function saveMainInfo(data, key) {
   let r = await api.post(`/api/generator/${mainInfo.value.id}/save-asp-program-data/`, mainInfo.value)
 }
 
+async function detectMoveAutumn(evt) {
+  $q.loading.show({message: "Сохранение данных"})
+  scientificResearchAutumn.value = _.map(scientificResearchAutumn.value, (x, index) => {
+    return {
+      ...x,
+      plan_id: mainInfo.value.id,
+      parameters: {...x.parameters, order: index},
+    }
+  })
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, scientificResearchAutumn.value)
+  $q.loading.hide()
+}
+
+async function detectMoveWinter(evt) {
+  $q.loading.show({message: "Сохранение данных"})
+  scientificResearchWinter.value = _.map(scientificResearchWinter.value, (x, index) => {
+    return {
+      ...x,
+      plan_id: mainInfo.value.id,
+      parameters: {...x.parameters, order: index},
+    }
+  })
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, scientificResearchWinter.value)
+  $q.loading.hide()
+}
+
+const currentItem = ref([])
+
+function openAddWorkDialog(semester, type) {
+  currentItem.value = {
+    'type': type,
+    'semester': semester,
+    'order': _.last(scientificResearchBySemester.value[semester]) ? _.last(scientificResearchBySemester.value[semester]).parameters.order + 1 : 0
+  }
+  addWorkDialog.value = true
+}
+
+async function addWorkInScience() {
+  $q.loading.show({message: "Сохранение данных"})
+  const data = [
+    {
+      'parameters': currentItem.value,
+      'text': work.value,
+      'plan_id': mainInfo.value.id
+    }
+  ]
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, data)
+  addWorkDialog.value = false
+  work.value = ''
+  scientificData.value.push(r.data[0])
+  scientificResearchAutumn.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 1).orderBy(x => x.parameters.order).value()
+  scientificResearchWinter.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 2).orderBy(x => x.parameters.order).value()
+  $q.loading.hide()
+}
+
+async function deleteWorkScience(id) {
+  let r = await api.delete(`/api/generator/${id}/del-scientific-work/`)
+
+  const key = _.findKey(scientificData.value, x => x.id == id)
+  scientificData.value.splice(key, 1)
+  scientificResearchAutumn.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 1).orderBy(x => x.parameters.order).value()
+  scientificResearchWinter.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 2).orderBy(x => x.parameters.order).value()
+}
+
 onBeforeMount(async () => {
   $q.loading.show({message: "Загрузка данных"})
   await fetchPlanData()
   await fetchHandbook()
   $q.loading.hide()
 })
+
+watch(kurs, () => {
+  scientificResearchAutumn.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 1).orderBy(x => x.parameters.order).value()
+  scientificResearchWinter.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 2).orderBy(x => x.parameters.order).value()
+}, {immediate: true})
+
 
 </script>
 
@@ -266,6 +359,56 @@ onBeforeMount(async () => {
             :title="`${kurs} курс`"
             :name="kurs"
           >
+            <div class="row" style="gap: 4px;">
+              <div class="col text-subtitle1">Семестр {{ ((kurs - 1) * 2) + 1 }}</div>
+              <div class="col text-subtitle1">Семестр {{ ((kurs - 1) * 2) + 2 }}</div>
+            </div>
+            <div class="row" style="gap: 4px;">
+              <div class="col">
+                <draggable
+                  :list="scientificResearchAutumn"
+                  class="q-gutter-y-sm"
+                  handle=".handle"
+                  item-key="id"
+                  @end="detectMoveAutumn"
+                >
+                  <template #item="{ element, index }">
+                    <div>
+                      <q-input v-model="element.text" outlined :debounce="500" @update:modelValue="detectMoveAutumn">
+                        <template #append>
+                          <q-btn flat color="negative" icon="mdi-delete" @click="deleteWorkScience(element.id)"/>
+                          <q-btn flat color="black" icon="mdi-cursor-move" class="handle"/>
+                        </template>
+                      </q-input>
+                    </div>
+                  </template>
+                </draggable>
+                <q-btn class="full-width q-mt-sm" color="primary" label="Добавить строчку"
+                       @click="openAddWorkDialog(((kurs - 1) * 2) + 1, 0)"/>
+              </div>
+              <div class="col">
+                <draggable
+                  :list="scientificResearchWinter"
+                  class="q-gutter-y-sm"
+                  handle=".handle"
+                  item-key="id"
+                  @end="detectMoveWinter"
+                >
+                  <template #item="{ element, index }">
+                    <div>
+                      <q-input v-model="element.text" outlined :debounce="500" @update:modelValue="detectMoveWinter">
+                        <template #append>
+                          <q-btn flat color="negative" icon="mdi-delete" @click="deleteWorkScience(element.id)"/>
+                          <q-btn flat color="black" icon="mdi-cursor-move" class="handle"/>
+                        </template>
+                      </q-input>
+                    </div>
+                  </template>
+                </draggable>
+                <q-btn class="full-width q-mt-sm" color="primary" label="Добавить строчку"
+                       @click="openAddWorkDialog(((kurs - 1) * 2) + 2, 0)"/>
+              </div>
+            </div>
 
           </q-step>
         </q-stepper>
@@ -340,6 +483,25 @@ onBeforeMount(async () => {
 
     </q-stepper>
   </div>
+
+  <q-dialog v-model="addWorkDialog" persistent>
+    <q-card style="width: 700px">
+      <q-card-section class="text-subtitle1">
+        Добавление работ
+      </q-card-section>
+
+      <q-card-section>
+        <q-select outlined label="Выбирите вид работы" v-model="work" :options="scientificWorks" map-options emit-value
+                  option-label="name" option-value="name"/>
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn label="Добавить" flat color="positive" @click="addWorkInScience"/>
+        <q-btn label="Отмена" flat color="negative" v-close-popup/>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
 </template>
 
 <style scoped>

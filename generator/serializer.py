@@ -285,7 +285,10 @@ class ScientificPlanSerializer(serializers.Serializer):
 
 class ScientificDataSerializer(serializers.Serializer):
 
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(required=False, allow_null=True)
+    plan_id = serializers.IntegerField()
+    text = serializers.CharField()
+    parameters = serializers.JSONField()
 
     class Meta:
         model = ScientificData
