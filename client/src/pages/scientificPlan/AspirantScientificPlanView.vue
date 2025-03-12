@@ -381,6 +381,10 @@ async function deletePublishData(id) {
   })
 }
 
+async function printReport() {
+  window.location.href = `/api/generator/${mainInfo.value.id}/get-scientific-report/`
+}
+
 onBeforeMount(async () => {
   $q.loading.show({message: "Загрузка данных"})
   await fetchPlanData()
@@ -403,7 +407,7 @@ watch(kurs, () => {
   <div class="q-pa-lg q-gutter-y-sm">
     <div class="flex justify-between">
       <q-btn @click="router.push('/scientific-plan')" color="primary" icon="mdi-arrow-left" label="Назад, к списку"/>
-      <q-btn color="primary" icon="mdi-content-copy" label="Печать документа"/>
+      <q-btn @click="printReport" color="info" icon="mdi-file-document" label="Печать документа"/>
     </div>
     <q-stepper
       v-model="step"
@@ -424,7 +428,7 @@ watch(kurs, () => {
           <q-card class="bg-blue-2" v-if="showHelpFirstPage">
             <q-card-section>
               <p>
-                Данный раздел заполняется автоматически, если есть данные которые "подтянулись" у Вас есть возможность
+                Данный раздел заполняется автоматически, если есть данные которые "подтянулись" у Вас нет возможности
                 их исправить.
               </p>
               <p>
@@ -444,15 +448,16 @@ watch(kurs, () => {
           separator="cell"
         >
 
-          <template #body-cell-val="props">
-            <q-td :props="props">
-              <q-popup-edit v-slot="scope" v-model="props.row.val" auto-save>
-                <q-input v-model="scope.value" autofocus @focusout="scope.set" @keyup.enter="scope.set" :debounce="1000"
-                         @update:modelValue="saveMainInfo(scope.value, props.row.key)"/>
-              </q-popup-edit>
-              {{ props.row.val }}
-            </q-td>
-          </template>
+<!--          <template #body-cell-val="props">-->
+<!--            <q-td :props="props">-->
+<!--              {{ props.row.val }}-->
+<!--              <q-popup-edit v-slot="scope" v-model="props.row.val" auto-save>-->
+<!--                <q-input v-model="scope.value" autofocus @focusout="scope.set" @keyup.enter="scope.set" :debounce="1000"-->
+<!--                         @update:modelValue="saveMainInfo(scope.value, props.row.key)"/>-->
+<!--              </q-popup-edit>-->
+<!--            </q-td>-->
+<!--          </template>-->
+
         </q-table>
       </q-step>
 

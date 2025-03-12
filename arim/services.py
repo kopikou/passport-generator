@@ -147,13 +147,13 @@ class AISServices(object):
         return data
 
     @staticmethod
-    def get_asp_napr(year):
+    def get_asp_napr(year, user):
 
         data = Mira.fetch(f"""
             SELECT c.name, p.species, p.id FROM uchplan_plan p
             LEFT JOIN catadmission c on p.cadmission = c.id
-            WHERE startyear = %s and c.cadmkind = 5
-            """, [year])
+            WHERE startyear = %s and c.cadmkind = 5 and cperson = %s 
+            """, [year, user])
 
         return data
 
