@@ -149,8 +149,10 @@ class GeneratorViewSet(
         scientific_data = ScientificData.objects.filter(plan_id=result['id']).values('id', 'text', 'parameters')
 
         if not scientific_data:
+            query = Q(kurs=result['rng'])
+            query |= Q(kurs=0)
 
-            default_data = ScientificDataDefault.objects.filter(kurs=result['rng'])
+            default_data = ScientificDataDefault.objects.filter(query)
 
             for item in default_data:
                 ScientificData.objects.create(

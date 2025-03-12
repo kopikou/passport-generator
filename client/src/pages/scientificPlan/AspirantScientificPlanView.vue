@@ -143,13 +143,12 @@ const scientificResearch = computed(() => {
   return _.filter(scientificData.value, (x) => x.parameters.part == 0)
 })
 
-// const scientificResearchByKurs = computed(() => {
-//   return _.groupBy(scientificResearch.value, x => Math.floor((x.parameters.semester + 1) / 2))
-// })
-//
 const scientificResearchBySemester = computed(() => {
   return _.groupBy(scientificResearch.value, x => x.parameters.semester)
 })
+
+const scientificDissertData = ref()
+const scientificPublishData = ref()
 
 const showHelpFirstPage = ref(true)
 const showHelpSecondPage = ref(true)
@@ -180,6 +179,13 @@ async function fetchHandbook() {
 async function saveMainInfo(data, key) {
   mainInfo.value[key] = data
   let r = await api.post(`/api/generator/${mainInfo.value.id}/save-asp-program-data/`, mainInfo.value)
+
+  $q.notify({
+    message: 'Успешно сохранено!',
+    position: 'top-right',
+    color: 'positive',
+  })
+
 }
 
 async function detectMoveAutumn(evt) {
@@ -192,6 +198,13 @@ async function detectMoveAutumn(evt) {
     }
   })
   let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, scientificResearchAutumn.value)
+
+  $q.notify({
+    message: 'Успешно сохранено!',
+    position: 'top-right',
+    color: 'positive',
+  })
+
   $q.loading.hide()
 }
 
@@ -205,6 +218,57 @@ async function detectMoveWinter(evt) {
     }
   })
   let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, scientificResearchWinter.value)
+
+  $q.notify({
+    message: 'Успешно сохранено!',
+    position: 'top-right',
+    color: 'positive',
+  })
+
+  $q.loading.hide()
+}
+
+async function detectMoveDissert(evt) {
+  $q.loading.show({message: "Сохранение данных"})
+
+  scientificDissertData.value = _.map(scientificDissertData.value, (x, index) => {
+    return {
+      ...x,
+      plan_id: mainInfo.value.id,
+      parameters: {...x.parameters, order: index},
+    }
+  })
+
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, scientificDissertData.value)
+
+  $q.notify({
+    message: 'Успешно сохранено!',
+    position: 'top-right',
+    color: 'positive',
+  })
+
+  $q.loading.hide()
+}
+
+async function detectMovePublish(evt) {
+  $q.loading.show({message: "Сохранение данных"})
+
+  scientificPublishData.value = _.map(scientificPublishData.value, (x, index) => {
+    return {
+      ...x,
+      plan_id: mainInfo.value.id,
+      parameters: {...x.parameters, order: index},
+    }
+  })
+
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, scientificPublishData.value)
+
+  $q.notify({
+    message: 'Успешно сохранено!',
+    position: 'top-right',
+    color: 'positive',
+  })
+
   $q.loading.hide()
 }
 
@@ -212,7 +276,7 @@ const currentItem = ref([])
 
 function openAddWorkDialog(semester, type) {
   currentItem.value = {
-    'type': type,
+    'part': type,
     'semester': semester,
     'order': _.last(scientificResearchBySemester.value[semester]) ? _.last(scientificResearchBySemester.value[semester]).parameters.order + 1 : 0
   }
@@ -234,6 +298,13 @@ async function addWorkInScience() {
   scientificData.value.push(r.data[0])
   scientificResearchAutumn.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 1).orderBy(x => x.parameters.order).value()
   scientificResearchWinter.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 2).orderBy(x => x.parameters.order).value()
+
+  $q.notify({
+    message: 'Успешно сохранено!',
+    position: 'top-right',
+    color: 'positive',
+  })
+
   $q.loading.hide()
 }
 
@@ -244,12 +315,80 @@ async function deleteWorkScience(id) {
   scientificData.value.splice(key, 1)
   scientificResearchAutumn.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 1).orderBy(x => x.parameters.order).value()
   scientificResearchWinter.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 2).orderBy(x => x.parameters.order).value()
+
+  $q.notify({
+    message: 'Успешно удалено :(',
+    position: 'top-right',
+    color: 'info',
+  })
+}
+
+async function addRowDissertData() {
+  const data = [{
+    text: '',
+    plan_id: mainInfo.value.id,
+    parameters: {
+      part: 1,
+      order: _.last(scientificDissertData.value) ? _.last(scientificDissertData.value).parameters.order + 1 : 0,
+      semester: 0,
+    }
+  }]
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, data)
+  scientificData.value.push(r.data[0])
+  scientificDissertData.value = _(scientificData.value).filter(x => x.parameters.part == 1).orderBy(x => x.parameters.order).value()
+}
+
+async function addRowPublishData() {
+  const data = [{
+    text: '',
+    plan_id: mainInfo.value.id,
+    parameters: {
+      part: 2,
+      order: _.last(scientificPublishData.value) ? _.last(scientificPublishData.value).parameters.order + 1 : 0,
+      semester: 0,
+    }
+  }]
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, data)
+  scientificData.value.push(r.data[0])
+  scientificPublishData.value = _(scientificData.value).filter(x => x.parameters.part == 2).orderBy(x => x.parameters.order).value()
+}
+
+async function deleteDissertData(id) {
+  let r = await api.delete(`/api/generator/${id}/del-scientific-work/`)
+
+  const key = _.findKey(scientificData.value, x => x.id == id)
+  scientificData.value.splice(key, 1)
+  scientificDissertData.value = _(scientificData.value).filter(x => x.parameters.part == 1).orderBy(x => x.parameters.order).value()
+
+  $q.notify({
+    message: 'Успешно удалено :(',
+    position: 'top-right',
+    color: 'info',
+  })
+}
+
+async function deletePublishData(id) {
+  let r = await api.delete(`/api/generator/${id}/del-scientific-work/`)
+
+  const key = _.findKey(scientificData.value, x => x.id == id)
+  scientificData.value.splice(key, 1)
+  scientificPublishData.value = _(scientificData.value).filter(x => x.parameters.part == 2).orderBy(x => x.parameters.order).value()
+
+  $q.notify({
+    message: 'Успешно удалено :(',
+    position: 'top-right',
+    color: 'info',
+  })
 }
 
 onBeforeMount(async () => {
   $q.loading.show({message: "Загрузка данных"})
   await fetchPlanData()
   await fetchHandbook()
+
+  scientificDissertData.value = _(scientificData.value).filter(x => x.parameters.part == 1).orderBy(x => x.parameters.order).value()
+  scientificPublishData.value = _(scientificData.value).filter(x => x.parameters.part == 2).orderBy(x => x.parameters.order).value()
+
   $q.loading.hide()
 })
 
@@ -258,14 +397,13 @@ watch(kurs, () => {
   scientificResearchWinter.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 2).orderBy(x => x.parameters.order).value()
 }, {immediate: true})
 
-
 </script>
 
 <template>
   <div class="q-pa-lg q-gutter-y-sm">
     <div class="flex justify-between">
-        <q-btn @click="router.push('/scientific-plan')" color="primary" icon="mdi-arrow-left" label="Назад, к списку"/>
-        <q-btn color="primary" icon="mdi-content-copy" label="Печать документа"/>
+      <q-btn @click="router.push('/scientific-plan')" color="primary" icon="mdi-arrow-left" label="Назад, к списку"/>
+      <q-btn color="primary" icon="mdi-content-copy" label="Печать документа"/>
     </div>
     <q-stepper
       v-model="step"
@@ -449,6 +587,27 @@ watch(kurs, () => {
             </q-card-section>
           </q-card>
         </div>
+        <draggable
+          :list="scientificDissertData"
+          class="q-gutter-y-sm q-mt-sm"
+          handle=".handle"
+          item-key="id"
+          @end="detectMoveDissert"
+        >
+          <template #item="{ element, index }">
+            <div>
+              <q-input v-model="element.text" outlined :debounce="500" @update:modelValue="detectMoveDissert">
+                <template #append>
+                  <q-btn flat color="negative" icon="mdi-delete" @click="deleteDissertData(element.id)"/>
+                  <q-btn flat color="black" icon="mdi-cursor-move" class="handle"/>
+                </template>
+              </q-input>
+            </div>
+          </template>
+        </draggable>
+        <q-btn class="full-width q-mt-sm" color="primary" label="Добавить строчку"
+               @click="addRowDissertData"/>
+
       </q-step>
 
       <q-step
@@ -482,6 +641,26 @@ watch(kurs, () => {
             </q-card-section>
           </q-card>
         </div>
+        <draggable
+          :list="scientificPublishData"
+          class="q-gutter-y-sm q-mt-sm"
+          handle=".handle"
+          item-key="id"
+          @end="detectMovePublish"
+        >
+          <template #item="{ element, index }">
+            <div>
+              <q-input v-model="element.text" outlined :debounce="500" @update:modelValue="detectMovePublish">
+                <template #append>
+                  <q-btn flat color="negative" icon="mdi-delete" @click="deletePublishData(element.id)"/>
+                  <q-btn flat color="black" icon="mdi-cursor-move" class="handle"/>
+                </template>
+              </q-input>
+            </div>
+          </template>
+        </draggable>
+        <q-btn class="full-width q-mt-sm" color="primary" label="Добавить строчку"
+               @click="addRowPublishData"/>
       </q-step>
 
     </q-stepper>
