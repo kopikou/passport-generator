@@ -50,7 +50,7 @@ class ReportService(object):
 
     @staticmethod
     def get_rpd_annotation(data):
-        path = f"{BASE_DIR}{Path("/templates/docxRPD/annotation.docx")}"
+        path = f'{BASE_DIR}{Path("/templates/docxRPD/annotation.docx")}'
         doc = DocxTemplate(path)
 
         competences_sorted = sorted(data['planlines']['indicators'], key=lambda item: item['competence_index'])
@@ -98,9 +98,9 @@ class ReportService(object):
     def get_rpd_report(data):
 
         if data['status'] == 3:
-            path = f"{BASE_DIR}{Path("/templates/docxRPD/rpd_sign.docx")}"
+            path = f'{BASE_DIR}{Path("/templates/docxRPD/rpd_sign.docx")}'
         else:
-            path = f"{BASE_DIR}{Path("/templates/docxRPD/rpd.docx")}"
+            path = f'{BASE_DIR}{Path("/templates/docxRPD/rpd.docx")}'
 
         doc = DocxTemplate(path)
 
