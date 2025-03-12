@@ -7,7 +7,7 @@ from app.utils import TimestampsModel
 
 def get_upload_dir(instance, filename):
     plan_data = PlanData.objects.get(id=instance.rpd_id)
-    fname = f"{instance.title}.{filename.split(".")[-1].lower()}"
+    fname = f'{instance.title}.{filename.split(".")[-1].lower()}'
     return f'files/{plan_data.abbrprofile}-{str(plan_data.startyear)[-2:]}/{fname}'
 
 class UploadFiles(TimestampsModel):

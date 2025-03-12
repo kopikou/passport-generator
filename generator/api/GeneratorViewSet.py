@@ -118,7 +118,7 @@ class GeneratorViewSet(
                 fgt += f"№ {plan_data[0]['gosdocument']}"
 
             if plan_data[0]['gosdate']:
-                fgt += f' от {plan_data[0]['gosdate']}'
+                fgt += f" от {plan_data[0]['gosdate']}"
 
             result = {
                 "ckaf": mira_data[0]['ckaf'],
