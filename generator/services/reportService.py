@@ -534,7 +534,7 @@ class ReportService(object):
             "software": software,
             "logistics": logistics,
             "protocol_number": data['protocol_number'],
-            "protocol_date": f"{protocol_date.format("DD.MM.YYYY")}",
+            "protocol_date": f'{protocol_date.format("DD.MM.YYYY")}',
             "protocol_year": protocol_date.year,
             "user_accepted": f"{user_accepted.last_name} {user_accepted.first_name} {user_accepted.userprofile.middle_name}",
             "user_type": PlanLinesLink.UserTypeChoices.labels[data['user_type']],
