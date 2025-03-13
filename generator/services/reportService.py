@@ -570,6 +570,27 @@ class ReportService(object):
         p2_1_indicator = LinesIndicators.objects.filter(planlineid__plan_id=rpd_data.id, indicator_index='Р-2.1').last()
         p2_2_indicator = LinesIndicators.objects.filter(planlineid__plan_id=rpd_data.id, indicator_index='Р-2.2').last()
 
+        table_colums = [
+            {'title': 'Подготовительный этап выполнения научного исследования', 'semesters': [1, 2]},
+            {'title': 'Основной этап выполнения научного исследования',
+             'semesters': [3, 4] if int(data.rng) == 3 else [3, 4, 5, 6]},
+            {'title': 'Завершающий этап выполнения научного исследования',
+             'semesters': [5, 6] if int(data.rng) == 3 else [7, 8]},
+        ]
+
+        table_data = []
+        for column in table_colums:
+            tmp = {}
+            for s in column['semesters']:
+                tmp[s] = sorted(
+                    [i for i in scientific_data if i['parameters']['part'] == 0 and i['parameters']['semester'] == s],
+                    key=lambda x: x['parameters']['order'])
+
+            table_data.append({
+                'title': column['title'],
+                'semesters': tmp,
+            })
+
         contex = {
             'name': data.name,
             'ckaf': data.ckaf,
@@ -586,9 +607,11 @@ class ReportService(object):
             'p2': p2_indicator.competence,
             'p21': p2_1_indicator.indicator,
             'p22': p2_2_indicator.indicator,
-            'scientific_research': sorted([i for i in scientific_data if i['parameters']['part'] == 0], key=lambda x: x['parameters']['order']),
-            'scientific_dissert': sorted([i for i in scientific_data if i['parameters']['part'] == 1], key=lambda x: x['parameters']['order']),
-            'scientific_publish': sorted([i for i in scientific_data if i['parameters']['part'] == 2], key=lambda x: x['parameters']['order']),
+            'scientific_research': table_data,
+            'scientific_dissert': sorted([i for i in scientific_data if i['parameters']['part'] == 1],
+                                         key=lambda x: x['parameters']['order']),
+            'scientific_publish': sorted([i for i in scientific_data if i['parameters']['part'] == 2],
+                                         key=lambda x: x['parameters']['order']),
         }
 
         doc.render(contex)
