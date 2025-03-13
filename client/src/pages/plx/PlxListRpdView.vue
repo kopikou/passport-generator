@@ -58,7 +58,7 @@ function removeFile(fileId: number) {
     },
     persistent: true
   }).onOk(async () => {
-    let r = await api.delete(`/api/plx/${fileId}`)
+    let r = await api.delete(`api/plx/${fileId}`)
     $q.notify({
       type: 'secondary',
       message: `Файл удален :)  `,
@@ -113,7 +113,7 @@ async function onUploadFinished() {
           color="white"
           text-color="black"
           auto-upload
-          url="/api/plx/insert-file/"
+          url="api/plx/insert-file/"
           multiple
           accept=".plx"
           :filter="filefilter"

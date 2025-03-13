@@ -58,23 +58,23 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
   })
 
   async function getCafData() {
-    let r = await api.get("/api/arim/kafs/")
+    let r = await api.get("api/arim/kafs/")
     cafData.value = r.data
   }
 
   async function getDocTypesData() {
-    let r = await api.get("/api/plx/get-document-types/")
+    let r = await api.get("api/plx/get-document-types/")
     docTypes.value = r.data
   }
 
   async function getLinesData() {
-    let r = await api.get("/api/plx/get-lines-data", {params: {id: activeFileId.value}})
+    let r = await api.get("api/plx/get-lines-data", {params: {id: activeFileId.value}})
     let data = r.data
     linesData.value = r.data.items
   }
 
   async function getFileData() {
-    let r = await api.get(`/api/plx/${activeFileId.value}/`)
+    let r = await api.get(`api/plx/${activeFileId.value}/`)
 
     fileData.value = r.data.items
     planData.value = r.data.parser.plan
@@ -87,7 +87,7 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
 
   async function fetchPlxFiles() {
     $q.loading.show()
-    let r = await api.get("/api/plx/")
+    let r = await api.get("api/plx/")
     files.value = _.sortBy(r.data, 'title')
 
     for (let f of files.value) {

@@ -44,7 +44,7 @@ function deleteOborud(id) {
 
 async function saveOborud() {
   $q.loading.show()
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+  let r = await api.post(`api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "logistics",
     value: oborudData.value,
   })
@@ -60,7 +60,7 @@ async function searchOborud() {
     })
   } else {
     $q.loading.show({message: "Поиск оборудования"})
-    let r = await api.get('/api/generator/search-oborud/', {
+    let r = await api.get('api/generator/search-oborud/', {
       params: {
         val: searchVal.value,
         caf: planlinesData.value.caf,

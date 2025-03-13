@@ -24,7 +24,7 @@ const $q = useQuasar()
 
 async function saveData() {
   $q.loading.show({message: "Сохранение данных"})
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+  let r = await api.post(`api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "resources",
     value: {
       "web": resources_web.value,

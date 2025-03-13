@@ -28,7 +28,7 @@ const filteredDiscipline = ref(listDiscipline.value)
 
 async function savePrecSubDiscipline() {
   $q.loading.show({message: "Сохранение"})
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+  let r = await api.post(`api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "disciplinePlace",
     value: {
       "precedence": precedence.value,

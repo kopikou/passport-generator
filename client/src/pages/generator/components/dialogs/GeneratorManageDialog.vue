@@ -49,15 +49,15 @@ const userTypeOptions = [
 const $q = useQuasar()
 
 async function getRPD() {
-  window.location.href = `/api/generator/${props.id}/get-rpd-report/`
+  window.location.href = `api/generator/${props.id}/get-rpd-report/`
 }
 
 async function getAnnot() {
-  window.location.href = `/api/generator/${props.id}/get-rpd-annotation/`
+  window.location.href = `api/generator/${props.id}/get-rpd-annotation/`
 }
 
 async function onAcceptClick() {
-  let r = await api.post(`/api/generator/${props.id}/accept-rpd/`, {
+  let r = await api.post(`api/generator/${props.id}/accept-rpd/`, {
     date: protocolDate.value,
     number: protocolNumber.value,
     userType: userType.value,
@@ -67,13 +67,13 @@ async function onAcceptClick() {
 }
 
 async function onRefileClick() {
-  let r = await api.post(`/api/generator/${props.id}/send-rpd-on-refile/`, {comment: comment.value})
+  let r = await api.post(`api/generator/${props.id}/send-rpd-on-refile/`, {comment: comment.value})
   onDialogOK()
 }
 
 async function getOldComment() {
   $q.loading.show({message: "Загрузка прошлых комментариев"})
-  let r = await api.get(`/api/generator/${props.id}/get-old-comments/`)
+  let r = await api.get(`api/generator/${props.id}/get-old-comments/`)
   oldComments.value = r.data
   $q.loading.hide()
   oldCommentView.value = true

@@ -64,7 +64,7 @@ async function onOKClick() {
 
   let data = _.keyBy(lecturesDisciplineWorkHour.value, "id")
 
-  let r = await api.post('/api/generator/save-discipline-work-hour/', {
+  let r = await api.post('api/generator/save-discipline-work-hour/', {
     planlineslink_id: rpdData.value.id,
     theme_id: theme.value,
     type: 0,  // Лекции
@@ -120,7 +120,7 @@ onBeforeMount(() => {
           stack-label
           label="Количество часов"
           v-model="hourCount"
-          
+
           filled
           type="number"
           :rules="[ val => val > 0 || 'Введите значение больше 0']"

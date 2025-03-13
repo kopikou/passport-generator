@@ -29,7 +29,7 @@ const columns = [
 
 async function updateDocuments(values) {
   $q.loading.show()
-  let r = await api.post("/api/plx/update-document-data/", values)
+  let r = await api.post("api/plx/update-document-data/", values)
   $q.loading.hide()
 }
 

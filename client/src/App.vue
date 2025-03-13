@@ -76,7 +76,7 @@ onBeforeMount(async () => {
               <q-item clickable href="/admin/" v-if="isStaff">
                 <q-item-section>Админка</q-item-section>
               </q-item>
-              <q-item clickable href="/api/accounts/logout/">
+              <q-item clickable href="api/accounts/logout/">
                 <q-item-section>Выйти</q-item-section>
               </q-item>
             </q-list>

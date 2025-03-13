@@ -56,7 +56,7 @@ async function onOKClick() {
 
   let data = _.keyBy(disciplineThemes.value, "id")
 
-  let r = await api.post('/api/generator/save-discipline-themes/', {
+  let r = await api.post('api/generator/save-discipline-themes/', {
     planlineslink_id: rpdData.value.id,
     name: themeName.value,
     semester: props.sem,

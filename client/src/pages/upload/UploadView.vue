@@ -70,7 +70,7 @@ async function deleteFile(planId, id) {
     persistent: true
   }).onOk(async () => {
     $q.loading.show()
-    let r = await api.delete(`/api/upload/${id}/`)
+    let r = await api.delete(`api/upload/${id}/`)
     let admKey = _.findKey(admissionData.value, (x) => x.plan_id == planId)
     let fileKey = _.findKey(admissionData.value[admKey].documents_files, (x) => x.id == id)
     admissionData.value[admKey].documents_files.splice(fileKey, 1)

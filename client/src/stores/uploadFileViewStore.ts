@@ -13,7 +13,7 @@ const useUploadFileViewStore = defineStore('UploadFileViewStore', () => {
 
   async function getAdmissionData() {
     $q.loading.show({message: "Загрузка данных о планах"})
-    let r = await api.get('/api/upload/get-admission-data/')
+    let r = await api.get('api/upload/get-admission-data/')
     admissionData.value = r.data
     $q.loading.hide()
   }

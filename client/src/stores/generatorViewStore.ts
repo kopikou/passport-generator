@@ -130,22 +130,22 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   const $q = useQuasar()
 
   async function getCafData() {
-    let r = await api.get("/api/arim/kafs/")
+    let r = await api.get("api/arim/kafs/")
     cafData.value = r.data
   }
 
   async function getFormControlData() {
-    let r = await api.get('/api/generator/get-form-control-data/')
+    let r = await api.get('api/generator/get-form-control-data/')
     formControl.value = r.data
   }
 
   async function getIndependentTypesData() {
-    let r = await api.get('/api/generator/get-independent-types-data/')
+    let r = await api.get('api/generator/get-independent-types-data/')
     independentTypes.value = r.data
   }
 
   async function getData() {
-    let r = await api.get(`/api/generator/${activeRpdId.value}/`)
+    let r = await api.get(`api/generator/${activeRpdId.value}/`)
     rpdData.value = r.data
   }
 

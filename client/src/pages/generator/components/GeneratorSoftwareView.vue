@@ -40,7 +40,7 @@ function deleteSoftware(id) {
 
 async function saveSoftware() {
   $q.loading.show()
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+  let r = await api.post(`api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "software",
     value: softwareData.value,
   })
@@ -56,7 +56,7 @@ async function searchSoft() {
     })
   } else {
     $q.loading.show({message: "Поиск программного обеспечения"})
-    let r = await api.get('/api/generator/search-software/', {params: {val: searchVal.value}})
+    let r = await api.get('api/generator/search-software/', {params: {val: searchVal.value}})
     searchResult.value = r.data
     $q.loading.hide()
   }

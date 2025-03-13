@@ -19,7 +19,7 @@ const year = ref($q.localStorage.getItem('scientificPlan_year') ? $q.localStorag
 
 
 async function fetchPrograms() {
-  let r = await api.get('/api/generator/get-asp-program-list/', {params: {year: year.value}})
+  let r = await api.get('api/generator/get-asp-program-list/', {params: {year: year.value}})
   programList.value = r.data
 }
 

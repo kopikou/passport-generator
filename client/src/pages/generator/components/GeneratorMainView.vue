@@ -52,7 +52,7 @@ const toolbar = ref([
 
 async function saveDiscplineGoal() {
   $q.loading.show()
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+  let r = await api.post(`api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "disciplineGoal",
     value: displGoal.value,
   }).then((v) => {

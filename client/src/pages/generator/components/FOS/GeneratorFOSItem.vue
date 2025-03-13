@@ -41,7 +41,7 @@ async function saveData() {
     "criteria": criteria.value,
     "title": props.title,
   })
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+  let r = await api.post(`api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": "fos",
     "value": fosInfo.value,
   }).then((v) => {

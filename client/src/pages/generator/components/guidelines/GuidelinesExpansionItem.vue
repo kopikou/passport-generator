@@ -31,7 +31,7 @@ async function saveData() {
   $q.loading.show({message: "Сохранение данных"})
   _.set(guidelines.value, `[0].${props.type}`, guidelines_text.value)
 
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+  let r = await api.post(`api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'guidelines',
     "value": guidelines.value,
   }).then((v) => {
