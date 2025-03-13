@@ -8,7 +8,7 @@ from fabric import task, Connection
 @task
 def deploy(ctx):
     data = ctx['deploy']
-    folder = "/srv/som"
+    folder = data.get('folder')
     c = Connection(**data.get('connection', {}))
 
     with c.prefix("source ~/.zshrc"):
