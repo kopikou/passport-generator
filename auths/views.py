@@ -33,7 +33,7 @@ class LoginView(View):
 class LogoutView(View):
     def get(self, *args, **kwargs):
         auth_logout(self.request)
-        return redirect("/")
+        return redirect(settings.FORCE_SCRIPT_NAME or "/")
 
 
 class BitrixAuthView(APIView):

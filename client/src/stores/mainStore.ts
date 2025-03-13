@@ -13,6 +13,7 @@ const useMainStore = defineStore("MainStore", () => {
   const isSuperuser = ref(false);
   const isStaff = ref(false);
   const BITRIX_CLIENT_ID = ref("");
+  const FORCE_SCRIPT_NAME = ref("");
   const VISIT_TOKEN_TIMEOUT = ref(30);
   const csrf = ref('');
   const permissions = ref<Permissions[]>([]);
@@ -33,9 +34,14 @@ const useMainStore = defineStore("MainStore", () => {
     mira_id.value = data.mira_id
     permissions.value = data.permissions;
     BITRIX_CLIENT_ID.value = r.data.BITRIX_CLIENT_ID
+    FORCE_SCRIPT_NAME.value = r.data.FORCE_SCRIPT_NAME
     VISIT_TOKEN_TIMEOUT.value = r.data.VISIT_TOKEN_TIMEOUT
     csrf.value = r.data.csrf
     api.defaults.headers.common['X-CSRFToken'] = r.data.csrf
+
+    let baseTag = document.querySelector("base")
+    if (baseTag)
+      baseTag.href = FORCE_SCRIPT_NAME.value;
 
     if (!isAuthenticated.value) {
       document.location.href = `https://int.istu.edu/oauth/authorize/?client_id=${BITRIX_CLIENT_ID.value}`;
@@ -53,6 +59,7 @@ const useMainStore = defineStore("MainStore", () => {
     mira_id,
     userId,
     BITRIX_CLIENT_ID,
+    FORCE_SCRIPT_NAME,
     VISIT_TOKEN_TIMEOUT,
     csrf,
     permissions,

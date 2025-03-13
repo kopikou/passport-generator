@@ -12,6 +12,7 @@ const {
   isStaff,
   lastName,
   firstName,
+  FORCE_SCRIPT_NAME,
 } = storeToRefs(mainStore)
 
 const $q = useQuasar()
