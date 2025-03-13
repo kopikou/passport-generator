@@ -8,3 +8,4 @@ pendulum==3.0.0
 mssql-django==1.4
 docxtpl==0.18.0
 mssql-django==1.4
+fabric

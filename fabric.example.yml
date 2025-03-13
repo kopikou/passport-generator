@@ -1,0 +1,7 @@
+deploy:
+  folder: "/srv/surp"
+  connection:
+    host: 172.28.20.70
+    user: katash
+    connect_kwargs:
+      password: ""
