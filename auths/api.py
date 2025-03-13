@@ -64,7 +64,7 @@ class UserApiViewSet(ListModelMixin, GenericViewSet):
             "authenticated": bool(self.request.user and self.request.user.is_authenticated),
             'csrf': django.middleware.csrf.get_token(request),
             'BITRIX_CLIENT_ID': settings.BITRIX_CLIENT_ID,
-            'FORCE_SCRIPT_NAME': settings.FORCE_SCRIPT_NAME or "/",
+            'FORCE_SCRIPT_NAME': settings.FORCE_SCRIPT_NAME or "",
         }
 
         if self.request.user.is_authenticated:
