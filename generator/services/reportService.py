@@ -1,4 +1,5 @@
 import os
+import re
 from itertools import groupby
 from pathlib import Path
 
@@ -8,7 +9,8 @@ from docxtpl import DocxTemplate
 
 from app.settings import BASE_DIR
 from arim.models import CatPerson
-from generator.models import PlanLinesLink
+from generator.models import PlanLinesLink, ScientificData
+from rpd.models import LinesIndicators, PlanData
 
 
 def get_tic_name(data):
@@ -484,13 +486,17 @@ class ReportService(object):
                 "tic": '',
                 "num": '',
                 "lekc": '',
-                "lekc_hours": sum([i['lekc_hours'] for i in tmp if i['lekc_hours'] != '']) if sum([i['lekc_hours'] for i in tmp if i['lekc_hours'] != '']) != 0 else '',
+                "lekc_hours": sum([i['lekc_hours'] for i in tmp if i['lekc_hours'] != '']) if sum(
+                    [i['lekc_hours'] for i in tmp if i['lekc_hours'] != '']) != 0 else '',
                 "lab": '',
-                "lab_hours": sum([i['lab_hours'] for i in tmp if i['lab_hours'] != '']) if sum([i['lab_hours'] for i in tmp if i['lab_hours'] != '']) != 0 else '',
+                "lab_hours": sum([i['lab_hours'] for i in tmp if i['lab_hours'] != '']) if sum(
+                    [i['lab_hours'] for i in tmp if i['lab_hours'] != '']) != 0 else '',
                 "pr": '',
-                "pr_hours": sum([i['pr_hours'] for i in tmp if i['pr_hours'] != '']) if sum([i['pr_hours'] for i in tmp if i['pr_hours'] != '']) != 0 else '',
+                "pr_hours": sum([i['pr_hours'] for i in tmp if i['pr_hours'] != '']) if sum(
+                    [i['pr_hours'] for i in tmp if i['pr_hours'] != '']) != 0 else '',
                 "srs": '',
-                "srs_hours": sum([i['srs_hours'] for i in tmp if i['srs_hours'] != '']) if sum([i['srs_hours'] for i in tmp if i['srs_hours'] != '']) != 0 else '',
+                "srs_hours": sum([i['srs_hours'] for i in tmp if i['srs_hours'] != '']) if sum(
+                    [i['srs_hours'] for i in tmp if i['srs_hours'] != '']) != 0 else '',
             })
 
         protocol_date = pendulum.from_format(data['protocol_date'], "YYYY-MM-DD")
@@ -544,5 +550,47 @@ class ReportService(object):
         }
 
         doc.render(context)
+
+        return doc
+
+    @staticmethod
+    def get_scientific_report(data):
+        path = ''
+        if int(data.rng) == 4:
+            path = f'{BASE_DIR}{Path("/templates/docxRPD/scientific_four.docx")}'
+        elif int(data.rng) == 3:
+            path = f'{BASE_DIR}{Path("/templates/docxRPD/scientific_third.docx")}'
+
+        doc = DocxTemplate(path)
+
+        scientific_data = ScientificData.objects.filter(plan_id=data.id).values()
+        rpd_data = PlanData.objects.get(mira_id=data.mira_id, is_deleted=False)
+
+        p2_indicator = LinesIndicators.objects.filter(planlineid__plan_id=rpd_data.id, competence_index='Р-2').last()
+        p2_1_indicator = LinesIndicators.objects.filter(planlineid__plan_id=rpd_data.id, indicator_index='Р-2.1').last()
+        p2_2_indicator = LinesIndicators.objects.filter(planlineid__plan_id=rpd_data.id, indicator_index='Р-2.2').last()
+
+        contex = {
+            'name': data.name,
+            'ckaf': data.ckaf,
+            'cfac': data.cfac,
+            'cfob': data.cfob,
+            'rng': data.rng,
+            'startyear': data.startyear,
+            'fgt': data.fgt,
+            'viceRector': re.sub(r'(?<= \w)\w+', '.', data.viceRector),
+            'director': re.sub(r'(?<= \w)\w+', '.', data.director),
+            'zavkaf': re.sub(r'(?<= \w)\w+', '.', data.zavkaf),
+            'rop': re.sub(r'(?<= \w)\w+', '.', data.rop),
+            'year': data.year,
+            'p2': p2_indicator.competence,
+            'p21': p2_1_indicator.indicator,
+            'p22': p2_2_indicator.indicator,
+            'scientific_research': sorted([i for i in scientific_data if i['parameters']['part'] == 0], key=lambda x: x['parameters']['order']),
+            'scientific_dissert': sorted([i for i in scientific_data if i['parameters']['part'] == 1], key=lambda x: x['parameters']['order']),
+            'scientific_publish': sorted([i for i in scientific_data if i['parameters']['part'] == 2], key=lambda x: x['parameters']['order']),
+        }
+
+        doc.render(contex)
 
         return doc

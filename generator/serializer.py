@@ -287,7 +287,7 @@ class ScientificDataSerializer(serializers.Serializer):
 
     id = serializers.IntegerField(required=False, allow_null=True)
     plan_id = serializers.IntegerField()
-    text = serializers.CharField()
+    text = serializers.CharField(allow_blank=True, allow_null=True)
     parameters = serializers.JSONField()
 
     class Meta:
