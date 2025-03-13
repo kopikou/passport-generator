@@ -109,7 +109,7 @@ class BitrixAuthView(APIView):
         user.userprofile.save()
         auth_login(self.request, user)
 
-        return redirect("/")
+        return redirect(settings.FORCE_SCRIPT_NAME or "/")
 
 
 
