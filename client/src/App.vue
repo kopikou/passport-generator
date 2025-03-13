@@ -74,7 +74,7 @@ onBeforeMount(async () => {
           />
           <q-btn-dropdown auto-close stretch flat :label="`${lastName} ${firstName}`">
             <q-list>
-              <q-item clickable href="/admin/" v-if="isStaff">
+              <q-item clickable :href="`${FORCE_SCRIPT_NAME}/admin/`" v-if="isStaff">
                 <q-item-section>Админка</q-item-section>
               </q-item>
               <q-item clickable :href="`${FORCE_SCRIPT_NAME}/api/accounts/logout/`">
