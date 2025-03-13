@@ -2,7 +2,7 @@
   "name": "client",
   "version": "0.0.1",
   "description": "rpd new ",
-  "productName": "rpd_2_0",
+  "productName": "Генератор РПД 2.0",
   "author": "SkyFalI <alewaflamaster@gmail.com>",
   "private": true,
   "scripts": {
