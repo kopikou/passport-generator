@@ -139,8 +139,7 @@ class AISServices(object):
                 left JOIN catkaf k ON up.ckaf = k.id
                 LEFT JOIN catfaculty f ON f.id = k.cfac
                 left JOIN cl$fob fo ON c.cfob = fo.id
-                left join cl$spec s ON c.cspec = s.id
-                LEFT join catperson p ON s.cprepod = p.id
+                LEFT join catperson p ON up.cperson = p.id
                 where up.id = %s
             """, [id])
 
