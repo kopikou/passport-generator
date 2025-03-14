@@ -54,11 +54,11 @@ const userTypeOptions = [
 const $q = useQuasar()
 
 async function getRPD() {
-  window.location.href = `${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-report/`
+  window.location.href = `${FORCE_SCRIPT_NAME.value}/api/generator/${props.id}/get-rpd-report/`
 }
 
 async function getAnnot() {
-  window.location.href = `${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-annotation/`
+  window.location.href = `${FORCE_SCRIPT_NAME.value}/api/generator/${props.id}/get-rpd-annotation/`
 }
 
 async function onAcceptClick() {

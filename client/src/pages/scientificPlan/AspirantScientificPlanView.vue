@@ -388,7 +388,7 @@ async function deletePublishData(id) {
 }
 
 async function printReport() {
-  window.location.href = `${FORCE_SCRIPT_NAME}/api/generator/${mainInfo.value.id}/get-scientific-report/`
+  window.location.href = `${FORCE_SCRIPT_NAME.value}/api/generator/${mainInfo.value.id}/get-scientific-report/`
 }
 
 onBeforeMount(async () => {

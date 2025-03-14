@@ -48,7 +48,7 @@ function getFileUrl(planId, fileId) {
   let files = _.filter(admissionData.value, (x) => x.plan_id == planId)[0]?.documents_files
   let url = _.filter(files, (x) => x.type_id == getFileType(planId, fileId))[0]?.file
   if (url) {
-    window.location.href = `${FORCE_SCRIPT_NAME}/uploads/` + url
+    window.location.href = `${FORCE_SCRIPT_NAME.value}/uploads/` + url
   }
 }
 
