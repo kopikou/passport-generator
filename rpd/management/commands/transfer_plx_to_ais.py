@@ -17,6 +17,9 @@ class Command(BaseCommand):
         data = list(RPDFile.objects.filter(status=RPDFile.StatusChoice.accepted))
         RPDFile.objects.filter(status=RPDFile.StatusChoice.accepted).update(status=RPDFile.StatusChoice.on_synchronize)
 
+        kaf_codes = UchPlanKaf.objects.all()
+        kaf_codes = {i['ckaf2rpgen']: i for i in kaf_codes.values()}
+
         for i in data:
             plan_data = PlanData.objects.filter(file_id=i.id).values()
             line_data = LinesData.objects.filter(plan__file_id=i.id).values()
@@ -34,6 +37,7 @@ class Command(BaseCommand):
                     "fullplanname": plan['planname'],
                     "name": plan['planname'],
                     "kafcode_id": plan['kafcode'],
+                    "ckaf": kaf_codes.get('kafcode', None),
                     "lastshifr": plan['lastshifr'],
                     "abbrprofile": plan['abbrprofile'],
                     "cadmission_id": cadmission.id,
@@ -76,9 +80,6 @@ class Command(BaseCommand):
 
             discpl_names = UchPlanDiscpl.objects.filter(query)
             discpl_names = {f"{i['name']}": i for i in discpl_names.values()}
-
-            kaf_codes = UchPlanKaf.objects.all()
-            kaf_codes = {i['ckaf2rpgen']: i for i in kaf_codes.values()}
 
             for line in line_data:
 
