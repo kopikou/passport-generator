@@ -113,12 +113,12 @@ class GeneratorViewSet(
             instance = ScientificPlanData.objects.get(mira_id=pk)
 
         except ObjectDoesNotExist:
-            fgt = '№ 951 от 20.10.2021'
-            # if plan_data[0]['gosdocument']:
-            #     fgt += f"№ {plan_data[0]['gosdocument']}"
-            #
-            # if plan_data[0]['gosdate']:
-            #     fgt += f" от {plan_data[0]['gosdate']}"
+            fgt = ''
+            if plan_data[0]['gosdocument']:
+                fgt += f"№ {plan_data[0]['gosdocument']}"
+
+            if plan_data[0]['gosdate']:
+                fgt += f" от {plan_data[0]['gosdate']}"
 
             result = {
                 "ckaf": mira_data[0]['ckaf'],

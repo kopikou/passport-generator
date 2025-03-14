@@ -48,7 +48,7 @@ class Command(BaseCommand):
                     "fordel": 'f',
                 }
 
-                uchplan, created = UchPlanPlan.objects.update_or_create(
+                uchplan, created = UchPlanPlan.objects.get_or_create(
                     species=plan['species'],
                     startyear=plan['startyear'],
                     abbrprofile=plan['abbrprofile'],
