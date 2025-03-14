@@ -54,7 +54,7 @@ class Command(BaseCommand):
                 if created:
                     PlanData.objects.filter(id=plan['id']).update(mira_id=uchplan.id)
 
-                # Catadmission.objects.filter(id=cadmission.id).update(cuchplan_id=uchplan.id)
+                Catadmission.objects.filter(id=cadmission.id).update(cuchplan_id=uchplan.id)
 
 
             for file in files_data:

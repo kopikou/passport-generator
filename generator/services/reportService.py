@@ -591,8 +591,13 @@ class ReportService(object):
                 'semesters': tmp,
             })
 
+        name = data.name
+        if name.find('Направленность') != -1:
+            parts = data.name.split('Направленность')
+            name = f"{parts[0]}\nНаправленность {parts[1]}"
+
         contex = {
-            'name': data.name,
+            'name': name,
             'ckaf': data.ckaf,
             'cfac': data.cfac,
             'cfob': data.cfob,
