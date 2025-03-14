@@ -69,7 +69,7 @@ async function searchBook() {
     })
   } else {
     $q.loading.show({message: "Поиск книг"})
-    let r = await api.get('api/generator/search-book/', {params: {val: searchVal.value}})
+    let r = await api.get('/api/generator/search-book/', {params: {val: searchVal.value}})
     bookData.value = r.data
     $q.loading.hide()
   }
@@ -77,7 +77,7 @@ async function searchBook() {
 
 async function saveLibary() {
   $q.loading.show()
-  let r = await api.post(`api/generator/${activeRpdId.value}/save-additional-info/`, {
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "library",
     value: {
       "mainBook": mainBook.value,

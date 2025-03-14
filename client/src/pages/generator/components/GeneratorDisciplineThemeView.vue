@@ -106,7 +106,7 @@ async function fieldDown(num, sem) {
 }
 
 async function saveThemeData(data) {
-  let r = await api.post('api/generator/save-discipline-themes/', data)
+  let r = await api.post('/api/generator/save-discipline-themes/', data)
   return r.data
 }
 

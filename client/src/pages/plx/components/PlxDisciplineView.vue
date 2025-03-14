@@ -35,7 +35,7 @@ const columns = [
 
 async function updateLines(values) {
   $q.loading.show()
-  let r = await api.post("api/plx/update-lines-data/", {
+  let r = await api.post("/api/plx/update-lines-data/", {
     data: values
   })
   $q.loading.hide()
@@ -69,7 +69,7 @@ async function changeCaf() {
     $q.loading.show()
 
     try {
-      let r = await api.post("api/plx/batch-update-caf-lines/", {
+      let r = await api.post("/api/plx/batch-update-caf-lines/", {
         ids: selected.value.map((x) => x.id),
         caf: data,
       })

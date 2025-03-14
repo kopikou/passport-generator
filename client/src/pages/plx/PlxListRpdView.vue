@@ -113,7 +113,7 @@ async function onUploadFinished() {
           color="white"
           text-color="black"
           auto-upload
-          url="api/plx/insert-file/"
+          url="/api/plx/insert-file/"
           multiple
           accept=".plx"
           :filter="filefilter"

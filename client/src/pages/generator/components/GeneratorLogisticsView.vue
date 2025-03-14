@@ -60,7 +60,7 @@ async function searchOborud() {
     })
   } else {
     $q.loading.show({message: "Поиск оборудования"})
-    let r = await api.get('api/generator/search-oborud/', {
+    let r = await api.get('/api/generator/search-oborud/', {
       params: {
         val: searchVal.value,
         caf: planlinesData.value.caf,

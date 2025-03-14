@@ -56,7 +56,7 @@ async function searchSoft() {
     })
   } else {
     $q.loading.show({message: "Поиск программного обеспечения"})
-    let r = await api.get('api/generator/search-software/', {params: {val: searchVal.value}})
+    let r = await api.get('/api/generator/search-software/', {params: {val: searchVal.value}})
     searchResult.value = r.data
     $q.loading.hide()
   }

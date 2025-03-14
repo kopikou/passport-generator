@@ -47,7 +47,7 @@ function acceptPlan() {
     },
     html: true,
   }).onOk(async () => {
-    let r = await api.get('api/plx/accept-file/', {params: {id: props.id}})
+    let r = await api.get('/api/plx/accept-file/', {params: {id: props.id}})
 
     $q.notify({
       color: "primary",

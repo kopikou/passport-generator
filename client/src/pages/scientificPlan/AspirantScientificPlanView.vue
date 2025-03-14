@@ -172,7 +172,7 @@ async function fetchPlanData() {
 }
 
 async function fetchHandbook() {
-  let r = await api.get('api/generator/get-scientific-work/')
+  let r = await api.get('/api/generator/get-scientific-work/')
   scientificWorks.value = r.data
 }
 
