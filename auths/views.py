@@ -108,7 +108,7 @@ class BitrixAuthView(APIView):
             user.userprofile.mira_id = mira_id
 
         if bool(result['is_teacher']):
-            user.userprofile.permissions = {Permissions.can_edit_rpd, Permissions.can_use_generator}
+            user.userprofile.permissions = [Permissions.can_edit_rpd, Permissions.can_use_generator]
 
         if bool(result['is_student']):
             user.is_active = False
