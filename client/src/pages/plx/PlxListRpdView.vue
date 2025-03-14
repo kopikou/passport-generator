@@ -11,7 +11,7 @@ import dayjs from "dayjs";
 import usePlanViewStore from "stores/planViewStore";
 
 const mainStore = useMainStore();
-const {csrf} = storeToRefs(mainStore)
+const {csrf, FORCE_SCRIPT_NAME} = storeToRefs(mainStore)
 
 const planViewStore = usePlanViewStore();
 const {files} = storeToRefs(planViewStore);
@@ -113,7 +113,7 @@ async function onUploadFinished() {
           color="white"
           text-color="black"
           auto-upload
-          url="/api/plx/insert-file/"
+          :url="`${FORCE_SCRIPT_NAME}/api/plx/insert-file/`"
           multiple
           accept=".plx"
           :filter="filefilter"
