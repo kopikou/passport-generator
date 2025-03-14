@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.models import User
+from auths.models import Permissions
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views import View
@@ -105,6 +106,12 @@ class BitrixAuthView(APIView):
         mira_id = int(result['mira_id'][0] if result['mira_id'] or 0 else 0)
         if mira_id > 2:
             user.userprofile.mira_id = mira_id
+
+        if bool(result['is_teacher']):
+            user.userprofile.permissions = {Permissions.can_edit_rpd, Permissions.can_use_generator}
+
+        if bool(result['is_students']):
+            user.is_active = False
 
         user.userprofile.save()
         auth_login(self.request, user)
