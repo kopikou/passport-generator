@@ -140,13 +140,13 @@ function getStatusColor(status) {
           <q-btn
             class="col"
             label="РПД"
-            :href="`${FORCE_SCRIPT_NAME.value}/api/generator/${props.id}/get-rpd-report/`"
+            :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-report/`"
             target="_blank"
           />
           <q-btn
             class="col"
             label="Аннотация"
-            :href="`${FORCE_SCRIPT_NAME.value}/api/generator/${props.id}/get-rpd-annotation/`"
+            :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-annotation/`"
             target="_blank"
           />
         </div>
