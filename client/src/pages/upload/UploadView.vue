@@ -7,8 +7,16 @@ import _ from "lodash";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import {computed, ref} from "vue";
+import useMainStore from "stores/mainStore";
 
 const $q = useQuasar()
+
+
+const mainStore = useMainStore();
+
+const {FORCE_SCRIPT_NAME} = storeToRefs(mainStore);
+
+
 const uploadFileViewStore = useUploadFileViewStore();
 
 const {
@@ -40,7 +48,7 @@ function getFileUrl(planId, fileId) {
   let files = _.filter(admissionData.value, (x) => x.plan_id == planId)[0]?.documents_files
   let url = _.filter(files, (x) => x.type_id == getFileType(planId, fileId))[0]?.file
   if (url) {
-    window.location.href = 'uploads/' + url
+    window.location.href = `${FORCE_SCRIPT_NAME}/uploads/` + url
   }
 }
 

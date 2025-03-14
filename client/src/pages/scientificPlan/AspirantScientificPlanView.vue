@@ -6,6 +6,8 @@ import {useQuasar} from "quasar";
 import {api} from "boot/axios";
 import _ from "lodash";
 import draggable from "vuedraggable";
+import useMainStore from "stores/mainStore";
+import {storeToRefs} from "pinia";
 
 
 const props = defineProps({
@@ -17,6 +19,10 @@ const props = defineProps({
 
 const router = useRouter()
 const $q = useQuasar()
+
+const mainStore = useMainStore();
+
+const {FORCE_SCRIPT_NAME} = storeToRefs(mainStore);
 
 const step = ref(0)
 
@@ -382,7 +388,7 @@ async function deletePublishData(id) {
 }
 
 async function printReport() {
-  window.location.href = `/api/generator/${mainInfo.value.id}/get-scientific-report/`
+  window.location.href = `${FORCE_SCRIPT_NAME}/api/generator/${mainInfo.value.id}/get-scientific-report/`
 }
 
 onBeforeMount(async () => {

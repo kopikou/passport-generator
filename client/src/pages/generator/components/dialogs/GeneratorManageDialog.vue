@@ -8,8 +8,13 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import EmptyIcon from "components/EmptyIcon.vue";
 import NoCommentsIcon from "components/NoCommentsIcon.vue";
+import useMainStore from "stores/mainStore";
 
 const {dialogRef, onDialogHide, onDialogOK, onDialogCancel} = useDialogPluginComponent()
+
+const mainStore = useMainStore();
+
+const {FORCE_SCRIPT_NAME} = storeToRefs(mainStore);
 
 const generatorViewStore = useGeneratorViewStore();
 
@@ -49,11 +54,11 @@ const userTypeOptions = [
 const $q = useQuasar()
 
 async function getRPD() {
-  window.location.href = `/api/generator/${props.id}/get-rpd-report/`
+  window.location.href = `${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-report/`
 }
 
 async function getAnnot() {
-  window.location.href = `/api/generator/${props.id}/get-rpd-annotation/`
+  window.location.href = `${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-annotation/`
 }
 
 async function onAcceptClick() {
