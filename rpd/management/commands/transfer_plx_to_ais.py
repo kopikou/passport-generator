@@ -37,7 +37,7 @@ class Command(BaseCommand):
                     "fullplanname": plan['planname'],
                     "name": plan['planname'],
                     "kafcode_id": plan['kafcode'],
-                    "ckaf": kaf_codes.get('kafcode', None),
+                    "ckaf": kaf_codes.get(plan['kafcode'], None),
                     "lastshifr": plan['lastshifr'],
                     "abbrprofile": plan['abbrprofile'],
                     "cadmission_id": cadmission.id,
