@@ -395,6 +395,7 @@ onBeforeMount(async () => {
   scientificDissertData.value = _(scientificData.value).filter(x => x.parameters.part == 1).orderBy(x => x.parameters.order).value()
   scientificPublishData.value = _(scientificData.value).filter(x => x.parameters.part == 2).orderBy(x => x.parameters.order).value()
 
+  kurs.value = 1
   $q.loading.hide()
 })
 
