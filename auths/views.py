@@ -110,7 +110,7 @@ class BitrixAuthView(APIView):
         if bool(result['is_teacher']):
             user.userprofile.permissions = {Permissions.can_edit_rpd, Permissions.can_use_generator}
 
-        if bool(result['is_students']):
+        if bool(result['is_student']):
             user.is_active = False
 
         user.userprofile.save()
