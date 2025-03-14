@@ -387,10 +387,6 @@ async function deletePublishData(id) {
   })
 }
 
-async function printReport() {
-  window.location.href = `${FORCE_SCRIPT_NAME.value}/api/generator/${mainInfo.value.id}/get-scientific-report/`
-}
-
 onBeforeMount(async () => {
   $q.loading.show({message: "Загрузка данных"})
   await fetchPlanData()
@@ -413,7 +409,7 @@ watch(kurs, () => {
   <div class="q-pa-lg q-gutter-y-sm">
     <div class="flex justify-between">
       <q-btn @click="router.push('/scientific-plan')" color="primary" icon="mdi-arrow-left" label="Назад, к списку"/>
-      <q-btn @click="printReport" color="info" icon="mdi-file-document" label="Печать документа"/>
+      <q-btn target="_blank" :href="`${FORCE_SCRIPT_NAME.value}/api/generator/${mainInfo.value.id}/get-scientific-report/`" color="info" icon="mdi-file-document" label="Печать документа"/>
     </div>
     <q-stepper
       v-model="step"
