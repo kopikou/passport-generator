@@ -61,7 +61,7 @@ async function deleteTheme(id) {
   }).onOk(async () => {
 
     $q.loading.show({message: "Удаление"})
-    let r = await api.get(`api/generator/delete-discipline-themes/`, {params: {id: id}})
+    let r = await api.get(`/api/generator/delete-discipline-themes/`, {params: {id: id}})
 
     rpdData.value.discipline_themes.splice(_.findKey(disciplineThemes.value, (x) => x.id == id), 1)
 

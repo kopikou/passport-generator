@@ -58,7 +58,7 @@ function removeFile(fileId: number) {
     },
     persistent: true
   }).onOk(async () => {
-    let r = await api.delete(`api/plx/${fileId}`)
+    let r = await api.delete(`/api/plx/${fileId}`)
     $q.notify({
       type: 'secondary',
       message: `Файл удален :)  `,

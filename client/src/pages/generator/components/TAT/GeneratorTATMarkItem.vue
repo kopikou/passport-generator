@@ -46,7 +46,7 @@ async function saveData() {
     "unsatisfactory": unsatisfactory.value,
     "title": props.title,
   })
-  let r = await api.post(`api/generator/${activeRpdId.value}/save-additional-info/`, {
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'tat',
     "value": tatInfo.value,
   }).then((v) => {

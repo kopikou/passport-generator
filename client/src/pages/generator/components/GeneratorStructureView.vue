@@ -24,7 +24,7 @@ const methods = ref<string>('')
 
 async function saveMethods() {
   $q.loading.show()
-  let r = await api.post(`api/generator/${activeRpdId.value}/save-additional-info/`, {
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "interactiveMethods",
     value: {
       "interactiveMethods": methods.value

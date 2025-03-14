@@ -44,7 +44,7 @@ function deleteOborud(id) {
 
 async function saveOborud() {
   $q.loading.show()
-  let r = await api.post(`api/generator/${activeRpdId.value}/save-additional-info/`, {
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "logistics",
     value: oborudData.value,
   })

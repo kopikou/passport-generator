@@ -156,7 +156,7 @@ const showHelpThirdPage = ref(true)
 const showHelpFourPage = ref(true)
 
 async function fetchPlanData() {
-  let r = await api.get(`api/generator/${props.id}/get-asp-program-detail/`)
+  let r = await api.get(`/api/generator/${props.id}/get-asp-program-detail/`)
   mainInfo.value = _.get(r.data, 'plan')
   _.forEach(r.data.plan, (x, key) => {
     if (columnsNames[key].visible) {
@@ -178,7 +178,7 @@ async function fetchHandbook() {
 
 async function saveMainInfo(data, key) {
   mainInfo.value[key] = data
-  let r = await api.post(`api/generator/${mainInfo.value.id}/save-asp-program-data/`, mainInfo.value)
+  let r = await api.post(`/api/generator/${mainInfo.value.id}/save-asp-program-data/`, mainInfo.value)
 
   $q.notify({
     message: 'Успешно сохранено!',
@@ -197,7 +197,7 @@ async function detectMoveAutumn(evt) {
       parameters: {...x.parameters, order: index},
     }
   })
-  let r = await api.post(`api/generator/${props.id}/save-scientific-data/`, scientificResearchAutumn.value)
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, scientificResearchAutumn.value)
 
   $q.notify({
     message: 'Успешно сохранено!',
@@ -217,7 +217,7 @@ async function detectMoveWinter(evt) {
       parameters: {...x.parameters, order: index},
     }
   })
-  let r = await api.post(`api/generator/${props.id}/save-scientific-data/`, scientificResearchWinter.value)
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, scientificResearchWinter.value)
 
   $q.notify({
     message: 'Успешно сохранено!',
@@ -239,7 +239,7 @@ async function detectMoveDissert(evt) {
     }
   })
 
-  let r = await api.post(`api/generator/${props.id}/save-scientific-data/`, scientificDissertData.value)
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, scientificDissertData.value)
 
   $q.notify({
     message: 'Успешно сохранено!',
@@ -261,7 +261,7 @@ async function detectMovePublish(evt) {
     }
   })
 
-  let r = await api.post(`api/generator/${props.id}/save-scientific-data/`, scientificPublishData.value)
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, scientificPublishData.value)
 
   $q.notify({
     message: 'Успешно сохранено!',
@@ -292,7 +292,7 @@ async function addWorkInScience() {
       'plan_id': mainInfo.value.id
     }
   ]
-  let r = await api.post(`api/generator/${props.id}/save-scientific-data/`, data)
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, data)
   addWorkDialog.value = false
   work.value = ''
   scientificData.value.push(r.data[0])
@@ -309,7 +309,7 @@ async function addWorkInScience() {
 }
 
 async function deleteWorkScience(id) {
-  let r = await api.delete(`api/generator/${id}/del-scientific-work/`)
+  let r = await api.delete(`/api/generator/${id}/del-scientific-work/`)
 
   const key = _.findKey(scientificData.value, x => x.id == id)
   scientificData.value.splice(key, 1)
@@ -333,7 +333,7 @@ async function addRowDissertData() {
       semester: 0,
     }
   }]
-  let r = await api.post(`api/generator/${props.id}/save-scientific-data/`, data)
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, data)
   scientificData.value.push(r.data[0])
   scientificDissertData.value = _(scientificData.value).filter(x => x.parameters.part == 1).orderBy(x => x.parameters.order).value()
 }
@@ -348,13 +348,13 @@ async function addRowPublishData() {
       semester: 0,
     }
   }]
-  let r = await api.post(`api/generator/${props.id}/save-scientific-data/`, data)
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, data)
   scientificData.value.push(r.data[0])
   scientificPublishData.value = _(scientificData.value).filter(x => x.parameters.part == 2).orderBy(x => x.parameters.order).value()
 }
 
 async function deleteDissertData(id) {
-  let r = await api.delete(`api/generator/${id}/del-scientific-work/`)
+  let r = await api.delete(`/api/generator/${id}/del-scientific-work/`)
 
   const key = _.findKey(scientificData.value, x => x.id == id)
   scientificData.value.splice(key, 1)
@@ -368,7 +368,7 @@ async function deleteDissertData(id) {
 }
 
 async function deletePublishData(id) {
-  let r = await api.delete(`api/generator/${id}/del-scientific-work/`)
+  let r = await api.delete(`/api/generator/${id}/del-scientific-work/`)
 
   const key = _.findKey(scientificData.value, x => x.id == id)
   scientificData.value.splice(key, 1)
@@ -382,7 +382,7 @@ async function deletePublishData(id) {
 }
 
 async function printReport() {
-  window.location.href = `api/generator/${mainInfo.value.id}/get-scientific-report/`
+  window.location.href = `/api/generator/${mainInfo.value.id}/get-scientific-report/`
 }
 
 onBeforeMount(async () => {
