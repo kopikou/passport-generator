@@ -44,7 +44,7 @@ onBeforeMount(async () => {
 
 <template>
   <div class="q-pa-lg q-gutter-y-md">
-    <div class="text-center text-h6 q-mb-md">Список рабочих программ по программе аспирантуры ИРНИТУ</div>
+    <div class="text-center text-h6 q-mb-md">Список планов научной деятельности по программе аспирантуры ИРНИТУ</div>
     <q-select
       label="Выберите учебный год"
       :options="yearsOptions"
