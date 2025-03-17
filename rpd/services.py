@@ -214,7 +214,6 @@ class PLXParser:
 
         for child in root.findall(self.path + 'ООП'):
             if not child.attrib.get('КодРодительскогоООП'):
-                planData['gosdocument'] = int(child.attrib.get('НомерДокумента')) if child.attrib.get('НомерДокумента') else None
                 planData['lastshifr'] = child.attrib.get('Шифр')
                 planData['naprcode'] = child.attrib.get('Шифр')
                 planData['napr_e'] = child.attrib.get('Название')
