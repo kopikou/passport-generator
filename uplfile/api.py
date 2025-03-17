@@ -37,7 +37,7 @@ class UploadFileViewSet(
     def get_admission_data(self, request, *args, **kwargs):
 
         mira_id = self.request.user.userprofile.mira_id
-        mira_id = 16236
+
         data = AISServices.get_admission_list_by_person(mira_id)
 
         abbrprofile_list = list(set([i['abbrprofile'] for i in data]))
