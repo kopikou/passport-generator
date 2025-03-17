@@ -201,7 +201,7 @@ class PLXParser:
             planData['igahourzet'] = float(child.attrib.get('ЗЕТвНеделю'))
             planData['semesteroncource'] = int(child.attrib.get('СеместровНаКурсе'))
             self.semesteroncource = int(child.attrib.get('СеместровНаКурсе'))
-            planData['gosdocument'] = int(child.attrib.get('НомерФГОС'))
+            planData['gosdocument'] = float(child.attrib.get('НомерФГОС'))
             planData['gostype'] = int(child.attrib.get('ТипГОСа'))
             planData['gosdate'] = datetime.fromisoformat((child.attrib.get('ДатаГОСа'))).strftime(
                 "%Y-%m-%d") if child.attrib.get('ДатаГОСа') else None
