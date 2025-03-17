@@ -180,6 +180,7 @@ async function fetchPlanData() {
 async function fetchHandbook() {
   let r = await api.get('/api/generator/get-scientific-work/')
   scientificWorks.value = r.data
+  scientificWorks.value.push({id: 0, name: ''})
 }
 
 async function saveMainInfo(data, key) {
@@ -387,6 +388,10 @@ async function deletePublishData(id) {
   })
 }
 
+async function copyPlan() {
+  let r = await api.get('/api/generator/')
+}
+
 onBeforeMount(async () => {
   $q.loading.show({message: "Загрузка данных"})
   await fetchPlanData()
@@ -410,7 +415,10 @@ watch(kurs, () => {
   <div class="q-pa-lg q-gutter-y-sm">
     <div class="flex justify-between">
       <q-btn @click="router.push('/scientific-plan')" color="primary" icon="mdi-arrow-left" label="Назад, к списку"/>
-      <q-btn target="_blank" :href="`${FORCE_SCRIPT_NAME}/api/generator/${mainInfo?.id}/get-scientific-report/`" color="info" icon="mdi-file-document" label="Печать документа"/>
+      <div class="q-gutter-x-sm">
+        <q-btn target="_blank" :href="`${FORCE_SCRIPT_NAME}/api/generator/${mainInfo?.id}/get-scientific-report/`" color="info" icon="mdi-file-document" label="Печать документа"/>
+<!--        <q-btn label="Скопировать план" color="primary" icon="mdi-clipboard-outline"/>-->
+      </div>
     </div>
     <q-stepper
       v-model="step"
@@ -483,7 +491,7 @@ watch(kurs, () => {
                   оставить
                   без изменения, удалить все либо некоторые или отредактировать. При нажатии на «Добавить вид работ»
                   можно
-                  воспользоваться вариантами из выпадающего списка (кнопка «Выбрать») или предложить свои варианты,
+                  воспользоваться вариантами из выпадающего списка (кнопка «Добавить») или предложить свои варианты,
                   заполнив
                   пустое поле.
                 </p>
@@ -532,7 +540,7 @@ watch(kurs, () => {
                     </div>
                   </template>
                 </draggable>
-                <q-btn class="full-width q-mt-sm" color="primary" label="Добавить строчку"
+                <q-btn class="full-width q-mt-sm" color="primary" label="Добавить вид работ"
                        @click="openAddWorkDialog(((kurs - 1) * 2) + 1, 0)"/>
               </div>
               <div class="col">
@@ -554,7 +562,7 @@ watch(kurs, () => {
                     </div>
                   </template>
                 </draggable>
-                <q-btn class="full-width q-mt-sm" color="primary" label="Добавить строчку"
+                <q-btn class="full-width q-mt-sm" color="primary" label="Добавить вид работ"
                        @click="openAddWorkDialog(((kurs - 1) * 2) + 2, 0)"/>
               </div>
             </div>
@@ -578,8 +586,7 @@ watch(kurs, () => {
               <div>
                 <p>
                   При заполнении данного раздела можно воспользоваться предложенными вариантами (оставить без изменения,
-                  удалить все либо некоторые или отредактировать) либо предложить свои, нажав на кнопку «Добавить вид
-                  работ».
+                  удалить все либо некоторые или отредактировать) либо предложить свои, нажав на кнопку «Добавить вид работ».
 
                 </p>
                 <p>
@@ -613,7 +620,7 @@ watch(kurs, () => {
             </div>
           </template>
         </draggable>
-        <q-btn class="full-width q-mt-sm" color="primary" label="Добавить строчку"
+        <q-btn class="full-width q-mt-sm" color="primary" label="Добавить вид работ"
                @click="addRowDissertData"/>
 
       </q-step>
@@ -667,7 +674,7 @@ watch(kurs, () => {
             </div>
           </template>
         </draggable>
-        <q-btn class="full-width q-mt-sm" color="primary" label="Добавить строчку"
+        <q-btn class="full-width q-mt-sm" color="primary" label="Добавить вид работ"
                @click="addRowPublishData"/>
       </q-step>
 
@@ -681,7 +688,7 @@ watch(kurs, () => {
       </q-card-section>
 
       <q-card-section>
-        <q-select outlined label="Выбирите вид работы" v-model="work" :options="scientificWorks" map-options emit-value
+        <q-select outlined label="Выберите вид работы" v-model="work" :options="scientificWorks" map-options emit-value
                   option-label="name" option-value="name"/>
       </q-card-section>
 

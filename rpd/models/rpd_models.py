@@ -108,7 +108,7 @@ class PlanDocuments(TimestampsModel):
     name = models.TextField()
     type = models.IntegerField()
     new_type = models.ForeignKey("DocumentsTypes", on_delete=models.CASCADE, default=None, null=True)
-    synchronize = models.BooleanField()
+    synchronize = models.BooleanField(default=True)
     manual = models.BooleanField(default=False)
     mira_id = models.IntegerField(null=True, blank=True)
 

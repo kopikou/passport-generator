@@ -24,7 +24,7 @@ class Command(BaseCommand):
             plan_data = PlanData.objects.filter(file_id=i.id).values()
             line_data = LinesData.objects.filter(plan__file_id=i.id).values()
             semester_data = SemesterData.objects.filter(planlineid__synchronize=True, planlineid__plan__file_id=i.id).values()
-            files_data = PlanDocuments.objects.filter(plan__file_id=i.id).values()
+            files_data = PlanDocuments.objects.filter(plan__file_id=i.id, synchronize=True).values()
 
             transfer_plan_data = {}
             for plan in plan_data:

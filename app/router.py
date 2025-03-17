@@ -51,7 +51,23 @@ class RpdRouter(object):
     auth and contenttypes applications.
     """
 
+    def db_for_read(self, model, **hints):
+        if model._meta.app_label == 'rpgen':
+            return 'rpgen'
+        return None
+
+    def db_for_write(self, model, **hints):
+        if model._meta.app_label == 'rpgen':
+            return 'rpgen'
+        return None
+
+    def allow_relation(self, obj1, obj2, **hints):
+        if obj1._meta.app_label == 'rpgen' \
+                or obj2._meta.app_label == 'rpgen':
+            return True
+        return None
+
     def allow_migrate(self, db, app_label, model_name=None, **hints):
-        if db == 'rpd_old':
+        if db == 'rpgen' or app_label == 'rpgen':
             return False
         return None

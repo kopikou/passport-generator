@@ -1,5 +1,39 @@
 from django.db import models
 
+class AspPlan(models.Model):
+    class Meta:
+        db_table = 'asp_plan'
+        managed = False
+
+    admis_id = models.IntegerField()
+    plan_id = models.IntegerField()
+    start_date = models.DateField()
+    edit_date = models.DateField()
+    author_id = models.IntegerField()
+
+
+class AspParamValue(models.Model):
+    class Meta:
+        db_table = 'asp_param_value'
+        managed = False
+
+    type_id = models.IntegerField()
+    value = models.TextField()
+    linked = models.ForeignKey('AspParamValue', null=True, blank=True, on_delete=models.CASCADE)
+    plan_id = models.IntegerField()
+    sort = models.IntegerField()
+
+
+class AspParamType(models.Model):
+    class Meta:
+        db_table = 'asp_param_type'
+        managed = False
+
+    descr = models.TextField()
+    name = models.TextField()
+    group_id = models.IntegerField(null=True, blank=True)
+    is_group = models.IntegerField(default=0)
+
 
 class Competence(models.Model):
     code = models.IntegerField()

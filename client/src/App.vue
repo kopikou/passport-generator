@@ -66,7 +66,8 @@ onBeforeMount(async () => {
           <q-route-tab icon="mdi-generator-portable" label="Генератор РПД" to="/generator"
                        v-permissions-required="Permissions.can_use_generator"
           />
-          <q-route-tab icon="mdi-account-school" label="План научной деятельности по программе аспирантуры" to="/scientific-plan"
+          <q-route-tab icon="mdi-account-school" label="План научной деятельности по программе аспирантуры"
+                       to="/scientific-plan"
                        v-permissions-required="Permissions.can_use_generator"
           />
           <q-route-tab icon="mdi-format-list-checks" label="PLX файлы" to="/plx"
@@ -76,6 +77,9 @@ onBeforeMount(async () => {
             <q-list>
               <q-item clickable :href="`${FORCE_SCRIPT_NAME}/admin/`" v-if="isStaff">
                 <q-item-section>Админка</q-item-section>
+              </q-item>
+              <q-item clickable href="https://int.istu.edu/">
+                <q-item-section>Назад в кампус</q-item-section>
               </q-item>
               <q-item clickable :href="`${FORCE_SCRIPT_NAME}/api/accounts/logout/`">
                 <q-item-section>Выйти</q-item-section>

@@ -118,6 +118,19 @@ class AISServices(object):
         return data
 
     @staticmethod
+    def get_asp_old_plans(id):
+
+        query = f"""
+            select p2.id from uchplan_plan p
+            left join uchplan_plan p2 on p.abbrprofile = p2.abbrprofile
+            where p.id = %s and p2.fordel = 'f'
+            """
+
+        data = Mira.fetch(query, [id])
+
+        return data
+
+    @staticmethod
     def get_asp_napr_detail(id):
 
         data = Mira.fetch(f"""
