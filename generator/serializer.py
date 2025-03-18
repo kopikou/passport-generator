@@ -301,7 +301,7 @@ class ScientificDataSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         data, created = ScientificData.objects.update_or_create(
-            id=validated_data['id'],
+            id=validated_data.get('id', None),
             defaults=validated_data,
         )
 

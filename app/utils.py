@@ -3,11 +3,14 @@ from django.conf import settings
 from django.core.cache import cache
 from django.forms import CheckboxSelectMultiple, MultipleChoiceField
 from rest_framework.permissions import BasePermission
+from sqlalchemy import URL, create_engine
+from sqlalchemy.orm import Session
 
 
 class BaseQuerySet(models.QuerySet):
     def delete(self):
         self.update(is_deleted=True)
+
 
 class BaseModelManager(models.Manager):
 
@@ -22,7 +25,6 @@ class TimestampsModel(models.Model):
 
     objects = BaseModelManager()
     default_objects = models.Manager()
-
 
     class Meta:
         abstract = True
@@ -69,37 +71,91 @@ class UserProfileHasPermission(BasePermission):
         return self.permission in request.user.userprofile.permissions
 
 
-class Mira:
-    @classmethod
-    def dictfetchall(cls, cursor):
-        data = list(cursor.fetchall())
-        columns = [col[0] for col in cursor.description]
-        return [
-            dict(zip(columns, row))
-            for row in data
-        ]
+def dictfetchall(cursor):
+    data = list(cursor.fetchall())
+    columns = [col[0] for col in cursor.description]
+    return [
+        dict(zip(columns, row))
+        for row in data
+    ]
+
+
+class DB:
+    key = 'default'
 
     @classmethod
     def exec(cls, query, params, as_dict=False):
+        data = None
         with connections[cls.key].cursor() as cursor:
             d = cursor.execute(query, params)
             while True:
                 if cursor.description:
                     if as_dict:
-                        data = cls.dictfetchall(d)
+                        data = dictfetchall(d)
                     else:
                         data = d.fetchall()
-                if cursor.nextset() == False:
+                if not cursor.nextset():
                     break
             connections[cls.key].commit()
         return data
 
+    @classmethod
+    def fetch(cls, query, params=None):
+        if not params:
+            params = []
+        with connections[cls.key].cursor() as cursor:
+            cursor.execute(query, params)
+            data = dictfetchall(cursor)
+        return data
+
+
+class RPGEN:
+    key = 'rpgen'
+
+    @classmethod
+    def exec(cls, query, params, as_dict=False):
+        db = DBRepository()
+
+        data = None
+        with db.cursor() as cursor:
+            d = cursor.execute(query, params)
+            while True:
+                if cursor.description:
+                    if as_dict:
+                        data = dictfetchall(d)
+                    else:
+                        data = d.fetchall()
+                if not cursor.nextset():
+                    break
+            connections[cls.key].commit()
+        return data
 
     @classmethod
     def fetch(cls, query, params=None):
-        if params is None:
+        db = DBRepository()
+
+        if not params:
             params = []
-        with connections['mira'].cursor() as cursor:
+        with db.cursor() as cursor:
             cursor.execute(query, params)
-            data = cls.dictfetchall(cursor)
+            data = dictfetchall(cursor)
         return data
+
+
+class Mira(DB):
+    key = 'mira'
+
+
+class DBRepository(object):
+    db_conf_key = ""
+    db_driver = ""
+
+    def __init__(self) -> None:
+        self.engine = create_engine(settings.RPGEN_CONNECTION_STRING)
+
+    def session(self):
+        return Session(self.engine)
+
+    def cursor(self):
+        connection = self.engine.raw_connection()
+        return connection.cursor()

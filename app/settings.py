@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'loginas',
 
     'rpd',
-    'rpdgen',
+    'rpgen',
     'generator',
     'uplfile',
     'auths',
@@ -149,11 +149,15 @@ ENABLE_CACHE_FUNCTION_DECORATOR = False
 
 ARIM_URL = "http://arim.istu.edu"
 
+
+MEDIA_URL = '/uploads/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
+
+RPGEN_CONNECTION_STRING = ""
+
+
 try:
     from .local import *
 except:
     pass
 
-
-MEDIA_URL = '/uploads/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')

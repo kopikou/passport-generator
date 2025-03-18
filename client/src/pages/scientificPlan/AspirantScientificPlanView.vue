@@ -138,9 +138,11 @@ const kurs = ref()
 const mainInfo = ref()
 const scientificWorks = ref([])
 const scientificData = ref([])
+const oldPlans = ref([])
 
 const work = ref()
 const addWorkDialog = ref(false)
+const copyProgramDialog = ref(false)
 
 const scientificResearchAutumn = ref()
 const scientificResearchWinter = ref()
@@ -161,6 +163,7 @@ const showHelpSecondPage = ref(true)
 const showHelpThirdPage = ref(true)
 const showHelpFourPage = ref(true)
 
+
 async function fetchPlanData() {
   let r = await api.get(`/api/generator/${props.id}/get-asp-program-detail/`)
   mainInfo.value = _.get(r.data, 'plan')
@@ -175,12 +178,12 @@ async function fetchPlanData() {
   })
 
   scientificData.value = r.data.data
+  oldPlans.value = r.data.old
 }
 
 async function fetchHandbook() {
   let r = await api.get('/api/generator/get-scientific-work/')
   scientificWorks.value = r.data
-  scientificWorks.value.push({id: 0, name: ''})
 }
 
 async function saveMainInfo(data, key) {
@@ -281,13 +284,39 @@ async function detectMovePublish(evt) {
 
 const currentItem = ref([])
 
-function openAddWorkDialog(semester, type) {
+function openAddWorkDialog(semester) {
   currentItem.value = {
-    'part': type,
+    'part': 0,
     'semester': semester,
     'order': _.last(scientificResearchBySemester.value[semester]) ? _.last(scientificResearchBySemester.value[semester]).parameters.order + 1 : 0
   }
   addWorkDialog.value = true
+}
+
+async function addRowInScience(semester) {
+  const data = [
+    {
+      'parameters': {
+        part: 0,
+        semester: semester,
+        order: _.last(scientificResearchBySemester.value[semester]) ? _.last(scientificResearchBySemester.value[semester]).parameters.order + 1 : 0,
+      },
+      'text': '',
+      'plan_id': mainInfo.value.id
+    }
+  ]
+  let r = await api.post(`/api/generator/${props.id}/save-scientific-data/`, data)
+
+  work.value = ''
+  scientificData.value.push(r.data[0])
+  scientificResearchAutumn.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 1).orderBy(x => x.parameters.order).value()
+  scientificResearchWinter.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 2).orderBy(x => x.parameters.order).value()
+
+  $q.notify({
+    message: 'Успешно сохранено!',
+    position: 'top-right',
+    color: 'positive',
+  })
 }
 
 async function addWorkInScience() {
@@ -388,8 +417,21 @@ async function deletePublishData(id) {
   })
 }
 
-async function copyPlan() {
-  let r = await api.get('/api/generator/')
+async function copyPlan(id) {
+  $q.loading.show({message: 'Копирование данных'})
+  let r = await api.get(`/api/generator/${props.id}/copy-asp-program-data/`, {params: {old_pk: id}})
+
+  scientificData.value = r.data
+
+  scientificResearchAutumn.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 1).orderBy(x => x.parameters.order).value()
+  scientificResearchWinter.value = _(scientificData.value).filter(x => x.parameters.semester == ((kurs.value - 1) * 2) + 2).orderBy(x => x.parameters.order).value()
+
+  scientificDissertData.value = _(scientificData.value).filter(x => x.parameters.part == 1).orderBy(x => x.parameters.order).value()
+  scientificPublishData.value = _(scientificData.value).filter(x => x.parameters.part == 2).orderBy(x => x.parameters.order).value()
+
+  copyProgramDialog.value = false
+  $q.loading.hide()
+
 }
 
 onBeforeMount(async () => {
@@ -416,8 +458,9 @@ watch(kurs, () => {
     <div class="flex justify-between">
       <q-btn @click="router.push('/scientific-plan')" color="primary" icon="mdi-arrow-left" label="Назад, к списку"/>
       <div class="q-gutter-x-sm">
-        <q-btn target="_blank" :href="`${FORCE_SCRIPT_NAME}/api/generator/${mainInfo?.id}/get-scientific-report/`" color="info" icon="mdi-file-document" label="Печать документа"/>
-<!--        <q-btn label="Скопировать план" color="primary" icon="mdi-clipboard-outline"/>-->
+        <q-btn target="_blank" :href="`${FORCE_SCRIPT_NAME}/api/generator/${mainInfo?.id}/get-scientific-report/`"
+               color="info" icon="mdi-file-document" label="Печать документа"/>
+        <q-btn label="Скопировать план" color="primary" icon="mdi-clipboard-outline" @click="copyProgramDialog = true"/>
       </div>
     </div>
     <q-stepper
@@ -439,8 +482,7 @@ watch(kurs, () => {
           <q-card class="bg-blue-2" v-if="showHelpFirstPage">
             <q-card-section>
               <p>
-                Данный раздел заполняется автоматически, если есть данные которые "подтянулись" у Вас нет возможности
-                их исправить.
+                Данный раздел заполняется автоматически
               </p>
               <p>
                 После завершения работы с каждой вкладкой можно переходить к следующей. Все наработки сохранятся и в
@@ -459,15 +501,15 @@ watch(kurs, () => {
           separator="cell"
         >
 
-<!--          <template #body-cell-val="props">-->
-<!--            <q-td :props="props">-->
-<!--              {{ props.row.val }}-->
-<!--              <q-popup-edit v-slot="scope" v-model="props.row.val" auto-save>-->
-<!--                <q-input v-model="scope.value" autofocus @focusout="scope.set" @keyup.enter="scope.set" :debounce="1000"-->
-<!--                         @update:modelValue="saveMainInfo(scope.value, props.row.key)"/>-->
-<!--              </q-popup-edit>-->
-<!--            </q-td>-->
-<!--          </template>-->
+          <!--          <template #body-cell-val="props">-->
+          <!--            <q-td :props="props">-->
+          <!--              {{ props.row.val }}-->
+          <!--              <q-popup-edit v-slot="scope" v-model="props.row.val" auto-save>-->
+          <!--                <q-input v-model="scope.value" autofocus @focusout="scope.set" @keyup.enter="scope.set" :debounce="1000"-->
+          <!--                         @update:modelValue="saveMainInfo(scope.value, props.row.key)"/>-->
+          <!--              </q-popup-edit>-->
+          <!--            </q-td>-->
+          <!--          </template>-->
 
         </q-table>
       </q-step>
@@ -489,11 +531,10 @@ watch(kurs, () => {
                   исследования
                   в вашей предметной области. В некоторых семестрах уже имеются предложенные варианты, которые можно
                   оставить
-                  без изменения, удалить все либо некоторые или отредактировать. При нажатии на «Добавить вид работ»
+                  без изменения, удалить все либо некоторые или отредактировать. При нажатии на «Выбрать вид работ»
                   можно
                   воспользоваться вариантами из выпадающего списка (кнопка «Добавить») или предложить свои варианты,
-                  заполнив
-                  пустое поле.
+                  нажав на кнопку «Добавить вид работ» и заполнив пустое поле.
                 </p>
                 <p>
                   После завершения работы с каждой вкладкой можно переходить к следующей. Все наработки сохранятся и в
@@ -540,8 +581,12 @@ watch(kurs, () => {
                     </div>
                   </template>
                 </draggable>
-                <q-btn class="full-width q-mt-sm" color="primary" label="Добавить вид работ"
-                       @click="openAddWorkDialog(((kurs - 1) * 2) + 1, 0)"/>
+                <div class="row" style="gap: 4px;">
+                  <q-btn class="full-width q-mt-sm col" color="info" label="Выбрать вид работ"
+                         @click="openAddWorkDialog(((kurs - 1) * 2) + 1,)"/>
+                  <q-btn class="full-width q-mt-sm col" color="primary" label="Добавить вид работ"
+                         @click="addRowInScience(((kurs - 1) * 2) + 1)"/>
+                </div>
               </div>
               <div class="col">
                 <draggable
@@ -562,8 +607,12 @@ watch(kurs, () => {
                     </div>
                   </template>
                 </draggable>
-                <q-btn class="full-width q-mt-sm" color="primary" label="Добавить вид работ"
-                       @click="openAddWorkDialog(((kurs - 1) * 2) + 2, 0)"/>
+                <div class="row" style="gap: 4px;">
+                  <q-btn class="full-width q-mt-sm col" color="info" label="Выбрать вид работ"
+                         @click="openAddWorkDialog(((kurs - 1) * 2) + 2, 0)"/>
+                  <q-btn class="full-width q-mt-sm col" color="primary" label="Добавить вид работ"
+                         @click="addRowInScience(((kurs - 1) * 2) + 2, 0)"/>
+                </div>
               </div>
             </div>
 
@@ -586,7 +635,8 @@ watch(kurs, () => {
               <div>
                 <p>
                   При заполнении данного раздела можно воспользоваться предложенными вариантами (оставить без изменения,
-                  удалить все либо некоторые или отредактировать) либо предложить свои, нажав на кнопку «Добавить вид работ».
+                  удалить все либо некоторые или отредактировать) либо предложить свои, нажав на кнопку «Добавить вид
+                  работ».
 
                 </p>
                 <p>
@@ -602,6 +652,7 @@ watch(kurs, () => {
             </q-card-section>
           </q-card>
         </div>
+
         <draggable
           :list="scientificDissertData"
           class="q-gutter-y-sm q-mt-sm"
@@ -694,6 +745,55 @@ watch(kurs, () => {
 
       <q-card-actions align="right">
         <q-btn label="Добавить" flat color="positive" @click="addWorkInScience"/>
+        <q-btn label="Отмена" flat color="negative" v-close-popup/>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
+  <q-dialog v-model="copyProgramDialog" persistent>
+    <q-card style="width: 700px; max-width: 80vw;">
+
+      <q-card-section class="text-h6">
+        Копирование программы
+      </q-card-section>
+
+      <q-card-section>
+        <q-card class="bg-red-2">
+          <q-card-section>
+            Внимание!!!
+            Копирование данных осуществляется в текущий план из выбранного Вами в этом окне.
+            При этом данные разделов "Примерный план выполнения научного исследования", "Примерный план
+            подготовки диссертации" и "Примерный план подготовки публикаций" будут безвозвратно заменены
+            соответствующими
+            данными выбранного плана. После копирования Вы можете изменять данные плана так, как потребуется.
+          </q-card-section>
+        </q-card>
+      </q-card-section>
+
+
+      <q-card-section class="q-gutter-y-sm">
+
+        <div class="text-h6">Старые планы</div>
+
+        <q-field
+          outlined
+          stack-label
+          :label="plan.species"
+          v-for="plan in oldPlans"
+        >
+          <template #control>
+            <div>
+              {{ plan.abbrprofile }}-{{ `${plan.startyear}`.slice(-2) }}
+            </div>
+          </template>
+
+          <template #append>
+            <q-btn flat icon="mdi-clipboard" color="black" @click="copyPlan(plan.id)"/>
+          </template>
+        </q-field>
+      </q-card-section>
+
+      <q-card-actions align="right">
         <q-btn label="Отмена" flat color="negative" v-close-popup/>
       </q-card-actions>
     </q-card>

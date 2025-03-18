@@ -19,9 +19,9 @@ class AspParamValue(models.Model):
 
     type_id = models.IntegerField()
     value = models.TextField()
-    linked = models.ForeignKey('AspParamValue', null=True, blank=True, on_delete=models.CASCADE)
+    linked_id = models.ForeignKey('AspParamValue', on_delete=models.CASCADE, null=True, blank=True)
     plan_id = models.IntegerField()
-    sort = models.IntegerField()
+    sort = models.IntegerField(null=True, blank=True)
 
 
 class AspParamType(models.Model):

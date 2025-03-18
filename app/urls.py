@@ -10,7 +10,6 @@ from auths.api import UserApiViewSet
 from generator.api.GeneratorViewSet import GeneratorViewSet
 from rpd.api.AccreditationInfoViewSet import AccreditationInfoViewSet
 from rpd.api.PlxUploadViewSet import PlxUploadViewSet
-from rpdgen.api import AspPlanViewSet
 from uplfile.api import UploadFileViewSet
 
 router = routers.DefaultRouter()
@@ -21,8 +20,8 @@ router.register(r'accreditation', AccreditationInfoViewSet, basename="accreditat
 router.register(r'generator', GeneratorViewSet, basename="generator")
 router.register(r'upload', UploadFileViewSet, basename="upload")
 
-router_old = routers.DefaultRouter()
-router_old.register(r'asp', AspPlanViewSet, basename="asp")
+# router_old = routers.DefaultRouter()
+# router_old.register(r'asp', AspPlanViewSet, basename="asp")
 
 urlpatterns = [
     path('api/', include(router.urls)),

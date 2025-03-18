@@ -2,6 +2,7 @@ from itertools import groupby
 
 import pendulum
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.serializers import serialize
 from django.db.models import Q
 from django.http import HttpResponse
 from django.utils.encoding import escape_uri_path
@@ -11,7 +12,7 @@ from rest_framework.decorators import action
 from rest_framework.mixins import RetrieveModelMixin, ListModelMixin, DestroyModelMixin, CreateModelMixin
 from rest_framework.viewsets import GenericViewSet
 
-from app.utils import UserProfileHasPermission
+from app.utils import UserProfileHasPermission, RPGEN
 from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
@@ -23,6 +24,7 @@ from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSe
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
 from generator.services import ReportService
 from rpd.models import LinesData, PlanData, LinesIndicators
+from rpgen.models import AspParamValue
 
 
 class GeneratorViewSet(
@@ -90,6 +92,64 @@ class GeneratorViewSet(
 
         return Response(serializer.data)
 
+    @action(methods=['GET'], url_path='copy-asp-program-data', detail=True)
+    def copy_asp_program_data(self, request, *args, **kwargs):
+
+        pk = self.kwargs['pk']
+
+        old_pk = self.request.query_params['old_pk']
+
+        instance = ScientificPlanData.objects.get(mira_id=pk)
+
+        old_data = RPGEN.fetch("SELECT * FROM asp_param_value where plan_id = %s and type_id in (15, 16, 17, 18) order by type_id", [old_pk])
+
+        old_data_by_key = {i['id']: i for i in old_data if i['type_id'] == 15}
+
+        for key, i in enumerate(old_data):
+            if not i['sort']:
+                old_data[key] = {
+                    **i,
+                    'sort': 0,
+                }
+
+        grouped_old_data = {key: list(i) for key, i in groupby(old_data, key=lambda x: x['type_id'])}
+
+        data = []
+        for key, items in grouped_old_data.items():
+            if key == 16:
+                for index, item in enumerate(sorted(items, key=lambda x: x['sort']), start=1):
+
+                    semester = old_data_by_key.get(item['linked_id'], {}).get('value', None)
+
+                    data.append({
+                        "plan_id": instance.id,
+                        "text": item['value'],
+                        "parameters": {"order": index, "part": 0, "semester": semester},
+                    })
+            elif key == 17:
+                for index, item in enumerate(sorted(items, key=lambda x: x['sort']), start=1):
+                    data.append({
+                        "plan_id": instance.id,
+                        "text": item['value'],
+                        "parameters": {"order": index, "part": 1},
+                    })
+            elif key == 18:
+                for index, item in enumerate(sorted(items, key=lambda x: x['sort']), start=1):
+                    data.append({
+                        "plan_id": instance.id,
+                        "text": item['value'],
+                        "parameters": {"order": index, "part": 2},
+                    })
+
+
+        ScientificData.objects.filter(plan_id=instance.id).delete()
+
+        serializer = ScientificDataSerializer(data=data, many=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(data=serializer.data)
+
     @action(methods=['get'], url_path="get-asp-program-list", detail=False)
     def get_aps_program_list(self, request, *args, **kwargs):
         user = self.request.user.userprofile.mira_id
@@ -101,7 +161,7 @@ class GeneratorViewSet(
     @action(methods=['GET'], url_path="get-asp-program-detail", detail=True)
     def get_asp_program_detail(self, request, *args, **kwargs):
 
-        pk = self.kwargs['pk']
+        pk = int(self.kwargs['pk'])
 
         mira_data = AISServices.get_asp_napr_detail(pk)
         plan_data = PlanData.objects.filter(mira_id=pk).values()
@@ -163,9 +223,13 @@ class GeneratorViewSet(
 
             scientific_data = ScientificData.objects.filter(plan_id=result['id']).values('id', 'text', 'parameters')
 
+        old_plans = list(filter(lambda x: x['id'] != pk, AISServices.get_asp_old_plans(pk)))
+
+
         return Response(data={
             "plan": result,
             "data": scientific_data,
+            "old": old_plans,
         })
 
     @action(methods=['GET'], url_path="get-program-list", detail=False)

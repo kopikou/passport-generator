@@ -79,7 +79,6 @@ class AISServices(object):
 
         now = pendulum.now().start_of("day")
         left_time = now.add(years=-6).year
-        data = None
         query = Q()
         if adm_user:
             if adm_user.isadmin == 't':
@@ -121,9 +120,10 @@ class AISServices(object):
     def get_asp_old_plans(id):
 
         query = f"""
-            select p2.id from uchplan_plan p
+            select p2.id, p2.abbrprofile, p2.startyear, p2.species from uchplan_plan p
             left join uchplan_plan p2 on p.abbrprofile = p2.abbrprofile
             where p.id = %s and p2.fordel = 'f'
+            order by p2.startyear
             """
 
         data = Mira.fetch(query, [id])
