@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.forms import ModelForm
 from django.template.loader import render_to_string
@@ -32,7 +33,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 
     def buttons(self, obj):
         out = render_to_string('loginas/userprofile_loginas_button.html', {
-            "object_id": obj.user.id
+            "object_id": obj.user.id,
         })
         return mark_safe(out)
 

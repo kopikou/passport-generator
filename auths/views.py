@@ -97,6 +97,14 @@ class BitrixAuthView(APIView):
 
         if created:
             user.userprofile.bitrix_user_id = bitrix_user_id
+
+            if bool(result['is_teacher']):
+                perms = [Permissions.can_edit_rpd, Permissions.can_use_generator]
+                user.userprofile.permissions = perms
+
+            if bool(result['is_student']):
+                user.is_active = False
+                
             user.userprofile.save()
 
         user.userprofile.is_teacher = bool(result['is_teacher'])
@@ -107,18 +115,7 @@ class BitrixAuthView(APIView):
         if mira_id > 2:
             user.userprofile.mira_id = mira_id
 
-        if bool(result['is_teacher']):
-            perms = [Permissions.can_edit_rpd, Permissions.can_use_generator]
-            user.userprofile.permissions = perms
-
-        if bool(result['is_student']):
-            user.is_active = False
-
         user.userprofile.save()
         auth_login(self.request, user)
 
         return redirect(settings.FORCE_SCRIPT_NAME or "/")
-
-
-
-
