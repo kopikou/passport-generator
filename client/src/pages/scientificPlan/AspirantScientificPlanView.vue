@@ -430,6 +430,15 @@ async function copyPlan(id) {
   scientificPublishData.value = _(scientificData.value).filter(x => x.parameters.part == 2).orderBy(x => x.parameters.order).value()
 
   copyProgramDialog.value = false
+
+  if (r.status == 200) {
+    $q.notify({
+      message: "Успешно скопировано!",
+      color: "positive",
+      position: "top",
+    })
+  }
+
   $q.loading.hide()
 
 }
