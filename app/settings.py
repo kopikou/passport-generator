@@ -155,6 +155,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
 
 RPGEN_CONNECTION_STRING = ""
 
+PRODUCTION = False
 
 try:
     from .local import *

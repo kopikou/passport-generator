@@ -362,7 +362,7 @@ class GeneratorViewSet(
         tpl.save(path_doc_file)
         # tpl.save(response)
 
-        if settings.DEBUG:
+        if not settings.PRODUCTION:
             from win32com.client import Dispatch
 
             word = Dispatch('Word.Application')
