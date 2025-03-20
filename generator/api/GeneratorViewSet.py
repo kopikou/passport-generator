@@ -363,33 +363,33 @@ class GeneratorViewSet(
         path_pdf_file = f"{os.path.abspath(path)}/{pk}.pdf"
 
         tpl = ReportService.get_scientific_report(result)
-        tpl.save(path_doc_file)
-        # tpl.save(response)
+        tpl.save(response)
+        # tpl.save(path_doc_file)
 
-        if platform.system() == 'Linux':
-            run([
-                'libreoffice', '--headless', '--invisible', '--convert-to',
-                'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
-            ])
-
-        elif platform.system() == 'Windows':
-            from win32com.client import Dispatch
-
-            word = Dispatch('Word.Application')
-            doc = word.Documents.Open(path_doc_file)
-            doc.SaveAs(path_pdf_file, FileFormat=17)
-            word.Quit()
-        else:
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        with open(path_pdf_file, 'rb') as file:
-            response.write(file.read())
-
-        if os.path.exists(path_doc_file):
-            os.remove(path_doc_file)
-
-        if os.path.exists(path_pdf_file):
-            os.remove(path_pdf_file)
+        # if platform.system() == 'Linux':
+        #     run([
+        #         'libreoffice', '--headless', '--invisible', '--convert-to',
+        #         'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
+        #     ])
+        #
+        # elif platform.system() == 'Windows':
+        #     from win32com.client import Dispatch
+        #
+        #     word = Dispatch('Word.Application')
+        #     doc = word.Documents.Open(path_doc_file)
+        #     doc.SaveAs(path_pdf_file, FileFormat=17)
+        #     word.Quit()
+        # else:
+        #     return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        #
+        # with open(path_pdf_file, 'rb') as file:
+        #     response.write(file.read())
+        #
+        # if os.path.exists(path_doc_file):
+        #     os.remove(path_doc_file)
+        #
+        # if os.path.exists(path_pdf_file):
+        #     os.remove(path_pdf_file)
 
         # return Response(result)
         return response
