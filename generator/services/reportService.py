@@ -583,7 +583,7 @@ class ReportService(object):
             tmp = {}
             for s in column['semesters']:
                 tmp[s] = sorted(
-                    [i for i in scientific_data if i['parameters']['part'] == 0 and i['parameters']['semester'] == s],
+                    [i for i in scientific_data if i['parameters']['part'] == 0 and int(i['parameters']['semester']) == s],
                     key=lambda x: x['parameters']['order'])
 
             table_data.append({
