@@ -76,12 +76,15 @@ onBeforeMount(async () => {
       <div class="text-center text-h6 q-mb-md">Просмотр ПНД по программе аспирантуры ИРНИТУ</div>
       <div class="q-gutter-y-xs">
         <q-list bordered separator>
-          <q-item v-for="item in adminProgramList" clickable v-ripple target="_blank" :href="`${FORCE_SCRIPT_NAME}/api/generator/${item?.id}/get-scientific-report/`">
+          <q-item v-for="item in adminProgramList" clickable v-ripple>
             <q-item-section>
               <div class="flex justify-between">
-                <div class="text-subtitle1">{{ item.name }}</div>
-                <div>
-                  <q-btn flat color="black" icon="mdi-download" />
+                <div class="text-subtitle1">{{ item.species }} <span class="text-bold">{{ item.name }}</span></div>
+                <div v-if="item.created">
+                  <q-btn flat color="black" icon="mdi-download" target="_blank" :href="`${FORCE_SCRIPT_NAME}/api/generator/${item.id}/get-scientific-report/`"/>
+                </div>
+                <div v-else>
+                  <q-chip color="negative" class="text-white">Еще не заполнялся</q-chip>
                 </div>
               </div>
             </q-item-section>

@@ -160,12 +160,28 @@ class GeneratorViewSet(
 
         year = self.request.query_params.get('year', pendulum.now().year)
 
-        result = {}
+        data = AISServices.get_asp_napr(year, user)
+        data = sorted(data, key=lambda x: x['species'])
 
-        result['items'] = *AISServices.get_asp_napr(year, user),
+        result = {"items": data}
 
         if Permissions.scientific_admin in request.user.userprofile.permissions:
-            result['admin_items'] = ScientificPlanData.objects.filter(startyear=year).values('id', 'name', 'startyear')
+
+            ais_plans = AISServices.get_all_asp(year)
+
+            scientific_plan = ScientificPlanData.objects.filter(startyear=year).values_list('mira_id', flat=True)
+            scientific_plan_ids = [i for i in scientific_plan]
+
+            res = []
+            for i in ais_plans:
+                res.append({
+                    **i,
+                    "created": True if i['id'] in scientific_plan_ids else False
+                })
+
+            res = sorted(res, key=lambda x: x['species'])
+            result.update({"admin_items": res})
+
 
         return Response(data=result)
 
