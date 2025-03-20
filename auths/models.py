@@ -13,6 +13,7 @@ class Permissions(TextChoices):
     can_edit_rpd = "can_edit_rpd", "Может редактировать РПД"
     can_use_generator = "can_use_generator", "Может использовать генератор"
     can_upload_files = "can_upload_files", "Может загружать файлы Программы"
+    scientific_admin = "scientific_admin", "Просмотр всех ПНД по программе аспирантуры"
 
 
 # Create your models here.

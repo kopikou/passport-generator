@@ -169,7 +169,6 @@ class AISServices(object):
 
         return data
 
-
     @staticmethod
     def search_software(val):
 

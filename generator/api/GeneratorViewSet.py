@@ -158,9 +158,16 @@ class GeneratorViewSet(
     def get_aps_program_list(self, request, *args, **kwargs):
         user = self.request.user.userprofile.mira_id
 
-        data = AISServices.get_asp_napr(self.request.query_params.get('year', pendulum.now().year), user)
+        year = self.request.query_params.get('year', pendulum.now().year)
 
-        return Response(data)
+        result = {}
+
+        result['items'] = *AISServices.get_asp_napr(year, user),
+
+        if Permissions.scientific_admin in request.user.userprofile.permissions:
+            result['admin_items'] = ScientificPlanData.objects.filter(startyear=year).values('id', 'name', 'startyear')
+
+        return Response(data=result)
 
     @action(methods=['GET'], url_path="get-asp-program-detail", detail=True)
     def get_asp_program_detail(self, request, *args, **kwargs):
@@ -350,10 +357,12 @@ class GeneratorViewSet(
         result = ScientificPlanData.objects.get(id=pk)
 
         rpd_data = PlanData.objects.get(mira_id=result.mira_id, is_deleted=False)
-        filename = f"План_НИД_{str(rpd_data.startyear)[:2]}_{result.name}_{rpd_data.abbrprofile}.pdf"
+        filename = f"План_НИД_{str(rpd_data.startyear)[:2]}_{result.name}_{rpd_data.abbrprofile}.docx"
+        # filename = f"План_НИД_{str(rpd_data.startyear)[:2]}_{result.name}_{rpd_data.abbrprofile}.pdf"
         path = f'templates/outputs/'
 
-        response = HttpResponse(content_type='application/pdf')
+        # response = HttpResponse(content_type='application/pdf')
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
 
         if not os.path.exists(path):

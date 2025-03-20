@@ -2,6 +2,8 @@ export enum Permissions {
   can_upload_plx_files = 'can_upload_plx_files',
   can_use_generator = 'can_use_generator',
   can_upload_files = 'can_upload_files',
+  can_edit_rpd = "can_edit_rpd",
+  scientific_admin = "scientific_admin",
 }
 
 export interface PlanLineItem {
@@ -268,8 +270,8 @@ export interface DisciplineWorkHour {
 }
 
 export interface DefaultRecources {
-    id: number,
-    name: string,
-    type: number,
-    url: string,
+  id: number,
+  name: string,
+  type: number,
+  url: string,
 }
