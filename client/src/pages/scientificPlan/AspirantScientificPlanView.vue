@@ -467,7 +467,7 @@ watch(kurs, () => {
     <div class="flex justify-between">
       <q-btn @click="router.push('/scientific-plan')" color="primary" icon="mdi-arrow-left" label="Назад, к списку"/>
       <div class="q-gutter-x-sm">
-        <q-btn target="_blank" :href="`${FORCE_SCRIPT_NAME}/api/generator/${mainInfo?.id}/get-scientific-report/`"
+        <q-btn target="_blank" :href="`${FORCE_SCRIPT_NAME}/api/generator/${mainInfo?.mira_id}/get-scientific-report/`"
                color="info" icon="mdi-file-document" label="Печать документа"/>
         <q-btn label="Скопировать план" color="primary" icon="mdi-clipboard-outline" @click="copyProgramDialog = true"/>
       </div>
@@ -491,11 +491,11 @@ watch(kurs, () => {
           <q-card class="bg-blue-2" v-if="showHelpFirstPage">
             <q-card-section>
               <p>
-                Данный раздел заполняется автоматически
+                Данный раздел заполняется автоматически.
               </p>
               <p>
                 После завершения работы с каждой вкладкой можно переходить к следующей. Все наработки сохранятся и в
-                дальнейшем будут выгружены в соответствующий раздел бумажного варианта плана научной деятельности
+                дальнейшем будут выгружены в соответствующий раздел бумажного варианта плана научной деятельности.
               </p>
             </q-card-section>
           </q-card>

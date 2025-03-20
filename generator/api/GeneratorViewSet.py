@@ -370,7 +370,7 @@ class GeneratorViewSet(
 
         pk = self.kwargs['pk']
 
-        result = ScientificPlanData.objects.get(id=pk)
+        result = ScientificPlanData.objects.get(mira_id=pk)
 
         rpd_data = PlanData.objects.get(mira_id=result.mira_id, is_deleted=False)
         filename = f"План_НИД_{str(rpd_data.startyear)[:2]}_{result.name}_{rpd_data.abbrprofile}.docx"
