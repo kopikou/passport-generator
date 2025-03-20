@@ -1,6 +1,9 @@
+import os
 from itertools import groupby
+from subprocess import run
 
 import pendulum
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers import serialize
 from django.db.models import Q
@@ -341,16 +344,48 @@ class GeneratorViewSet(
     @action(methods=['GET'], url_path="get-scientific-report", detail=True)
     def get_scientific_report(self, request, *args, **kwargs):
 
-        result = ScientificPlanData.objects.get(id=self.kwargs['pk'])
+        pk = self.kwargs['pk']
+
+        result = ScientificPlanData.objects.get(id=pk)
 
         rpd_data = PlanData.objects.get(mira_id=result.mira_id, is_deleted=False)
-        filename = f"План_НИД_{str(rpd_data.startyear)[:2]}_{result.name}_{rpd_data.abbrprofile}.docx"
+        filename = f"План_НИД_{str(rpd_data.startyear)[:2]}_{result.name}_{rpd_data.abbrprofile}.pdf"
+        path = f'templates/outputs/'
 
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        path_doc_file = f"{os.path.abspath(path)}/{pk}.docx"
+        path_pdf_file = f"{os.path.abspath(path)}/{pk}.pdf"
+
+        tpl = ReportService.get_scientific_report(result)
+        tpl.save(path_doc_file)
+        # tpl.save(response)
+
+        if settings.DEBUG:
+            from win32com.client import Dispatch
+
+            word = Dispatch('Word.Application')
+            doc = word.Documents.Open(path_doc_file)
+            doc.SaveAs(path_pdf_file, FileFormat=17)
+            word.Quit()
+        else:
+            run([
+                'libreoffice', '--headless', '--invisible', '--convert-to',
+                'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
+            ])
+
+        response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
 
-        doc = ReportService.get_scientific_report(result)
-        doc.save(response)
+        with open(path_pdf_file, 'rb') as file:
+            response.write(file.read())
+
+        if os.path.exists(path_doc_file):
+            os.remove(path_doc_file)
+
+        if os.path.exists(path_pdf_file):
+            os.remove(path_pdf_file)
 
         # return Response(result)
         return response
