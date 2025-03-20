@@ -1,4 +1,5 @@
 import os
+import platform
 from itertools import groupby
 from subprocess import run
 
@@ -352,6 +353,9 @@ class GeneratorViewSet(
         filename = f"План_НИД_{str(rpd_data.startyear)[:2]}_{result.name}_{rpd_data.abbrprofile}.pdf"
         path = f'templates/outputs/'
 
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
+
         if not os.path.exists(path):
             os.makedirs(path)
 
@@ -362,7 +366,13 @@ class GeneratorViewSet(
         tpl.save(path_doc_file)
         # tpl.save(response)
 
-        if not settings.PRODUCTION:
+        if platform.system() == 'Linux':
+            run([
+                'libreoffice', '--headless', '--invisible', '--convert-to',
+                'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
+            ])
+
+        elif platform.system() == 'Windows':
             from win32com.client import Dispatch
 
             word = Dispatch('Word.Application')
@@ -370,13 +380,7 @@ class GeneratorViewSet(
             doc.SaveAs(path_pdf_file, FileFormat=17)
             word.Quit()
         else:
-            run([
-                'libreoffice', '--headless', '--invisible', '--convert-to',
-                'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
-            ])
-
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         with open(path_pdf_file, 'rb') as file:
             response.write(file.read())
