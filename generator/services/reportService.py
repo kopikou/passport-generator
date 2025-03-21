@@ -564,7 +564,7 @@ class ReportService(object):
         doc = DocxTemplate(path)
 
         scientific_data = ScientificData.objects.filter(plan_id=data.id).values()
-        rpd_data = PlanData.objects.get(mira_id=data.mira_id, is_deleted=False)
+        rpd_data = PlanData.objects.get(mira_id=data.mira_id)
 
         p2_indicator = LinesIndicators.objects.filter(planlineid__plan_id=rpd_data.id, competence_index='Р-2').last()
         p2_1_indicator = LinesIndicators.objects.filter(planlineid__plan_id=rpd_data.id, indicator_index='Р-2.1').last()

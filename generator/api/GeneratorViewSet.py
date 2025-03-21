@@ -372,14 +372,14 @@ class GeneratorViewSet(
 
         result = ScientificPlanData.objects.get(mira_id=pk)
 
-        rpd_data = PlanData.objects.get(mira_id=result.mira_id, is_deleted=False)
-        filename = f"План_НИД_{str(rpd_data.startyear)[:2]}_{result.name}_{rpd_data.abbrprofile}.docx"
+        rpd_data = PlanData.objects.get(mira_id=result.mira_id)
+        filename = f"План_НИД_{str(rpd_data.startyear)[:2]}_{result.name}_{rpd_data.abbrprofile}.docx".replace(',', ' ')
         # filename = f"План_НИД_{str(rpd_data.startyear)[:2]}_{result.name}_{rpd_data.abbrprofile}.pdf"
         path = f'templates/outputs/'
 
         # response = HttpResponse(content_type='application/pdf')
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-        response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
+        response['Content-Disposition'] = f"attachment; filename={escape_uri_path(filename)}"
 
         if not os.path.exists(path):
             os.makedirs(path)
