@@ -499,9 +499,6 @@ class ReportService(object):
                     [i['srs_hours'] for i in tmp if i['srs_hours'] != '']) != 0 else '',
             })
 
-        protocol_date = pendulum.from_format(data['protocol_date'], "YYYY-MM-DD")
-        user_accepted = User.objects.get(id=data['user_accepted_id'])
-
         context = {
             "now": pendulum.now().start_of("day"),
             "current_year": pendulum.now().year,
@@ -540,14 +537,21 @@ class ReportService(object):
             "software": software,
             "logistics": logistics,
             "protocol_number": data['protocol_number'],
-            "protocol_date": f'{protocol_date.format("DD.MM.YYYY")}',
-            "protocol_year": protocol_date.year,
-            "user_accepted": f"{user_accepted.last_name} {user_accepted.first_name} {user_accepted.userprofile.middle_name}",
-            "user_type": PlanLinesLink.UserTypeChoices.labels[data['user_type']],
             "meeting": data['meeting'],
             "accept_date": data['accept_date'],
             "review_date": data['review_date'],
         }
+
+        if data['status'] == 3:
+            protocol_date = pendulum.from_format(data['protocol_date'], "YYYY-MM-DD")
+            user_accepted = User.objects.get(id=data['user_accepted_id'])
+
+            context.update({
+                "protocol_date": f'{protocol_date.format("DD.MM.YYYY")}',
+                "protocol_year": protocol_date.year,
+                "user_accepted": f"{user_accepted.last_name} {user_accepted.first_name} {user_accepted.userprofile.middle_name}",
+                "user_type": PlanLinesLink.UserTypeChoices.labels[data['user_type']],
+            })
 
         doc.render(context)
 
@@ -583,7 +587,8 @@ class ReportService(object):
             tmp = {}
             for s in column['semesters']:
                 tmp[s] = sorted(
-                    [i for i in scientific_data if i['parameters']['part'] == 0 and int(i['parameters']['semester']) == s],
+                    [i for i in scientific_data if
+                     i['parameters']['part'] == 0 and int(i['parameters']['semester']) == s],
                     key=lambda x: x['parameters']['order'])
 
             table_data.append({

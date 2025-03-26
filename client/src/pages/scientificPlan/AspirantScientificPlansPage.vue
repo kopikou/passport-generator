@@ -25,7 +25,7 @@ const yearsOptions = _.map(Array(dayjs().year() - 2024), (x, i) => {
   return dayjs().year() - i
 })
 
-const year = ref($q.localStorage.getItem('scientificPlan_year') ? $q.localStorage.getItem('scientificPlan_year') : dayjs().year())
+const year = ref($q.localStorage.getItem('surp_scientificPlan_year') ? $q.localStorage.getItem('surp_scientificPlan_year') : dayjs().year())
 
 
 async function fetchPrograms() {
@@ -40,7 +40,7 @@ function openAspScientificPlan(id) {
 
 watch(year, async () => {
   $q.loading.show({message: "Загрузка данных"})
-  $q.localStorage.set('scientificPlan_year', year.value)
+  $q.localStorage.set('surp_scientificPlan_year', year.value)
   await fetchPrograms()
   $q.loading.hide()
 })

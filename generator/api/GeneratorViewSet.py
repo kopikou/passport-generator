@@ -272,7 +272,7 @@ class GeneratorViewSet(
 
         filtered_data = LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
                                                  plan__startyear__in=startyear_list,
-                                                 plan__file__status=4).select_related("plan")
+                                                 plan__file__status=4, synchronize=True).select_related("plan")
 
         filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.plan.startyear}": i for i in filtered_data}
 
@@ -519,10 +519,10 @@ class GeneratorViewSet(
         instance = self.get_object()
         result = self.retrieve(request, *args, **kwargs).data
 
-        filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx"
+        filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(',', ' ')
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-        response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
+        response['Content-Disposition'] = f"attachment; filename={escape_uri_path(filename)}"
 
         doc = ReportService.get_rpd_report(result)
         doc.save(response)
@@ -535,10 +535,10 @@ class GeneratorViewSet(
         instance = self.get_object()
         result = self.retrieve(request, *args, **kwargs).data
 
-        filename = f"Аннотация_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx"
+        filename = f"Аннотация_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(',', ' ')
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-        response['Content-Disposition'] = "attachment; filename=" + escape_uri_path(filename)
+        response['Content-Disposition'] = f"attachment; filename={escape_uri_path(filename)}"
 
         doc = ReportService.get_rpd_annotation(result)
         doc.save(response)

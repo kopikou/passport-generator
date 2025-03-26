@@ -13,7 +13,7 @@ const {
   mira_id,
 } = storeToRefs(mainStore)
 
-import {computed, onBeforeMount, ref} from "vue";
+import {computed, onBeforeMount, ref, watch} from "vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import {GeneratorListData} from "src/types";
@@ -34,7 +34,7 @@ const typeFilter = [
   {label: 'Преподаватель', value: 'person'},
 ]
 
-const type = ref(['person'])
+const type = ref($q.localStorage.getItem('surp_typeFilter') ? $q.localStorage.getItem('surp_typeFilter') : ['person'])
 
 const filteredListData = computed(() => {
   return _(listData.value)
@@ -82,6 +82,10 @@ function getViewRules(type) {
 function getRowColor(number) {
   return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
 }
+
+watch(type, () => {
+  $q.localStorage.setItem('surp_typeFilter', type.value)
+})
 
 onBeforeMount(async () => {
   $q.loading.show()
