@@ -93,7 +93,10 @@ onBeforeMount(() => {
             <div class="text-subtitle1">Лекции</div>
             <q-field outlined dense>
               <template v-slot:control>
-                <div class="self-center full-width no-outline text-center">{{ item.lekc }}</div>
+                <div class="self-center full-width no-outline text-center">
+                  <span v-if="item.lekc">{{ item.lekc }}</span>
+                  <span v-else>Отсутствует</span>
+                </div>
               </template>
             </q-field>
 
@@ -166,6 +169,7 @@ onBeforeMount(() => {
                   <span v-if="item.ekz">Экзамен</span>
                   <span v-if="item.zach">Зачет</span>
                   <span v-if="item.zacho">Зачет с оценкой></span>
+                  <span v-if="!item.ekz && !item.zach && !item.zacho">Отсутствует</span>
                 </div>
               </template>
             </q-field>
