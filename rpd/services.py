@@ -160,7 +160,7 @@ class PLXParser:
         lnsdata = self.get_lines_data(root, planData['id'], indikators_data)
 
         for key, item in lnsdata.items():
-            if item['parent_id'] and not item['viewpract'] and item['mustbesdudied'] != 0:
+            if not item['parent_id'] and not item['viewpract'] and item['mustbesdudied'] != 0:
                 lnsdata[key]['synchronize'] = False
 
         # Убрано, добавляем практику в РПД генератор
