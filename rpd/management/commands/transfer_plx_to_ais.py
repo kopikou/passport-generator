@@ -102,7 +102,7 @@ class Command(BaseCommand):
                     "kafcode_id": line['caf'],
                     "ckaf": kaf_codes.get(line['caf'], {}).get("ckaf2istu"),
                     "nocalccontrol": line['nocalccontrol'],
-                    "fordel": "t" if line['synchronize'] else 'f',
+                    "fordel": "f" if line['synchronize'] else 't',
                     "type": line['type'],
                     "viewpract": line['viewpract'],
                     "viewobject": line['viewobject'],
