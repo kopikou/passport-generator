@@ -16,7 +16,98 @@ from rpd.models import PlanData, LinesData, Disciplines, SemesterData, LinesIndi
 from rpd.serializer import PlanDataSerializer, DisciplinesSerializer, LinesDataSerializer, SemesterDataSerializer, \
     LinesIndicatorsSerializer, PlanDocumentsSerializer
 
-from app.utils import cache_function
+from app.utils import cache_function, RPGEN
+
+
+class RPDGenSerivce:
+
+    @staticmethod
+    def get_asp_plan(id):
+        query = "SELECT * FROM asp_param_value where plan_id = %s and type_id in (15, 16, 17, 18) order by type_id"
+
+        data = RPGEN.fetch(query, [id])
+
+        return data
+
+    @staticmethod
+    def get_current_control():
+        query = "SELECT * FROM cl$current_control"
+
+        data = RPGEN.fetch(query)
+
+        return data
+
+    @staticmethod
+    def get_kind_srs():
+        query = "SELECT * FROM cl$kindsrs"
+
+        data = RPGEN.fetch(query)
+
+        return data
+
+    @staticmethod
+    def get_rpd_line(id):
+        query = "SELECT * FROM cattitle where cplanlines = %s and delete = 'f'"
+
+        data = RPGEN.fetch(query, [id])
+
+        return data
+
+    @staticmethod
+    def get_displ2semestr(id):
+        query = "SELECT * FROM discpl2semestr where ctitle = %s"
+
+        data = RPGEN.fetch(query, [id])
+
+        return data
+
+    @staticmethod
+    def get_displ2lek(id):
+        query = "SELECT * FROM discpl2lek where cdiscpl2semestr = %s"
+
+        data = RPGEN.fetch(query, [id])
+
+        return data
+
+    @staticmethod
+    def get_displ2sam(id):
+        query = "SELECT * FROM discpl2sam where cdiscpl2lek = %s"
+
+        data = RPGEN.fetch(query, [id])
+
+        return data
+
+    @staticmethod
+    def get_displ2pract(id):
+        query = "SELECT * FROM discpl2pract where cdiscpl2lek = %s"
+
+        data = RPGEN.fetch(query, [id])
+
+        return data
+
+    @staticmethod
+    def get_displ2lab(id):
+        query = "SELECT * FROM discpl2lab where cdiscpl2lek = %s"
+
+        data = RPGEN.fetch(query, [id])
+
+        return data
+
+    @staticmethod
+    def get_mleha_planindikator(id):
+        query = "SELECT * FROM mleha_planindikator where planlineid = %s"
+
+        data = RPGEN.fetch(query, [id])
+
+        return data
+
+    @staticmethod
+    def get_mleha_indikator(id):
+        query = "SELECT * FROM mleha_indikator where id = %s"
+
+        data = RPGEN.fetch(query, [id])
+
+        return data
 
 
 class PLXParser:
@@ -39,6 +130,7 @@ class PLXParser:
 
     def get_result_data(self):
         return self.data
+
     def parseXML(self, tree, file_id):
         self.fileId = file_id
         root = tree.getroot()

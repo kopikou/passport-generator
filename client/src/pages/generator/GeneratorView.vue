@@ -7,6 +7,7 @@ import _ from "lodash";
 import {useQuasar} from "quasar";
 import {useRouter} from "vue-router";
 import GeneratorLeftMenu from "pages/generator/components/GeneratorLeftMenu.vue";
+import GeneratorCopyDialog from "pages/generator/components/dialogs/GeneratorCopyDialog.vue";
 
 const generatorViewStore = useGeneratorViewStore();
 
@@ -19,8 +20,7 @@ const {
   rpdData,
 } = storeToRefs(generatorViewStore)
 
-const props = defineProps(
-  {
+const props = defineProps({
     id: {
       required: true
     }
@@ -30,6 +30,14 @@ const props = defineProps(
 const cafDataById = computed(() => {
   return _.keyBy(cafData.value, 'value')
 })
+
+function copyProgram() {
+    $q.dialog({
+    component: GeneratorCopyDialog,
+  }).onOk((data) => {
+      console.log(data)
+  })
+}
 
 watch(() => props.id,
   () => {
@@ -41,24 +49,39 @@ watch(() => props.id,
 
 <template>
   <div class="generator-container">
-    <div class="generator-container__buttons q-pa-md">
+    <div class="generator-container__buttons q-pa-md q-gutter-x-sm">
       <q-btn
         color="secondary"
         label="Назад к списку"
         @click="router.push('/generator/')"
       />
+      <q-btn
+        label="Копирование"
+        color="primary"
+        @click="copyProgram"
+      />
     </div>
-    <div class="text-h6 q-pa-md generator-container__header">
+    <div class="q-pa-md generator-container__header">
       <div class="text-center">
-        Генератор рабочей программы дисциплины ИРНИТУ
+        <div class="text-h6">
+          Генератор рабочей программы дисциплины ИРНИТУ
+        </div>
+        <div class="text-subtitle1">
+          {{ rpdData.planlines?.plan.abbrprofile }} {{
+          rpdData.planlines?.plan.startyear
+        }} {{ rpdData.planlines?.dis }}
+        </div>
       </div>
     </div>
     <div class="generator-container__menu">
-      <div class="text-subtitle1 q-pl-md">{{ rpdData.planlines?.plan.abbrprofile }} {{ rpdData.planlines?.plan.startyear }} {{ rpdData.planlines?.dis }}</div>
+<!--      <div class="text-subtitle1 q-pl-md">{{ rpdData.planlines?.plan.abbrprofile }} {{-->
+<!--          rpdData.planlines?.plan.startyear-->
+<!--        }} {{ rpdData.planlines?.dis }}-->
+<!--      </div>-->
       <generator-left-menu :id="props.id"/>
     </div>
     <div class="generator-container__content q-ml-md">
-      <router-view />
+      <router-view/>
     </div>
   </div>
 </template>
@@ -96,6 +119,5 @@ watch(() => props.id,
   overflow-y: auto;
   grid-area: d;
 }
-
 
 </style>

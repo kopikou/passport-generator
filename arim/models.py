@@ -28,6 +28,8 @@ class Catadmission(models.Model):
     abbr = models.CharField(max_length=10)
     cuchplan = models.ForeignKey("UchPlanPlan", on_delete=models.CASCADE, null=True, blank=True, db_column="cuchplan")
     cdirection = models.ForeignKey("CLDirection", on_delete=models.CASCADE, null=True, blank=True, db_column="cdirection")
+    cspec = models.ForeignKey("CLSpec", on_delete=models.CASCADE, null=True, blank=True, db_column="cspec", related_name="clspec_cspec")
+    cprofili = models.ForeignKey("CLSpec", on_delete=models.CASCADE, null=True, blank=True, db_column="cprofili", related_name="clspec_cprofili")
     spec_name = models.CharField(max_length=250, null=True, blank=True)
     direct_name = models.CharField(max_length=150, null=True, blank=True)
     active = models.CharField(max_length=1, choices=BoolChoice)
@@ -46,6 +48,7 @@ class CLFob(models.Model):
 
     name = models.CharField(max_length=32)
 
+
 class CLDirection(models.Model):
     class Meta:
         db_table = "cl$direction"
@@ -53,6 +56,16 @@ class CLDirection(models.Model):
 
     name = models.CharField(max_length=150)
     cod = models.CharField(max_length=8)
+
+
+class CLSpec(models.Model):
+    class Meta:
+        db_table = "cl$spec"
+        managed = False
+
+    name = models.CharField(max_length=250)
+    code = models.CharField(max_length=8)
+    cprepod = models.IntegerField()
 
 
 class CLAdmKind(models.Model):
@@ -203,6 +216,7 @@ class ClLicense(models.Model):
 
     name = models.CharField(max_length=128)
 
+
 class OborudData(models.Model):
     class Meta:
         db_table = "oborud_data"
@@ -212,6 +226,7 @@ class OborudData(models.Model):
     inv = models.CharField(max_length=12, null=True, blank=True)
     caud = models.ForeignKey("CatAud", db_column="caud", on_delete=models.CASCADE, null=True)
     ismobile = models.CharField(max_length=1, choices=BoolChoice)
+
 
 class CatAud(models.Model):
     class Meta:

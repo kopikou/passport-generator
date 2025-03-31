@@ -4,6 +4,8 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import {useQuasar} from "quasar";
 import {api} from "boot/axios";
+import {computed} from "vue";
+import _ from "lodash";
 
 const props = defineProps({
   id: {
@@ -19,27 +21,33 @@ const {
   comment,
   disabled,
   rpdData,
+  admissionData,
 } = storeToRefs(generatorViewStore)
 
 const menuItems = [
-  {title: 'Титульный лист', url: 'main'},
-  {title: 'Компетенции', url: 'competences'},
-  {title: 'Индикаторы', url: 'indicators'},
-  {title: 'Место дисциплины в структуре ООП', url: 'discipline-place'},
-  {title: 'Структура дисциплины', url: 'structure'},
-  {title: 'Содержание тем дисциплины', url: 'discipline-theme'},
-  {title: 'Содержание лекционных работ', url: 'discipline-lectures', 'right': true},
-  {title: 'Содержание лабораторных работ', url: 'discipline-lab', 'right': true},
-  {title: 'Содержание практических работ', url: 'discipline-practice', 'right': true},
-  {title: 'Содержание самостоятельных работ', url: 'discipline-independent', 'right': true},
-  {title: 'Перечень учебно-методическоего обеспечение', url: 'guidelines'},
-  {title: 'Фонд оценочных средств для контроля текущей успеваемости', url: 'fos'},
-  {title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat'},
-  {title: 'Литература', url: 'library'},
-  {title: 'Другие ресурсы', url: 'resources'},
-  {title: 'Перечень используемых информационных технологий', url: 'soft'},
-  {title: 'Материально-техническое обеспечение', url: 'logistics'},
+  // title (название), url (ссылка), allow (cadmkind, отображать)
+  {title: 'Титульный лист', url: 'main', allow: [1,2,3,4,5]},
+  {title: 'Компетенции', url: 'competences', allow: [1,2,3,4,5]},
+  {title: 'Индикаторы', url: 'indicators', allow: [1,2,3,4,5]},
+  {title: 'Место дисциплины в структуре ООП', url: 'discipline-place', allow: [1,2,3,4]},
+  {title: 'Структура дисциплины', url: 'structure', allow: [1,2,3,4,5]},
+  {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1,2,3,4,5]},
+  {title: 'Содержание лекционных работ', url: 'discipline-lectures', 'right': true, allow: [1,2,3,4,5]},
+  {title: 'Содержание лабораторных работ', url: 'discipline-lab', 'right': true, allow: [1,2,3,4,5]},
+  {title: 'Содержание практических работ', url: 'discipline-practice', 'right': true, allow: [1,2,3,4,5]},
+  {title: 'Содержание самостоятельных работ', url: 'discipline-independent', 'right': true, allow: [1,2,3,4,5]},
+  {title: 'Перечень учебно-методическоего обеспечение', url: 'guidelines', allow: [1,2,3,4,5]},
+  {title: 'Фонд оценочных средств для контроля текущей успеваемости', url: 'fos', allow: [1,2,3,4,5]},
+  {title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat', allow: [1,2,3,4,5]},
+  {title: 'Литература', url: 'library', allow: [1,2,3,4,5]},
+  {title: 'Другие ресурсы', url: 'resources', allow: [1,2,3,4,5]},
+  {title: 'Перечень используемых информационных технологий', url: 'soft', allow: [1,2,3,4,5]},
+  {title: 'Материально-техническое обеспечение', url: 'logistics', allow: [1,2,3,4,5]},
 ]
+
+const filterMenuItems = computed(() => {
+  return _.filter(menuItems, x => x.allow.includes(admissionData.value.cadmkind))
+})
 
 const $q = useQuasar()
 
@@ -61,8 +69,8 @@ function translateDate(date) {
 </script>
 
 <template>
-    <div class="bg-pink-3 rounded-borders" v-if="comment.length != 0">
-    <div class="text-subtitle1">{{comment.user__last_name}} {{ comment.user__first_name }} оставил комментарий</div>
+  <div class="bg-pink-3 rounded-borders" v-if="comment.length != 0">
+    <div class="text-subtitle1">{{ comment.user__last_name }} {{ comment.user__first_name }} оставил комментарий</div>
     <div>
       <div class="q-ma-xs text-subtitle2">
         <div>
@@ -79,7 +87,7 @@ function translateDate(date) {
     separator
   >
     <q-item
-      v-for="item in menuItems"
+      v-for="item in filterMenuItems"
       clickable
       v-ripple
       active-class="bg-amber-4 text-black"

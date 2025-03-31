@@ -29,7 +29,6 @@ def get_tic_name(data):
 
     return result
 
-
 def get_work_hours(data, type):
     result = []
 
@@ -99,10 +98,10 @@ class ReportService(object):
     @staticmethod
     def get_rpd_report(data):
 
-        if data['status'] == 3:
-            path = f'{BASE_DIR}{Path("/templates/docxRPD/rpd_sign.docx")}'
-        else:
-            path = f'{BASE_DIR}{Path("/templates/docxRPD/rpd.docx")}'
+        path = f'{BASE_DIR}{Path("/templates/docxRPD/rpd.docx")}'
+
+        if data['admission']['cadmkind'] == 5:
+            path = f'{BASE_DIR}{Path("/templates/docxRPD/rpd_asp.docx")}'
 
         doc = DocxTemplate(path)
 
@@ -142,6 +141,23 @@ class ReportService(object):
             'zach': 'Типовые оценочные средства для проведения зачета по дисциплине',
             'krkp': 'Типовые оценочные средства для курсовой работы/курсового проектирования по дисциплине',
         }
+
+        asp_spec = ''
+        asp_napr = None
+        asp_code = ''
+
+        if data['admission']['cadmkind'] == 5:
+            tat_titles.update({'ekz': 'Типовые оценочные средства для проведения кандидатского экзамена по дисциплине',})
+
+            if data['admission']['spec_name'].find(', направленность') != -1:
+                napr = data['admission']['spec_name'].split(', направленность -')
+
+                asp_spec = napr[0]
+                asp_napr = napr[1]
+                asp_code = data['admission']['cspec__code']
+            else:
+                asp_spec = data['admission']['spec_name']
+                asp_code = data['admission']['cspec__code']
 
         additional_library = []
         main_library = []
@@ -253,8 +269,13 @@ class ReportService(object):
                         })
 
         other_disciplines = {item['disid']: item['dis'] for item in data['other_discipline']}
-        precedence_names = ", ".join([f"«{other_disciplines[item]}»" for item in precedence])
-        subsequent_names = ", ".join([f"«{other_disciplines[item]}»" for item in subsequent])
+
+        precedence_names = ''
+        subsequent_names = ''
+        if precedence:
+            precedence_names = ", ".join([f"«{other_disciplines[item]}»" for item in precedence])
+        if subsequent:
+            subsequent_names = ", ".join([f"«{other_disciplines[item]}»" for item in subsequent])
 
         tic_all = {}
         semester_hours = []
@@ -510,6 +531,9 @@ class ReportService(object):
             "kind_direct": 'Специальность' if data['admission']['cadmkind'] == 1 else 'Направление',
             "direction": data['admission']['cdirection__name'],
             "direction_code": data['admission']['cdirection__cod'],
+            "asp_spec": asp_spec,
+            "asp_napr": asp_napr,
+            "asp_code": asp_code,
             "fob": data['admission']['cfob__name'],
             "year_post": data['admission']['yr'],
             "person": data['person'],
@@ -536,10 +560,11 @@ class ReportService(object):
             "resources": resources,
             "software": software,
             "logistics": logistics,
-            "protocol_number": data['protocol_number'],
-            "meeting": data['meeting'],
-            "accept_date": data['accept_date'],
-            "review_date": data['review_date'],
+            "protocol_number": data['protocol_number'] if data['protocol_number'] else '',
+            "meeting": data['meeting'] if data['meeting'] else '',
+            "accept_date": data['accept_date'] if data['accept_date'] else '',
+            "review_date": data['review_date'] if data['review_date'] else '',
+            "status": data['status'],
         }
 
         if data['status'] == 3:

@@ -132,6 +132,10 @@ class RPGEN:
 
     @classmethod
     def fetch(cls, query, params=None):
+
+        if not params:
+            params = []
+
         db = DBRepository()
 
         if not params:

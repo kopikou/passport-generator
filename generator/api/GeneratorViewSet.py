@@ -1,19 +1,15 @@
 import os
-import platform
 from itertools import groupby
-from subprocess import run
 
 import pendulum
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.serializers import serialize
 from django.db.models import Q
 from django.http import HttpResponse
 from django.utils.encoding import escape_uri_path
 from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework.mixins import RetrieveModelMixin, ListModelMixin, DestroyModelMixin, CreateModelMixin
+from rest_framework.mixins import RetrieveModelMixin
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from app.utils import UserProfileHasPermission, RPGEN
@@ -23,19 +19,16 @@ from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
     DefaultsResources, PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
     ScientificDataDefault
-from generator.serializer import PlanLinesLinkSerializer, DisciplineIndicatorsSerializer, \
+from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
 from generator.services import ReportService
-from rpd.models import LinesData, PlanData, LinesIndicators
-from rpgen.models import AspParamValue
+from rpd.models import LinesData, PlanData
+from rpd.services import RPDGenSerivce
 
 
 class GeneratorViewSet(
     RetrieveModelMixin,
-    ListModelMixin,
-    DestroyModelMixin,
-    CreateModelMixin,
     GenericViewSet,
 ):
     queryset = PlanLinesLink.objects.all()
@@ -72,11 +65,14 @@ class GeneratorViewSet(
             "user__last_name",
         ).last()
 
+        old_rpd = AISServices.get_old_rpd_list(serializer.data['mira_id'])
+
         result = {
             "admission": admission_info[0],
             "other_discipline": [i for i in other_discipline],
             "resources": [i for i in resources],
             "comment": comment,
+            "old": [i for i in old_rpd],
             **serializer.data,
         }
 
@@ -105,7 +101,7 @@ class GeneratorViewSet(
 
         instance = ScientificPlanData.objects.get(mira_id=pk)
 
-        old_data = RPGEN.fetch("SELECT * FROM asp_param_value where plan_id = %s and type_id in (15, 16, 17, 18) order by type_id", [old_pk])
+        old_data = RPDGenSerivce.get_asp_plan(old_pk)
 
         old_data_by_key = {i['id']: i for i in old_data if i['type_id'] == 15}
 
@@ -250,7 +246,7 @@ class GeneratorViewSet(
 
             scientific_data = ScientificData.objects.filter(plan_id=result['id']).values('id', 'text', 'parameters')
 
-        old_plans = list(filter(lambda x: x['id'] != pk, AISServices.get_asp_old_plans(pk)))
+        old_plans = AISServices.get_asp_old_plans(pk)
 
 
         return Response(data={
@@ -588,3 +584,33 @@ class GeneratorViewSet(
         data = PlanLinesLinkComments.objects.filter(planlineslink_id=instance.id).order_by('-created_at').values()
 
         return Response([i for i in data])
+
+    @action(methods=['GET'], url_path="copy-old-rpd-program", detail=True)
+    def get_old_rpd(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+
+        old_pk = int(self.request.query_params['old_pk'])
+
+        instance = self.retrieve(request, *args, **kwargs).data
+
+        current_control = RPDGenSerivce.get_current_control()
+        current_control_by_id = {i['id']: i['name'] for i in current_control}
+
+        kind_srs = RPDGenSerivce.get_kind_srs()
+        kind_srs_by_id = {i['id']: i['name'] for i in kind_srs}
+
+        cattitle = RPDGenSerivce.get_rpd_line(old_pk)
+        cattitle_id = cattitle[0]['id']
+
+        d2s = RPDGenSerivce.get_displ2semestr(cattitle_id)
+
+        for item in d2s:
+
+            d2lek = RPDGenSerivce.get_displ2lek(item['id'])
+
+            for i in d2lek:
+                d2sam = RPDGenSerivce.get_displ2sam(i['id'])
+                d2pract = RPDGenSerivce.get_displ2pract(i['id'])
+                d2lab = RPDGenSerivce.get_displ2lab(i['id'])
+
+        return Response()

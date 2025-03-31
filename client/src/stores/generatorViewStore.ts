@@ -18,6 +18,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   const independentTypes = ref<GeneratorIndependentTypesData[]>([])
   const activeRpdId = ref(null)
 
+  const oldPlans = computed(() => {
+    return rpdData.value.old || []
+  })
+
   const status = computed(() => {
     return rpdData.value?.status || -1
   })
@@ -40,6 +44,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   const comment = computed(() => {
     return rpdData.value?.comment || []
+  })
+
+  const admissionData = computed(() => {
+    return rpdData.value?.admission || []
   })
 
   const semestersData = computed<PlanSemestrData[]>(() => {
@@ -180,9 +188,11 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   return {
     cafData,
+    oldPlans,
     formControl,
     independentTypes,
     otherDiscipline,
+    admissionData,
     disciplineThemes,
     disciplineThemesById,
     disciplineWorkHour,

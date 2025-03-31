@@ -36,6 +36,9 @@ class AISServices(object):
             'cdirection',
             'cdirection__name',
             'cdirection__cod',
+            'cspec',
+            'cspec__name',
+            'cspec__code',
             'cfob',
             'cfob__name',
         )
@@ -181,11 +184,11 @@ class AISServices(object):
         query = f"""
             select p2.id, p2.abbrprofile, p2.startyear, p2.species from uchplan_plan p
             left join uchplan_plan p2 on p.abbrprofile = p2.abbrprofile
-            where p.id = %s and p2.fordel = 'f'
+            where p.id = %s and p2.fordel = 'f' and p2.id <> %s
             order by p2.startyear
             """
 
-        data = Mira.fetch(query, [id])
+        data = Mira.fetch(query, [id, id])
 
         return data
 
@@ -276,5 +279,20 @@ class AISServices(object):
             'inv',
             'caud__name',
         )[:100]
+
+        return data
+
+    @staticmethod
+    def get_old_rpd_list(id):
+
+        query = f"""
+            select p2.abbrprofile, p2.startyear, l2.id, p2.species from uchplan_lines l
+            left join uchplan_plan p on p.id = l.planid
+            left join uchplan_plan p2 on p2.abbrprofile = p.abbrprofile
+            left join uchplan_lines l2 on l2.planid = p2.id and l2.disid = l.disid
+            where l.id = %s and p2.fordel = 'f' and l2.fordel = 'f' and l2.id <> %s
+        """
+
+        data = Mira.fetch(query, [id, id])
 
         return data
