@@ -160,7 +160,7 @@ class PLXParser:
         lnsdata = self.get_lines_data(root, planData['id'], indikators_data)
 
         for key, item in lnsdata.items():
-            if not item['parent_id'] and not item['viewpract'] and item['mustbesdudied'] != 0:
+            if item['parent_id'] and not item['viewpract'] and item['mustbesdudied'] != 0:
                 lnsdata[key]['synchronize'] = False
 
         # Убрано, добавляем практику в РПД генератор
@@ -293,7 +293,7 @@ class PLXParser:
             planData['igahourzet'] = float(child.attrib.get('ЗЕТвНеделю'))
             planData['semesteroncource'] = int(child.attrib.get('СеместровНаКурсе'))
             self.semesteroncource = int(child.attrib.get('СеместровНаКурсе'))
-            planData['gosdocument'] = int(child.attrib.get('НомерФГОС'))
+            planData['gosdocument'] = child.attrib.get('НомерФГОС') if child.attrib.get('НомерФГОС') else None
             planData['gostype'] = float(child.attrib.get('ТипГОСа'))
             planData['gosdate'] = datetime.fromisoformat((child.attrib.get('ДатаГОСа'))).strftime(
                 "%Y-%m-%d") if child.attrib.get('ДатаГОСа') else None

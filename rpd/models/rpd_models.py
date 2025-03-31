@@ -46,7 +46,7 @@ class PlanData(TimestampsModel):
     semesteroncource = models.IntegerField()
     gosdate = models.DateField(null=True)
     gostype = models.FloatField(null=True)
-    gosdocument = models.IntegerField(null=True)
+    gosdocument = models.TextField(null=True)
     lastshifr = models.TextField()
     napr_e = models.TextField()
     napr_t = models.TextField()
