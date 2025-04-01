@@ -109,7 +109,7 @@ onBeforeMount(() => {
             @update:modelValue="saveData"
           />
           <q-input
-            label="Пример билета"
+            label="Пример задания"
             type="textarea"
             filled
             stack-label
@@ -117,7 +117,7 @@ onBeforeMount(() => {
             :readonly="disabled"
             debounce="1000"
             @update:modelValue="saveData"
-            hint="Если Вам не нужен пример билета, оставьте поле пустым"
+            hint="Если Вам не нужен пример задания, оставьте поле пустым"
           />
           <p class="text-subtitle1">Критерии оценивания</p>
           <q-list bordered>

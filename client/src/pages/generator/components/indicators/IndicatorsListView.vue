@@ -11,9 +11,9 @@ import _ from "lodash";
 const $q = useQuasar()
 const generatorViewStore = useGeneratorViewStore();
 
-const{
+const {
   disabled,
-}=storeToRefs(generatorViewStore)
+} = storeToRefs(generatorViewStore)
 
 const props = defineProps({
   data: {
@@ -29,7 +29,7 @@ const criteria = ref(null)
 const methods = ref(null)
 
 async function saveData() {
-  $q.loading.show({message: "Сохранение"})
+  // $q.loading.show({message: "Сохранение"})
   let r = await api.post('/api/generator/save-discipline-indicator/', {
     indicator_id: props.data.id,
     planlineid_id: props.data.planlineid_id,
@@ -38,24 +38,27 @@ async function saveData() {
     own: own.value,
     criteria: criteria.value,
     methods: methods.value,
-  }).then((v) => {
+  })
+
+  if (r.status == 200) {
     $q.notify({
       message: "Данные <span class='text-bold'>о компетенциях</span> сохранены!",
       color: "secondary",
       position: "bottom",
       html: true,
     })
-    props.data.discipline_indicator[0] = v.data
-  }, (rej) => {
+    props.data.discipline_indicator[0] = r.data
+  } else {
+
     $q.notify({
       message: "Данные <span class='text-bold'>о компетенциях</span> не сохранены!",
       color: "negative",
       position: "bottom",
       html: true,
     })
-  })
+  }
 
-  $q.loading.hide()
+// $q.loading.hide()
 }
 
 onBeforeMount(() => {
@@ -72,7 +75,7 @@ onBeforeMount(() => {
 
 <template>
   <div class="q-pa-sm">
-<!--    <span class="text-subtitle1">{{ data.indicator_index }} {{ data.indicator }}</span>-->
+    <!--    <span class="text-subtitle1">{{ data.indicator_index }} {{ data.indicator }}</span>-->
     <div class="indicators-form row justify-between q-gutter-md">
       <q-input
         filled
@@ -130,9 +133,9 @@ onBeforeMount(() => {
         @update:modelValue="saveData"
       />
     </div>
-<!--    <div class="flex justify-start q-mt-md">-->
-<!--      <q-btn label="Сохранить" color="primary" @click="saveData" v-show="!disabled"/>-->
-<!--    </div>-->
+    <!--    <div class="flex justify-start q-mt-md">-->
+    <!--      <q-btn label="Сохранить" color="primary" @click="saveData" v-show="!disabled"/>-->
+    <!--    </div>-->
   </div>
 </template>
 

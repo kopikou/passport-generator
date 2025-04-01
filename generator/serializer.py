@@ -102,7 +102,7 @@ class DisciplineThemeSerializer(serializers.Serializer):
     semester = serializers.IntegerField()
     formcontrol_id = serializers.IntegerField()
     formcontrol_verbose = serializers.CharField(read_only=True)
-    comment = serializers.CharField()
+    comment = serializers.CharField(allow_blank=True, allow_null=False)
     num = serializers.IntegerField()
 
     class Meta:
@@ -119,8 +119,9 @@ class DisciplineThemeSerializer(serializers.Serializer):
         ]
 
     def create(self, validate_data):
+        pk = validate_data.get('id', None)
         discipline_themes, created = DisciplineThemes.objects.update_or_create(
-            id=validate_data['id'],
+            id=pk,
             defaults=validate_data,
         )
 
@@ -181,8 +182,9 @@ class DisciplineWorkHoursSerializer(serializers.Serializer):
         ]
 
     def create(self, validate_data):
+        pk = validate_data.get('id', None)
         discipline_themes, created = DisciplineWorkHours.objects.update_or_create(
-            id=validate_data['id'],
+            id=pk,
             defaults=validate_data,
         )
 

@@ -222,6 +222,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     indicatorsData,
     planlinesData,
     semestersData,
+    getData,
   }
 })
 

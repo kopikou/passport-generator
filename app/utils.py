@@ -23,8 +23,9 @@ class TimestampsModel(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False, null=True)
     is_deleted = models.BooleanField(default=False)
 
-    objects = BaseModelManager()
-    default_objects = models.Manager()
+    objects = models.Manager()
+    # objects = BaseModelManager()
+    # default_objects = models.Manager()
 
     class Meta:
         abstract = True

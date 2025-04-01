@@ -18,7 +18,7 @@ from arim_library.services import LibraryServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
     DefaultsResources, PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
-    ScientificDataDefault
+    ScientificDataDefault, DisciplineIndicators
 from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
@@ -118,7 +118,6 @@ class GeneratorViewSet(
         for key, items in grouped_old_data.items():
             if key == 16:
                 for index, item in enumerate(sorted(items, key=lambda x: x['sort']), start=1):
-
                     semester = old_data_by_key.get(item['linked_id'], {}).get('value', None)
 
                     data.append({
@@ -140,7 +139,6 @@ class GeneratorViewSet(
                         "text": item['value'],
                         "parameters": {"order": index, "part": 2},
                     })
-
 
         ScientificData.objects.filter(plan_id=instance.id).delete()
 
@@ -177,7 +175,6 @@ class GeneratorViewSet(
 
             res = sorted(res, key=lambda x: x['species'])
             result.update({"admin_items": res})
-
 
         return Response(data=result)
 
@@ -247,7 +244,6 @@ class GeneratorViewSet(
             scientific_data = ScientificData.objects.filter(plan_id=result['id']).values('id', 'text', 'parameters')
 
         old_plans = AISServices.get_asp_old_plans(pk)
-
 
         return Response(data={
             "plan": result,
@@ -515,7 +511,8 @@ class GeneratorViewSet(
         instance = self.get_object()
         result = self.retrieve(request, *args, **kwargs).data
 
-        filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(',', ' ')
+        filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(
+            ',', ' ')
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         response['Content-Disposition'] = f"attachment; filename={escape_uri_path(filename)}"
@@ -531,7 +528,8 @@ class GeneratorViewSet(
         instance = self.get_object()
         result = self.retrieve(request, *args, **kwargs).data
 
-        filename = f"Аннотация_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(',', ' ')
+        filename = f"Аннотация_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(
+            ',', ' ')
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         response['Content-Disposition'] = f"attachment; filename={escape_uri_path(filename)}"
@@ -593,6 +591,12 @@ class GeneratorViewSet(
 
         instance = self.retrieve(request, *args, **kwargs).data
 
+        form_control = FormControl.objects.all()
+        independent_types = IndependentTypes.objects.all()
+
+        form_control_by_name = {i.name: i.id for i in form_control}
+        independent_types_by_name = {i.name: i.id for i in independent_types}
+
         current_control = RPDGenSerivce.get_current_control()
         current_control_by_id = {i['id']: i['name'] for i in current_control}
 
@@ -602,6 +606,32 @@ class GeneratorViewSet(
         cattitle = RPDGenSerivce.get_rpd_line(old_pk)
         cattitle_id = cattitle[0]['id']
 
+        DisciplineThemes.objects.filter(planlineslink_id=pk).delete()
+        DisciplineWorkHours.objects.filter(planlineslink_id=pk).delete()
+        DisciplineIndicators.objects.filter(planlineid_id=instance['planlines']['id']).delete()
+
+        instance_indicators_by_index = {i['indicator_index']: i['id'] for i in instance['planlines']['indicators']}
+        plan_indikators = RPDGenSerivce.get_mleha_planindikator(cattitle[0]['cplanlines'])
+
+        for item in plan_indikators:
+            indicator = RPDGenSerivce.get_mleha_indikator(item['indikid'])
+
+            indicator_id = instance_indicators_by_index.get(indicator[0]['index'])
+
+            if indicator_id:
+                dis_indicator_serializer = DisciplineIndicatorsAddSerializer(data={
+                    "indicator_id": indicator_id,
+                    "planlineid_id": instance['planlines']['id'],
+                    "know": item['znat'],
+                    "able": item['umet'],
+                    "own": item['vladet'],
+                    "criteria": item['kriteriy_oceniv'],
+                    "methods": item['metod_oceniv'],
+                })
+                dis_indicator_serializer.is_valid(raise_exception=True)
+                dis_indicator_serializer.save()
+
+
         d2s = RPDGenSerivce.get_displ2semestr(cattitle_id)
 
         for item in d2s:
@@ -609,8 +639,78 @@ class GeneratorViewSet(
             d2lek = RPDGenSerivce.get_displ2lek(item['id'])
 
             for i in d2lek:
+
+                control = current_control_by_id.get(i['ccurrent_control'], 'Отчет')
+                form_control_id = form_control_by_name.get(control, None)
+
+                theme_serializer = DisciplineThemeSerializer(data={
+                    "planlineslink_id": pk,
+                    "name": i['tema'],
+                    "semester": item['semestr'],
+                    "formcontrol_id": form_control_id,
+                    "comment": i['note'],
+                    "num": i['num'],
+                })
+                theme_serializer.is_valid(raise_exception=True)
+                theme_serializer.save()
+
+                lek_serializer = DisciplineWorkHoursSerializer(data={
+                    "planlineslink_id": pk,
+                    "theme_id": theme_serializer.data['id'],
+                    "type": DisciplineWorkHours.TypeChoices.lectures,
+                    "name": i['tema'],
+                    "hours": i['hour'],
+                    "semester": item['semestr'],
+                    "num": i['num'],
+                })
+                lek_serializer.is_valid(raise_exception=True)
+                lek_serializer.save()
+
                 d2sam = RPDGenSerivce.get_displ2sam(i['id'])
+
+                for sam in d2sam:
+                    independent = kind_srs_by_id.get(sam['ckindsrs'], 'Написание отчета')
+
+                    sam_serializer = DisciplineWorkHoursSerializer(data={
+                        "planlineslink_id": pk,
+                        "theme_id": theme_serializer.data['id'],
+                        "type": DisciplineWorkHours.TypeChoices.independent,
+                        "name": independent,
+                        "hours": sam['hour'],
+                        "semester": item['semestr'],
+                        "num": sam['num'],
+                    })
+                    sam_serializer.is_valid(raise_exception=True)
+                    sam_serializer.save()
+
                 d2pract = RPDGenSerivce.get_displ2pract(i['id'])
+
+                for pract in d2pract:
+                    pract_serializer = DisciplineWorkHoursSerializer(data={
+                        "planlineslink_id": pk,
+                        "theme_id": theme_serializer.data['id'],
+                        "type": DisciplineWorkHours.TypeChoices.practice,
+                        "name": pract['tema'],
+                        "hours": pract['hour'],
+                        "semester": item['semestr'],
+                        "num": pract['num'],
+                    })
+                    pract_serializer.is_valid(raise_exception=True)
+                    pract_serializer.save()
+
                 d2lab = RPDGenSerivce.get_displ2lab(i['id'])
 
-        return Response()
+                for lab in d2lab:
+                    lab_serializer = DisciplineWorkHoursSerializer(data={
+                        "planlineslink_id": pk,
+                        "theme_id": theme_serializer.data['id'],
+                        "type": DisciplineWorkHours.TypeChoices.laboratory,
+                        "name": lab['tema'],
+                        "hours": lab['hour'],
+                        "semester": item['semestr'],
+                        "num": lab['num'],
+                    })
+                    lab_serializer.is_valid(raise_exception=True)
+                    lab_serializer.save()
+
+        return Response(data={"success": True}, status=status.HTTP_200_OK)
