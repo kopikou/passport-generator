@@ -28,11 +28,11 @@ const correct = computed(() => {
 })
 
 const clicense__name = ref<string>('')
-const clicense__type = ref<string>('')
+const clicense__type = ref<string>('Свободное')
 
 const clicense__type_options = ref([
   'Свободное',
-  'Лицензионное',
+  // 'Лицензионное',
 ])
 
 async function onOKClick() {

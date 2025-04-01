@@ -47,7 +47,7 @@ const meeting = ref()
 const userTypeOptions = [
   {value: 0, label: 'Руководитель программы'},
   {value: 1, label: 'Заведующий кафедрой'},
-  {value: 2, label: 'Директор института'},
+  // {value: 2, label: 'Директор института'},
 ]
 
 const $q = useQuasar()
@@ -142,12 +142,12 @@ function getStatusColor(status) {
             :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-report/`"
             target="_blank"
           />
-          <q-btn
-            class="col"
-            label="Аннотация"
-            :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-annotation/`"
-            target="_blank"
-          />
+<!--          <q-btn-->
+<!--            class="col"-->
+<!--            label="Аннотация"-->
+<!--            :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-annotation/`"-->
+<!--            target="_blank"-->
+<!--          />-->
         </div>
       </q-card-section>
 
