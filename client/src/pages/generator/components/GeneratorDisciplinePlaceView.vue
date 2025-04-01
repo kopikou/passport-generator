@@ -1,7 +1,6 @@
 <script setup lang="ts">
 
-import {onBeforeMount, ref, watch} from "vue";
-import {bi0CircleFill} from "@quasar/extras/bootstrap-icons";
+import {computed, onBeforeMount, ref, watch} from "vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import _ from "lodash";
@@ -23,18 +22,20 @@ const {
 const precedence = ref([])
 const subsequent = ref([])
 
-const listDiscipline = ref(otherDiscipline)
-const filteredDiscipline = ref(listDiscipline.value)
+const filteredOthderDiscipline = computed(() => {
+  return _.orderBy(otherDiscipline.value, x => x.dis)
+})
 
 async function savePrecSubDiscipline() {
-  $q.loading.show({message: "Сохранение"})
+  // $q.loading.show({message: "Сохранение"})
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "disciplinePlace",
     value: {
       "precedence": precedence.value,
       "subsequent": subsequent.value,
     }
-  }).then((v) => {
+  })
+  if (r.status == 200) {
     $q.notify({
       message: "Данные <span class='text-bold'>о месте дисциплины в структуре ООП</span> сохранены!",
       color: "secondary",
@@ -45,16 +46,16 @@ async function savePrecSubDiscipline() {
     let key = _.findKey(additionalInfo.value, (x) => x.id == v.data.id)
     _.set(additionalInfo.value, `[${key}].value.precedence`, precedence.value)
     _.set(additionalInfo.value, `[${key}].value.subsequent`, subsequent.value)
-  }, (rej) => {
+  } else {
     $q.notify({
       message: "Данные <span class='text-bold'>о месте дисциплины в структуре ООП</span> не сохранены!",
       color: "negative",
       position: "bottom",
       html: true,
     })
-  })
 
-  $q.loading.hide()
+    // $q.loading.hide()
+  }
 }
 
 watch(disciplinePlace, () => {
@@ -88,7 +89,7 @@ onBeforeMount(() => {
         multiple
         map-options
         emit-value
-        :options="otherDiscipline"
+        :options="filteredOthderDiscipline"
         :readonly="disabled"
         @update:modelValue="savePrecSubDiscipline"
       />
@@ -105,7 +106,7 @@ onBeforeMount(() => {
         multiple
         map-options
         emit-value
-        :options="otherDiscipline"
+        :options="filteredOthderDiscipline"
         :readonly="disabled"
         @update:modelValue="savePrecSubDiscipline"
       />

@@ -6,12 +6,19 @@ import {useQuasar} from "quasar";
 import {api} from "boot/axios";
 import {computed} from "vue";
 import _ from "lodash";
+import useMainStore from "stores/mainStore";
 
 const props = defineProps({
   id: {
     required: true,
   }
 })
+
+const mainStore = useMainStore();
+
+const {
+  FORCE_SCRIPT_NAME,
+} = storeToRefs(mainStore)
 
 const generatorViewStore = useGeneratorViewStore();
 
@@ -26,23 +33,23 @@ const {
 
 const menuItems = [
   // title (название), url (ссылка), allow (cadmkind, отображать)
-  {title: 'Титульный лист', url: 'main', allow: [1,2,3,4,5]},
-  {title: 'Компетенции', url: 'competences', allow: [1,2,3,4,5]},
-  {title: 'Индикаторы', url: 'indicators', allow: [1,2,3,4,5]},
-  {title: 'Место дисциплины в структуре ООП', url: 'discipline-place', allow: [1,2,3,4]},
-  {title: 'Структура дисциплины', url: 'structure', allow: [1,2,3,4,5]},
-  {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1,2,3,4,5]},
-  {title: 'Содержание лекционных работ', url: 'discipline-lectures', 'right': true, allow: [1,2,3,4,5]},
-  {title: 'Содержание лабораторных работ', url: 'discipline-lab', 'right': true, allow: [1,2,3,4,5]},
-  {title: 'Содержание практических работ', url: 'discipline-practice', 'right': true, allow: [1,2,3,4,5]},
-  {title: 'Содержание самостоятельных работ', url: 'discipline-independent', 'right': true, allow: [1,2,3,4,5]},
-  {title: 'Перечень учебно-методическоего обеспечение', url: 'guidelines', allow: [1,2,3,4,5]},
-  {title: 'Фонд оценочных средств для контроля текущей успеваемости', url: 'fos', allow: [1,2,3,4,5]},
-  {title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat', allow: [1,2,3,4,5]},
-  {title: 'Литература', url: 'library', allow: [1,2,3,4,5]},
-  {title: 'Другие ресурсы', url: 'resources', allow: [1,2,3,4,5]},
-  {title: 'Перечень используемых информационных технологий', url: 'soft', allow: [1,2,3,4,5]},
-  {title: 'Материально-техническое обеспечение', url: 'logistics', allow: [1,2,3,4,5]},
+  {title: 'Титульный лист', url: 'main', allow: [1, 2, 3, 4, 5]},
+  {title: 'Компетенции', url: 'competences', allow: [1, 2, 3, 4, 5]},
+  {title: 'Индикаторы', url: 'indicators', allow: [1, 2, 3, 4, 5]},
+  {title: 'Место дисциплины в структуре ООП', url: 'discipline-place', allow: [1, 2, 3, 4]},
+  {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5]},
+  {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1, 2, 3, 4, 5]},
+  {title: 'Содержание лекционных работ', url: 'discipline-lectures', 'right': true, allow: [1, 2, 3, 4, 5]},
+  {title: 'Содержание лабораторных работ', url: 'discipline-lab', 'right': true, allow: [1, 2, 3, 4, 5]},
+  {title: 'Содержание практических работ', url: 'discipline-practice', 'right': true, allow: [1, 2, 3, 4, 5]},
+  {title: 'Содержание самостоятельных работ', url: 'discipline-independent', 'right': true, allow: [1, 2, 3, 4, 5]},
+  {title: 'Перечень учебно-методическоего обеспечение', url: 'guidelines', allow: [1, 2, 3, 4, 5]},
+  {title: 'Оценочные материалы по дисциплине для контроля текущей успеваемости', url: 'fos', allow: [1, 2, 3, 4, 5]},
+  {title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat', allow: [1, 2, 3, 4, 5]},
+  {title: 'Литература', url: 'library', allow: [1, 2, 3, 4, 5]},
+  {title: 'Другие ресурсы', url: 'resources', allow: [1, 2, 3, 4, 5]},
+  {title: 'Перечень используемых информационных технологий', url: 'soft', allow: [1, 2, 3, 4, 5]},
+  {title: 'Материально-техническое обеспечение', url: 'logistics', allow: [1, 2, 3, 4, 5]},
 ]
 
 const filterMenuItems = computed(() => {
@@ -82,6 +89,34 @@ function translateDate(date) {
       </div>
     </div>
   </div>
+  <q-btn
+    color="primary"
+    class="full-width"
+    dense
+    label="Просмотр РПД"
+    :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-report/`"
+    target="_blank"
+  />
+  <div v-if="!disabled" class="q-mb-sm">
+    <q-btn
+      class="q-mt-xs"
+      color="secondary"
+      dense
+      @click="sendToReview"
+      style="width: 100%"
+      label="Отправить на согласование"
+    />
+  </div>
+  <div v-else class="text-center q-mb-md">
+    <q-btn
+      class="q-mt-xs"
+      color="secondary"
+      dense
+      disable
+      style="width: 100%"
+      :label="statusVerbose"
+    />
+  </div>
   <q-list
     bordered
     separator
@@ -102,26 +137,6 @@ function translateDate(date) {
     </q-item>
 
   </q-list>
-  <div v-if="!disabled" class="q-mb-md">
-    <q-btn
-      class="q-mt-xs"
-      color="secondary"
-      dense
-      @click="sendToReview"
-      style="width: 100%"
-      label="Отправить на согласование"
-    />
-  </div>
-  <div v-else class="text-center q-mb-md">
-    <q-btn
-      class="q-mt-xs"
-      color="secondary"
-      dense
-      disable
-      style="width: 100%"
-      :label="statusVerbose"
-    />
-  </div>
 
 
 </template>
