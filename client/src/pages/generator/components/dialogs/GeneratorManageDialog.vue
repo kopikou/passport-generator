@@ -36,7 +36,6 @@ const disabled = computed(() => {
   if (!protocolNumber.value) return true
   if (!protocolDate.value) return true
   if (!meeting.value) return true
-  if (!userType.value) return true
 
   return false
 })
