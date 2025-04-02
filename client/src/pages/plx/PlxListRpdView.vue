@@ -23,6 +23,15 @@ const $q = useQuasar()
 const uploadFileDialog = ref(false);
 const allFilter = ref("");
 
+const statusOptions = ref([
+  {label: 'Загружен', value: 0},
+  {label: 'На рассмотрении', value: 1},
+  {label: 'Принят, ожидает синхронизации', value: 2},
+  {label: 'Принят, синхронизируется', value: 3},
+  {label: 'Принят, уже в АИС', value: 4},
+])
+const status = ref([0, 1])
+
 const codes = computed(() => {
   let r = _(files.value).map(x => x.code).uniq().sortBy().value();
   return r;
@@ -74,6 +83,7 @@ const filesFiltered = computed(() => {
     return ((codeFilter.value || []).length == 0 || (codeFilter.value || []).includes(x.code))
       && ((abbrFilter.value || []).length == 0 || (abbrFilter.value || []).includes(x.abbr))
       && ((yearFilter.value || []).length == 0 || (yearFilter.value || []).includes(x.year))
+      && ((status.value || []).length == 0 || (status.value || []).includes(x.status))
     && (!allFilter.value || x.title.toLowerCase().includes(allFilter.value.toLowerCase()))
   })
 })
@@ -128,7 +138,7 @@ async function onUploadFinished() {
   </q-dialog>
 
   <div class="plx-container">
-    <div class="q-pa-md" style="display: grid; grid-template-columns: 3fr 1fr 1fr 1fr auto; gap: 1rem">
+    <div class="q-pa-md" style="display: grid; grid-template-columns: 3fr 1fr 1fr 1fr 1fr auto; gap: 1rem">
       <q-input v-model="allFilter" label="Название" clearable></q-input>
       <q-select-filterable use-input filled clearable use-chips multiple :options="codes"
                 v-model="codeFilter" label="Шифр"></q-select-filterable>
@@ -136,6 +146,7 @@ async function onUploadFinished() {
                 v-model="abbrFilter" label="Аббревиатура"></q-select-filterable>
       <q-select-filterable use-input filled clearable use-chips multiple :options="years"
                 v-model="yearFilter" label="Год"></q-select-filterable>
+      <q-select :options="statusOptions" v-model="status" emit-value map-options filled label="Статус" multiple/>
       <q-btn color="purple-3" @click="uploadFileDialog = true">Загрузить PLX файлы</q-btn>
     </div>
     <div class="plx-table">
