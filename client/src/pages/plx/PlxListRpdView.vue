@@ -104,6 +104,10 @@ async function onUploadFinished() {
   await planViewStore.fetchPlxFiles()
 }
 
+onBeforeMount(async () => {
+  await planViewStore.fetchPlxFiles()
+})
+
 </script>
 
 <template>
