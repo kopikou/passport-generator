@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {ref, watch, onBeforeMount} from "vue";
+import {ref, watch, onBeforeMount, watchEffect} from "vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import {GeneratorBookData} from "src/types";
@@ -76,7 +76,7 @@ async function searchBook() {
 }
 
 async function saveLibary() {
-  $q.loading.show()
+  // $q.loading.show()
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "library",
     value: {
@@ -84,7 +84,10 @@ async function saveLibary() {
       "dopBook": dopBook.value,
     }
   })
-  $q.loading.hide()
+  _.set(disciplineLibrary.value, "[0].value['mainBook']", mainBook.value)
+  _.set(disciplineLibrary.value, "[0].value['dopBook']", dopBook.value)
+  generatorViewStore.checkErrors()
+  // $q.loading.hide()
 }
 
 async function addBook() {
@@ -111,12 +114,7 @@ async function addBook() {
   })
 }
 
-watch(disciplineLibrary, () => {
-  mainBook.value = disciplineLibrary.value[0]?.value['mainBook'] || []
-  dopBook.value = disciplineLibrary.value[0]?.value['dopBook'] || []
-})
-
-onBeforeMount(() => {
+watchEffect(() => {
   mainBook.value = disciplineLibrary.value[0]?.value['mainBook'] || []
   dopBook.value = disciplineLibrary.value[0]?.value['dopBook'] || []
 })
@@ -165,7 +163,7 @@ onBeforeMount(() => {
               </template>
             </q-field>
           </div>
-          <q-separator />
+          <q-separator/>
           <div class="text-h6">Дополнительная литература</div>
           <div v-for="item in dopBook" style="width: 95%">
             <q-field label="Название" stack-label filled class="q-mb-md">
@@ -190,8 +188,8 @@ onBeforeMount(() => {
                   <a v-if="item.http_link" :href="`${item.http_link}`" target="_blank">{{ item.bib_disc }}</a>
                   <span v-else>{{ item.bib_disc }}</span>
                   <div v-if="checkTaken(item.id)">
-                    <q-btn v-if="checkTaken(item.id) == 'main'"  readonly>В основной литературе</q-btn>
-                    <q-btn v-if="checkTaken(item.id) == 'dop'"  readonly>В дополнительной литературе</q-btn>
+                    <q-btn v-if="checkTaken(item.id) == 'main'" readonly>В основной литературе</q-btn>
+                    <q-btn v-if="checkTaken(item.id) == 'dop'" readonly>В дополнительной литературе</q-btn>
                   </div>
                   <div v-else class="q-gutter-x-md q-mt-md">
                     <q-btn color="primary" label="В основную литературу"

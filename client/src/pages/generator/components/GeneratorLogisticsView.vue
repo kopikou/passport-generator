@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import {useQuasar} from "quasar";
-import {onBeforeMount, ref, watch} from "vue";
+import {onBeforeMount, ref, watch, watchEffect} from "vue";
 import {api} from "boot/axios";
 import {storeToRefs} from "pinia";
 import useGeneratorViewStore from "stores/generatorViewStore";
@@ -43,12 +43,14 @@ function deleteOborud(id) {
 }
 
 async function saveOborud() {
-  $q.loading.show()
+  // $q.loading.show()
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "logistics",
     value: oborudData.value,
   })
-  $q.loading.hide()
+  _.set(disciplineLogistics.value, '[0].value', oborudData.value)
+  generatorViewStore.checkErrors()
+  // $q.loading.hide()
 }
 
 
@@ -99,11 +101,7 @@ function addMTO() {
   })
 }
 
-onBeforeMount(() => {
-  oborudData.value = disciplineLogistics.value[0]?.value || []
-})
-
-watch(disciplineLogistics, () => {
+watchEffect(() => {
   oborudData.value = disciplineLogistics.value[0]?.value || []
 })
 

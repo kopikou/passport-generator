@@ -2,7 +2,7 @@
 
 import {useQuasar} from "quasar";
 import {api} from "boot/axios";
-import {onBeforeMount, ref, watch} from "vue";
+import {onBeforeMount, ref, watch, watchEffect} from "vue";
 import {GeneratorSoftwareData} from "src/types";
 import _ from "lodash";
 import useGeneratorViewStore from "stores/generatorViewStore";
@@ -39,12 +39,14 @@ function deleteSoftware(id) {
 }
 
 async function saveSoftware() {
-  $q.loading.show()
+  // $q.loading.show()
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "software",
     value: softwareData.value,
   })
-  $q.loading.hide()
+  _.set(disciplineSoftware.value, "[0].value", softwareData.value)
+  generatorViewStore.checkErrors()
+  // $q.loading.hide()
 }
 
 
@@ -84,11 +86,7 @@ function addPO() {
   })
 }
 
-onBeforeMount(() => {
-  softwareData.value = disciplineSoftware.value[0]?.value || []
-})
-
-watch(disciplineSoftware, () => {
+watchEffect(() => {
   softwareData.value = disciplineSoftware.value[0]?.value || []
 })
 

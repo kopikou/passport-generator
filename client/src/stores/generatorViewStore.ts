@@ -10,6 +10,7 @@ import {
   GeneratorData, GeneratorFormControlData, GeneratorIndependentTypesData, GeneratorOborudData,
   GeneratorPlanLineData, GeneratorSoftwareData, OtherDiscipline, PlanIndicatorData, PlanSemestrData,
 } from "src/types";
+import {fasElevator} from "@quasar/extras/fontawesome-v6";
 
 const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   const cafData = ref([])
@@ -159,7 +160,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   const errors = ref([])
 
-  function checkErrors() {
+  async function checkErrors() {
     const admkind = rpdData.value.admission.cadmkind
     const data = []
 
@@ -327,6 +328,230 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       })
     }
 
+    function checkGuidelines(type, errorText) {
+      if (!_.get(guidelines.value, `[0].${type}`, null)) {
+        data.push({
+          url: 'guidelines',
+          title: 'Нет данных для методических указаний',
+          text: [errorText],
+          level: 'critical',
+        })
+      }
+    }
+
+    if (guidelines.value.length == 0) {
+      data.push({
+        url: 'guidelines',
+        title: 'Не заполнены методические указания',
+        text: [`Не заполнены методические указания`],
+        level: 'critical',
+      })
+    } else {
+      let lab = false
+      let pr = false
+      let srs = false
+      let kp = false
+
+      _.forEach(semestersData.value, (x) => {
+        if (x.lab) lab = true
+        if (x.pr) pr = true
+        if (x.srs) srs = true
+        if (x.kp || x.kr) kp = true
+      })
+
+      if (lab) checkGuidelines('laboratory', 'Не заполнены методические указания для лабораторных работ')
+      if (pr) checkGuidelines('practice', 'Не заполнены методические указания для практических занятий')
+      if (srs) checkGuidelines('independent', 'Не заполнены методические указания для самостоятельных занятий')
+      if (kp) checkGuidelines('course', 'Не заполнены методические указания для курсового проекта/работы ')
+    }
+
+    const fos = _.uniqBy(disciplineThemes.value, 'formcontrol_verbose')
+
+    _.forEach(fos, (x) => {
+      const r = _.find(fosInfo.value, q => q.type == x.formcontrol_id)
+      if (!r) {
+        data.push({
+          url: 'fos',
+          title: 'Нет данных по оценочным материалам',
+          text: [`Не заполнена информация о "${x.formcontrol_verbose}"`],
+          level: 'critical',
+        })
+      } else {
+        if (!_.get(r, 'criteria', null)) {
+          data.push({
+            url: 'fos',
+            title: 'Нет данных по оценочным материалам',
+            text: [`Нет информации о критериях оценивания для "${x.formcontrol_verbose}"`],
+            level: 'critical',
+          })
+        }
+        if (!_.get(r, 'about', null)) {
+          data.push({
+            url: 'fos',
+            title: 'Нет данных по оценочным материалам',
+            text: [`Неи информации об описании процедуры для "${x.formcontrol_verbose}"`],
+            level: 'critical',
+          })
+        }
+      }
+    })
+
+    function checkTat(type, errorText) {
+      const r = _.find(tatInfo.value, x => x.type == type)
+      if (!r) {
+        data.push({
+          url: 'tat',
+          title: 'Нет информации по типовым оценочным средствам',
+          text: [`Нет информации о типовых оценочных средствах для "${errorText}"`],
+          level: 'critical',
+        })
+      } else {
+        if (!r.about) {
+          data.push({
+            url: 'tat',
+            title: `Нет данных`,
+            text: [`Нет описания процедуры по "${errorText}"`],
+            level: 'critical',
+          })
+        }
+        if (type == 'zach') {
+          if (!r.passed) {
+            data.push({
+              url: 'tat',
+              title: `Нет данных`,
+              text: [`Нет критерия оценивания по оценке "Зачтено" для "${errorText}"`],
+              level: 'critical',
+            })
+          }
+          if (!r.unpassed) {
+            data.push({
+              url: 'tat',
+              title: `Нет данных`,
+              text: [`Нет критерия оценивания по оценке "Не зачтено" для "${errorText}"`],
+              level: 'critical',
+            })
+          }
+        } else {
+          if (!r.great) {
+            data.push({
+              url: 'tat',
+              title: `Нет данных`,
+              text: [`Нет критерия оценивания по оценке "Отлично" для "${errorText}"`],
+              level: 'critical',
+            })
+          }
+          if (!r.good) {
+            data.push({
+              url: 'tat',
+              title: `Нет данных`,
+              text: [`Нет критерия оценивания по оценке "Хорошо" для "${errorText}"`],
+              level: 'critical',
+            })
+          }
+          if (!r.satisfactorily) {
+            data.push({
+              url: 'tat',
+              title: `Нет данных`,
+              text: [`Нет критерия оценивания по оценке "Удовлетворительно" для "${errorText}"`],
+              level: 'critical',
+            })
+          }
+          if (!r.unsatisfactory) {
+            data.push({
+              url: 'tat',
+              title: `Нет данных`,
+              text: [`Нет критерия оценивания по оценке "Неудовлетворительно" для "${errorText}"`],
+              level: 'critical',
+            })
+          }
+        }
+      }
+    }
+
+    if (tatInfo.value.length == 0) {
+      data.push({
+        url: 'tat',
+        title: 'Не заполнены типовые оценочные средства',
+        text: [`Не заполнены типовые оценочные средства`],
+        level: 'critical',
+      })
+    } else {
+      let zach = false
+      let zacho = false
+      let ekz = false
+      let kp = false
+
+      _.forEach(semestersData.value, (x) => {
+        if (x.zach) zach = true
+        if (x.zacho) zacho = true
+        if (x.ekz) ekz = true
+        if (x.kp || x.kr) kp = true
+      })
+
+      if (zach) checkTat('zach', 'Зачет')
+      if (zacho) checkTat('zacho', 'Дифференцированный зачет')
+      if (ekz) checkTat('ekz', 'Экзамен')
+      if (kp) checkTat('krkp', 'Курсовой проекта/работа')
+
+    }
+
+
+    const library = _.get(disciplineLibrary.value, `[0].value`)
+    if (!library) {
+      data.push({
+        url: 'library',
+        title: 'Не начинал',
+        text: ['Не выбрана литература'],
+        level: 'critical',
+      })
+    } else {
+      if (library.mainBook.length == 0) {
+        data.push({
+          url: 'library',
+          title: 'Не начинал',
+          text: ['Нет основной литературы'],
+          level: 'critical',
+        })
+      }
+      if (library.dopBook.length == 0) {
+        data.push({
+          url: 'library',
+          title: 'Не начинал',
+          text: ['Нет дополнительной литературы'],
+          level: 'critical',
+        })
+      }
+    }
+
+    if (resources.value.length == 0) {
+      data.push({
+        url: 'resources',
+        title: 'Не начинал',
+        text: ['Не заполнен раздел'],
+        level: 'critical',
+      })
+    }
+
+    const soft = _.get(disciplineSoftware.value, '[0].value', [])
+    if (soft.length == 0) {
+      data.push({
+        url: 'soft',
+        title: 'Не начинал',
+        text: ['Не выбрано используемое ПО'],
+        level: 'critical',
+      })
+    }
+
+    const logistics = _.get(disciplineLogistics.value, '[0].value', [])
+    if (logistics.length == 0) {
+      data.push({
+        url: 'logistics',
+        title: 'Не начинал',
+        text: ['Не выбрано используемое МТО'],
+        level: 'critical',
+      })
+    }
+
     if (admkind != 5) {
       const disPlace = _.find(additionalInfo.value, (x) => x.type == 'disciplinePlace')
       if (!disPlace) {
@@ -363,9 +588,11 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     await getCafData()
     await getFormControlData()
     await getIndependentTypesData()
-    checkErrors()
-
     loadingHelpers()
+  })
+
+  watch(rpdData, () => {
+    checkErrors()
   })
 
   watch(activeRpdId, async () => {

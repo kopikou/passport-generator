@@ -12,7 +12,6 @@ const generatorViewStore = useGeneratorViewStore();
 const {
   activeRpdId,
   disciplineThemes,
-  formControl,
 } = storeToRefs(generatorViewStore)
 
 const choicesName = ref([])

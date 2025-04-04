@@ -65,6 +65,7 @@ if (r.status == 200) {
     position: "bottom",
     html: true,
   })
+  generatorViewStore.checkErrors()
 } else {
   $q.notify({
     message: "Данные <span class='text-bold'>о фонде оценочных средств дисциплине</span> не сохранены!",

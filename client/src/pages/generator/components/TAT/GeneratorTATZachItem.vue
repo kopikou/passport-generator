@@ -72,6 +72,7 @@ async function saveData() {
         position: "bottom",
         html: true,
       })
+    generatorViewStore.checkErrors()
     }
     else {
       $q.notify({

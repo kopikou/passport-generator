@@ -67,7 +67,7 @@ class Command(BaseCommand):
                     "ctype": file['type'],
                 }
 
-                files, created = UchPlanFiles.objects.get_or_create(
+                files, created = UchPlanFiles.objects.update_or_create(
                     cplan_id=uchplan.id,
                     name=transfer_file_data['name'],
                     ctype=transfer_file_data['ctype'],
@@ -108,7 +108,7 @@ class Command(BaseCommand):
                     "viewobject": line['viewobject'],
                 }
 
-                lines, created = UchPlanLines.objects.get_or_create(
+                lines, created = UchPlanLines.objects.update_or_create(
                     planid_id=uchplan.id,
                     disid_id=transfer_line_data['disid_id'],
                     newdisid=transfer_line_data['newdisid'],
@@ -139,7 +139,7 @@ class Command(BaseCommand):
                             "eios": semestr['eios'],
                         }
 
-                        semesters, created = UchPlanSemestr.objects.get_or_create(
+                        semesters, created = UchPlanSemestr.objects.update_or_create(
                             planlineid_id=lines.id,
                             num=transfer_semester_data['num'],
                             defaults=transfer_semester_data,

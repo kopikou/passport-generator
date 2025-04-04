@@ -45,6 +45,7 @@ async function saveData() {
     } else {
       _.set(additionalInfo.value, `[${key}].value`, r.data.value)
     }
+    generatorViewStore.checkErrors()
   } else {
     $q.notify({
       message: "Данные <span class='text-bold'>об используемых ресурсах</span> не сохранены!",
