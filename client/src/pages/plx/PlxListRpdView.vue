@@ -30,7 +30,7 @@ const statusOptions = ref([
   {label: 'Принят, синхронизируется', value: 3},
   {label: 'Принят, уже в АИС', value: 4},
 ])
-const status = ref([0, 1])
+const status = ref([0])
 
 const codes = computed(() => {
   let r = _(files.value).map(x => x.code).uniq().sortBy().value();

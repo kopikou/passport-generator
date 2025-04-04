@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {onBeforeMount, ref, watch, computed} from "vue";
+import {onBeforeMount, ref, watch, computed, watchEffect} from "vue";
 import {useQuasar} from "quasar";
 import GeneratorAddIndependentDialog from "pages/generator/components/dialogs/GeneratorAddIndependentDialog.vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
@@ -50,6 +50,8 @@ function addIndependent() {
       sem: tab.value,
       id: null,
     },
+  }).onOk(() => {
+    generatorViewStore.checkErrors()
   })
 }
 
@@ -60,15 +62,17 @@ function updateIndependent(id) {
       sem: tab.value,
       id: id,
     },
+  }).onOk(() => {
+    generatorViewStore.checkErrors()
   })
 }
 
 function deleteIndependent(id) {
   $q.dialog({
     title: 'Удаление самостоятельного занятия',
-    message: 'Вы точно хотите отправить самостоятельное занятие в архив?',
+    message: 'Вы точно хотите удалить самостоятельное занятие?',
     ok: {
-      label: 'В архив',
+      label: 'Удалить',
       flat: true,
       color: 'red',
     },
@@ -84,16 +88,13 @@ function deleteIndependent(id) {
     let r = await api.get('/api/generator/delete-discipline-work-hour/', {params: {id: id}})
 
     rpdData.value.discipline_work_hour.splice(_.findKey(rpdData.value.discipline_work_hour, (x) => x.id == id), 1)
+    generatorViewStore.checkErrors()
 
     $q.loading.hide()
   })
 }
 
-watch(semestersData, () => {
-  tab.value = `${semestersData.value[0].num}`
-})
-
-onBeforeMount(() => {
+watchEffect(() => {
   tab.value = `${semestersData.value[0]?.num}`
 })
 

@@ -23,31 +23,42 @@ const tab = ref<string>('')
 const methods = ref<string>('')
 
 async function saveMethods() {
-  $q.loading.show()
+  // $q.loading.show()
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "interactiveMethods",
     value: {
       "interactiveMethods": methods.value
     }
-  }).then((v) => {
+  })
+  if (r.status == 200) {
     $q.notify({
       message: "Данные <span class='text-bold'>о структуре дисциплины</span> сохранены!",
       color: "secondary",
       position: "bottom",
       html: true,
     })
-    let key = _.findKey(additionalInfo.value, (x) => x.id == v.data.id)
-    _.set(additionalInfo.value, `[${key}].value.interactiveMethods`, methods.value)
-  }, (rej) => {
+    let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
+    if (key) _.set(additionalInfo.value, `[${key}].value.interactiveMethods`, methods.value)
+    else additionalInfo.value.push({
+      id: r.data.id,
+      planlineslink_id: activeRpdId.value,
+      type: 'interactiveMethods',
+      value: {
+        interactiveMethods: methods.value,
+      }
+    })
+    generatorViewStore.checkErrors()
+  } else {
+
     $q.notify({
       message: "Данные <span class='text-bold'>о структуре дисциплины</span> не сохранены!",
       color: "negative",
       position: "bottom",
       html: true,
     })
-  })
+  }
 
-  $q.loading.hide()
+  // $q.loading.hide()
 }
 
 watch(semestersData, () => {
@@ -69,7 +80,7 @@ onBeforeMount(() => {
   <div>
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Структура дисциплины</span>
-      <p>Количество академических часов, выделенных на дисциплину Базы данных. Данные автоматически получены их учебного
+      <p>Количество академических часов, выделенных на дисциплину "{{ rpdData.planlines?.dis }}". Данные автоматически получены их учебного
         плана.</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-tabs
@@ -131,7 +142,7 @@ onBeforeMount(() => {
               </template>
             </q-field>
 
-            <div class="text-subtitle1">Электронное информационная образовательная среда
+            <div class="text-subtitle1">Электронная информационная образовательная среда
             </div>
             <q-field outlined dense>
               <template v-slot:control>
@@ -190,7 +201,9 @@ onBeforeMount(() => {
       </q-tab-panels>
       <div class="q-gutter-md">
         <div class="text-h6">
-          Интерактивные методы обучения можно посмотреть по <a target="_blank" href="https://edu.itmo.ru/ru/edutech_iteractiv/">ссылке</a> или этой <a target="_blank" href="https://sberuniversity.ru/edutech-club/lab/glossary/937/">ссылке</a>
+          Интерактивные методы обучения можно посмотреть по <a target="_blank"
+                                                               href="https://edu.itmo.ru/ru/edutech_iteractiv/">ссылке</a>
+          или этой <a target="_blank" href="https://sberuniversity.ru/edutech-club/lab/glossary/937/">ссылке</a>
         </div>
         <q-input
           label="Интерактивные методы обучения"
@@ -202,12 +215,12 @@ onBeforeMount(() => {
           @update:modelValue="saveMethods"
           debounce="1000"
         />
-<!--        <q-btn-->
-<!--          label="Сохранить"-->
-<!--          color="primary"-->
-<!--          @click="saveMethods"-->
-<!--          v-show="!disabled"-->
-<!--        />-->
+        <!--        <q-btn-->
+        <!--          label="Сохранить"-->
+        <!--          color="primary"-->
+        <!--          @click="saveMethods"-->
+        <!--          v-show="!disabled"-->
+        <!--        />-->
       </div>
     </div>
   </div>

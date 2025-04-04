@@ -91,7 +91,7 @@ watch(resources, () => {
     <p></p>
     <q-separator class="q-mt-md q-mb-md"/>
     <div class="q-pt-xs q-gutter-md">
-      <div class="text-h6">Используемые ресурсы сети интернет</div>
+      <div class="text-h6">Используемые ресурсы сети "Интернет"</div>
       <q-input
         label="Ресурсы сети интернет"
         type="textarea"

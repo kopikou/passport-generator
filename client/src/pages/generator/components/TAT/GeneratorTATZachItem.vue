@@ -3,7 +3,7 @@
 import {useQuasar} from "quasar";
 import {storeToRefs} from "pinia";
 import useGeneratorViewStore from "stores/generatorViewStore";
-import {onBeforeMount, ref, watch} from "vue";
+import {onBeforeMount, ref, watch, watchEffect} from "vue";
 import _ from "lodash";
 import {api} from "boot/axios";
 
@@ -33,50 +33,65 @@ const passed = ref('')
 const unpassed = ref('')
 
 async function saveData() {
-  $q.loading.show({message: "Сохранение данных"})
-  _.set(tatInfo.value, `[0].${props.type}`, {
-    "main": main.value,
-    "about": about.value,
-    "example": example.value,
-    "passed": passed.value,
-    "unpassed": unpassed.value,
-    "title": props.title,
-  })
+  // $q.loading.show({message: "Сохранение данных"})
+  const key = _.findKey(tatInfo.value, x => x.type == props.type)
+
+  if (!key) {
+    tatInfo.value.push({
+      "about": about.value,
+      "example": example.value,
+      "great": great.value,
+      "good": good.value,
+      "satisfactorily": satisfactorily.value,
+      "unsatisfactory": unsatisfactory.value,
+      "title": props.title,
+      "type": props.type,
+    })
+  } else {
+    _.set(tatInfo.value, `[${key}]`, {
+      "about": about.value,
+      "example": example.value,
+      "great": great.value,
+      "good": good.value,
+      "satisfactorily": satisfactorily.value,
+      "unsatisfactory": unsatisfactory.value,
+      "title": props.title,
+      "type": props.type,
+    })
+  }
+
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'tat',
     "value": tatInfo.value,
-  }).then((v) => {
-    $q.notify({
-      message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> сохранены!",
-      color: "secondary",
-      position: "bottom",
-      html: true,
-    })
-  }, (rej) => {
-    $q.notify({
-      message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> не сохранены!",
-      color: "negative",
-      position: "bottom",
-      html: true,
-    })
   })
-  $q.loading.hide()
+
+    if (r.status == 200) {
+      $q.notify({
+        message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> сохранены!",
+        color: "secondary",
+        position: "bottom",
+        html: true,
+      })
+    }
+    else {
+      $q.notify({
+        message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> не сохранены!",
+        color: "negative",
+        position: "bottom",
+        html: true,
+      })
+    }
+  // $q.loading.hide()
 }
 
-watch(additionalInfo, () => {
-  main.value = _.get(tatInfo.value, `[0].${props.type}.main`)
-  about.value = _.get(tatInfo.value, `[0].${props.type}.about`)
-  passed.value = _.get(tatInfo.value, `[0].${props.type}.passed`)
-  unpassed.value = _.get(tatInfo.value, `[0].${props.type}.unpassed`)
-  example.value = _.get(tatInfo.value, `[0].${props.type}.example`)
-})
-
-onBeforeMount(() => {
-  main.value = _.get(tatInfo.value, `[0].${props.type}.main`)
-  about.value = _.get(tatInfo.value, `[0].${props.type}.about`)
-  passed.value = _.get(tatInfo.value, `[0].${props.type}.passed`)
-  unpassed.value = _.get(tatInfo.value, `[0].${props.type}.unpassed`)
-  example.value = _.get(tatInfo.value, `[0].${props.type}.example`)
+watchEffect(() => {
+  const key = _.findKey(tatInfo.value, x => x.type == props.type)
+  if (key) {
+    about.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'about', '')
+    passed.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'passed', '')
+    unpassed.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'unpassed', '')
+    example.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'example', '')
+  }
 })
 
 </script>
@@ -88,16 +103,16 @@ onBeforeMount(() => {
     <q-card>
       <q-card-section>
         <div class="q-gutter-md">
-          <q-input
-            label="Основная информация"
-            type="textarea"
-            filled
-            stack-label
-            v-model="main"
-            :readonly="disabled"
-            debounce="1000"
-            @update:modelValue="saveData"
-          />
+<!--          <q-input-->
+<!--            label="Основная информация"-->
+<!--            type="textarea"-->
+<!--            filled-->
+<!--            stack-label-->
+<!--            v-model="main"-->
+<!--            :readonly="disabled"-->
+<!--            debounce="1000"-->
+<!--            @update:modelValue="saveData"-->
+<!--          />-->
           <q-input
             label="Описание процедуры"
             type="textarea"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {computed, onBeforeMount, ref, watch} from "vue";
+import {computed, onBeforeMount, ref, watch, watchEffect} from "vue";
 import {useQuasar} from "quasar";
 import GeneratorAddPracticeDialog from "pages/generator/components/dialogs/GeneratorAddPracticeDialog.vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
@@ -49,6 +49,8 @@ function addPractice() {
       sem: tab.value,
       id: null,
     },
+  }).onOk(() => {
+    generatorViewStore.checkErrors()
   })
 }
 
@@ -59,15 +61,17 @@ function updatePractice(id) {
       sem: tab.value,
       id: id,
     },
+  }).onOk(() => {
+    generatorViewStore.checkErrors()
   })
 }
 
 function deletePractice(id) {
   $q.dialog({
     title: 'Удаление практического занятия',
-    message: 'Вы точно хотите отправить практическое занятие в архив?',
+    message: 'Вы точно хотите удалить практическое занятие?',
     ok: {
-      label: 'В архив',
+      label: 'Удалить',
       flat: true,
       color: 'red',
     },
@@ -83,16 +87,12 @@ function deletePractice(id) {
     let r = await api.get('/api/generator/delete-discipline-work-hour/', {params: {id: id}})
 
     rpdData.value.discipline_work_hour.splice(_.findKey(rpdData.value.discipline_work_hour, (x) => x.id == id), 1)
-
+    generatorViewStore.checkErrors()
     $q.loading.hide()
   })
 }
 
-watch(semestersData, () => {
-  tab.value = `${semestersData.value[0].num}`
-})
-
-onBeforeMount(() => {
+watchEffect(() => {
   tab.value = `${semestersData.value[0]?.num}`
 })
 
@@ -145,11 +145,11 @@ function getRowColor(number) {
 <template>
   <div>
     <div style="width: 95%">
-      <span class="text-h6 q-pl-lg">Перечень практических работ по дисциплине</span>
+      <span class="text-h6 q-pl-lg">Перечень практических занятий по дисциплине</span>
       <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div v-if="allPercent != 0">
-        <q-btn label="Добавить новую практическую работу" color="teal" class="q-mb-md" @click="addPractice"
+        <q-btn label="Добавить новое практическое занятие" color="teal" class="q-mb-md" @click="addPractice"
                :disabled="disabled"/>
         <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
           <div class="absolute-full flex flex-center">
@@ -183,7 +183,7 @@ function getRowColor(number) {
                 №
               </div>
               <div>
-                Наименование практической работы
+                Наименование практического занятия
               </div>
               <div>
                 Количество часов
@@ -209,7 +209,8 @@ function getRowColor(number) {
                   {{ practice.hours }}
                 </div>
                 <div>
-                  {{ disciplineThemesByValue[practice.theme_id]?.num }}. {{ disciplineThemesByValue[practice.theme_id]?.name }}
+                  {{ disciplineThemesByValue[practice.theme_id]?.num }}.
+                  {{ disciplineThemesByValue[practice.theme_id]?.name }}
                 </div>
                 <div v-show="!disabled">
                   <q-btn
@@ -243,7 +244,7 @@ function getRowColor(number) {
 <style scoped lang="scss">
 .practice-container {
 
-  $border: 1px solid silrver;
+  $border: 1px solid silver;
 
   > .practice-container__header {
     display: grid;

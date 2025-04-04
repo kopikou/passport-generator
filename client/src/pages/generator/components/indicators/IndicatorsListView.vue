@@ -48,8 +48,8 @@ async function saveData() {
       html: true,
     })
     props.data.discipline_indicator[0] = r.data
+    generatorViewStore.checkErrors()
   } else {
-
     $q.notify({
       message: "Данные <span class='text-bold'>о компетенциях</span> не сохранены!",
       color: "negative",

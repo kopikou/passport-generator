@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {onBeforeMount, ref, watch} from "vue";
+import {onBeforeMount, ref, toRaw, watchEffect} from "vue";
 import {api} from "boot/axios";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
@@ -28,35 +28,35 @@ const $q = useQuasar()
 const guidelines_text = ref<string>('')
 
 async function saveData() {
-  $q.loading.show({message: "Сохранение данных"})
+  // $q.loading.show({message: "Сохранение данных"})
+
   _.set(guidelines.value, `[0].${props.type}`, guidelines_text.value)
 
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'guidelines',
     "value": guidelines.value,
-  }).then((v) => {
-    $q.notify({
-      message: "Данные <span class='text-bold'>об методических указаний</span> сохранены!",
-      color: "secondary",
-      position: "bottom",
-      html: true,
-    })
-  }, (rej) => {
-    $q.notify({
-      message: "Данные <span class='text-bold'>об методических указаний</span> не сохранены!",
-      color: "negative",
-      position: "bottom",
-      html: true,
-    })
   })
-  $q.loading.hide()
+
+    if (r.status == 200) {
+      $q.notify({
+        message: "Данные <span class='text-bold'>об методических указаний</span> сохранены!",
+        color: "secondary",
+        position: "bottom",
+        html: true,
+      })
+    }
+    else {
+      $q.notify({
+        message: "Данные <span class='text-bold'>об методических указаний</span> не сохранены!",
+        color: "negative",
+        position: "bottom",
+        html: true,
+      })
+    }
+  // $q.loading.hide()
 }
 
-watch(additionalInfo, () => {
-  guidelines_text.value = _.get(guidelines.value, `[0].${props.type}`)
-})
-
-onBeforeMount(() => {
+watchEffect(() => {
   guidelines_text.value = _.get(guidelines.value, `[0].${props.type}`)
 })
 

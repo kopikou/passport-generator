@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {computed, onBeforeMount, ref, watch} from "vue";
+import {computed, onBeforeMount, ref, watch, watchEffect} from "vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import _ from "lodash";
@@ -43,9 +43,24 @@ async function savePrecSubDiscipline() {
       html: true,
     })
 
-    let key = _.findKey(additionalInfo.value, (x) => x.id == v.data.id)
-    _.set(additionalInfo.value, `[${key}].value.precedence`, precedence.value)
-    _.set(additionalInfo.value, `[${key}].value.subsequent`, subsequent.value)
+    let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
+    if (key) {
+      _.set(additionalInfo.value, `[${key}].value.precedence`, precedence.value)
+      _.set(additionalInfo.value, `[${key}].value.subsequent`, subsequent.value)
+    } else {
+      additionalInfo.value.push({
+        id: r.data.id,
+        planlineslink_id: activeRpdId.value,
+        type: 'disciplinePlace',
+        value: {
+          "precedence": precedence.value,
+          "subsequent": subsequent.value,
+        }
+      })
+    }
+
+    generatorViewStore.checkErrors()
+
   } else {
     $q.notify({
       message: "Данные <span class='text-bold'>о месте дисциплины в структуре ООП</span> не сохранены!",
@@ -58,16 +73,10 @@ async function savePrecSubDiscipline() {
   }
 }
 
-watch(disciplinePlace, () => {
+watchEffect(() => {
   precedence.value = disciplinePlace.value[0]?.value['precedence'] || []
   subsequent.value = disciplinePlace.value[0]?.value['subsequent'] || []
 })
-
-onBeforeMount(() => {
-  precedence.value = disciplinePlace.value[0]?.value['precedence'] || []
-  subsequent.value = disciplinePlace.value[0]?.value['subsequent'] || []
-})
-
 
 </script>
 
@@ -85,7 +94,6 @@ onBeforeMount(() => {
         stack-label
         filled
         use-chips
-        clearable
         multiple
         map-options
         emit-value
@@ -102,7 +110,6 @@ onBeforeMount(() => {
         stack-label
         filled
         use-chips
-        clearable
         multiple
         map-options
         emit-value

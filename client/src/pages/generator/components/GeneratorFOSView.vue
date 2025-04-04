@@ -2,7 +2,7 @@
 
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
-import {computed} from "vue";
+import {ref, watch} from "vue";
 import _ from "lodash";
 import GeneratorFOSItem from "pages/generator/components/FOS/GeneratorFOSItem.vue";
 import EmptyIcon from "components/EmptyIcon.vue";
@@ -15,13 +15,11 @@ const {
   formControl,
 } = storeToRefs(generatorViewStore)
 
-const choicesName = computed(() => {
-  return _.uniq(_.map(disciplineThemes.value, (x) => x.formcontrol_verbose)) || []
-})
+const choicesName = ref([])
 
-function getType(value) {
-  return _.filter(formControl.value, (x) => x.name == value)[0]?.type
-}
+watch(disciplineThemes, () => {
+  choicesName.value = _.uniqBy(disciplineThemes.value, 'formcontrol_verbose')
+}, {immediate: true})
 
 </script>
 
@@ -36,7 +34,7 @@ function getType(value) {
         style="border-bottom: none;"
       >
         <div v-for="n in choicesName">
-          <generator-f-o-s-item :title="n" :type="getType(n)"/>
+          <generator-f-o-s-item :title="n.formcontrol_verbose" :type="n.formcontrol_id"/>
         </div>
       </q-list>
     </div>

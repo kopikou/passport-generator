@@ -89,7 +89,7 @@ watch(additionalInfo, () => {
   <div>
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Данные по дисциплине</span>
-      <p>Данные для рабочей программы по дисциплине "Базы данных" получены автоматически из учебного плана</p>
+      <p>Данные для рабочей программы по дисциплине "{{ rpdData.planlines?.dis }}" получены автоматически из учебного плана</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div class="q-pb-md">
         <span class="text-subtitle1">Наименование дисциплины</span>

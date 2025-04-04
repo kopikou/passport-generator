@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {onBeforeMount, ref, watch, computed} from "vue";
+import {watchEffect, ref, watch, computed} from "vue";
 import {useQuasar} from "quasar";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
@@ -50,6 +50,8 @@ function addLectures() {
       sem: tab.value,
       id: null,
     },
+  }).onOk(() => {
+    generatorViewStore.checkErrors()
   })
 }
 
@@ -60,15 +62,17 @@ function updateLectures(id) {
       sem: tab.value,
       id: id,
     },
+  }).onOk(() => {
+    generatorViewStore.checkErrors()
   })
 }
 
 function deleteLectures(id) {
   $q.dialog({
-    title: 'Удаление темы',
-    message: 'Вы точно хотите отправить тему в архив?',
+    title: 'Удаление лекционного занятия',
+    message: 'Вы точно хотите удалить занятие?',
     ok: {
-      label: 'В архив',
+      label: 'Удалить',
       flat: true,
       color: 'red',
     },
@@ -84,7 +88,7 @@ function deleteLectures(id) {
     let r = await api.get('/api/generator/delete-discipline-work-hour/', {params: {id: id}})
 
     rpdData.value.discipline_work_hour.splice(_.findKey(rpdData.value.discipline_work_hour, (x) => x.id == id), 1)
-
+    generatorViewStore.checkErrors()
     $q.loading.hide()
   })
 }
@@ -133,11 +137,7 @@ async function fieldDown(num, sem) {
   await saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
 }
 
-watch(semestersData, () => {
-  tab.value = `${semestersData.value[0].num}`
-})
-
-onBeforeMount(() => {
+watchEffect(() => {
   tab.value = `${semestersData.value[0]?.num}`
 })
 
@@ -146,11 +146,11 @@ onBeforeMount(() => {
 <template>
   <div>
     <div style="width: 95%">
-      <span class="text-h6 q-pl-lg">Перечень лекционных работ по дисциплине</span>
+      <span class="text-h6 q-pl-lg">Перечень лекционных занятий по дисциплине</span>
       <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div v-if="allPercent != 0">
-        <q-btn label="Добавить новую лекционную работу" color="teal" class="q-mb-md" @click="addLectures"
+        <q-btn label="Добавить новое лекционное занятие" color="teal" class="q-mb-md" @click="addLectures"
                :disable="disabled"/>
         <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
           <div class="absolute-full flex flex-center">

@@ -2,7 +2,7 @@
 
 
 import {useQuasar} from "quasar";
-import {computed, onBeforeMount, ref, watch} from "vue";
+import {computed, onBeforeMount, ref, watch, watchEffect} from "vue";
 import GeneratorAddLabDialog from "./dialogs/GeneratorAddLabDialog.vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
@@ -51,6 +51,8 @@ function addLab() {
       sem: tab.value,
       id: null,
     },
+  }).onOk(() => {
+    generatorViewStore.checkErrors()
   })
 }
 
@@ -61,15 +63,17 @@ function updateLab(id) {
       sem: tab.value,
       id: id,
     },
+  }).onOk(() => {
+    generatorViewStore.checkErrors()
   })
 }
 
 function deleteLab(id) {
   $q.dialog({
-    title: 'Удаление лабораторного занятия',
-    message: 'Вы точно хотите отправить лабораторное занятие в архив?',
+    title: 'Удаление лабораторной работы',
+    message: 'Вы точно хотите удалить лабораторную работу?',
     ok: {
-      label: 'В архив',
+      label: 'Удалить',
       flat: true,
       color: 'red',
     },
@@ -81,20 +85,16 @@ function deleteLab(id) {
     persistent: true
   }).onOk(async () => {
 
-    $q.loading.show({message: "Удаление"})
+    // $q.loading.show({message: "Удаление"})
     let r = await api.get('/api/generator/delete-discipline-work-hour/', {params: {id: id}})
 
     rpdData.value.discipline_work_hour.splice(_.findKey(rpdData.value.discipline_work_hour, (x) => x.id == id), 1)
-
-    $q.loading.hide()
+    generatorViewStore.checkErrors()
+    // $q.loading.hide()
   })
 }
 
-watch(semestersData, () => {
-  tab.value = `${semestersData.value[0].num}`
-})
-
-onBeforeMount(() => {
+watchEffect(() => {
   tab.value = `${semestersData.value[0]?.num}`
 })
 

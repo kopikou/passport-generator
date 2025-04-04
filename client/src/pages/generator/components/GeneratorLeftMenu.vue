@@ -14,6 +14,8 @@ const props = defineProps({
   }
 })
 
+const $q = useQuasar()
+
 const mainStore = useMainStore();
 
 const {
@@ -29,6 +31,7 @@ const {
   disabled,
   rpdData,
   admissionData,
+  errors,
 } = storeToRefs(generatorViewStore)
 
 const menuItems = [
@@ -39,11 +42,11 @@ const menuItems = [
   {title: 'Место дисциплины в структуре ООП', url: 'discipline-place', allow: [1, 2, 3, 4]},
   {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5]},
   {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1, 2, 3, 4, 5]},
-  {title: 'Содержание лекционных работ', url: 'discipline-lectures', 'right': true, allow: [1, 2, 3, 4, 5]},
+  {title: 'Содержание лекционных занятий', url: 'discipline-lectures', 'right': true, allow: [1, 2, 3, 4, 5]},
   {title: 'Содержание лабораторных работ', url: 'discipline-lab', 'right': true, allow: [1, 2, 3, 4, 5]},
-  {title: 'Содержание практических работ', url: 'discipline-practice', 'right': true, allow: [1, 2, 3, 4, 5]},
+  {title: 'Содержание практических занятий', url: 'discipline-practice', 'right': true, allow: [1, 2, 3, 4, 5]},
   {title: 'Содержание самостоятельных работ', url: 'discipline-independent', 'right': true, allow: [1, 2, 3, 4, 5]},
-  {title: 'Перечень учебно-методическоего обеспечение', url: 'guidelines', allow: [1, 2, 3, 4, 5]},
+  {title: 'Перечень учебно-методического обеспечения', url: 'guidelines', allow: [1, 2, 3, 4, 5]},
   {title: 'Оценочные материалы по дисциплине для контроля текущей успеваемости', url: 'fos', allow: [1, 2, 3, 4, 5]},
   {title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat', allow: [1, 2, 3, 4, 5]},
   {title: 'Литература', url: 'library', allow: [1, 2, 3, 4, 5]},
@@ -56,8 +59,6 @@ const filterMenuItems = computed(() => {
   return _.filter(menuItems, x => x.allow.includes(admissionData.value.cadmkind))
 })
 
-const $q = useQuasar()
-
 async function sendToReview() {
   $q.loading.show()
   let r = await api.get(`/api/generator/${activeRpdId.value}/send-rpd-on-review/`)
@@ -66,10 +67,13 @@ async function sendToReview() {
   $q.loading.hide()
 }
 
-
 function translateDate(date) {
   let result = new Date(date).toLocaleString('ru')
   return result
+}
+
+function getErrors(url) {
+  return _.filter(errors.value, x => x.url == url)
 }
 
 
@@ -105,6 +109,7 @@ function translateDate(date) {
       @click="sendToReview"
       style="width: 100%"
       label="Отправить на согласование"
+      :disabled="errors.length != 0"
     />
   </div>
   <div v-else class="text-center q-mb-md">
@@ -133,6 +138,17 @@ function translateDate(date) {
       <q-item-section>
         <q-item-label :class="item.right ? 'q-ml-lg' : ''">{{ item.title }}</q-item-label>
         <!--        <q-item-label caption>Основная информация о программе</q-item-label>-->
+      </q-item-section>
+      <q-item-section avatar v-if="getErrors(item.url).length != 0">
+        <q-icon name="mdi-alert-box" color="red-7">
+          <q-tooltip class="bg-red-9 text-white hide-scrollbar" max-height="20%">
+            <div v-for="error in getErrors(item.url)" style="font-size: 14px;">
+              <div v-for="text in error.text">
+                {{ text }}
+              </div>
+            </div>
+          </q-tooltip>
+        </q-icon>
       </q-item-section>
     </q-item>
 

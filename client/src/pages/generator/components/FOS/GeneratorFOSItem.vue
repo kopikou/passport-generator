@@ -3,8 +3,8 @@
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import {useQuasar} from "quasar";
-import {computed, onBeforeMount, ref, watch} from "vue";
-import _ from "lodash";
+import {computed, onBeforeMount, ref, watch, watchEffect} from "vue";
+import _, {forEach} from "lodash";
 import {api} from "boot/axios";
 
 const generatorViewStore = useGeneratorViewStore();
@@ -35,41 +35,53 @@ const themes = computed(() => {
 })
 
 async function saveData() {
-  $q.loading.show({message: "Сохранение данных"})
-  _.set(fosInfo.value, `[0].${props.type}`, {
-    "about": about.value,
-    "criteria": criteria.value,
-    "title": props.title,
-  })
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
-    "type": "fos",
-    "value": fosInfo.value,
-  }).then((v) => {
-    $q.notify({
-      message: "Данные <span class='text-bold'>о фонде оценочных средств дисциплине</span> сохранены!",
-      color: "secondary",
-      position: "bottom",
-      html: true,
+  // $q.loading.show({message: "Сохранение данных"})
+  const key = _.findKey(fosInfo.value, x => x.type == props.type)
+  if (!key) {
+    fosInfo.value.push({
+      "about": about.value,
+      "criteria": criteria.value,
+      "title": props.title,
+      "type": props.type,
     })
-  }, (rej) => {
-    $q.notify({
-      message: "Данные <span class='text-bold'>о фонде оценочных средств дисциплине</span> не сохранены!",
-      color: "negative",
-      position: "bottom",
-      html: true,
+  } else {
+    _.set(fosInfo.value, `[${key}]`, {
+      "about": about.value,
+      "criteria": criteria.value,
+      "title": props.title,
+      "type": props.type,
     })
-  })
-  $q.loading.hide()
-}
+  }
 
-watch(additionalInfo, () => {
-  about.value = _.get(fosInfo.value, `[0].${props.type}.about`)
-  criteria.value = _.get(fosInfo.value, `[0].${props.type}.criteria`)
+let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+  "type": "fos",
+  "value": fosInfo.value,
 })
 
-onBeforeMount(() => {
-  about.value = _.get(fosInfo.value, `[0].${props.type}.about`)
-  criteria.value = _.get(fosInfo.value, `[0].${props.type}.criteria`)
+if (r.status == 200) {
+  $q.notify({
+    message: "Данные <span class='text-bold'>о фонде оценочных средств дисциплине</span> сохранены!",
+    color: "secondary",
+    position: "bottom",
+    html: true,
+  })
+} else {
+  $q.notify({
+    message: "Данные <span class='text-bold'>о фонде оценочных средств дисциплине</span> не сохранены!",
+    color: "negative",
+    position: "bottom",
+    html: true,
+  })
+}
+// $q.loading.hide()
+}
+
+watchEffect(() => {
+  const key = _.findKey(fosInfo.value, x => x.type == props.type)
+  if (key) {
+    about.value = _.get(_.find(fosInfo.value, x => x.type == props.type), 'about', '')
+    criteria.value = _.get(_.find(fosInfo.value, x => x.type == props.type), 'criteria', '')
+  }
 })
 
 </script>

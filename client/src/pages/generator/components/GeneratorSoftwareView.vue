@@ -120,7 +120,7 @@ watch(disciplineSoftware, () => {
       </div>
       <div class="row">
         <div class="col-5">
-          <div class="text-h6">Выбраный софт</div>
+          <div class="text-h6">Выбранный софт</div>
           <div v-for="item in softwareData" style="width: 95%">
             <q-field label="Название" stack-label filled class="q-mb-md">
               <template #control>

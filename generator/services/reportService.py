@@ -191,11 +191,11 @@ class ReportService(object):
 
             if item['type'] == 'fos':
                 q = 0
-                for k, i in item['value'][0].items():
+                for i in item['value']:
                     q += 1
                     fos.append({
                         'number': q,
-                        'type': k,
+                        'type': i['type'],
                         'title': i['title'],
                         'about': i['about'] if 'about' in i else '',
                         'criteria': i['criteria'] if 'criteria' in i else '',
@@ -241,14 +241,14 @@ class ReportService(object):
 
             if item['type'] == 'tat':
                 q = 0
-                for k, i in item['value'][0].items():
+                for i in item['value']:
                     q += 1
-                    if k == 'zach':
+                    if i['type'] == 'zach':
                         tat.append({
                             'number': q,
-                            'type': k,
-                            'title': tat_titles[k],
-                            'main': i['main'],
+                            'type': i['type'],
+                            'title': tat_titles[i['type']],
+                            # 'main': i['main'],
                             'about': i['about'],
                             'example': i['example'],
                             'passed': i['passed'],
@@ -257,9 +257,9 @@ class ReportService(object):
                     else:
                         tat.append({
                             'number': q,
-                            'type': k,
-                            'title': tat_titles[k],
-                            'main': i['main'],
+                            'type': i['type'],
+                            'title': tat_titles[i['type']],
+#                             'main': i['main'],
                             'about': i['about'],
                             'example': i['example'],
                             'great': i['great'],

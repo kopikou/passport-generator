@@ -6,6 +6,7 @@ import _ from "lodash";
 const generatorViewStore = useGeneratorViewStore()
 
 const {
+  rpdData,
   indicatorsData,
 } = storeToRefs(generatorViewStore)
 
@@ -30,7 +31,7 @@ watch(indicatorsData, () =>{
   <div>
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Компетенции по дисциплине</span>
-      <p>В результате освоения дисциплины "Базы данных" у обучающихся должны быть сформированы компетенции. Данные
+      <p>В результате освоения дисциплины "{{ rpdData.planlines?.dis }}" у обучающихся должны быть сформированы компетенции. Данные
         автоматически получены из учебного плана.</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div class="q-pb-md">

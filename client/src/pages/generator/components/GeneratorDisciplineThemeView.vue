@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, nextTick, onBeforeMount, ref, watch} from "vue";
+import {computed, nextTick, onBeforeMount, ref, watch, watchEffect} from "vue";
 import {useQuasar} from "quasar";
 import GeneratorDialogAddTheme from "pages/generator/components/dialogs/GeneratorAddThemeDialog.vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
@@ -15,6 +15,7 @@ const generatorViewStore = useGeneratorViewStore();
 const {
   semestersData,
   disciplineThemes,
+  disciplineWorkHour,
   formControl,
   rpdData,
   disabled,
@@ -29,6 +30,8 @@ function addTheme() {
       sem: tab.value,
       id: null,
     },
+  }).onOk(() => {
+    generatorViewStore.checkErrors()
   })
 }
 
@@ -39,6 +42,8 @@ function updateTheme(id) {
       sem: tab.value,
       id: id,
     },
+  }).onOk(() => {
+   generatorViewStore.checkErrors()
   })
 }
 
@@ -46,9 +51,9 @@ async function deleteTheme(id) {
 
   $q.dialog({
     title: 'Удаление темы',
-    message: 'Вы точно хотите отправить тему в архив?',
+    message: 'Вы точно хотите удалить тему?',
     ok: {
-      label: 'В архив',
+      label: 'Удалить',
       flat: true,
       color: 'red',
     },
@@ -64,8 +69,11 @@ async function deleteTheme(id) {
     let r = await api.get(`/api/generator/delete-discipline-themes/`, {params: {id: id}})
 
     rpdData.value.discipline_themes.splice(_.findKey(disciplineThemes.value, (x) => x.id == id), 1)
+    rpdData.value.discipline_work_hour = _.filter(disciplineWorkHour.value, x => x.theme_id != id)
 
+    generatorViewStore.checkErrors()
     $q.loading.hide()
+
   })
 
 }
@@ -114,11 +122,7 @@ function getRowColor(number) {
   return number % 2 == 0 ? 'bg-grey-4' : 'bg-white'
 }
 
-watch(semestersData, () => {
-  tab.value = `${semestersData.value[0].num}`
-})
-
-onBeforeMount(() => {
+watchEffect(() => {
   tab.value = `${semestersData.value[0]?.num}`
 })
 
