@@ -35,7 +35,7 @@ function copyProgram() {
     $q.dialog({
     component: GeneratorCopyDialog,
   }).onOk((data) => {
-      console.log(data)
+      // console.log(data)
   })
 }
 

@@ -21,7 +21,7 @@ const {
 
 const displGoal = ref()
 const saveData = _.debounce(async () => {
-  console.log(displGoal)
+  // console.log(displGoal)
   saveDiscplineGoal()
 }, 1000)
 
