@@ -171,8 +171,13 @@ class PLXParser:
                 lnsdata[key]['synchronize'] = False
 
             if item['type'] == 3:
-                if item['viewpract'] not in [6, 7, 72]:
-                    lnsdata[key]['synchronize'] = False
+
+                if self.studylevel == 7:
+                    if item['viewpract'] not in [6, 7, 72]:
+                        lnsdata[key]['synchronize'] = False
+                else:
+                    if item['viewpract'] not in [6, 7, 72, 8]:
+                        lnsdata[key]['synchronize'] = False
 
 
         # Убрано, добавляем практику в РПД генератор
