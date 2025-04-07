@@ -528,7 +528,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         url: 'resources',
         title: 'Не начинал',
         text: ['Не заполнен раздел'],
-        level: 'critical',
+        level: 'warning',
       })
     }
 
@@ -538,7 +538,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         url: 'soft',
         title: 'Не начинал',
         text: ['Не выбрано используемое ПО'],
-        level: 'critical',
+        level: 'warning',
       })
     }
 
@@ -548,7 +548,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         url: 'logistics',
         title: 'Не начинал',
         text: ['Не выбрано используемое МТО'],
-        level: 'critical',
+        level: 'warning',
       })
     }
 
@@ -559,7 +559,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
           url: 'discipline-place',
           title: 'Не начинал',
           text: ['Не начата заполняться информация о месте дисциплины в структуре ООП'],
-          level: 'critical',
+          level: 'warning',
         })
       } else {
         const text = []
@@ -571,7 +571,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
             url: 'discipline-place',
             title: 'Не заполнено место дисциплины в структуре ООП',
             text: text,
-            level: 'critical',
+            level: 'warning',
           })
         }
       }

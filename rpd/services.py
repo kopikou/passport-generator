@@ -312,6 +312,9 @@ class PLXParser:
             except:
                 planData['abbrprofile'] = None
 
+        # for child in root.findall(self.path + 'ПланыПрофили'):
+        #     planData['cvalif'] = child.attrib.get('Квалификация')
+
         for child in root.findall(self.path + 'ООП'):
             if not child.attrib.get('КодРодительскогоООП'):
                 planData['lastshifr'] = child.attrib.get('Шифр')

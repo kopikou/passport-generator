@@ -59,6 +59,10 @@ const filterMenuItems = computed(() => {
   return _.filter(menuItems, x => x.allow.includes(admissionData.value.cadmkind))
 })
 
+const criticalErrors = computed(() => {
+  return _.filter(errors.value, x => x.level == 'critical')
+})
+
 async function sendToReview() {
   $q.loading.show()
   let r = await api.get(`/api/generator/${activeRpdId.value}/send-rpd-on-review/`)
@@ -109,7 +113,7 @@ function getErrors(url) {
       @click="sendToReview"
       style="width: 100%"
       label="Отправить на согласование"
-      :disabled="errors.length != 0"
+      :disabled="criticalErrors.length != 0"
     />
   </div>
   <div v-else class="text-center q-mb-md">
@@ -140,8 +144,8 @@ function getErrors(url) {
         <!--        <q-item-label caption>Основная информация о программе</q-item-label>-->
       </q-item-section>
       <q-item-section avatar v-if="getErrors(item.url).length != 0">
-        <q-icon name="mdi-alert-box" color="red-7">
-          <q-tooltip class="bg-red-9 text-white hide-scrollbar" max-height="20%">
+        <q-icon :name="getErrors(item.url)[0].level == 'warning' ? 'mdi-alert' : 'mdi-alert-box'" :color="getErrors(item.url)[0].level == 'warning' ? 'amber-8' : 'red-7'">
+          <q-tooltip class="text-white hide-scrollbar" :class="getErrors(item.url)[0].level == 'warning' ? 'bg-amber-8' : 'bg-red-9'" max-height="20%">
             <div v-for="error in getErrors(item.url)" style="font-size: 14px;">
               <div v-for="text in error.text">
                 {{ text }}
