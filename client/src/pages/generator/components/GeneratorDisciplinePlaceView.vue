@@ -23,7 +23,9 @@ const precedence = ref([])
 const subsequent = ref([])
 
 const filteredOthderDiscipline = computed(() => {
-  return _.orderBy(otherDiscipline.value, x => x.dis)
+  const data = _.orderBy(otherDiscipline.value, x => x.dis)
+  data.push({disid: 0, dis: 'Нет'})
+  return data
 })
 
 async function savePrecSubDiscipline() {

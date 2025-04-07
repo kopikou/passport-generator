@@ -235,97 +235,109 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         }
       })
     }
+    const lekc = _(semestersData.value).map(x => x.lekc).sum()
+    const srs = _(semestersData.value).map(x => x.srs).sum()
+    const pr = _(semestersData.value).map(x => x.pr).sum()
+    const lab = _(semestersData.value).map(x => x.lab).sum()
 
-    const lectures = _.filter(disciplineWorkHour.value, x => x.type == 0)
-    if (lectures.length == 0) {
-      data.push({
-        url: 'discipline-lectures',
-        title: 'Не начинал',
-        text: ['Не заполнена информация об лекционных занятиях'],
-        level: 'critical',
-      })
-    } else {
-      _.forEach(semesters, (x) => {
-        const lekHour = _.get(_.find(semestersData.value, q => q.num == x), 'lekc', 0)
-        const currentLekHour = _(lecturesDisciplineWorkHour.value).filter(q => q.semester == x).map(q => q.hours).sum()
-        if (currentLekHour != lekHour) {
-          data.push({
-            url: 'discipline-lectures',
-            title: 'Неверное кол-во часов в лекционных занятиях',
-            text: [`Количество часов в лекционных занятий не сходиться в семестре № ${x}`],
-            level: 'critical',
-          })
-        }
-      })
+    if (lekc) {
+      const lectures = _.filter(disciplineWorkHour.value, x => x.type == 0)
+      if (lectures.length == 0) {
+        data.push({
+          url: 'discipline-lectures',
+          title: 'Не начинал',
+          text: ['Не заполнена информация об лекционных занятиях'],
+          level: 'critical',
+        })
+      } else {
+        _.forEach(semesters, (x) => {
+          const lekHour = _.get(_.find(semestersData.value, q => q.num == x), 'lekc', 0)
+          const currentLekHour = _(lecturesDisciplineWorkHour.value).filter(q => q.semester == x).map(q => q.hours).sum()
+          if (currentLekHour != lekHour) {
+            data.push({
+              url: 'discipline-lectures',
+              title: 'Неверное кол-во часов в лекционных занятиях',
+              text: [`Количество часов в лекционных занятий не сходиться в семестре № ${x}`],
+              level: 'critical',
+            })
+          }
+        })
+      }
     }
 
-    const laboratory = _.filter(disciplineWorkHour.value, x => x.type == 3)
-    if (laboratory.length == 0) {
-      data.push({
-        url: 'discipline-lab',
-        title: 'Не начинал',
-        text: ['Не заполнена информация о лабораторных работах'],
-        level: 'critical',
-      })
-    } else {
-      _.forEach(semesters, (x) => {
-        const labHour = _.get(_.find(semestersData.value, q => q.num == x), 'lab', 0)
-        const currentLabHour = _(labDisciplineWorkHour.value).filter(q => q.semester == x).map(q => q.hours).sum()
-        if (currentLabHour != labHour) {
-          data.push({
-            url: 'discipline-lab',
-            title: 'Неверное кол-во часов в лабораторных работах',
-            text: [`Количество часов в лабораторных работах не сходиться в семестре № ${x}`],
-            level: 'critical',
-          })
-        }
-      })
+    if (lab) {
+      const laboratory = _.filter(disciplineWorkHour.value, x => x.type == 3)
+      if (laboratory.length == 0) {
+        data.push({
+          url: 'discipline-lab',
+          title: 'Не начинал',
+          text: ['Не заполнена информация о лабораторных работах'],
+          level: 'critical',
+        })
+      } else {
+        _.forEach(semesters, (x) => {
+          const labHour = _.get(_.find(semestersData.value, q => q.num == x), 'lab', 0)
+          const currentLabHour = _(labDisciplineWorkHour.value).filter(q => q.semester == x).map(q => q.hours).sum()
+          if (currentLabHour != labHour) {
+            data.push({
+              url: 'discipline-lab',
+              title: 'Неверное кол-во часов в лабораторных работах',
+              text: [`Количество часов в лабораторных работах не сходиться в семестре № ${x}`],
+              level: 'critical',
+            })
+          }
+        })
+      }
     }
 
-    const practice = _.filter(disciplineWorkHour.value, x => x.type == 1)
-    if (practice.length == 0) {
-      data.push({
-        url: 'discipline-practice',
-        title: 'Не начинал',
-        text: ['Не заполнена информация о практических занятиях'],
-        level: 'critical',
-      })
-    } else {
-      _.forEach(semesters, (x) => {
-        const practHour = _.get(_.find(semestersData.value, q => q.num == x), 'pr', 0)
-        const currentpractHour = _(practiceDisciplineWorkHour.value).filter(q => q.semester == x).map(q => q.hours).sum()
-        if (currentpractHour != practHour) {
-          data.push({
-            url: 'discipline-practice',
-            title: 'Неверное кол-во часов в практических занятиях',
-            text: [`Количество часов в практических часов не сходиться в семестре № ${x}`],
-            level: 'critical',
-          })
-        }
-      })
+    if (pr) {
+      const practice = _.filter(disciplineWorkHour.value, x => x.type == 1)
+      if (practice.length == 0) {
+        data.push({
+          url: 'discipline-practice',
+          title: 'Не начинал',
+          text: ['Не заполнена информация о практических занятиях'],
+          level: 'critical',
+        })
+      } else {
+        _.forEach(semesters, (x) => {
+          const practHour = _.get(_.find(semestersData.value, q => q.num == x), 'pr', 0)
+          const currentpractHour = _(practiceDisciplineWorkHour.value).filter(q => q.semester == x).map(q => q.hours).sum()
+          if (currentpractHour != practHour) {
+            data.push({
+              url: 'discipline-practice',
+              title: 'Неверное кол-во часов в практических занятиях',
+              text: [`Количество часов в практических часов не сходиться в семестре № ${x}`],
+              level: 'critical',
+            })
+          }
+        })
+      }
     }
 
-    const independent = _.filter(disciplineWorkHour.value, x => x.type == 2)
-    if (independent.length == 0) {
-      data.push({
-        url: 'discipline-independent',
-        title: 'Не начинал',
-        text: ['Не заполнена информация о самостоятельных работах'],
-        level: 'critical',
-      })
-    } else {
-      _.forEach(semesters, (x) => {
-        const independentHour = _.get(_.find(semestersData.value, q => q.num == x), 'srs', 0)
-        const currentindependentHour = _(independentDisciplineWorkHour.value).filter(q => q.semester == x).map(q => q.hours).sum()
-        if (currentindependentHour != independentHour) {
-          data.push({
-            url: 'discipline-independent',
-            title: 'Неверное кол-во часов в самостоятельных работах',
-            text: [`Количество часов в самостоятельных работах не сходиться в семестре № ${x}`],
-            level: 'critical',
-          })
-        }
-      })
+    if (srs) {
+      const independent = _.filter(disciplineWorkHour.value, x => x.type == 2)
+      if (independent.length == 0) {
+        data.push({
+          url: 'discipline-independent',
+          title: 'Не начинал',
+          text: ['Не заполнена информация о самостоятельных работах'],
+          level: 'critical',
+        })
+      } else {
+        _.forEach(semesters, (x) => {
+          const independentHour = _.get(_.find(semestersData.value, q => q.num == x), 'srs', 0)
+          const currentindependentHour = _(independentDisciplineWorkHour.value).filter(q => q.semester == x).map(q => q.hours).sum()
+          if (currentindependentHour != independentHour) {
+            data.push({
+              url: 'discipline-independent',
+              title: 'Неверное кол-во часов в самостоятельных работах',
+              text: [`Количество часов в самостоятельных работах не сходиться в семестре № ${x}`],
+              level: 'critical',
+            })
+          }
+        })
+      }
     }
 
     function checkGuidelines(type, errorText) {

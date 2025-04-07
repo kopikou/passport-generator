@@ -219,7 +219,7 @@ class ReportService(object):
 
             if item['type'] == 'software':
                 for k, i in enumerate(item['value'], start=1):
-                    if i['clicense__type']:
+                    if 'clicense__type' in i:
                         software.append({
                             'number': k,
                             'content': 'Свободно распространяемое программное обеспечение ' + i['clicense__name']
@@ -268,14 +268,15 @@ class ReportService(object):
                             'unsatisfactory': i['unsatisfactory'],
                         })
 
-        other_disciplines = {item['disid']: item['dis'] for item in data['other_discipline']}
+        other_disciplines = {item['disid']: f"«{item['dis']}»" for item in data['other_discipline']}
+        other_disciplines.update({0: 'Нет'})
 
         precedence_names = ''
         subsequent_names = ''
         if precedence:
-            precedence_names = ", ".join([f"«{other_disciplines[item]}»" for item in precedence])
+            precedence_names = ", ".join([f"{other_disciplines[item]}" for item in precedence])
         if subsequent:
-            subsequent_names = ", ".join([f"«{other_disciplines[item]}»" for item in subsequent])
+            subsequent_names = ", ".join([f"{other_disciplines[item]}" for item in subsequent])
 
         tic_all = {}
         semester_hours = []

@@ -97,7 +97,8 @@ watchEffect(() => {
           <q-chip
             v-for="theme in themes"
             :label="theme.name"
-            style="max-width: 60vw"
+            style="max-width: 20vw; margin: 0;"
+            class="bg-transparent text-black"
           >
             <q-tooltip>{{ theme.name }}</q-tooltip>
           </q-chip>

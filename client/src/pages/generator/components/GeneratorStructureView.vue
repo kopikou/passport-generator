@@ -142,9 +142,9 @@ onBeforeMount(() => {
               </template>
             </q-field>
 
-            <div class="text-subtitle1">Электронная информационная образовательная среда
+            <div class="text-subtitle1" v-if="item.eios">Электронная информационная образовательная среда
             </div>
-            <q-field outlined dense>
+            <q-field outlined dense v-if="item.eios">
               <template v-slot:control>
                 <div class="self-center full-width no-outline text-center">
                   <span v-if="item.eios">{{ item.eios }}</span>
