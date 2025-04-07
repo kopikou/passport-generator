@@ -167,8 +167,12 @@ class PLXParser:
             if item['type'] == 1 and not item['parent_id']:
                 lnsdata[key]['synchronize'] = False
 
-            if item['type'] in [5, 6, 3]:
+            if item['type'] in [5, 6]:
                 lnsdata[key]['synchronize'] = False
+
+            if item['type'] == 3:
+                if item['viewpract'] not in [6, 7, 72]:
+                    lnsdata[key]['synchronize'] = False
 
 
         # Убрано, добавляем практику в РПД генератор
