@@ -36,8 +36,8 @@ const typeFilter = [
 
 const type = ref($q.localStorage.getItem('surp_typeFilter') ? $q.localStorage.getItem('surp_typeFilter') : ['person'])
 
-const groupFilter = ref('')
-const discplFilter = ref('')
+const groupFilter = ref($q.localStorage.getItem("surp_groupfilter") ? $q.localStorage.getItem("surp_groupfilter") : '')
+const discplFilter = ref($q.localStorage.getItem("surp_discplfilter") ? $q.localStorage.getItem("surp_discplfilter") : '')
 
 const filteredListData = computed(() => {
   return _(listData.value)
@@ -102,8 +102,13 @@ watch(type, () => {
   $q.localStorage.setItem('surp_typeFilter', type.value)
 })
 
+watch([discplFilter, groupFilter], () => {
+  $q.localStorage.setItem("surp_discplfilter", discplFilter.value)
+  $q.localStorage.setItem("surp_groupfilter", groupFilter.value)
+})
+
 onBeforeMount(async () => {
-  $q.loading.show()
+  $q.loading.show({message: "Загрузка дисциплин"})
   await getProgramData()
   $q.loading.hide()
 })
@@ -134,42 +139,50 @@ onBeforeMount(async () => {
           <q-input style="width: 48%" outlined label="Группа" v-model="groupFilter"/>
           <q-input style="width: 48%" outlined label="Дисциплина" v-model="discplFilter"/>
         </div>
-        <q-list
-          bordered
-          separator
-        >
-          <q-expansion-item
-            v-for="items, key in filteredListData"
-            :label="key"
+        <div v-if="_.size(filteredListData) > 0">
+          <q-list
+            bordered
+            separator
           >
-            <q-card>
-              <q-card-section>
-                <div class="rpd-container">
-                  <div class="rpd-row rpd-row__header text-weight-bold text-center">
-                    <div>Код</div>
-                    <div>Дисциплина</div>
-                    <div>Составитель</div>
-                    <div>Кафедра</div>
-                    <div>Статус</div>
-                    <div>Управление</div>
-                  </div>
-                  <div class="rpd-row rpd-row__body text-center" v-for="item, key in items">
-<!--                       @click="router.push(`/generator/${item.id}/main`)"-->
-                    <div :class="getRowColor(key)">{{ item.discode }}</div>
-                    <div :class="getRowColor(key)">{{ item.discpl }}</div>
-                    <div :class="getRowColor(key)">{{ item.person }}</div>
-                    <div :class="getRowColor(key)">{{ cafDataById[item.kafcode]?.label }}</div>
-                    <div :class="getRowColor(key)">{{ item.status_verbose }}</div>
-                    <div :class="getRowColor(key)">
-                      <q-btn v-if="getEditRules(item.type)" dense flat color="primary" icon="mdi-pencil" label="заполнить" @click="router.push(`/generator/${item.id}/main`)"/>
-                      <q-btn v-if="getViewRules(item.type)" dense flat color="secondary" icon="mdi-briefcase-eye" label="просмотр" @click="openManageDialog(item.id, item)"/>
+            <q-expansion-item
+              v-for="items, key in filteredListData"
+              :label="key"
+            >
+              <q-card>
+                <q-card-section>
+                  <div class="rpd-container">
+                    <div class="rpd-row rpd-row__header text-weight-bold text-center">
+                      <div>Код</div>
+                      <div>Дисциплина</div>
+                      <div>Составитель</div>
+                      <div>Кафедра</div>
+                      <div>Статус</div>
+                      <div>Управление</div>
+                    </div>
+                    <div class="rpd-row rpd-row__body text-center" v-for="item, key in items">
+                      <!--                       @click="router.push(`/generator/${item.id}/main`)"-->
+                      <div :class="getRowColor(key)">{{ item.discode }}</div>
+                      <div :class="getRowColor(key)">{{ item.discpl }}</div>
+                      <div :class="getRowColor(key)">{{ item.person }}</div>
+                      <div :class="getRowColor(key)">{{ cafDataById[item.kafcode]?.label }}</div>
+                      <div :class="getRowColor(key)">{{ item.status_verbose }}</div>
+                      <div :class="getRowColor(key)">
+                        <q-btn v-if="getEditRules(item.type)" dense flat color="primary" icon="mdi-pencil"
+                               label="заполнить" @click="router.push(`/generator/${item.id}/main`)"/>
+                        <q-btn v-if="getViewRules(item.type)" dense flat color="secondary" icon="mdi-briefcase-eye"
+                               label="просмотр" @click="openManageDialog(item.id, item)"/>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </q-card-section>
-            </q-card>
-          </q-expansion-item>
-        </q-list>
+                </q-card-section>
+              </q-card>
+            </q-expansion-item>
+          </q-list>
+        </div>
+        <div v-else class="text-h6">
+          <span v-if="_.size(listData) > 0">Не найдены дисциплины с текущими фильтрами</span>
+          <span v-else>Дисциплины не назначены</span>
+        </div>
       </div>
     </div>
   </div>
