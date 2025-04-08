@@ -36,10 +36,25 @@ const typeFilter = [
 
 const type = ref($q.localStorage.getItem('surp_typeFilter') ? $q.localStorage.getItem('surp_typeFilter') : ['person'])
 
+const groupFilter = ref('')
+const discplFilter = ref('')
+
 const filteredListData = computed(() => {
   return _(listData.value)
     .filter(x => {
       return x.type.some(q => type.value.includes(q));
+    })
+    .filter(x => {
+      if (groupFilter.value.length > 0) {
+        return x.abbr.toLowerCase().includes(groupFilter.value.toLowerCase())
+      }
+      return x
+    })
+    .filter(x => {
+      if (discplFilter.value.length > 0) {
+        return x.discpl.toLowerCase().includes(discplFilter.value.toLowerCase())
+      }
+      return x
     })
     .orderBy(x => x.discode, 'asc')
     .groupBy(x => x.abbr)
@@ -115,6 +130,10 @@ onBeforeMount(async () => {
           emit-value
           outlined
         />
+        <div class="flex justify-between q-mb-sm">
+          <q-input style="width: 48%" outlined label="Группа" v-model="groupFilter"/>
+          <q-input style="width: 48%" outlined label="Дисциплина" v-model="discplFilter"/>
+        </div>
         <q-list
           bordered
           separator
