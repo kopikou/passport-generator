@@ -37,8 +37,10 @@ const {
 const menuItems = [
   // title (название), url (ссылка), allow (cadmkind, отображать)
   {title: 'Титульный лист', url: 'main', allow: [1, 2, 3, 4, 5]},
-  {title: 'Компетенции', url: 'competences', allow: [1, 2, 3, 4, 5]},
-  {title: 'Индикаторы', url: 'indicators', allow: [1, 2, 3, 4, 5]},
+  {title: 'Компетенции', url: 'competences', allow: [1, 2, 3, 4]},
+  {title: 'Индикаторы', url: 'indicators', allow: [1, 2, 3, 4]},
+  {title: 'Результаты освоения программы', url: 'competences', allow: [5]},
+  {title: 'Результаты освоения дисциплины ', url: 'indicators', allow: [5]},
   {title: 'Место дисциплины в структуре ООП', url: 'discipline-place', allow: [1, 2, 3, 4]},
   {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5]},
   {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1, 2, 3, 4, 5]},

@@ -17,6 +17,7 @@ const {
   additionalInfo,
   disciplineGoal,
   disabled,
+  admissionData,
 } = storeToRefs(generatorViewStore)
 
 const displGoal = ref()
@@ -75,6 +76,24 @@ async function saveDiscplineGoal() {
   $q.loading.hide()
 }
 
+function getSpecNapr(name) {
+  const names = name.split("направленность")
+  if (names.length > 1) {
+    return names[1].replace(' - ', '')
+  } else {
+    return 'Отсутствует'
+  }
+}
+
+function getSpecName(name) {
+  const names = name.split("направленность")
+  if (names.length > 1) {
+    return names[0].replace(', ', '')
+  } else {
+    return name
+  }
+}
+
 const cafDataById = computed(() => {
   return _.keyBy(cafData.value, 'value')
 })
@@ -89,7 +108,8 @@ watch(additionalInfo, () => {
   <div>
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Данные по дисциплине</span>
-      <p>Данные для рабочей программы по дисциплине "{{ rpdData.planlines?.dis }}" получены автоматически из учебного плана</p>
+      <p>Данные для рабочей программы по дисциплине "{{ rpdData.planlines?.dis }}" получены автоматически из учебного
+        плана</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div class="q-pb-md">
         <span class="text-subtitle1">Наименование дисциплины</span>
@@ -98,16 +118,34 @@ watch(additionalInfo, () => {
             <div class="self-center full-width no-outline">{{ rpdData.planlines?.dis }}</div>
           </template>
         </q-field>
-        <span class="text-subtitle1">Профиль/Специальность</span>
-        <q-field outlined dense>
+        <span v-if="admissionData.cadmkind != 5" class="text-subtitle1">Профиль/Специальность</span>
+        <q-field outlined dense v-if="admissionData.cadmkind != 5">
           <template v-slot:control>
             <div class="self-center full-width no-outline">{{ rpdData.admission?.spec_name }}</div>
           </template>
         </q-field>
-        <span class="text-subtitle1">Наименование направления</span>
-        <q-field outlined dense>
+        <span v-if="admissionData.cadmkind != 5" class="text-subtitle1">Наименование направления</span>
+        <q-field outlined dense v-if="admissionData.cadmkind != 5">
           <template v-slot:control>
             <div class="self-center full-width no-outline">{{ rpdData.admission?.direct_name }}</div>
+          </template>
+        </q-field>
+        <span v-if="admissionData.cadmkind == 5" class="text-subtitle1">Наименование направления</span>
+        <q-field outlined dense v-if="admissionData.cadmkind == 5">
+          <template v-slot:control>
+            <div class="self-center full-width no-outline">{{ getSpecName(rpdData.admission?.spec_name) }}</div>
+          </template>
+        </q-field>
+        <span v-if="admissionData.cadmkind == 5" class="text-subtitle1">Направленность</span>
+        <q-field outlined dense v-if="admissionData.cadmkind == 5">
+          <template v-slot:control>
+            <div class="self-center full-width no-outline">{{ getSpecNapr(rpdData.admission?.spec_name) }}</div>
+          </template>
+        </q-field>
+        <span class="text-subtitle1">Факультет</span>
+        <q-field outlined dense>
+          <template v-slot:control>
+            <div class="self-center full-width no-outline">{{ admissionData.cfac__name }}</div>
           </template>
         </q-field>
         <span class="text-subtitle1">Кафедра</span>
@@ -133,18 +171,18 @@ watch(additionalInfo, () => {
       </div>
       <q-separator class="q-mt-md q-mb-md"/>
       <div>
-<!--        <q-input-->
-<!--          label="Цель освоения дисциплины"-->
-<!--          type="textarea"-->
-<!--          filled-->
-<!--          stack-label-->
-<!--          v-model="displGoal"-->
-<!--          class="q-mb-md"-->
-<!--          :readonly="disabled"-->
-<!--          hint="Для аннотации"-->
-<!--          debounce="1000"-->
-<!--          @update:modelValue="saveDiscplineGoal"-->
-<!--        />-->
+        <!--        <q-input-->
+        <!--          label="Цель освоения дисциплины"-->
+        <!--          type="textarea"-->
+        <!--          filled-->
+        <!--          stack-label-->
+        <!--          v-model="displGoal"-->
+        <!--          class="q-mb-md"-->
+        <!--          :readonly="disabled"-->
+        <!--          hint="Для аннотации"-->
+        <!--          debounce="1000"-->
+        <!--          @update:modelValue="saveDiscplineGoal"-->
+        <!--        />-->
         <!--        <q-editor-->
         <!--          v-model="displGoal"-->
         <!--          :toolbar="toolbar"-->
