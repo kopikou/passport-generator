@@ -690,7 +690,7 @@ class GeneratorViewSet(
                     "semester": item['semestr'],
                     "formcontrol_id": form_control_id,
                     "comment": i['note'],
-                    "num": i['num'],
+                    "num": i['num'] or 1,
                 })
                 theme_serializer.is_valid(raise_exception=True)
                 theme_serializer.save()
@@ -700,9 +700,9 @@ class GeneratorViewSet(
                     "theme_id": theme_serializer.data['id'],
                     "type": DisciplineWorkHours.TypeChoices.lectures,
                     "name": i['tema'],
-                    "hours": i['hour'],
+                    "hours": i['hour'] or 0,
                     "semester": item['semestr'],
-                    "num": i['num'],
+                    "num": i['num'] or 1,
                 })
                 lek_serializer.is_valid(raise_exception=True)
                 lek_serializer.save()
@@ -717,9 +717,9 @@ class GeneratorViewSet(
                         "theme_id": theme_serializer.data['id'],
                         "type": DisciplineWorkHours.TypeChoices.independent,
                         "name": independent,
-                        "hours": sam['hour'],
+                        "hours": sam['hour'] or 0,
                         "semester": item['semestr'],
-                        "num": sam['num'],
+                        "num": sam['num'] or 1,
                     })
                     sam_serializer.is_valid(raise_exception=True)
                     sam_serializer.save()
@@ -732,9 +732,9 @@ class GeneratorViewSet(
                         "theme_id": theme_serializer.data['id'],
                         "type": DisciplineWorkHours.TypeChoices.practice,
                         "name": pract['tema'],
-                        "hours": pract['hour'],
+                        "hours": pract['hour'] or 0,
                         "semester": item['semestr'],
-                        "num": pract['num'],
+                        "num": pract['num'] or 1,
                     })
                     pract_serializer.is_valid(raise_exception=True)
                     pract_serializer.save()
@@ -747,9 +747,9 @@ class GeneratorViewSet(
                         "theme_id": theme_serializer.data['id'],
                         "type": DisciplineWorkHours.TypeChoices.laboratory,
                         "name": lab['tema'],
-                        "hours": lab['hour'],
+                        "hours": lab['hour'] or 0,
                         "semester": item['semestr'],
-                        "num": lab['num'],
+                        "num": lab['num'] or 1,
                     })
                     lab_serializer.is_valid(raise_exception=True)
                     lab_serializer.save()
