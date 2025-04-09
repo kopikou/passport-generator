@@ -40,10 +40,8 @@ async function saveData() {
     tatInfo.value.push({
       "about": about.value,
       "example": example.value,
-      "great": great.value,
-      "good": good.value,
-      "satisfactorily": satisfactorily.value,
-      "unsatisfactory": unsatisfactory.value,
+      "passed": passed.value,
+      "unpassed": unpassed.value,
       "title": props.title,
       "type": props.type,
     })
@@ -51,10 +49,8 @@ async function saveData() {
     _.set(tatInfo.value, `[${key}]`, {
       "about": about.value,
       "example": example.value,
-      "great": great.value,
-      "good": good.value,
-      "satisfactorily": satisfactorily.value,
-      "unsatisfactory": unsatisfactory.value,
+      "passed": passed.value,
+      "unpassed": unpassed.value,
       "title": props.title,
       "type": props.type,
     })
