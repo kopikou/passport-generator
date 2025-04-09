@@ -1,5 +1,7 @@
 import os
+import platform
 from itertools import groupby
+from subprocess import run
 
 import pendulum
 from django.core.exceptions import ObjectDoesNotExist
@@ -508,17 +510,56 @@ class GeneratorViewSet(
 
     @action(methods=['GET'], url_path="get-rpd-report", detail=True)
     def get_rpd_report(self, request, *args, **kwargs):
+
         instance = self.get_object()
         result = self.retrieve(request, *args, **kwargs).data
 
-        filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(
+        pk = self.kwargs['pk']
+
+        # filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(
+        #     ',', ' ')
+        filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.pdf".replace(
             ',', ' ')
+        path = f'templates/outputs/'
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         response['Content-Disposition'] = f"attachment; filename={escape_uri_path(filename)}"
 
-        doc = ReportService.get_rpd_report(result)
-        doc.save(response)
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        path_doc_file = f"{os.path.abspath(path)}/{pk}.docx"
+        path_pdf_file = f"{os.path.abspath(path)}/{pk}.pdf"
+
+        tpl = ReportService.get_rpd_report(result)
+        # tpl.save(response)
+
+        tpl.save(path_doc_file)
+
+        if platform.system() == 'Linux':
+            run([
+                'libreoffice', '--headless', '--invisible', '--convert-to',
+                'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
+            ])
+
+        elif platform.system() == 'Windows':
+            from win32com.client import Dispatch
+
+            word = Dispatch('Word.Application')
+            doc = word.Documents.Open(path_doc_file)
+            doc.SaveAs(path_pdf_file, FileFormat=17)
+            word.Quit()
+        else:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        with open(path_pdf_file, 'rb') as file:
+            response.write(file.read())
+
+        if os.path.exists(path_doc_file):
+            os.remove(path_doc_file)
+
+        if os.path.exists(path_pdf_file):
+            os.remove(path_pdf_file)
 
         # return Response(result)
         return response
