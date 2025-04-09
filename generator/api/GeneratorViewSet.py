@@ -270,33 +270,43 @@ class GeneratorViewSet(
 
         filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.plan.startyear}": i for i in filtered_data}
 
+        lineslink = PlanLinesLink.objects.filter(mira_id__in=[i['planlin'] for i in data])
+        lineslink_sorted = sorted(lineslink, key=lambda x: x.mira_id)
+        lineslink_by_id = {i.mira_id: i for i in lineslink_sorted}
+
         result = []
         for item in data:
 
             line = filtered_data_sorted.get(f"{item['discpl']}_{item['abbr']}_{item['yr']}")
 
             if line:
-                lines, created = PlanLinesLink.objects.get_or_create(
-                    cadmission=item['id_admission'],
-                    mira_id=item['planlin'],
-                    person=item['mira_id'],
-                    defaults={
-                        "cadmission": item['id_admission'],
-                        "mira_id": item['planlin'],
-                        "person": item['mira_id'],
-                        "status": PlanLinesLink.StatusChoices.appointed,
-                        "planlines_id": line.id,
-                    }
-                )
+
+                res = lineslink_by_id.get(item['planlin'], [])
+
+                if not res:
+
+                    res, created = PlanLinesLink.objects.get_or_create(
+                        cadmission=item['id_admission'],
+                        mira_id=item['planlin'],
+                        person=item['mira_id'],
+                        defaults={
+                            "cadmission": item['id_admission'],
+                            "mira_id": item['planlin'],
+                            "person": item['mira_id'],
+                            "status": PlanLinesLink.StatusChoices.appointed,
+                            "planlines_id": line.id,
+                        }
+                    )
 
                 result.append({
                     **item,
-                    "id": lines.id,
-                    "status": lines.status,
-                    "status_verbose": lines.status_verbose,
-                    "kafcode": lines.planlines.caf,
-                    "discode": lines.planlines.newdisid,
+                    "id": res.id,
+                    "status": res.status,
+                    "status_verbose": res.status_verbose,
+                    "kafcode": res.planlines.caf,
+                    "discode": res.planlines.newdisid,
                 })
+
 
         sorted_result = sorted(result, key=lambda x: (x['planlin'], x['mira_id']))
         grouped_result = {key: list(items) for key, items in
