@@ -128,7 +128,7 @@ class AISServices(object):
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
-            where u.cperson = @id and p.fordel = 'f' and u.fordel = 'f'
+            where u.cperson = @id and p.fordel = 'f' and u.fordel = 'f' and u.type != 3
 
             UNION ALL
 
@@ -137,7 +137,7 @@ class AISServices(object):
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
             LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where a.ckaf in (SELECT id FROM dbo.catkaf WHERE czav = @id AND isreal = 't') and p.fordel = 'f' and u.fordel = 'f'
+            where a.ckaf in (SELECT id FROM dbo.catkaf WHERE czav = @id AND isreal = 't') and p.fordel = 'f' and u.fordel = 'f' and u.type != 3
 
             UNION ALL
 
@@ -146,7 +146,7 @@ class AISServices(object):
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
             LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where a.cfac in (SELECT id FROM dbo.catfaculty WHERE cdean = @id AND realfac = 't') and p.fordel = 'f' and u.fordel = 'f'
+            where a.cfac in (SELECT id FROM dbo.catfaculty WHERE cdean = @id AND realfac = 't') and p.fordel = 'f' and u.fordel = 'f' and u.type != 3
 
             UNION ALL
 
@@ -158,7 +158,7 @@ class AISServices(object):
             where p.cperson = @id
             --a.cspec in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id) OR a.cprofili in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id)
             --OR a.cdirection in (SELECT id FROM dbo.[cl$direction] WHERE cperson = @id)
-            AND p.fordel = 'f' and u.fordel = 'f'
+            AND p.fordel = 'f' and u.fordel = 'f' and u.type != 3
 
             ) t
             LEFT JOIN dbo.catperson cp ON cp.id = t.mira_id
@@ -289,8 +289,10 @@ class AISServices(object):
             select p2.abbrprofile, p2.startyear, l2.id, p2.species from uchplan_lines l
             left join uchplan_plan p on p.id = l.planid
             left join uchplan_plan p2 on p2.abbrprofile = p.abbrprofile
-            left join uchplan_lines l2 on l2.planid = p2.id and l2.disid = l.disid
-            where l.id = %s and p2.fordel = 'f' and l2.fordel = 'f' and l2.id <> %s
+            left join uchplan_lines l2 on l2.planid = p2.id
+			left join uchplan_discpl d on d.id = l.disid
+			left join uchplan_discpl d2 on d2.id = l2.disid
+            where l.id = %s and p2.fordel = 'f' and l2.fordel = 'f' and l2.id <> %s and d.name = d2.name
         """
 
         data = Mira.fetch(query, [id, id])
