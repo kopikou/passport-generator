@@ -101,11 +101,55 @@ class AISServices(object):
         return data
 
     @staticmethod
+    def get_practice_by_person(id):
+
+        q = f"""
+
+            declare @id INT;
+
+            SET @id = %s
+
+            SELECT
+            DISTINCT
+            t.discpl,
+            t.id_discpl,
+            t.planlin,
+            t.abbr,
+            t.yr,
+            t.id_admission,
+            t.mira_id,
+            cp.name AS person,
+            t.type AS type
+            FROM (
+            SELECT d.name as discpl,d.id as id_discpl, u.id as planlin, p.abbrprofile as abbr, p.startyear as yr, p.cadmission as id_admission,  p.cperson AS mira_id, 'person' AS type  -- Преподаватель
+            FROM uchplan_lines u
+            left join uchplan_discpl d on (u.disid = d.id)
+            left join uchplan_plan p on (p.id = u.planid)
+            where p.cperson = @id and p.fordel = 'f' and u.fordel = 'f' and u.type = 3
+
+            ) t
+            LEFT JOIN dbo.catperson cp ON cp.id = t.mira_id
+            WHERE t.mira_id IS NOT NULL
+            """
+
+        # r = requests.get(f"{settings.ARIM_URL}/wizard.sql", {
+        #     "q": q
+        # }, proxies={
+        #     "http": "",
+        #     "https": "",
+        # })
+        #
+        # data = r.json()['RecordSet']
+
+        data = Mira.fetch(q, [int(id)])
+
+        return data
+
+    @staticmethod
     # @cache_function(timeout=10 * 1)
     def get_disciplines_by_person(id):
 
         # q = f"""exec rpd_list_for_person %s"""
-
         q = f"""
 
             declare @id INT;
@@ -137,7 +181,7 @@ class AISServices(object):
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
             LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where a.ckaf in (SELECT id FROM dbo.catkaf WHERE czav = @id AND isreal = 't') and p.fordel = 'f' and u.fordel = 'f' and u.type != 3
+            where u.ckaf in (SELECT id FROM dbo.catkaf WHERE czav = @id AND isreal = 't') and p.fordel = 'f' and u.fordel = 'f' and  u.type != 3
 
             UNION ALL
 
@@ -146,7 +190,7 @@ class AISServices(object):
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
             LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where a.cfac in (SELECT id FROM dbo.catfaculty WHERE cdean = @id AND realfac = 't') and p.fordel = 'f' and u.fordel = 'f' and u.type != 3
+            where a.cfac in (SELECT id FROM dbo.catfaculty WHERE cdean = @id AND realfac = 't') and p.fordel = 'f' and u.fordel = 'f' and  u.type != 3
 
             UNION ALL
 
@@ -158,7 +202,7 @@ class AISServices(object):
             where p.cperson = @id
             --a.cspec in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id) OR a.cprofili in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id)
             --OR a.cdirection in (SELECT id FROM dbo.[cl$direction] WHERE cperson = @id)
-            AND p.fordel = 'f' and u.fordel = 'f' and u.type != 3
+            AND p.fordel = 'f' and u.fordel = 'f' and  u.type != 3
 
             ) t
             LEFT JOIN dbo.catperson cp ON cp.id = t.mira_id
