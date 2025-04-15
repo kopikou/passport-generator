@@ -8,12 +8,13 @@ import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import {computed, ref} from "vue";
 import useMainStore from "stores/mainStore";
+import LayoutHCF from "components/LayoutHCF.vue";
 
 const $q = useQuasar()
 
 
 const mainStore = useMainStore();
-
+const textFilter = ref("");
 const {FORCE_SCRIPT_NAME} = storeToRefs(mainStore);
 
 
@@ -25,13 +26,16 @@ const {
 
 
 const admissionList = computed(() => {
-  let result = []
-  if (!adms.value || adms.value.length == 0) result = admissionData.value
-  else result = _.filter(admissionData.value, (x) => adms.value.includes(x.abbrprofile))
-  if (!years.value || years.value.length == 0) return result
-  else result = _.filter(result, (x) => years.value.includes(x.startyear))
-  return result
+  let txt = textFilter.value.toLowerCase();
+  return _(admissionData.value).filter((x: any) => {
+    return (!adms.value || adms.value.length == 0 || adms.value.includes(x.abbrprofile))
+      && (!years.value || years.value.length == 0 || years.value.includes(x.startyear))
+      && (!studyformFilter.value || studyformFilter.value.length == 0 || studyformFilter.value.includes(x.studyform))
+      && (!studyprogFilter.value || studyprogFilter.value.length == 0 || studyprogFilter.value.includes(x.studyprog))
+      && ((txt || "") == "" || x.abbrprofile.toLowerCase().includes(txt))
+  }).sortBy(x => x['abbrprofile']).value()
 })
+
 
 const yearslist = computed(() => {
   return _.uniq(_.map(admissionData.value, (x) => x.startyear))
@@ -41,10 +45,20 @@ const admslist = computed(() => {
   return _.uniq(_.map(admissionData.value, (x) => x.abbrprofile))
 })
 
-const years = ref([])
-const adms = ref([])
+const studyformList = computed(() => {
+  return _.uniq(_.map(admissionData.value, (x) => x.studyform))
+})
 
-function getFileUrl(planId, fileId) {
+const studyprogList = computed(() => {
+  return _.uniq(_.map(admissionData.value, (x) => x.studyprog))
+})
+
+const years = ref<string[]>([])
+const adms = ref<string[]>([])
+const studyformFilter = ref<string[]>([])
+const studyprogFilter = ref<string[]>([])
+
+function getFileUrl(planId: number, fileId: number) {
   let files = _.filter(admissionData.value, (x) => x.plan_id == planId)[0]?.documents_files
   let url = _.filter(files, (x) => x.type_id == getFileType(planId, fileId))[0]?.file
   if (url) {
@@ -97,20 +111,22 @@ function checkFile(planId, fileId) {
 </script>
 
 <template>
-  <div class="q-pa-lg">
-    <div class="text-center text-h6 q-mb-md">Список рабочих программ ИРНИТУ</div>
-    <div class="row q-gutter-x-md q-mb-md">
-      <q-select
-          class="col"
-          label="Направление"
-          use-chips
-          filled
-          clearable
-          :options="admslist"
-          v-model="adms"
-          multiple
-      />
-      <q-select
+  <layout-h-c-f>
+    <template #header>
+      <div class="text-center text-h6 q-mb-md">Список рабочих программ ИРНИТУ</div>
+      <div class="q-pa-md" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px">
+        <q-input v-model="textFilter" label="Направление"></q-input>
+<!--        <q-select-->
+<!--          class="col"-->
+<!--          label="Направление"-->
+<!--          use-chips-->
+<!--          filled-->
+<!--          clearable-->
+<!--          :options="admslist"-->
+<!--          v-model="adms"-->
+<!--          multiple-->
+<!--        />-->
+        <q-select
           class="col"
           label="Год"
           use-chips
@@ -119,45 +135,67 @@ function checkFile(planId, fileId) {
           :options="yearslist"
           v-model="years"
           multiple
-      />
-    </div>
-    <q-list bordered>
-      <q-expansion-item
+        />
+         <q-select
+          class="col"
+          label="Форма"
+          use-chips
+          filled
+          clearable
+          :options="studyformList"
+          v-model="studyformFilter"
+          multiple
+        />
+         <q-select
+          class="col"
+          label="Уровень"
+          use-chips
+          filled
+          clearable
+          :options="studyprogList"
+          v-model="studyprogFilter"
+          multiple
+        />
+      </div>
+    </template>
+    <template #content>
+      <q-list bordered>
+        <q-expansion-item
           v-for="item in admissionList"
           expand-separator
           :caption="item.plan_name"
-          :label="`Учебный план ${item.abbrprofile} ${item.startyear}`"
-      >
-        <q-card>
-          <q-card-section class="card-body">
-            <div class="card-header text-center">
-              <div>
-                Наименование
-              </div>
-              <div>
-                Загруженные файлы
-              </div>
-            </div>
-            <div class="card-container" v-for="i in item.plan_documents">
-              <div>
-                {{ i.name }}
-              </div>
-              <div class="flex items-center" style="display: grid; grid-template-columns: 1fr auto">
-                <div v-if="!checkFile(item.plan_id, i.id)">
-                  <file-uploader :title="i.new_type__name" :file-id="i.id" :plan-id="item.plan_id"/>
+          :label="`${item.abbrprofile} ${item.startyear}`"
+        >
+          <q-card>
+            <q-card-section class="card-body">
+              <div class="card-header text-center">
+                <div>
+                  Наименование
                 </div>
-                <div v-else>
-                  <q-field
+                <div>
+                  Загруженные файлы
+                </div>
+              </div>
+              <div class="card-container" v-for="i in item.plan_documents">
+                <div>
+                  {{ i.name }}
+                </div>
+                <div class="flex items-center" style="display: grid; grid-template-columns: 1fr auto">
+                  <div v-if="!checkFile(item.plan_id, i.id)">
+                    <file-uploader :title="i.new_type__name" :file-id="i.id" :plan-id="item.plan_id"/>
+                  </div>
+                  <div v-else>
+                    <q-field
                       outlined
                       stack-label
                       dense
                       bg-color="green-3"
-                  >
-                    <template v-slot:control>
-                      {{ i.name }}
-                    </template>
-                    <template v-slot:append>
-                      <q-btn
+                    >
+                      <template v-slot:control>
+                        {{ i.name }}
+                      </template>
+                      <template v-slot:append>
+                        <q-btn
                           icon="mdi-eye"
                           flat
                           dense
@@ -165,19 +203,20 @@ function checkFile(planId, fileId) {
                           v-show="checkFile(item.plan_id, i.id)"
                           color="secondary"
                           @click="getFileUrl(item.plan_id, i.id)"
-                      />
-                    </template>
-                  </q-field>
+                        />
+                      </template>
+                    </q-field>
+                  </div>
+                  <q-btn v-show="checkFile(item.plan_id, i.id)" flat dense icon="mdi-delete" color="negative"
+                         @click="deleteFile(item.plan_id, getFileId(item.plan_id, i.id))"/>
                 </div>
-                <q-btn v-show="checkFile(item.plan_id, i.id)" flat dense icon="mdi-delete" color="negative"
-                       @click="deleteFile(item.plan_id, getFileId(item.plan_id, i.id))"/>
               </div>
-            </div>
-          </q-card-section>
-        </q-card>
-      </q-expansion-item>
-    </q-list>
-  </div>
+            </q-card-section>
+          </q-card>
+        </q-expansion-item>
+      </q-list>
+    </template>
+  </layout-h-c-f>
 </template>
 
 <style scoped>

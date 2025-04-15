@@ -4,12 +4,13 @@ import {computed, ref} from "vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import _ from "lodash";
+import {PlanData} from "src/types";
 
 const useUploadFileViewStore = defineStore('UploadFileViewStore', () => {
 
   const $q = useQuasar()
 
-  const admissionData = ref([])
+  const admissionData = ref<PlanData[]>([])
 
   async function getAdmissionData() {
     $q.loading.show({message: "Загрузка данных о планах"})

@@ -1,6 +1,8 @@
 import os
 from itertools import groupby
 
+from django.db.models import Prefetch
+from django.forms import model_to_dict
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException
@@ -43,7 +45,12 @@ class UploadFileViewSet(
         abbrprofile_list = list(set([i['abbrprofile'] for i in data]))
         startyear_list = list(set([i['startyear'] for i in data]))
 
-        filtered_data = PlanData.objects.filter(abbrprofile__in=abbrprofile_list, startyear__in=startyear_list, file__status=4)
+        filtered_data = PlanData.objects\
+            .filter(abbrprofile__in=abbrprofile_list, startyear__in=startyear_list, file__status=4)\
+            .prefetch_related(
+            Prefetch("plan_documents", queryset=PlanDocuments.objects.select_related("new_type").all()),
+            Prefetch("uplfile", queryset=UploadFiles.objects.all())
+        ).select_related("file")
         filtered_data_sorted = {f"{i.abbrprofile}_{i.startyear}": i for i in filtered_data}
 
         result = []
@@ -52,8 +59,12 @@ class UploadFileViewSet(
             if res:
                 result.append({
                     **item,
-                    "plan_documents": [i for i in res.plan_documents.values("id", "name", "new_type", "new_type__name")],
-                    "documents_files": [i for i in res.uplfile.values()],
+                    "plan_documents": [{
+                        "id": i.id,
+                        "name": i.name,
+                        "new_type__name": i.new_type.name
+                    } for i in res.plan_documents.all()],
+                    "documents_files": [model_to_dict(i) for i in res.uplfile.all()],
                     "plan_id": res.id,
                     "plan_name": res.file.title,
                 })
