@@ -412,7 +412,7 @@ class PLXParser:
 
         query = Q()
         for i in data.values():
-            query |= Q(plan_id=i['plan_id'], dis=i['dis'])
+            query |= Q(plan_id=i['plan_id'], dis=i['dis'], newdisid=i['newdisid'])
 
         lines = LinesData.objects.filter(query)
         lines = {f"{i['plan_id']}_{i['dis']}_{i['newdisid']}": i for i in lines.values()}

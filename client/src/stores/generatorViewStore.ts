@@ -253,7 +253,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         _.forEach(semesters, (x) => {
           const lekHour = _.get(_.find(semestersData.value, q => q.num == x), 'lekc', 0)
           const currentLekHour = _(lecturesDisciplineWorkHour.value).filter(q => q.semester == x).map(q => q.hours).sum()
-          if (currentLekHour != lekHour) {
+          if (currentLekHour != lekHour && lekHour) {
             data.push({
               url: 'discipline-lectures',
               title: 'Неверное кол-во часов в лекционных занятиях',
@@ -278,7 +278,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         _.forEach(semesters, (x) => {
           const labHour = _.get(_.find(semestersData.value, q => q.num == x), 'lab', 0)
           const currentLabHour = _(labDisciplineWorkHour.value).filter(q => q.semester == x).map(q => q.hours).sum()
-          if (currentLabHour != labHour) {
+          if (currentLabHour != labHour && labHour) {
             data.push({
               url: 'discipline-lab',
               title: 'Неверное кол-во часов в лабораторных работах',
@@ -302,8 +302,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       } else {
         _.forEach(semesters, (x) => {
           const practHour = _.get(_.find(semestersData.value, q => q.num == x), 'pr', 0)
-          const currentpractHour = _(practiceDisciplineWorkHour.value).filter(q => q.semester == x).map(q => q.hours).sum()
-          if (currentpractHour != practHour) {
+          let currentpractHour = _(practiceDisciplineWorkHour.value).filter(q => q.semester == x).map(q => q.hours).sum()
+          if (currentpractHour != practHour && practHour) {
             data.push({
               url: 'discipline-practice',
               title: 'Неверное кол-во часов в практических занятиях',
@@ -328,7 +328,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         _.forEach(semesters, (x) => {
           const independentHour = _.get(_.find(semestersData.value, q => q.num == x), 'srs', 0)
           const currentindependentHour = _(independentDisciplineWorkHour.value).filter(q => q.semester == x).map(q => q.hours).sum()
-          if (currentindependentHour != independentHour) {
+          if (currentindependentHour != independentHour && independentHour) {
             data.push({
               url: 'discipline-independent',
               title: 'Неверное кол-во часов в самостоятельных работах',
