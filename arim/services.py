@@ -176,7 +176,7 @@ class AISServices(object):
 
             UNION ALL
 
-            select d.name as discpl,d.id as id_discpl, u.id as planlin, p.abbrprofile as abbr, p.startyear as yr, p.cadmission as id_admission, u.cperson AS mira_id, 'kaf' AS type -- Заведующий кафедры
+            select d.name as discpl,d.id as id_discpl, u.id as planlin, p.abbrprofile as abbr, p.startyear as yr, p.cadmission as id_admission, u.cperson AS mira_id, 'zav' AS type -- Заведующий кафедры
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
