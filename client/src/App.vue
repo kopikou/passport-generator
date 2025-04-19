@@ -66,6 +66,9 @@ onBeforeMount(async () => {
           <q-route-tab icon="mdi-generator-portable" label="Генератор РПД" to="/generator"
                        v-permissions-required="Permissions.can_use_generator"
           />
+          <q-route-tab icon="mdi-generator-mobile" label="Генератор РПП" to="/practice_generator"
+                       v-permissions-required="Permissions.can_use_generator"
+          />
           <q-route-tab icon="mdi-account-school" label="План научной деятельности по программе аспирантуры"
                        to="/scientific-plan"
                        v-permissions-required="Permissions.can_use_generator"
