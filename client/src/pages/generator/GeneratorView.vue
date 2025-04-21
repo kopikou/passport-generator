@@ -18,6 +18,7 @@ const {
   cafData,
   activeRpdId,
   rpdData,
+  planlinesData,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -63,8 +64,11 @@ watch(() => props.id,
     </div>
     <div class="q-pa-md generator-container__header">
       <div class="text-center">
-        <div class="text-h6">
+        <div class="text-h6" v-if="!planlinesData.viewpract">
           Генератор рабочей программы дисциплины ИРНИТУ
+        </div>
+        <div class="text-h6" v-else>
+          Генератор рабочей программы практики ИРНИТУ
         </div>
         <div class="text-subtitle1">
           {{ rpdData.planlines?.plan.abbrprofile }} {{

@@ -13,6 +13,7 @@ const generatorViewStore = useGeneratorViewStore();
 
 const {
   disabled,
+  planlinesData,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -79,7 +80,7 @@ onBeforeMount(() => {
     <div class="indicators-form row justify-between q-gutter-md">
       <q-input
         filled
-        label="Знать"
+        :label="!planlinesData.viewpract ? 'Знать' : 'Опыт профессиональной деятельности'"
         stack-label
         type="textarea"
         class="col"

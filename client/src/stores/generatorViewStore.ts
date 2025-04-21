@@ -160,7 +160,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   const errors = ref([])
 
-  async function checkErrors() {
+  function rpdErrors() {
     const admkind = rpdData.value.admission.cadmkind
     const data = []
 
@@ -589,6 +589,19 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       }
     }
     errors.value = data
+  }
+
+  function rppErrors() {
+    const data = []
+    errors.value = data
+  }
+
+  async function checkErrors() {
+    if (planlinesData.value.viewpract) {
+      rppErrors()
+    } else {
+      rpdErrors()
+    }
   }
 
   onAuthenticated(async () => {

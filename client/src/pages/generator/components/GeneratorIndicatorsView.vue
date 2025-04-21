@@ -10,6 +10,7 @@ const generatorViewStore = useGeneratorViewStore()
 const {
   indicatorsData,
   admissionData,
+  planlinesData,
 } = storeToRefs(generatorViewStore)
 
 
@@ -22,8 +23,14 @@ const filteredData = computed(() => {
 <template>
   <div>
     <div style="width: 95%">
-      <span v-if="admissionData.cadmkind != 5" class="text-h6 q-pl-lg">Индикаторы по дисциплине</span>
-      <span v-else class="text-h6 q-pl-lg">Результаты освоения дисциплины</span>
+      <div v-if="!planlinesData.viewpract">
+        <span v-if="admissionData.cadmkind != 5" class="text-h6 q-pl-lg">Индикаторы по дисциплине</span>
+        <span v-else class="text-h6 q-pl-lg">Результаты освоения дисциплины</span>
+      </div>
+      <div v-else>
+        <span v-if="admissionData.cadmkind != 5" class="text-h6 q-pl-lg">Индикаторы по практике</span>
+        <span v-else class="text-h6 q-pl-lg">Результаты освоения практики</span>
+      </div>
       <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-list bordered>

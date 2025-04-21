@@ -8,8 +8,10 @@ import {useQuasar} from "quasar";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import useMainStore from "stores/mainStore";
 import {storeToRefs} from "pinia";
+import {useRouter} from "vue-router";
 
 const $q = useQuasar()
+const router = useRouter()
 
 const generatorViewStore = useGeneratorViewStore();
 const mainStore = useMainStore();
@@ -110,7 +112,7 @@ onBeforeMount(async () => {
                       <div :class="getRowColor(key)">{{ item.status_verbose }}</div>
                       <div :class="getRowColor(key)">
                         <q-btn dense flat color="primary" icon="mdi-pencil"
-                               label="заполнить" @click="router.push(`/generator/${item.id}/main`)"/>
+                               label="заполнить" @click="router.push(`/practice_generator/${item.id}/main`)"/>
                       </div>
                     </div>
                   </div>

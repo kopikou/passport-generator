@@ -18,6 +18,7 @@ const {
   disciplineGoal,
   disabled,
   admissionData,
+  planlinesData,
 } = storeToRefs(generatorViewStore)
 
 const displGoal = ref()
@@ -76,6 +77,10 @@ async function saveDiscplineGoal() {
   $q.loading.hide()
 }
 
+function getPracticeNamePart(text) {
+  return text.split(": ")
+}
+
 function getSpecNapr(name) {
   const names = name.split("направленность")
   if (names.length > 1) {
@@ -107,17 +112,37 @@ watch(additionalInfo, () => {
 <template>
   <div>
     <div style="width: 95%">
-      <span class="text-h6 q-pl-lg">Данные по дисциплине</span>
-      <p>Данные для рабочей программы по дисциплине "{{ rpdData.planlines?.dis }}" получены автоматически из учебного
+      <span class="text-h6 q-pl-lg" v-if="planlinesData.viewpract">Данные по практике</span>
+      <span class="text-h6 q-pl-lg" v-else>Данные по дисциплине</span>
+      <p>Данные для рабочей программы
+        <span v-if="planlinesData.viewpract">практики</span>
+        <span v-else>по дисциплине</span>
+         "{{ rpdData.planlines?.dis }}" получены автоматически из учебного
         плана</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div class="q-pb-md">
-        <span class="text-subtitle1">Наименование дисциплины</span>
-        <q-field outlined dense>
-          <template v-slot:control>
-            <div class="self-center full-width no-outline">{{ rpdData.planlines?.dis }}</div>
-          </template>
-        </q-field>
+        <div v-if="!planlinesData.viewpract">
+          <span class="text-subtitle1">Наименование дисциплины</span>
+          <q-field outlined dense>
+            <template v-slot:control>
+              <div class="self-center full-width no-outline">{{ rpdData.planlines?.dis }}</div>
+            </template>
+          </q-field>
+        </div>
+        <div v-else>
+          <span class="text-subtitle1">Вид практики</span>
+          <q-field outlined dense>
+            <template v-slot:control>
+              <div class="self-center full-width no-outline">{{ getPracticeNamePart(rpdData.planlines?.dis)[0] }}</div>
+            </template>
+          </q-field>
+          <span class="text-subtitle1">Тип практики</span>
+          <q-field outlined dense>
+            <template v-slot:control>
+              <div class="self-center full-width no-outline">{{ getPracticeNamePart(rpdData.planlines?.dis)[1][0].toUpperCase() + getPracticeNamePart(rpdData.planlines?.dis)[1].slice(1) }}</div>
+            </template>
+          </q-field>
+        </div>
         <span v-if="admissionData.cadmkind != 5" class="text-subtitle1">Профиль/Специальность</span>
         <q-field outlined dense v-if="admissionData.cadmkind != 5">
           <template v-slot:control>

@@ -30,6 +30,7 @@ import UploadView from "pages/upload/UploadView.vue";
 import AspirantScientificPlansPage from "pages/scientificPlan/AspirantScientificPlansPage.vue";
 import AspirantScientificPlanView from "pages/scientificPlan/AspirantScientificPlanView.vue";
 import PracticeGeneratorListView from "pages/generator/PracticeGeneratorListView.vue";
+import GeneratorPracticeContent from "pages/generator/components/GeneratorPracticeContent.vue";
 
 
 const routes: RouteRecordRaw[] = [
@@ -68,7 +69,75 @@ const routes: RouteRecordRaw[] = [
         path: '',
         name: "PracticeGeneratorListView",
         component: PracticeGeneratorListView,
-      }
+      },
+      {
+        path: ':id',
+        name: 'PracticeGeneratorView',
+        component: GeneratorView,
+        props: true,
+        children: [
+          {
+            path: "main",
+            name: "PracticeGeneratorMainView",
+            component: GeneratorMainView,
+          },
+          {
+            path: "competences",
+            name: "PracticeGeneratorCompetencesView",
+            component: GeneratorCompetenceView,
+          },
+          {
+            path: "indicators",
+            name: "PracticeGeneratorindicatorsView",
+            component: GeneratorIndicatorsView,
+          },
+          {
+            path: "structure",
+            name: "PracticeGeneratorStructureView",
+            component: GeneratorStructureView,
+          },
+          {
+            path: "practice-content",
+            name: "PracticeGeneratorContent",
+            component: GeneratorPracticeContent,
+          },
+          {
+            path: "library",
+            name: "PracticeGeneratorLibraryView",
+            component: GeneratorLibraryView,
+          },
+          {
+            path: "soft",
+            name: "PracticeGeneratorSoftwareView",
+            component: GeneratorSoftwareView,
+          },
+          {
+            path: "logistics",
+            name: "PracticeGeneratorLogisticsView",
+            component: GeneratorLogisticsView,
+          },
+          {
+            path: "resources",
+            name: "PracticeGeneratorResourcesView",
+            component: GeneratorResourcesView,
+          },
+          {
+            path: "guidelines",
+            name: "PracticeGeneratorGuidelinesView",
+            component: GeneratorGuidelinesView,
+          },
+          {
+            path: "fos",
+            name: "PracticeGeneratorFOSView",
+            component: GeneratorFOSView,
+          },
+          {
+            path: "tat",
+            name: "PracticeGeneratorTatView",
+            component: GeneratorTATView,
+          },
+        ]
+      },
     ]
   },
   {

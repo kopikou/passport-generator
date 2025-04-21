@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {onBeforeMount, ref, watch} from "vue";
+import {onBeforeMount, ref, watch, watchEffect} from "vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import {api} from "boot/axios";
@@ -17,10 +17,53 @@ const {
   interactiveMethods,
   additionalInfo,
   disabled,
+  planlinesData,
 } = storeToRefs(generatorViewStore)
 
 const tab = ref<string>('')
 const methods = ref<string>('')
+const way = ref([])
+
+const wayOptions = [
+  'Стационарная',
+  'Выездная',
+]
+
+async function savePracticeWay() {
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+    type: "practiceWay",
+    value: {
+      "practiceWay": way.value
+    }
+  })
+  if (r.status == 200) {
+    $q.notify({
+      message: "Данные <span class='text-bold'>о способе проведения практики</span> сохранены!",
+      color: "secondary",
+      position: "bottom",
+      html: true,
+    })
+    let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
+    if (key) _.set(additionalInfo.value, `[${key}].value.practiceWay`, way.value)
+    else additionalInfo.value.push({
+      id: r.data.id,
+      planlineslink_id: activeRpdId.value,
+      type: 'practiceWay',
+      value: {
+        practiceWay: way.value,
+      }
+    })
+    generatorViewStore.checkErrors()
+  } else {
+
+    $q.notify({
+      message: "Данные <span class='text-bold'>о способе проведения практики</span> не сохранены!",
+      color: "negative",
+      position: "bottom",
+      html: true,
+    })
+  }
+}
 
 async function saveMethods() {
   // $q.loading.show()
@@ -65,13 +108,16 @@ watch(semestersData, () => {
   tab.value = `${semestersData.value[0].num}`
 })
 
-watch(interactiveMethods, () => {
-  methods.value = interactiveMethods.value[0]?.value['interactiveMethods']
+watchEffect(() => {
+  if (planlinesData.value.viewpract) {
+    way.value = _.filter(additionalInfo.value, (x) => x.type == 'practiceWay')[0]?.value['practiceWay']
+  } else {
+    methods.value = interactiveMethods.value[0]?.value['interactiveMethods']
+  }
 })
 
 onBeforeMount(() => {
   tab.value = `${semestersData.value[0]?.num}`
-  methods.value = interactiveMethods.value[0]?.value['interactiveMethods']
 })
 
 </script>
@@ -80,7 +126,8 @@ onBeforeMount(() => {
   <div>
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Структура дисциплины</span>
-      <p>Количество академических часов, выделенных на дисциплину "{{ rpdData.planlines?.dis }}". Данные автоматически получены их учебного
+      <p>Количество академических часов, выделенных на дисциплину "{{ rpdData.planlines?.dis }}". Данные автоматически
+        получены их учебного
         плана.</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-tabs
@@ -179,7 +226,7 @@ onBeforeMount(() => {
                 <div class="self-center full-width no-outline text-center">
                   <span v-if="item.ekz">Экзамен</span>
                   <span v-if="item.zach">Зачет</span>
-                  <span v-if="item.zacho">Зачет с оценкой></span>
+                  <span v-if="item.zacho">Зачет с оценкой</span>
                   <span v-if="!item.ekz && !item.zach && !item.zacho">Отсутствует</span>
                 </div>
               </template>
@@ -199,7 +246,7 @@ onBeforeMount(() => {
           </div>
         </q-tab-panel>
       </q-tab-panels>
-      <div class="q-gutter-md">
+      <div class="q-gutter-md" v-if="!planlinesData.viewpract">
         <div class="text-h6">
           Интерактивные методы обучения можно посмотреть по <a target="_blank"
                                                                href="https://edu.itmo.ru/ru/edutech_iteractiv/">ссылке</a>
@@ -221,6 +268,24 @@ onBeforeMount(() => {
         <!--          @click="saveMethods"-->
         <!--          v-show="!disabled"-->
         <!--        />-->
+      </div>
+      <div v-else>
+        <div class="text-h6">
+          Способ проведения практики
+        </div>
+        <q-select
+          label="Способы проведения практики"
+          filled
+          stack-label
+          :options="wayOptions"
+          v-model="way"
+          clearable
+          multiple
+          use-chips
+          :readonly="disabled"
+          @update:modelValue="savePracticeWay"
+          debounce="1000"
+        />
       </div>
     </div>
   </div>

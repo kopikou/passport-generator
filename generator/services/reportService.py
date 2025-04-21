@@ -403,47 +403,51 @@ class ReportService(object):
                 tmp_pr = []
                 tmp_lekc = []
                 if srs_work_grouped:
-                    for q in srs_work_grouped[key]:
-                        if item['id'] == q['theme_id']:
-                            tmp_srs.append({
-                                "hours": q['hours'],
-                                "theme": q['theme'],
-                                "theme_id": q['theme_id'],
-                                "name": q['content'],
-                            })
+                    if srs_work_grouped.get(key):
+                        for q in srs_work_grouped[key]:
+                            if item['id'] == q['theme_id']:
+                                tmp_srs.append({
+                                    "hours": q['hours'],
+                                    "theme": q['theme'],
+                                    "theme_id": q['theme_id'],
+                                    "name": q['content'],
+                                })
 
                 if lab_work_grouped:
-                    for q in lab_work_grouped[key]:
-                        if item['id'] == q['theme_id']:
-                            tmp_lab.append({
-                                "hours": q['hours'],
-                                "theme": q['theme'],
-                                "theme_id": q['theme_id'],
-                                "name": q['content'],
-                                "number": q['number'],
-                            })
+                    if lab_work_grouped.get(key):
+                        for q in lab_work_grouped[key]:
+                            if item['id'] == q['theme_id']:
+                                tmp_lab.append({
+                                    "hours": q['hours'],
+                                    "theme": q['theme'],
+                                    "theme_id": q['theme_id'],
+                                    "name": q['content'],
+                                    "number": q['number'],
+                                })
 
                 if pr_work_grouped:
-                    for q in pr_work_grouped[key]:
-                        if item['id'] == q['theme_id']:
-                            tmp_pr.append({
-                                "hours": q['hours'],
-                                "theme": q['theme'],
-                                "theme_id": q['theme_id'],
-                                "name": q['content'],
-                                "number": q['number'],
-                            })
+                    if pr_work_grouped.get(key):
+                        for q in pr_work_grouped[key]:
+                            if item['id'] == q['theme_id']:
+                                tmp_pr.append({
+                                    "hours": q['hours'],
+                                    "theme": q['theme'],
+                                    "theme_id": q['theme_id'],
+                                    "name": q['content'],
+                                    "number": q['number'],
+                                })
 
                 if lekc_work_grouped:
-                    for q in lekc_work_grouped[key]:
-                        if item['id'] == q['theme_id']:
-                            tmp_lekc.append({
-                                "hours": q['hours'],
-                                "theme": q['theme'],
-                                "theme_id": q['theme_id'],
-                                "name": q['content'],
-                                "number": q['number'],
-                            })
+                    if lekc_work_grouped.get(key):
+                        for q in lekc_work_grouped[key]:
+                            if item['id'] == q['theme_id']:
+                                tmp_lekc.append({
+                                    "hours": q['hours'],
+                                    "theme": q['theme'],
+                                    "theme_id": q['theme_id'],
+                                    "name": q['content'],
+                                    "number": q['number'],
+                                })
 
                 res.append({
                     **item,
