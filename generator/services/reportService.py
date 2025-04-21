@@ -402,7 +402,7 @@ class ReportService(object):
                 tmp_lab = []
                 tmp_pr = []
                 tmp_lekc = []
-                if srs_work_grouped:
+                if srs_work_grouped.get(key):
                     for q in srs_work_grouped[key]:
                         if item['id'] == q['theme_id']:
                             tmp_srs.append({
@@ -412,7 +412,7 @@ class ReportService(object):
                                 "name": q['content'],
                             })
 
-                if lab_work_grouped:
+                if lab_work_grouped.get(key):
                     for q in lab_work_grouped[key]:
                         if item['id'] == q['theme_id']:
                             tmp_lab.append({
@@ -423,7 +423,7 @@ class ReportService(object):
                                 "number": q['number'],
                             })
 
-                if pr_work_grouped:
+                if pr_work_grouped.get(key):
                     for q in pr_work_grouped[key]:
                         if item['id'] == q['theme_id']:
                             tmp_pr.append({
@@ -434,7 +434,7 @@ class ReportService(object):
                                 "number": q['number'],
                             })
 
-                if lekc_work_grouped:
+                if lekc_work_grouped.get(key):
                     for q in lekc_work_grouped[key]:
                         if item['id'] == q['theme_id']:
                             tmp_lekc.append({
