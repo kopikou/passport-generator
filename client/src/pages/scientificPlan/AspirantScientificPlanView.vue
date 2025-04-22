@@ -5,7 +5,7 @@ import {computed, onBeforeMount, ref, watch} from "vue";
 import {useQuasar} from "quasar";
 import {api} from "boot/axios";
 import _ from "lodash";
-// import draggable from "vuedraggable";
+import draggable from "vuedraggable";
 import useMainStore from "stores/mainStore";
 import {storeToRefs} from "pinia";
 
