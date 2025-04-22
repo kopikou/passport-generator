@@ -77,8 +77,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <div>
-    <div style="width: 95%">
+  <div class="q-px-md">
       <span class="text-h6">Структура дисциплины</span>
       <p>Количество академических часов, выделенных на дисциплину "{{ rpdData.planlines?.dis }}". Данные автоматически получены их учебного
         плана.</p>
@@ -86,10 +85,10 @@ onBeforeMount(() => {
       <q-tabs
         v-model="tab"
         align="left"
-        narrow-indicator
         class="q-mb-md"
+        active-bg-color="teal-1"
       >
-        <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`"
+        <q-tab class="text-teal" v-for="item in semestersData" :name="`${item.num}`"
                :label="`Семестр ${item.num}`"/>
       </q-tabs>
 
@@ -222,7 +221,6 @@ onBeforeMount(() => {
         <!--          v-show="!disabled"-->
         <!--        />-->
       </div>
-    </div>
   </div>
 </template>
 

@@ -105,91 +105,90 @@ watch(additionalInfo, () => {
 </script>
 
 <template>
-  <div>
-    <div style="width: 95%">
-      <span class="text-h6">Данные по дисциплине</span>
-      <p>Данные для рабочей программы по дисциплине "{{ rpdData.planlines?.dis }}" получены автоматически из учебного
-        плана</p>
-      <q-separator class="q-mt-md q-mb-md"/>
-      <div class="q-pb-md">
-        <span class="text-subtitle1">Наименование дисциплины</span>
-        <q-field outlined dense>
-          <template v-slot:control>
-            <div class="self-center full-width no-outline">{{ rpdData.planlines?.dis }}</div>
-          </template>
-        </q-field>
-        <span v-if="admissionData.cadmkind != 5" class="text-subtitle1">Профиль/Специальность</span>
-        <q-field outlined dense v-if="admissionData.cadmkind != 5">
-          <template v-slot:control>
-            <div class="self-center full-width no-outline">{{ rpdData.admission?.spec_name }}</div>
-          </template>
-        </q-field>
-        <span v-if="admissionData.cadmkind != 5" class="text-subtitle1">Наименование направления</span>
-        <q-field outlined dense v-if="admissionData.cadmkind != 5">
-          <template v-slot:control>
-            <div class="self-center full-width no-outline">{{ rpdData.admission?.direct_name }}</div>
-          </template>
-        </q-field>
-        <span v-if="admissionData.cadmkind == 5" class="text-subtitle1">Наименование направления</span>
-        <q-field outlined dense v-if="admissionData.cadmkind == 5">
-          <template v-slot:control>
-            <div class="self-center full-width no-outline">{{ getSpecName(rpdData.admission?.spec_name) }}</div>
-          </template>
-        </q-field>
-        <span v-if="admissionData.cadmkind == 5" class="text-subtitle1">Направленность</span>
-        <q-field outlined dense v-if="admissionData.cadmkind == 5">
-          <template v-slot:control>
-            <div class="self-center full-width no-outline">{{ getSpecNapr(rpdData.admission?.spec_name) }}</div>
-          </template>
-        </q-field>
-        <span class="text-subtitle1">Факультет</span>
-        <q-field outlined dense>
-          <template v-slot:control>
-            <div class="self-center full-width no-outline">{{ admissionData.cfac__name }}</div>
-          </template>
-        </q-field>
-        <span class="text-subtitle1">Кафедра</span>
-        <q-field outlined dense>
-          <template v-slot:control>
-            <div class="self-center full-width no-outline">{{ cafDataById[rpdData.planlines?.caf]?.label }}</div>
-          </template>
-        </q-field>
-      </div>
-      <div class="flex justify-center items-center">
-        <span class="text-subtitle1">Количество семестров</span>
-        <q-field filled dense style="width: 5%" class="q-ml-md q-mr-md">
-          <template v-slot:control>
-            <div class="self-center full-width no-outline text-center">{{ semestersData.length }}</div>
-          </template>
-        </q-field>
-        <span class="text-subtitle1">Начальный семестр</span>
-        <q-field filled dense style="width: 5%" class="q-ml-md">
-          <template v-slot:control>
-            <div class="self-center full-width no-outline text-center">{{ semestersData[0]?.num }}</div>
-          </template>
-        </q-field>
-      </div>
-      <q-separator class="q-mt-md q-mb-md"/>
-      <div>
-        <!--        <q-input-->
-        <!--          label="Цель освоения дисциплины"-->
-        <!--          type="textarea"-->
-        <!--          filled-->
-        <!--          stack-label-->
-        <!--          v-model="displGoal"-->
-        <!--          class="q-mb-md"-->
-        <!--          :readonly="disabled"-->
-        <!--          hint="Для аннотации"-->
-        <!--          debounce="1000"-->
-        <!--          @update:modelValue="saveDiscplineGoal"-->
-        <!--        />-->
-        <!--        <q-editor-->
-        <!--          v-model="displGoal"-->
-        <!--          :toolbar="toolbar"-->
-        <!--          @update:modelValue="saveData"-->
-        <!--        />-->
 
-      </div>
+  <div class="q-px-md">
+    <span class="text-h6">Данные по дисциплине</span>
+    <p>Данные для рабочей программы по дисциплине "{{ rpdData.planlines?.dis }}" получены автоматически из учебного
+      плана</p>
+    <q-separator class="q-mt-md q-mb-md"/>
+    <div class="q-pb-md">
+      <span class="text-subtitle1">Наименование дисциплины</span>
+      <q-field outlined dense>
+        <template v-slot:control>
+          <div class="self-center full-width no-outline">{{ rpdData.planlines?.dis }}</div>
+        </template>
+      </q-field>
+      <span v-if="admissionData.cadmkind != 5" class="text-subtitle1">Профиль/Специальность</span>
+      <q-field outlined dense v-if="admissionData.cadmkind != 5">
+        <template v-slot:control>
+          <div class="self-center full-width no-outline">{{ rpdData.admission?.spec_name }}</div>
+        </template>
+      </q-field>
+      <span v-if="admissionData.cadmkind != 5" class="text-subtitle1">Наименование направления</span>
+      <q-field outlined dense v-if="admissionData.cadmkind != 5">
+        <template v-slot:control>
+          <div class="self-center full-width no-outline">{{ rpdData.admission?.direct_name }}</div>
+        </template>
+      </q-field>
+      <span v-if="admissionData.cadmkind == 5" class="text-subtitle1">Наименование направления</span>
+      <q-field outlined dense v-if="admissionData.cadmkind == 5">
+        <template v-slot:control>
+          <div class="self-center full-width no-outline">{{ getSpecName(rpdData.admission?.spec_name) }}</div>
+        </template>
+      </q-field>
+      <span v-if="admissionData.cadmkind == 5" class="text-subtitle1">Направленность</span>
+      <q-field outlined dense v-if="admissionData.cadmkind == 5">
+        <template v-slot:control>
+          <div class="self-center full-width no-outline">{{ getSpecNapr(rpdData.admission?.spec_name) }}</div>
+        </template>
+      </q-field>
+      <span class="text-subtitle1">Факультет</span>
+      <q-field outlined dense>
+        <template v-slot:control>
+          <div class="self-center full-width no-outline">{{ admissionData.cfac__name }}</div>
+        </template>
+      </q-field>
+      <span class="text-subtitle1">Кафедра</span>
+      <q-field outlined dense>
+        <template v-slot:control>
+          <div class="self-center full-width no-outline">{{ cafDataById[rpdData.planlines?.caf]?.label }}</div>
+        </template>
+      </q-field>
+    </div>
+    <div class="flex justify-center items-center">
+      <span class="text-subtitle1">Количество семестров</span>
+      <q-field filled dense style="width: 5%" class="q-ml-md q-mr-md">
+        <template v-slot:control>
+          <div class="self-center full-width no-outline text-center">{{ semestersData.length }}</div>
+        </template>
+      </q-field>
+      <span class="text-subtitle1">Начальный семестр</span>
+      <q-field filled dense style="width: 5%" class="q-ml-md">
+        <template v-slot:control>
+          <div class="self-center full-width no-outline text-center">{{ semestersData[0]?.num }}</div>
+        </template>
+      </q-field>
+    </div>
+    <q-separator class="q-mt-md q-mb-md"/>
+    <div>
+      <!--        <q-input-->
+      <!--          label="Цель освоения дисциплины"-->
+      <!--          type="textarea"-->
+      <!--          filled-->
+      <!--          stack-label-->
+      <!--          v-model="displGoal"-->
+      <!--          class="q-mb-md"-->
+      <!--          :readonly="disabled"-->
+      <!--          hint="Для аннотации"-->
+      <!--          debounce="1000"-->
+      <!--          @update:modelValue="saveDiscplineGoal"-->
+      <!--        />-->
+      <!--        <q-editor-->
+      <!--          v-model="displGoal"-->
+      <!--          :toolbar="toolbar"-->
+      <!--          @update:modelValue="saveData"-->
+      <!--        />-->
+
     </div>
   </div>
 </template>

@@ -23,7 +23,7 @@ watch(disciplineThemes, () => {
 </script>
 
 <template>
-  <div style="width: 95%">
+  <div class="q-px-md">
     <span class="text-h6">Оценочные материалы по дисциплине</span>
     <p></p>
     <q-separator class="q-mt-md q-mb-md"/>

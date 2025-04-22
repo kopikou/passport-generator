@@ -20,11 +20,10 @@ const filteredData = computed(() => {
 </script>
 
 <template>
-  <div>
-    <div style="width: 95%">
+  <div class="q-px-md">
       <span v-if="admissionData.cadmkind != 5" class="text-h6">Индикаторы по дисциплине</span>
       <span v-else class="text-h6">Результаты освоения дисциплины</span>
-      <p></p>
+      <p>Раскройте для заполнения</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-list bordered>
         <div v-for="i in filteredData">
@@ -35,7 +34,6 @@ const filteredData = computed(() => {
           </q-expansion-item>
         </div>
       </q-list>
-    </div>
   </div>
 </template>
 

@@ -7,6 +7,7 @@ import {storeToRefs} from "pinia";
 import _, {sumBy} from "lodash";
 import {api} from "boot/axios";
 import {moveArrayElement, useSortable} from "@vueuse/integrations/useSortable";
+import GeneratorPageView from "pages/generator/components/GeneratorPageView.vue";
 
 
 const $q = useQuasar()
@@ -43,7 +44,7 @@ function updateTheme(id) {
       id: id,
     },
   }).onOk(() => {
-   generatorViewStore.checkErrors()
+    generatorViewStore.checkErrors()
   })
 }
 
@@ -129,21 +130,22 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div>
-    <div style="width: 95%">
-      <span class="text-h6">Содержание разделов и тем по дисциплине</span>
-      <p></p>
-      <q-separator class="q-mt-md q-mb-md"/>
-      <q-btn label="Добавить тему дисциплины" color="teal" class="q-mb-md" @click="addTheme" :disabled="disabled"/>
-      <q-tabs
+  <generator-page-view title="Содержание разделов и тем по дисциплине">
+    <template #title-right>
+      <q-btn label="Добавить тему дисциплины" icon="mdi-plus" color="white" text-color="black" class="q-mb-md" @click="addTheme" :disabled="disabled"/>
+    </template>
+    <template #header>
+       <q-tabs
         v-model="tab"
         align="left"
-        narrow-indicator
         class="q-mb-md"
+        active-bg-color="teal-1"
       >
-        <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`"
+        <q-tab class="text-teal" v-for="item in semestersData" :name="`${item.num}`"
                :label="`Семестр ${item.num}`"/>
       </q-tabs>
+    </template>
+    <template #content>
       <q-tab-panels
         v-model="tab"
         animated
@@ -205,7 +207,10 @@ watchEffect(() => {
 
         </q-tab-panel>
       </q-tab-panels>
-    </div>
+    </template>
+  </generator-page-view>
+  <div>
+
   </div>
 </template>
 

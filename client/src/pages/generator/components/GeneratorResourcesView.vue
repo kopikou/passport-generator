@@ -87,7 +87,7 @@ watch(resources, () => {
 </script>
 
 <template>
-  <div style="width: 95%">
+  <div class="q-px-md">
     <span class="text-h6">Другие ресурсы используемые по дисциплине</span>
     <p></p>
     <q-separator class="q-mt-md q-mb-md"/>

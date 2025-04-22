@@ -108,8 +108,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div>
-    <div style="width: 95%">
+  <div class="q-px-md">
       <span class="text-h6">Перечень материально-технического обеспечения для дисциплины</span>
       <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
@@ -171,7 +170,6 @@ watchEffect(() => {
           </div>
         </div>
       </div>
-    </div>
   </div>
 </template>
 

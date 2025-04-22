@@ -83,8 +83,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div>
-    <div style="width: 95%">
+  <div class="q-px-md">
       <span class="text-h6">Место дисциплины в структуре ООП</span>
       <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
@@ -120,7 +119,6 @@ watchEffect(() => {
         @update:modelValue="savePrecSubDiscipline"
       />
       <!--      <q-btn label="Сохранить" color="primary" class="q-mt-sm" @click="savePrecSubDiscipline" v-show="!disabled"/>-->
-    </div>
   </div>
 </template>
 
