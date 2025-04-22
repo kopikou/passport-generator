@@ -86,81 +86,81 @@ function getErrors(url) {
 </script>
 
 <template>
-  <div class="bg-pink-3 rounded-borders" v-if="comment.length != 0">
-    <div class="text-subtitle1">{{ comment.user__last_name }} {{ comment.user__first_name }} оставил комментарий</div>
-    <div>
-      <div class="q-ma-xs text-subtitle2">
+  <div style="display: grid; grid-template-rows: auto 1fr; overflow: hidden; height: 100%">
+    <div class="q-pa-sm">
+      <div class="bg-pink-3 rounded-borders" v-if="comment.length != 0">
+        <div class="text-subtitle1">{{ comment.user__last_name }} {{ comment.user__first_name }} оставил комментарий
+        </div>
         <div>
-          <div class="text-subtitle1 text-bold">{{ translateDate(comment.created_at) }}</div>
-          <div>
-            {{ comment.comment }}
+          <div class="q-ma-xs text-subtitle2">
+            <div>
+              <div class="text-subtitle1 text-bold">{{ translateDate(comment.created_at) }}</div>
+              <div>
+                {{ comment.comment }}
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      <div v-if="!disabled" class="q-mb-sm">
+        <q-btn
+          class="q-mt-xs"
+          color="secondary"
+          dense
+          @click="sendToReview"
+          style="width: 100%"
+          label="Отправить на согласование"
+          :disabled="criticalErrors.length != 0"
+        />
+      </div>
+      <div v-else class="text-center q-mb-md">
+        <q-btn
+          class="q-mt-xs"
+          color="secondary"
+          dense
+          disable
+          style="width: 100%"
+          :label="statusVerbose"
+        />
+      </div>
     </div>
-  </div>
-  <q-btn
-    color="primary"
-    class="full-width"
-    dense
-    label="Просмотр РПД"
-    :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-report/`"
-    target="_blank"
-  />
-  <div v-if="!disabled" class="q-mb-sm">
-    <q-btn
-      class="q-mt-xs"
-      color="secondary"
-      dense
-      @click="sendToReview"
-      style="width: 100%"
-      label="Отправить на согласование"
-      :disabled="criticalErrors.length != 0"
-    />
-  </div>
-  <div v-else class="text-center q-mb-md">
-    <q-btn
-      class="q-mt-xs"
-      color="secondary"
-      dense
-      disable
-      style="width: 100%"
-      :label="statusVerbose"
-    />
-  </div>
-  <q-list
-    bordered
-    separator
-  >
-    <q-item
-      v-for="item in filterMenuItems"
-      clickable
-      v-ripple
-      active-class="bg-amber-4 text-black"
-      :to="`/generator/${id}/${item.url}`"
-      dense
-      style="padding: 12px;"
+    <q-list
+      style="overflow-y: auto"
+      bordered
+      separator
     >
-      <q-item-section>
-        <q-item-label :class="item.right ? 'q-ml-lg' : ''">{{ item.title }}</q-item-label>
-        <!--        <q-item-label caption>Основная информация о программе</q-item-label>-->
-      </q-item-section>
-      <q-item-section avatar v-if="getErrors(item.url).length != 0">
-        <q-icon :name="getErrors(item.url)[0].level == 'warning' ? 'mdi-alert' : 'mdi-alert-box'" :color="getErrors(item.url)[0].level == 'warning' ? 'amber-8' : 'red-7'">
-          <q-tooltip class="text-white hide-scrollbar" :class="getErrors(item.url)[0].level == 'warning' ? 'bg-amber-8' : 'bg-red-9'" max-height="20%">
-            <div v-for="error in getErrors(item.url)" style="font-size: 14px;">
-              <div v-for="text in error.text">
-                {{ text }}
+      <q-item
+        v-for="item in filterMenuItems"
+        clickable
+        v-ripple
+        active-class="bg-amber-2 text-black"
+        :to="`/generator/${id}/${item.url}`"
+        dense
+        style="padding: 12px;"
+      >
+        <q-item-section>
+          <q-item-label :class="item.right ? 'q-ml-lg' : ''">{{ item.title }}</q-item-label>
+          <!--        <q-item-label caption>Основная информация о программе</q-item-label>-->
+        </q-item-section>
+        <q-item-section avatar v-if="getErrors(item.url).length != 0">
+          <q-icon :name="getErrors(item.url)[0].level == 'warning' ? 'mdi-alert' : 'mdi-alert-box'"
+                  :color="getErrors(item.url)[0].level == 'warning' ? 'amber-4' : 'red-7'">
+            <q-tooltip class="text-white hide-scrollbar"
+                       :class="getErrors(item.url)[0].level == 'warning' ? 'bg-amber-8' : 'bg-red-9'" max-height="20%">
+              <div v-for="error in getErrors(item.url)" style="font-size: 14px;">
+                <div v-for="text in error.text">
+                  {{ text }}
+                </div>
               </div>
-            </div>
-          </q-tooltip>
-        </q-icon>
-      </q-item-section>
-    </q-item>
+            </q-tooltip>
+          </q-icon>
+        </q-item-section>
+      </q-item>
 
-  </q-list>
+    </q-list>
 
-
+  </div>
 </template>
 
 <style scoped>

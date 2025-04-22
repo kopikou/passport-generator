@@ -79,7 +79,7 @@ onBeforeMount(() => {
 <template>
   <div>
     <div style="width: 95%">
-      <span class="text-h6 q-pl-lg">Структура дисциплины</span>
+      <span class="text-h6">Структура дисциплины</span>
       <p>Количество академических часов, выделенных на дисциплину "{{ rpdData.planlines?.dis }}". Данные автоматически получены их учебного
         плана.</p>
       <q-separator class="q-mt-md q-mb-md"/>

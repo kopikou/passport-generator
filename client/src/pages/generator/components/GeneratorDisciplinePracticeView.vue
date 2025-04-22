@@ -8,6 +8,9 @@ import {storeToRefs} from "pinia";
 import {api} from "boot/axios";
 import _ from "lodash";
 import EmptyIcon from "components/EmptyIcon.vue";
+import LayoutHCF from "components/LayoutHCF.vue";
+import GeneratorDiscipline_Work_View from "pages/generator/components/GeneratorDiscipline_Work_View.vue";
+import GeneratorDisciplineWorkViewBase from "pages/generator/components/GeneratorDisciplineWorkViewBase.vue";
 
 const $q = useQuasar()
 
@@ -137,108 +140,92 @@ async function saveData(data) {
 }
 
 function getRowColor(number) {
-  return number % 2 == 0 ? 'bg-grey-4' : 'bg-white'
+  return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
 }
 
 </script>
 
 <template>
-  <div>
-    <div style="width: 95%">
-      <span class="text-h6 q-pl-lg">Перечень практических занятий по дисциплине</span>
-      <p></p>
-      <q-separator class="q-mt-md q-mb-md"/>
-      <div v-if="allPercent != 0">
-        <q-btn label="Добавить новое практическое занятие" color="teal" class="q-mb-md" @click="addPractice"
-               :disabled="disabled"/>
-        <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
-          <div class="absolute-full flex flex-center">
-            <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
+  <generator-discipline-work-view-base
+    :disabled="disabled"
+    :all-percent="allPercent"
+    :all-percent-value="allPercentValue"
+    :all-semester-percent-value="allSemesterPercentValue"
+    :all-semester-percent="allSemesterPercent"
+    :semesters-data="semestersData"
+    v-model:tab="tab"
+    title="Перечень практических занятий по дисциплине"
+    button-add-title="Добавить практическое занятие"
+    @add-clicked="addPractice"
+  >
+    <template #content>
+      <q-tab-panels
+        v-model="tab"
+        animated
+        transition-prev="scale"
+        transition-next="scale"
+      >
+        <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="practice-container">
+          <div v-if="item" class="practice-container__header text-center text-subtitle1 items-center bg-grey-2">
+            <div>
+              №
+            </div>
+            <div>
+              Наименование практического занятия
+            </div>
+            <div>
+              Количество часов
+            </div>
+            <div>
+              Тема дисциплины
+            </div>
+            <div v-show="!disabled">
+              Управление
+            </div>
           </div>
-        </q-linear-progress>
-        <q-tabs
-          v-model="tab"
-          align="left"
-          narrow-indicator
-          class="q-mb-md"
-        >
-          <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`"
-                 :label="`Семестр ${item.num}`"/>
-        </q-tabs>
-        <q-linear-progress class="q-mb-md" size="20px" rounded :value="allSemesterPercentValue / allSemesterPercent"
-                           color="primary">
-          <div class="absolute-full flex flex-center">
-            <q-badge color="white" text-color="black" :label="`${allSemesterPercentValue} / ${allSemesterPercent}`"/>
-          </div>
-        </q-linear-progress>
-        <q-tab-panels
-          v-model="tab"
-          animated
-          transition-prev="scale"
-          transition-next="scale"
-        >
-          <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="practice-container">
-            <div v-if="item" class="practice-container__header text-center text-subtitle1 items-center bg-grey-2">
+          <div v-for="practice in filteredData" class="practice-container__body">
+            <div v-if="practice.semester == tab"
+                 class="practice-container__body__cell text-subtitle1 text-center items-center"
+                 :class="getRowColor(practice.num)">
               <div>
-                №
+                {{ practice.num }}
+              </div>
+              <div class="text-justify">
+                {{ practice.name }}
               </div>
               <div>
-                Наименование практического занятия
+                {{ practice.hours }}
               </div>
               <div>
-                Количество часов
-              </div>
-              <div>
-                Тема дисциплины
+                {{ disciplineThemesByValue[practice.theme_id]?.num }}.
+                {{ disciplineThemesByValue[practice.theme_id]?.name }}
               </div>
               <div v-show="!disabled">
-                Управление
+                <q-btn
+                  icon="mdi-delete" color="red" flat @click="deletePractice(practice.id)"
+                />
+                <q-btn
+                  icon="mdi-update" color="green" flat @click="updatePractice(practice.id)"
+                />
+                <q-btn v-if="practice.num != 1"
+                       icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
+                       @click="fieldUp(practice.num, practice.semester)"
+                />
+                <q-btn v-if="practice.num != maxNumberInSemester"
+                       icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
+                       @click="fieldDown(practice.num, practice.semester)"
+                />
               </div>
             </div>
-            <div v-for="practice in filteredData" class="practice-container__body">
-              <div v-if="practice.semester == tab"
-                   class="practice-container__body__cell text-subtitle1 text-center items-center"
-                   :class="getRowColor(practice.num)">
-                <div>
-                  {{ practice.num }}
-                </div>
-                <div class="text-justify">
-                  {{ practice.name }}
-                </div>
-                <div>
-                  {{ practice.hours }}
-                </div>
-                <div>
-                  {{ disciplineThemesByValue[practice.theme_id]?.num }}.
-                  {{ disciplineThemesByValue[practice.theme_id]?.name }}
-                </div>
-                <div v-show="!disabled">
-                  <q-btn
-                    icon="mdi-delete" color="red" flat @click="deletePractice(practice.id)"
-                  />
-                  <q-btn
-                    icon="mdi-update" color="green" flat @click="updatePractice(practice.id)"
-                  />
-                  <q-btn v-if="practice.num != 1"
-                         icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
-                         @click="fieldUp(practice.num, practice.semester)"
-                  />
-                  <q-btn v-if="practice.num != maxNumberInSemester"
-                         icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
-                         @click="fieldDown(practice.num, practice.semester)"
-                  />
-                </div>
-              </div>
-            </div>
-          </q-tab-panel>
-        </q-tab-panels>
-      </div>
-      <div v-else>
+          </div>
+        </q-tab-panel>
+      </q-tab-panels>
+      <div v-if="allPercent == 0">
         <p class="text-h6">Нет часов по практическим занятиям</p>
         <empty-icon/>
       </div>
-    </div>
-  </div>
+    </template>
+  </generator-discipline-work-view-base>
 </template>
 
 <style scoped lang="scss">

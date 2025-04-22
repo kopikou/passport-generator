@@ -8,6 +8,7 @@ import {storeToRefs} from "pinia";
 import _ from "lodash";
 import {api} from "boot/axios";
 import EmptyIcon from "components/EmptyIcon.vue";
+import GeneratorDisciplineWorkViewBase from "pages/generator/components/GeneratorDisciplineWorkViewBase.vue";
 
 const $q = useQuasar()
 
@@ -140,40 +141,25 @@ async function saveData(data) {
 
 function getRowColor(id) {
   let number = _.findKey(filteredData.value, x => x.id == id)
-  return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
+  return number % 2 == 0 ? 'bg-grey-1' : 'bg-white'
 }
 
 </script>
 
 <template>
-  <div>
-    <div style="width: 95%">
-      <span class="text-h6 q-pl-lg">Перечень самостоятельных работ по дисциплине</span>
-      <p></p>
-      <q-separator class="q-mt-md q-mb-md"/>
-      <div v-if="allPercent != 0">
-        <q-btn label="Добавить новую самостоятельную работу" color="teal" class="q-mb-md" @click="addIndependent"
-               :disabled="disabled"/>
-        <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
-          <div class="absolute-full flex flex-center">
-            <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
-          </div>
-        </q-linear-progress>
-        <q-tabs
-          v-model="tab"
-          align="left"
-          narrow-indicator
-          class="q-mb-md"
-        >
-          <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`"
-                 :label="`Семестр ${item.num}`"/>
-        </q-tabs>
-        <q-linear-progress class="q-mb-md" size="20px" rounded :value="allSemesterPercentValue / allSemesterPercent"
-                           color="primary">
-          <div class="absolute-full flex flex-center">
-            <q-badge color="white" text-color="black" :label="`${allSemesterPercentValue} / ${allSemesterPercent}`"/>
-          </div>
-        </q-linear-progress>
+  <generator-discipline-work-view-base
+    :disabled="disabled"
+    :all-percent="allPercent"
+    :all-percent-value="allPercentValue"
+    :all-semester-percent-value="allSemesterPercentValue"
+    :all-semester-percent="allSemesterPercent"
+    :semesters-data="semestersData"
+    v-model:tab="tab"
+    title="Перечень самостоятельных работ по дисциплине"
+    button-add-title="Добавить новую самостоятельную работу"
+    @add-clicked="addIndependent"
+  >
+    <template #content>
         <q-tab-panels
           v-model="tab"
           animated
@@ -234,13 +220,9 @@ function getRowColor(id) {
             </div>
           </q-tab-panel>
         </q-tab-panels>
-      </div>
-      <div v-else>
-        <p class="text-h6">Нет часов по самостоятельным занятиям</p>
-        <empty-icon/>
-      </div>
-    </div>
-  </div>
+    </template>
+  </generator-discipline-work-view-base>
+
 </template>
 
 <style scoped lang="scss">

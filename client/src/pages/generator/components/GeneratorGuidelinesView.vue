@@ -38,7 +38,7 @@ const kpCheck = computed(() => {
 
 <template>
   <div style="width: 95%">
-    <span class="text-h6 q-pl-lg">Методические указания по дисциплине</span>
+    <span class="text-h6">Методические указания по дисциплине</span>
     <p>Вы можете написать ссылку на электронный курс из <a href="https://el.istu.edu">el.istu.edu</a> оформленный по <a href="https://bibliostyle.ru/oformlenie-ssylok-na-elektronnye-dokumenty-sayty-internet-istochniki-po-gost-p-7-0-108-2022/" target="_blank">ГОСТ 7.0.108-2022</a></p>
     <q-separator class="q-mt-md q-mb-md"/>
     <q-list

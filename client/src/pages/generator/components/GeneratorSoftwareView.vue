@@ -95,7 +95,7 @@ watchEffect(() => {
 <template>
   <div>
     <div style="width: 95%">
-      <span class="text-h6 q-pl-lg">Перечень лицензионного программного обеспечения для дисциплины</span>
+      <span class="text-h6">Перечень лицензионного программного обеспечения для дисциплины</span>
       <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-btn

@@ -24,7 +24,7 @@ watch(disciplineThemes, () => {
 
 <template>
   <div style="width: 95%">
-    <span class="text-h6 q-pl-lg">Оценочные материалы по дисциплине</span>
+    <span class="text-h6">Оценочные материалы по дисциплине</span>
     <p></p>
     <q-separator class="q-mt-md q-mb-md"/>
     <div v-if="choicesName.length > 0">

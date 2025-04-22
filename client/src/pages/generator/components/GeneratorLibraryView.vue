@@ -125,7 +125,7 @@ watchEffect(() => {
 <template>
   <div>
     <div style="width: 95%">
-      <span class="text-h6 q-pl-lg">Учебная литература для дисциплины</span>
+      <span class="text-h6">Учебная литература для дисциплины</span>
       <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-btn

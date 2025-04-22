@@ -8,6 +8,7 @@ import GeneratorAddLecturesDialog from "pages/generator/components/dialogs/Gener
 import _ from "lodash";
 import {api} from "boot/axios";
 import EmptyIcon from "components/EmptyIcon.vue";
+import GeneratorDisciplineWorkViewBase from "pages/generator/components/GeneratorDisciplineWorkViewBase.vue";
 
 const $q = useQuasar()
 
@@ -144,34 +145,19 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div>
-    <div style="width: 95%">
-      <span class="text-h6 q-pl-lg">Перечень лекционных занятий по дисциплине</span>
-      <p></p>
-      <q-separator class="q-mt-md q-mb-md"/>
-      <div v-if="allPercent != 0">
-        <q-btn label="Добавить новое лекционное занятие" color="teal" class="q-mb-md" @click="addLectures"
-               :disable="disabled"/>
-        <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal">
-          <div class="absolute-full flex flex-center">
-            <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
-          </div>
-        </q-linear-progress>
-        <q-tabs
-          v-model="tab"
-          align="left"
-          narrow-indicator
-          class="q-mb-md"
-        >
-          <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`"
-                 :label="`Семестр ${item.num}`"/>
-        </q-tabs>
-        <q-linear-progress class="q-mb-md" size="20px" rounded :value="allSemesterPercentValue / allSemesterPercent"
-                           color="primary">
-          <div class="absolute-full flex flex-center">
-            <q-badge color="white" text-color="black" :label="`${allSemesterPercentValue} / ${allSemesterPercent}`"/>
-          </div>
-        </q-linear-progress>
+  <generator-discipline-work-view-base
+ :disabled="disabled"
+    :all-percent="allPercent"
+    :all-percent-value="allPercentValue"
+    :all-semester-percent-value="allSemesterPercentValue"
+    :all-semester-percent="allSemesterPercent"
+    :semesters-data="semestersData"
+    v-model:tab="tab"
+    title="Перечень лекционных занятий по дисциплине"
+    button-add-title="Добавить лекционное занятие"
+    @add-clicked="addLectures"
+  >
+    <template #content>
         <q-tab-panels
           v-model="tab"
           animated
@@ -232,13 +218,8 @@ watchEffect(() => {
             </div>
           </q-tab-panel>
         </q-tab-panels>
-      </div>
-      <div v-else>
-        <p class="text-h6">Нет часов по лекционным занятиям</p>
-        <empty-icon/>
-      </div>
-    </div>
-  </div>
+    </template>
+  </generator-discipline-work-view-base>
 </template>
 
 <style scoped lang="scss">

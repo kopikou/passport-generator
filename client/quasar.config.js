@@ -102,7 +102,11 @@ module.exports = configure(function (ctx) {
     },
 
     framework: {
-      config: {},
+      config: {
+        brand: {
+          primary: "purple"
+        }
+      },
 
       // iconSet: 'material-icons', // Quasar icon set
       lang: 'ru', // Quasar language pack

@@ -38,7 +38,7 @@ const krCheck = computed(() => {
 
 <template>
   <div style="width: 95%">
-    <span class="text-h6 q-pl-lg">Типовые оценочные средства по дисциплине</span>
+    <span class="text-h6">Типовые оценочные средства по дисциплине</span>
     <p></p>
     <q-separator class="q-mt-md q-mb-md"/>
     <q-list
