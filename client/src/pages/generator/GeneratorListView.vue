@@ -22,28 +22,28 @@ import {storeToRefs} from "pinia";
 import _ from "lodash";
 import useMainStore from "stores/mainStore";
 import GeneratorManageDialog from "pages/generator/components/dialogs/GeneratorManageDialog.vue";
+import LayoutHCF from "components/LayoutHCF.vue";
 
 const $q = useQuasar()
 const router = useRouter()
 const listData = ref<GeneratorListData[]>([])
 
-const typeFilter = [
-  {label: 'Руководитель программы', value: 'rop'},
-  {label: 'Директор', value: 'fac'},
-  {label: 'Заведующий кафедры', value: 'zav'},
-  {label: 'Преподаватель', value: 'person'},
-]
+const typeFilterLabel = {
+  rop: 'Руководитель программы',
+  fac: 'Директор',
+  zav: 'Заведующий кафедры',
+  person: 'Преподаватель',
+}
 
-const type = ref($q.localStorage.getItem('surp_typeFilter') ? $q.localStorage.getItem('surp_typeFilter') : ['person'])
 
 const groupFilter = ref($q.localStorage.getItem("surp_groupfilter") ? $q.localStorage.getItem("surp_groupfilter") : '')
 const discplFilter = ref($q.localStorage.getItem("surp_discplfilter") ? $q.localStorage.getItem("surp_discplfilter") : '')
 
 const filteredListData = computed(() => {
   return _(listData.value)
-    .filter(x => {
-      return x.type.some(q => type.value.includes(q));
-    })
+    // .filter(x => {
+    //   return type.value.length == 0 || x.type.some(q => type.value.includes(q));
+    // })
     .filter(x => {
       if (groupFilter.value.length > 0) {
         return x.abbr.toLowerCase().includes(groupFilter.value.toLowerCase())
@@ -98,10 +98,6 @@ function getRowColor(number) {
   return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
 }
 
-watch(type, () => {
-  $q.localStorage.setItem('surp_typeFilter', type.value)
-})
-
 watch([discplFilter, groupFilter], () => {
   $q.localStorage.setItem("surp_discplfilter", discplFilter.value)
   $q.localStorage.setItem("surp_groupfilter", groupFilter.value)
@@ -116,29 +112,16 @@ onBeforeMount(async () => {
 </script>
 
 <template>
-  <div class="q-pa-lg">
-    <div class="text-center text-h6 q-mb-md">Список рабочих программ дисциплин ИРНИТУ</div>
-    <div>
-      <div>
-        <div class="text-center text-subtitle1">Список РПД</div>
-        <q-select
-          class="q-mb-sm"
-          v-model="type"
-          :options="typeFilter"
-          label="Фильтр"
-          option-label="label"
-          option-value="value"
-          stack-label
-          multiple
-          use-chips
-          map-options
-          emit-value
-          outlined
-        />
-        <div class="flex justify-between q-mb-sm">
-          <q-input style="width: 48%" outlined label="Группа" v-model="groupFilter"/>
-          <q-input style="width: 48%" outlined label="Дисциплина" v-model="discplFilter"/>
-        </div>
+  <layout-h-c-f>
+    <template #header>
+      <div class="text-center text-h6 q-mb-md">Список рабочих программ дисциплин ИРНИТУ</div>
+      <div class="flex justify-between q-mb-sm q-px-sm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+        <q-input outlined label="Группа" v-model="groupFilter"/>
+        <q-input outlined label="Дисциплина" v-model="discplFilter"/>
+      </div>
+    </template>
+    <template #content>
+      <div class="q-pa-md">
         <div v-if="_.size(filteredListData) > 0">
           <q-list
             bordered
@@ -148,6 +131,19 @@ onBeforeMount(async () => {
               v-for="items, key in filteredListData"
               :label="key"
             >
+              <template #header>
+                <div class="q-item__section column q-item__section--main justify-center">
+                  <div class="q-item__label">
+                    <div style="display: flex; gap: 8px;">
+                      <div style="width: 70px">{{ key }}</div>
+                      <q-badge v-for="type in _(items).map(x => x.type).flatten().uniq().value()">
+                        {{ typeFilterLabel[type] }}
+                      </q-badge>
+                    </div>
+                  </div>
+
+                </div>
+              </template>
               <q-card>
                 <q-card-section>
                   <div class="rpd-container">
@@ -184,8 +180,9 @@ onBeforeMount(async () => {
           <span v-else>Дисциплины не назначены</span>
         </div>
       </div>
-    </div>
-  </div>
+    </template>
+  </layout-h-c-f>
+
 </template>
 
 <style scoped lang="scss">

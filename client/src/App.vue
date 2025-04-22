@@ -54,7 +54,7 @@ onBeforeMount(async () => {
             </q-avatar>
           </q-btn>
           <q-btn to="/" flat v-if="!$q.screen.xs">
-            Система управления рабочими программами
+            Управление рабочими программами
           </q-btn>
 
         </q-toolbar-title>
@@ -63,13 +63,13 @@ onBeforeMount(async () => {
           <q-route-tab icon="mdi-upload-box" label="Загрузка файлов программ" to="/upload"
                        v-permissions-required="Permissions.can_upload_files"
           />
-          <q-route-tab icon="mdi-generator-portable" label="Генератор РПД" to="/generator"
+          <q-route-tab icon="mdi-generator-portable" label="РПД" to="/generator"
                        v-permissions-required="Permissions.can_use_generator"
           />
           <q-route-tab icon="mdi-generator-mobile" label="Генератор РПП" to="/practice_generator"
                        v-permissions-required="Permissions.can_use_generator"
           />
-          <q-route-tab icon="mdi-account-school" label="План научной деятельности по программе аспирантуры"
+          <q-route-tab icon="mdi-account-school" label="План научной деятельности аспирантуры"
                        to="/scientific-plan"
                        v-permissions-required="Permissions.can_use_generator"
           />
