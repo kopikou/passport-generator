@@ -205,7 +205,7 @@ function getRowColor(id) {
                     icon="mdi-delete" color="red" flat @click="deleteIndependent(independent.id)"
                   />
                   <q-btn
-                    icon="mdi-update" color="green" flat @click="updateIndependent(independent.id)"
+                    icon="mdi-pencil-outline" color="green" flat @click="updateIndependent(independent.id)"
                   />
 <!--                  <q-btn v-if="independent.num != 1"-->
 <!--                         icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"-->

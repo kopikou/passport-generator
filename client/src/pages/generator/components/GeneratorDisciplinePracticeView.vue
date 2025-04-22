@@ -205,7 +205,7 @@ function getRowColor(number) {
                   icon="mdi-delete" color="red" flat @click="deletePractice(practice.id)"
                 />
                 <q-btn
-                  icon="mdi-update" color="green" flat @click="updatePractice(practice.id)"
+                  icon="mdi-pencil-outline" color="green" flat @click="updatePractice(practice.id)"
                 />
                 <q-btn v-if="practice.num != 1"
                        icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"

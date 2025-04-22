@@ -32,33 +32,60 @@ const {
   rpdData,
   admissionData,
   errors,
+  lekcHours,
+  srsHours,
+  prHours,
+  labHours,
 } = storeToRefs(generatorViewStore)
 
-const menuItems = [
-  // title (название), url (ссылка), allow (cadmkind, отображать)
-  {title: 'Титульный лист', url: 'main', allow: [1, 2, 3, 4, 5]},
-  {title: 'Компетенции', url: 'competences', allow: [1, 2, 3, 4]},
-  {title: 'Индикаторы', url: 'indicators', allow: [1, 2, 3, 4]},
-  {title: 'Результаты освоения программы', url: 'competences', allow: [5]},
-  {title: 'Результаты освоения дисциплины ', url: 'indicators', allow: [5]},
-  {title: 'Место дисциплины в структуре ООП', url: 'discipline-place', allow: [1, 2, 3, 4]},
-  {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5]},
-  {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1, 2, 3, 4, 5]},
-  {title: 'Содержание лекционных занятий', url: 'discipline-lectures', 'right': true, allow: [1, 2, 3, 4, 5]},
-  {title: 'Содержание лабораторных работ', url: 'discipline-lab', 'right': true, allow: [1, 2, 3, 4, 5]},
-  {title: 'Содержание практических занятий', url: 'discipline-practice', 'right': true, allow: [1, 2, 3, 4, 5]},
-  {title: 'Содержание самостоятельных работ', url: 'discipline-independent', 'right': true, allow: [1, 2, 3, 4, 5]},
-  {title: 'Перечень учебно-методического обеспечения', url: 'guidelines', allow: [1, 2, 3, 4, 5]},
-  {title: 'Оценочные материалы по дисциплине для контроля текущей успеваемости', url: 'fos', allow: [1, 2, 3, 4, 5]},
-  {title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat', allow: [1, 2, 3, 4, 5]},
-  {title: 'Литература', url: 'library', allow: [1, 2, 3, 4, 5]},
-  {title: 'Другие ресурсы', url: 'resources', allow: [1, 2, 3, 4, 5]},
-  {title: 'Перечень используемых информационных технологий', url: 'soft', allow: [1, 2, 3, 4, 5]},
-  {title: 'Материально-техническое обеспечение', url: 'logistics', allow: [1, 2, 3, 4, 5]},
-]
+const menuItems = computed(() => {
+  let items = [];
+  items.push(...[
+      // title (название), url (ссылка), allow (cadmkind, отображать)
+      {title: 'Титульный лист', url: 'main', allow: [1, 2, 3, 4, 5]},
+      {title: 'Компетенции', url: 'competences', allow: [1, 2, 3, 4]},
+      {title: 'Индикаторы', url: 'indicators', allow: [1, 2, 3, 4]},
+      {title: 'Результаты освоения программы', url: 'competences', allow: [5]},
+      {title: 'Результаты освоения дисциплины ', url: 'indicators', allow: [5]},
+      {title: 'Место дисциплины в структуре ООП', url: 'discipline-place', allow: [1, 2, 3, 4]},
+      {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5]},
+    ]
+  );
+
+  if (lekcHours.value) {
+    items.push({title: 'Содержание лекционных занятий', url: 'discipline-lectures', 'right': true, allow: [1, 2, 3, 4, 5]})
+  }
+  if (labHours.value) {
+    items.push({title: 'Содержание лабораторных работ', url: 'discipline-lab', 'right': true, allow: [1, 2, 3, 4, 5]})
+  }
+  if (prHours.value) {
+    items.push({title: 'Содержание практических занятий', url: 'discipline-practice', 'right': true, allow: [1, 2, 3, 4, 5]})
+  }
+  if (srsHours.value) {
+    items.push( {title: 'Содержание самостоятельных работ', url: 'discipline-independent', 'right': true, allow: [1, 2, 3, 4, 5]})
+  }
+
+
+  items.push(...[
+    {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1, 2, 3, 4, 5]},
+    {title: 'Перечень учебно-методического обеспечения', url: 'guidelines', allow: [1, 2, 3, 4, 5]},
+    {
+      title: 'Оценочные материалы по дисциплине для контроля текущей успеваемости',
+      url: 'fos',
+      allow: [1, 2, 3, 4, 5]
+    },
+    {title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat', allow: [1, 2, 3, 4, 5]},
+    {title: 'Литература', url: 'library', allow: [1, 2, 3, 4, 5]},
+    {title: 'Другие ресурсы', url: 'resources', allow: [1, 2, 3, 4, 5]},
+    {title: 'Перечень используемых информационных технологий', url: 'soft', allow: [1, 2, 3, 4, 5]},
+    {title: 'Материально-техническое обеспечение', url: 'logistics', allow: [1, 2, 3, 4, 5]},
+  ]);
+
+  return items;
+});
 
 const filterMenuItems = computed(() => {
-  return _.filter(menuItems, x => x.allow.includes(admissionData.value.cadmkind))
+  return _.filter(menuItems.value, x => x.allow.includes(admissionData.value.cadmkind))
 })
 
 const criticalErrors = computed(() => {

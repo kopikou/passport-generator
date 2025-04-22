@@ -191,7 +191,7 @@ watchEffect(() => {
                   icon="mdi-delete" color="red" flat @click="deleteTheme(item.id)" :disabled="disabled"
                 />
                 <q-btn
-                  icon="mdi-update" color="green" flat @click="updateTheme(item.id)" :disabled="disabled"
+                  icon="mdi-pencil-outline" color="green" flat @click="updateTheme(item.id)" :disabled="disabled"
                 />
                 <q-btn v-if="item.num != 1"
                        icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"

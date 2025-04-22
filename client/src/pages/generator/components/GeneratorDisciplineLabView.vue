@@ -204,7 +204,7 @@ async function fieldDown(num, sem) {
                     icon="mdi-delete" color="red" flat @click="deleteLab(lab.id)"
                   />
                   <q-btn
-                    icon="mdi-update" color="green" flat @click="updateLab(lab.id)"
+                    icon="mdi-pencil-outline" color="green" flat @click="updateLab(lab.id)"
                   />
                   <q-btn v-if="lab.num != 1"
                          icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"

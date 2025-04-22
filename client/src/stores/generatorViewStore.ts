@@ -135,6 +135,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return rpdData.value.resources || []
   })
 
+  const lekcHours = computed(() => _(semestersData.value).map(x => x.lekc).sum())
+  const srsHours = computed(() => _(semestersData.value).map(x => x.srs).sum())
+  const prHours = computed(() => _(semestersData.value).map(x => x.pr).sum())
+  const labHours = computed(() => _(semestersData.value).map(x => x.lab).sum())
 
   const $q = useQuasar()
 
@@ -235,12 +239,9 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         }
       })
     }
-    const lekc = _(semestersData.value).map(x => x.lekc).sum()
-    const srs = _(semestersData.value).map(x => x.srs).sum()
-    const pr = _(semestersData.value).map(x => x.pr).sum()
-    const lab = _(semestersData.value).map(x => x.lab).sum()
 
-    if (lekc) {
+
+    if (lekcHours.value) {
       const lectures = _.filter(disciplineWorkHour.value, x => x.type == 0)
       if (lectures.length == 0) {
         data.push({
@@ -265,7 +266,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       }
     }
 
-    if (lab) {
+    if (labHours.value) {
       const laboratory = _.filter(disciplineWorkHour.value, x => x.type == 3)
       if (laboratory.length == 0) {
         data.push({
@@ -290,7 +291,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       }
     }
 
-    if (pr) {
+    if (prHours.value) {
       const practice = _.filter(disciplineWorkHour.value, x => x.type == 1)
       if (practice.length == 0) {
         data.push({
@@ -315,7 +316,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       }
     }
 
-    if (srs) {
+    if (srsHours.value) {
       const independent = _.filter(disciplineWorkHour.value, x => x.type == 2)
       if (independent.length == 0) {
         data.push({
@@ -660,6 +661,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     semestersData,
     getData,
     checkErrors,
+    lekcHours,
+    srsHours,
+    prHours,
+    labHours,
   }
 })
 

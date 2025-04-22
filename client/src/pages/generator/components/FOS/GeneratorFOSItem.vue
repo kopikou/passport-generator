@@ -88,7 +88,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <q-expansion-item>
+  <q-expansion-item v-bind="$attrs">
 
     <template #header>
       <q-item-section>
@@ -97,8 +97,6 @@ watchEffect(() => {
           <q-chip
             v-for="theme in themes"
             :label="theme.name"
-            style="max-width: 20vw; margin: 0;"
-            class="bg-transparent text-black"
           >
             <q-tooltip>{{ theme.name }}</q-tooltip>
           </q-chip>

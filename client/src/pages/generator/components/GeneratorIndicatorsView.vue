@@ -26,9 +26,11 @@ const filteredData = computed(() => {
       <p>Раскройте для заполнения</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-list bordered>
-        <div v-for="i in filteredData">
+        <div v-for="(i, index) in filteredData">
           <q-expansion-item
             :label="`${i.indicator_index} ${i.indicator}`"
+            :default-opened="index==0"
+            group="indicators"
           >
             <indicators-list-view :data="i"/>
           </q-expansion-item>

@@ -47,7 +47,7 @@ const tab = defineModel('tab', {
                  :label="`Семестр ${item.num}`"/>
         </q-tabs>
         <q-linear-progress class="q-mb-md" size="20px" rounded :value="allSemesterPercentValue / allSemesterPercent"
-                           color="purple-3">
+                           color="orange-3">
           <div class="absolute-full flex flex-center">
             <q-badge color="white" text-color="black"
                      :label="`${allSemesterPercentValue} / ${allSemesterPercent}`"/>

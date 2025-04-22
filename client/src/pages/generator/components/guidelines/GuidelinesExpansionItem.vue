@@ -67,6 +67,7 @@ watchEffect(() => {
 <template>
   <q-expansion-item
       :label=props.label
+      v-bind="$attrs"
   >
     <q-card>
       <q-card-section>
