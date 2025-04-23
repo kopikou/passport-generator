@@ -49,6 +49,7 @@ const menuItems = computed(() => {
       {title: 'Результаты освоения дисциплины ', url: 'indicators', allow: [5]},
       {title: 'Место дисциплины в структуре ООП', url: 'discipline-place', allow: [1, 2, 3, 4]},
       {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5]},
+      {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1, 2, 3, 4, 5]},
     ]
   );
 
@@ -67,7 +68,6 @@ const menuItems = computed(() => {
 
 
   items.push(...[
-    {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1, 2, 3, 4, 5]},
     {title: 'Перечень учебно-методического обеспечения', url: 'guidelines', allow: [1, 2, 3, 4, 5]},
     {
       title: 'Оценочные материалы по дисциплине для контроля текущей успеваемости',

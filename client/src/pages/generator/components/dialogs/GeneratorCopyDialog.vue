@@ -81,7 +81,7 @@ async function copyProgram(id) {
           >
             <template #control>
               <div>
-                {{ plan.abbrprofile }} - {{ String(plan.startyear).slice(-2) }}
+                {{ plan.abbrprofile }}-{{ String(plan.startyear).slice(-2) }}
               </div>
             </template>
 

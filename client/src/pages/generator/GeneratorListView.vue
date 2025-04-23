@@ -29,10 +29,10 @@ const router = useRouter()
 const listData = ref<GeneratorListData[]>([])
 
 const typeFilterLabel = {
-  rop: 'Руководитель программы',
+  rop: 'Руководитель ОП',
   fac: 'Директор',
   zav: 'Заведующий кафедры',
-  person: 'Преподаватель',
+  person: 'Разработчик РПД',
 }
 
 
@@ -130,6 +130,7 @@ onBeforeMount(async () => {
             <q-expansion-item
               v-for="items, key in filteredListData"
               :label="key"
+              group="programs"
             >
               <template #header>
                 <div class="q-item__section column q-item__section--main justify-center">

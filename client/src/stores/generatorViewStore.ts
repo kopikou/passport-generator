@@ -14,13 +14,13 @@ import {fasElevator} from "@quasar/extras/fontawesome-v6";
 
 const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   const cafData = ref([])
-  const rpdData = ref<GeneratorData[]>([])
+  const rpdData = ref<GeneratorData>({});
   const formControl = ref<GeneratorFormControlData[]>([])
   const independentTypes = ref<GeneratorIndependentTypesData[]>([])
   const activeRpdId = ref(null)
 
   const oldPlans = computed(() => {
-    return rpdData.value.old || []
+    return _.orderBy(rpdData.value.old || [], x => -x.startyear)
   })
 
   const status = computed(() => {
@@ -32,7 +32,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
   const disabled = computed(() => {
-    return [2, 3].includes(rpdData.value?.status)
+    return [2, 3].includes(rpdData.value?.status || 0)
   })
 
   const indicatorsData = computed<PlanIndicatorData[]>(() => {
@@ -162,11 +162,21 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     rpdData.value = r.data
   }
 
-  const errors = ref([])
+  const errors = ref<{
+    url: string,
+    title: string,
+    text: string[],
+    level: string,
+  }[]>([]);
 
   async function checkErrors() {
     const admkind = rpdData.value.admission.cadmkind
-    const data = []
+    const data: {
+      url: string,
+      title: string,
+      text: string[],
+      level: string,
+    }[] = []
 
     const indicators = _(indicatorsData.value)
       .map(x => x.discipline_indicator)
@@ -180,7 +190,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         level: 'critical',
       })
     } else {
-      const text = []
+      const text: string[] = []
       _.forEach(indicators, (x) => {
         const ind = _.find(indicatorsData.value, q => q.id == x.indicator_id)
         if (!x.know) text.push(`Не заполнены сведения о "Знать" для индикатора: ${ind?.indicator_index}`)
@@ -341,7 +351,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       }
     }
 
-    function checkGuidelines(type, errorText) {
+    function checkGuidelines(type: string, errorText: string) {
       if (!_.get(guidelines.value, `[0].${type}`, null)) {
         data.push({
           url: 'guidelines',
@@ -409,7 +419,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       }
     })
 
-    function checkTat(type, errorText) {
+    function checkTat(type: string, errorText: string) {
       const r = _.find(tatInfo.value, x => x.type == type)
       if (!r) {
         data.push({
