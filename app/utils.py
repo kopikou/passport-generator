@@ -2,7 +2,7 @@ from django.db import models, connections
 from django.conf import settings
 from django.core.cache import cache
 from django.forms import CheckboxSelectMultiple, MultipleChoiceField
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission, IsAuthenticated
 from sqlalchemy import URL, create_engine
 from sqlalchemy.orm import Session
 
@@ -58,7 +58,7 @@ class CheckboxSelectMultipleEx(CheckboxSelectMultiple):
         return value.split(",")
 
 
-class UserProfileHasPermission(BasePermission):
+class UserProfileHasPermission(IsAuthenticated):
     message = "У вас не достаточно прав"
 
     def __init__(self, permission):
