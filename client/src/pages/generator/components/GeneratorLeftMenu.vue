@@ -7,6 +7,7 @@ import {api} from "boot/axios";
 import {computed} from "vue";
 import _ from "lodash";
 import useMainStore from "stores/mainStore";
+import dayjs from "dayjs";
 
 const props = defineProps({
   id: {
@@ -88,20 +89,8 @@ const filterMenuItems = computed(() => {
   return _.filter(menuItems.value, x => x.allow.includes(admissionData.value.cadmkind))
 })
 
-const criticalErrors = computed(() => {
-  return _.filter(errors.value, x => x.level == 'critical')
-})
-
-async function sendToReview() {
-  $q.loading.show()
-  let r = await api.get(`/api/generator/${activeRpdId.value}/send-rpd-on-review/`)
-  rpdData.value.status = r.data.status
-  rpdData.value.status_verbose = r.data.status_verbose
-  $q.loading.hide()
-}
-
 function translateDate(date) {
-  let result = new Date(date).toLocaleString('ru')
+  let result = dayjs(new Date(date)).format("DD MMMM YYYY в HH:mm")
   return result
 }
 
@@ -114,43 +103,28 @@ function getErrors(url) {
 
 <template>
   <div style="display: grid; grid-template-rows: auto 1fr; overflow: hidden; height: 100%">
-    <div class="q-pa-sm">
-      <div class="bg-pink-3 rounded-borders" v-if="comment.length != 0">
-        <div class="text-subtitle1">{{ comment.user__last_name }} {{ comment.user__first_name }} оставил комментарий
-        </div>
-        <div>
-          <div class="q-ma-xs text-subtitle2">
-            <div>
-              <div class="text-subtitle1 text-bold">{{ translateDate(comment.created_at) }}</div>
-              <div>
-                {{ comment.comment }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div v-if="!disabled" class="q-mb-sm">
-        <q-btn
-          class="q-mt-xs"
-          color="secondary"
-          dense
-          @click="sendToReview"
-          style="width: 100%"
-          label="Отправить на согласование"
-          :disabled="criticalErrors.length != 0"
-        />
-      </div>
-      <div v-else class="text-center q-mb-md">
-        <q-btn
-          class="q-mt-xs"
-          color="secondary"
-          dense
-          disable
-          style="width: 100%"
-          :label="statusVerbose"
-        />
-      </div>
+    <div class="q-pa-sm" v-if="comment">
+      <q-expansion-item
+        class="bg-blue-2"
+        expand-separator
+        icon="mdi-information"
+        :label="`Комментарий от ${comment.user__last_name} ${comment.user__first_name}`"
+        :caption="translateDate(comment.created_at)"
+      >
+        <q-card class="q-pa-sm bg-blue-1" style="max-height: 300px; overflow-y: auto">
+         {{ comment.comment }}
+          </q-card>
+      </q-expansion-item>
+<!--      <div class="bg-pink-2 q-pa-sm rounded-borders" v-if="comment.length != 0">-->
+<!--        <div class="text-subtitle1">-->
+<!--          {{ comment.user__last_name }} {{ comment.user__first_name }}-->
+<!--          <small>оставил комментарий</small>-->
+<!--        </div>-->
+<!--        <div class="bg-grey-2 q-pa-sm rounded-borders" style="box-shadow: 0 0 4px silver inset">-->
+<!--              -->
+<!--        </div>-->
+<!--        <div class="text-right q-mt-sm" style="font-size: 0.7rem"></div>-->
+<!--      </div>-->
     </div>
     <q-list
       style="overflow-y: auto"

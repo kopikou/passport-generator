@@ -100,7 +100,7 @@ async function addBook() {
     message: "Убедитесь, что выбранный источник доступен всем студентам и в достаточном количестве.",
     color: "secondary",
     type: "info",
-    position: "center",
+    position: "top",
     progress: true,
     timeout: 3500,
   })
@@ -124,8 +124,9 @@ watchEffect(() => {
 
 <template>
   <div class="q-px-md">
+
+
       <span class="text-h6">Учебная литература для дисциплины</span>
-      <p></p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-btn
         class="q-mb-md"

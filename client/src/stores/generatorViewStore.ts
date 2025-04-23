@@ -44,7 +44,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
   const comment = computed(() => {
-    return rpdData.value?.comment || []
+    return rpdData.value?.comment
   })
 
   const admissionData = computed(() => {
@@ -134,6 +134,12 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   const defaultResources = computed<DefaultRecources[]>(() => {
     return rpdData.value.resources || []
   })
+
+
+  const criticalErrors = computed(() => {
+    return _.filter(errors.value, x => x.level == 'critical')
+  })
+
 
   const lekcHours = computed(() => _(semestersData.value).map(x => x.lekc).sum())
   const srsHours = computed(() => _(semestersData.value).map(x => x.srs).sum())
@@ -663,6 +669,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     statusVerbose,
     disabled,
     errors,
+    criticalErrors,
 
     activeRpdId,
     rpdData,

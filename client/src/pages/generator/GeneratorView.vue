@@ -9,6 +9,7 @@ import {useRouter} from "vue-router";
 import GeneratorLeftMenu from "pages/generator/components/GeneratorLeftMenu.vue";
 import GeneratorCopyDialog from "pages/generator/components/dialogs/GeneratorCopyDialog.vue";
 import useMainStore from "stores/mainStore";
+import {api} from "boot/axios";
 
 const generatorViewStore = useGeneratorViewStore();
 
@@ -26,6 +27,9 @@ const {
   cafData,
   activeRpdId,
   rpdData,
+  criticalErrors,
+  disabled,
+  statusVerbose,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -46,6 +50,16 @@ function copyProgram() {
     // console.log(data)
   })
 }
+
+
+async function sendToReview() {
+  $q.loading.show()
+  let r = await api.get(`/api/generator/${activeRpdId.value}/send-rpd-on-review/`)
+  rpdData.value.status = r.data.status
+  rpdData.value.status_verbose = r.data.status_verbose
+  $q.loading.hide()
+}
+
 
 watch(() => props.id,
   () => {
@@ -72,18 +86,29 @@ watch(() => props.id,
       </div>
       <div style="justify-content: flex-end; display: flex; gap: 8px">
         <q-btn
-        color="purple-5"
-        label="Просмотр РПД"
-        icon="mdi-file-pdf-box"
-        :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-report/`"
-        target="_blank"
-      />
+          color="purple-5"
+          label="Просмотр РПД"
+          icon="mdi-file-pdf-box"
+          :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-report/`"
+          target="_blank"
+        />
         <q-btn
           label="Скопировать"
           color="white"
           text-color="black"
           icon="mdi-content-copy"
           @click="copyProgram"
+        />
+        <q-btn v-if="!disabled"
+          color="secondary"
+          @click="sendToReview"
+          label="Отправить на согласование"
+          :disabled="criticalErrors.length != 0"
+        />
+        <q-btn v-else
+          color="secondary"
+          disable
+          :label="statusVerbose"
         />
       </div>
     </div>
