@@ -42,46 +42,9 @@ class GeneratorViewSet(
 
     def retrieve(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
-        instance = (PlanLinesLink.objects.filter(id=pk)
-                    .select_related("planlines", "planlines__plan")
-                    .prefetch_related("planlines__semesters", "planlines__indicators",
-                                      "planlines__indicators__discipline_indicator", "discipline_themes",
-                                      "discipline_work_hour").first())
-
-        if instance.status == PlanLinesLink.StatusChoices.appointed:
-            instance.status = PlanLinesLink.StatusChoices.is_filled
-            instance.save()
-
-        serializer = self.get_serializer(instance)
-
-        admission_info = AISServices.get_admissionn_info(serializer.data['cadmission'])
-
-        other_discipline = LinesData.objects.filter(plan_id=serializer.data['planlines']['plan_id'],
-                                                    synchronize=True).values("disid", "dis")
-
-        resources = DefaultsResources.objects.all().values("id", "name", "type", "url")
-
-        comment = PlanLinesLinkComments.objects.filter(planlineslink_id=instance.id).values(
-            "id",
-            "created_at",
-            "comment",
-            "user_id",
-            "user__first_name",
-            "user__last_name",
-        ).last()
-
-        old_rpd = AISServices.get_old_rpd_list(serializer.data['mira_id'])
-
-        result = {
-            "admission": admission_info[0],
-            "other_discipline": [i for i in other_discipline],
-            "resources": [i for i in resources],
-            "comment": comment,
-            "old": [i for i in old_rpd],
-            **serializer.data,
-        }
-
+        result = GeneratorService.get_rpd_data(pk)
         return Response(result)
+
 
     @action(methods=['POST'], url_path='save-asp-program-data', detail=True, permission_classes=[CanEditRPDProgram])
     def save_asp_program_data(self, request, *args, **kwargs):
@@ -463,13 +426,13 @@ class GeneratorViewSet(
     def get_rpd_report(self, request, *args, **kwargs):
 
         instance = self.get_object()
-        result = self.retrieve(request, *args, **kwargs).data
-
         pk = self.kwargs['pk']
+
+        rpd_data = GeneratorService.get_rpd_data(pk)
 
         # filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(
         #     ',', ' ')
-        filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.pdf".replace(
+        filename = f"РПД_{instance.planlines.dis}_{rpd_data['admission']['abbr']}-{rpd_data['admission']['yr']}.pdf".replace(
             ',', ' ')
         path = f'templates/outputs/'
 
@@ -482,7 +445,7 @@ class GeneratorViewSet(
         path_doc_file = f"{os.path.abspath(path)}/{pk}.docx"
         path_pdf_file = f"{os.path.abspath(path)}/{pk}.pdf"
 
-        tpl = ReportService.get_rpd_report(result)
+        tpl = ReportService.get_rpd_report(rpd_data)
         # tpl.save(response)
 
         tpl.save(path_doc_file)
@@ -512,7 +475,6 @@ class GeneratorViewSet(
         if os.path.exists(path_pdf_file):
             os.remove(path_pdf_file)
 
-        # return Response(result)
         return response
 
     @action(methods=['GET'], url_path="get-rpd-annotation", detail=True)

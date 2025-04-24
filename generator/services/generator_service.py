@@ -2,7 +2,8 @@ from itertools import groupby
 
 from app.utils import cache_function
 from arim.services import AISServices
-from generator.models import PlanLinesLink
+from generator.models import PlanLinesLink, DefaultsResources, PlanLinesLinkComments
+from generator.serializer import PlanLinesLinkSerializer
 from rpd.models import LinesData
 
 
@@ -71,3 +72,45 @@ class GeneratorService(object):
             res.append(temp)
 
         return res
+
+    @classmethod
+    def get_rpd_data(cls, plan_lines_link_id):
+        instance = (PlanLinesLink.objects.filter(id=plan_lines_link_id)
+                    .select_related("planlines", "planlines__plan")
+                    .prefetch_related("planlines__semesters", "planlines__indicators",
+                                      "planlines__indicators__discipline_indicator", "discipline_themes",
+                                      "discipline_work_hour").first())
+
+        if instance.status == PlanLinesLink.StatusChoices.appointed:
+            instance.status = PlanLinesLink.StatusChoices.is_filled
+            instance.save()
+
+        serializer = PlanLinesLinkSerializer(instance)
+
+        admission_info = AISServices.get_admissionn_info(serializer.data['cadmission'])
+
+        other_discipline = LinesData.objects.filter(plan_id=serializer.data['planlines']['plan_id'],
+                                                    synchronize=True).values("disid", "dis")
+
+        resources = DefaultsResources.objects.all().values("id", "name", "type", "url")
+
+        comment = PlanLinesLinkComments.objects.filter(planlineslink_id=instance.id).values(
+            "id",
+            "created_at",
+            "comment",
+            "user_id",
+            "user__first_name",
+            "user__last_name",
+        ).last()
+
+        old_rpd = AISServices.get_old_rpd_list(serializer.data['mira_id'])
+
+        result = {
+            "admission": admission_info[0],
+            "other_discipline": [i for i in other_discipline],
+            "resources": [i for i in resources],
+            "comment": comment,
+            "old": [i for i in old_rpd],
+            **serializer.data,
+        }
+        return result
