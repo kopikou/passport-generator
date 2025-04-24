@@ -521,7 +521,10 @@ class ReportService(object):
                     [i['srs_hours'] for i in tmp if i['srs_hours'] != '']) != 0 else '',
             })
 
-        podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
+        if data['admission']['ckaf_id'] == 105:
+            podrazdelene = data['admission']['cfac__name'].strip()
+        else:
+            podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
 
         context = {
             "now": pendulum.now().start_of("day"),
