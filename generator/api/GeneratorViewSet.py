@@ -364,7 +364,7 @@ class GeneratorViewSet(
         # return Response(result)
         return response
 
-    @action(methods=['GET'], url_path="search-book", detail=False)
+    @action(methods=['GET'], url_path="search-book", detail=False, permission_classes=[IsAuthenticated])
     def search_book(self, request, *args, **kwargs):
         val = self.request.query_params.get('val')
 
@@ -372,7 +372,7 @@ class GeneratorViewSet(
 
         return Response(data)
 
-    @action(methods=['GET'], url_path="search-software", detail=False)
+    @action(methods=['GET'], url_path="search-software", detail=False, permission_classes=[IsAuthenticated])
     def search_soft(self, request, *args, **kwargs):
         val = self.request.query_params.get('val')
 
