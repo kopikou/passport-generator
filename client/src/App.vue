@@ -24,7 +24,7 @@ api.interceptors.response.use((response) => response, (error) => {
 
   $q.notify({
     color: 'negative',
-    message: 'Ошибка получения данных, перезагрузите страницу',
+    message: error.response?.data?.detail || 'Ошибка получения данных, перезагрузите страницу',
     icon: 'mdi-alert-box',
     position: 'top',
   })

@@ -43,7 +43,7 @@ const protocolNumber = ref()
 const protocolDate = ref()
 const acceptRPD = ref(false)
 const userType = ref(0)
-const meeting = ref()
+const meeting = ref("заседании кафедры")
 const userTypeOptions = [
   {value: 0, label: 'Руководитель программы'},
   {value: 1, label: 'Заведующий кафедрой'},
@@ -225,7 +225,7 @@ function getStatusColor(status) {
             v-model="meeting"
             type="text"
             stack-label
-            label="Заседание"
+            label="Утвердили на"
             filled
           />
           <q-input

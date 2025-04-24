@@ -11,6 +11,7 @@ from django.utils.encoding import escape_uri_path
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.mixins import RetrieveModelMixin
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
@@ -21,7 +22,7 @@ from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
     DefaultsResources, PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
     ScientificDataDefault, DisciplineIndicators
-from generator.permissions import CanEditRPDProgram
+from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanAcceptRPDProgram
 from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
@@ -37,7 +38,7 @@ class GeneratorViewSet(
 ):
     queryset = PlanLinesLink.objects.all()
     serializer_class = PlanLinesLinkSerializer
-    permission_classes = [UserProfileHasPermission(Permissions.can_use_generator)]
+    permission_classes = [UserProfileHasPermission(Permissions.can_use_generator) and CanViewRPDProgram]
 
     def retrieve(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
@@ -255,7 +256,7 @@ class GeneratorViewSet(
             "old": old_plans,
         })
 
-    @action(methods=['GET'], url_path="get-program-list", detail=False)
+    @action(methods=['GET'], url_path="get-program-list", detail=False, permission_classes=[IsAuthenticated])
     def get_program_list(self, request, *args, **kwargs):
         res = GeneratorService.get_program_list(self.request.user.userprofile.mira_id)
 
@@ -379,7 +380,7 @@ class GeneratorViewSet(
 
         return Response(data)
 
-    @action(methods=['GET'], url_path="search-oborud", detail=False)
+    @action(methods=['GET'], url_path="search-oborud", detail=False, permission_classes=[IsAuthenticated])
     def search_oborud(self, request, *args, **kwargs):
         val = self.request.query_params.get('val')
         type = int(self.request.query_params.get('type'))
@@ -389,13 +390,13 @@ class GeneratorViewSet(
 
         return Response(data)
 
-    @action(methods=['GET'], url_path="get-form-control-data", detail=False)
+    @action(methods=['GET'], url_path="get-form-control-data", detail=False, permission_classes=[IsAuthenticated])
     def get_form_control_data(self, request, *args, **kwargs):
         data = FormControl.objects.all().values("id", "name", "type")
 
         return Response(data)
 
-    @action(methods=['GET'], url_path="get-independent-types-data", detail=False)
+    @action(methods=['GET'], url_path="get-independent-types-data", detail=False, permission_classes=[IsAuthenticated])
     def get_independent_types_data(self, request, *args, **kwargs):
         data = IndependentTypes.objects.all().values("id", "name", "type")
 
@@ -541,7 +542,7 @@ class GeneratorViewSet(
         return Response(data={'status_verbose': PlanLinesLink.StatusChoices.on_review.label,
                               'status': PlanLinesLink.StatusChoices.on_review})
 
-    @action(methods=['POST'], url_path="accept-rpd", detail=True)
+    @action(methods=['POST'], url_path="accept-rpd", detail=True, permission_classes=[CanAcceptRPDProgram])
     def accept_rpd(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.accepted
