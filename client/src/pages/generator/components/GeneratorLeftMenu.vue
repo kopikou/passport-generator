@@ -37,6 +37,7 @@ const {
   srsHours,
   prHours,
   labHours,
+  hasTat,
 } = storeToRefs(generatorViewStore)
 
 const menuItems = computed(() => {
@@ -75,7 +76,13 @@ const menuItems = computed(() => {
       url: 'fos',
       allow: [1, 2, 3, 4, 5]
     },
-    {title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat', allow: [1, 2, 3, 4, 5]},
+    ])
+
+  if (hasTat.value) {
+    items.push({title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat', allow: [1, 2, 3, 4, 5]});
+  }
+
+  items.push(...[
     {title: 'Литература', url: 'library', allow: [1, 2, 3, 4, 5]},
     {title: 'Другие ресурсы', url: 'resources', allow: [1, 2, 3, 4, 5]},
     {title: 'Перечень используемых информационных технологий', url: 'soft', allow: [1, 2, 3, 4, 5]},

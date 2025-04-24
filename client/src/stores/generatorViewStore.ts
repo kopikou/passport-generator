@@ -140,6 +140,12 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return _.filter(errors.value, x => x.level == 'critical')
   })
 
+  const hasTat = computed(() => {
+    return _.some(semestersData.value, x => {
+      return x.ekz || x.zach || x.zacho || x.kp || x.kr
+    })
+  })
+
 
   const lekcHours = computed(() => _(semestersData.value).map(x => x.lekc).sum())
   const srsHours = computed(() => _(semestersData.value).map(x => x.srs).sum())
@@ -497,31 +503,32 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       }
     }
 
-    if (tatInfo.value.length == 0) {
-      data.push({
-        url: 'tat',
-        title: 'Не заполнены типовые оценочные средства',
-        text: [`Не заполнены типовые оценочные средства`],
-        level: 'critical',
-      })
-    } else {
-      let zach = false
-      let zacho = false
-      let ekz = false
-      let kp = false
+    if (hasTat.value) {
+      if (tatInfo.value.length == 0) {
+        data.push({
+          url: 'tat',
+          title: 'Не заполнены типовые оценочные средства',
+          text: [`Не заполнены типовые оценочные средства`],
+          level: 'critical',
+        })
+      } else {
+        let zach = false
+        let zacho = false
+        let ekz = false
+        let kp = false
 
-      _.forEach(semestersData.value, (x) => {
-        if (x.zach) zach = true
-        if (x.zacho) zacho = true
-        if (x.ekz) ekz = true
-        if (x.kp || x.kr) kp = true
-      })
+        _.forEach(semestersData.value, (x) => {
+          if (x.zach) zach = true
+          if (x.zacho) zacho = true
+          if (x.ekz) ekz = true
+          if (x.kp || x.kr) kp = true
+        })
 
-      if (zach) checkTat('zach', 'Зачет')
-      if (zacho) checkTat('zacho', 'Дифференцированный зачет')
-      if (ekz) checkTat('ekz', 'Экзамен')
-      if (kp) checkTat('krkp', 'Курсовой проекта/работа')
-
+        if (zach) checkTat('zach', 'Зачет')
+        if (zacho) checkTat('zacho', 'Дифференцированный зачет')
+        if (ekz) checkTat('ekz', 'Экзамен')
+        if (kp) checkTat('krkp', 'Курсовой проекта/работа')
+      }
     }
 
 
@@ -668,6 +675,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     status,
     statusVerbose,
     disabled,
+    hasTat,
     errors,
     criticalErrors,
 
