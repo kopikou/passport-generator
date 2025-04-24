@@ -556,7 +556,7 @@ class GeneratorViewSet(
 
         return Response({"success": True})
 
-    @action(methods=['POST'], url_path="send-rpd-on-refile", detail=True)
+    @action(methods=['POST'], url_path="send-rpd-on-refile", detail=True, permission_classes=[CanAcceptRPDProgram])
     def send_rpd_on_refile(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.on_refile
@@ -575,7 +575,7 @@ class GeneratorViewSet(
 
         return Response([i for i in data])
 
-    @action(methods=['GET'], url_path="copy-old-rpd-program", detail=True)
+    @action(methods=['GET'], url_path="copy-old-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
     def get_old_rpd(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
 
