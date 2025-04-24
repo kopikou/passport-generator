@@ -20,6 +20,7 @@ const {
   lecturesDisciplineWorkHour,
   disciplineThemes,
   disabled,
+  activeRpdId,
 } = storeToRefs(generatorViewStore)
 
 const tab = ref(0)
@@ -86,7 +87,7 @@ function deleteLectures(id) {
   }).onOk(async () => {
 
     $q.loading.show({message: "Удаление"})
-    let r = await api.get('/api/generator/delete-discipline-work-hour/', {params: {id: id}})
+    let r = await api.get(`/api/generator/${activeRpdId.value}/delete-discipline-work-hour/`, {params: {id: id}})
 
     rpdData.value.discipline_work_hour.splice(_.findKey(rpdData.value.discipline_work_hour, (x) => x.id == id), 1)
     generatorViewStore.checkErrors()
@@ -112,7 +113,7 @@ function getRowColor(number) {
 }
 
 async function saveWorkHour(data) {
-  let r = await api.post('/api/generator/save-discipline-work-hour/', data)
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-work-hour/`, data)
   return r.data
 }
 

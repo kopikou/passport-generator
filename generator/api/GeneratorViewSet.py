@@ -21,10 +21,12 @@ from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
     DefaultsResources, PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
     ScientificDataDefault, DisciplineIndicators
+from generator.permissions import CanEditRPDProgram
 from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
 from generator.services import ReportService
+from generator.services.generator_service import GeneratorService
 from rpd.models import LinesData, PlanData
 from rpd.services import RPDGenSerivce
 
@@ -80,7 +82,7 @@ class GeneratorViewSet(
 
         return Response(result)
 
-    @action(methods=['POST'], url_path='save-asp-program-data', detail=True)
+    @action(methods=['POST'], url_path='save-asp-program-data', detail=True, permission_classes=[CanEditRPDProgram])
     def save_asp_program_data(self, request, *args, **kwargs):
 
         data = self.request.data
@@ -94,7 +96,7 @@ class GeneratorViewSet(
 
         return Response(serializer.data)
 
-    @action(methods=['GET'], url_path='copy-asp-program-data', detail=True)
+    @action(methods=['GET'], url_path='copy-asp-program-data', detail=True, permission_classes=[CanEditRPDProgram])
     def copy_asp_program_data(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -255,76 +257,14 @@ class GeneratorViewSet(
 
     @action(methods=['GET'], url_path="get-program-list", detail=False)
     def get_program_list(self, request, *args, **kwargs):
-
-        user = self.request.user.userprofile.mira_id
-
-        data = AISServices.get_disciplines_by_person(user)
-
-        discpl_list = [i['discpl'] for i in data]
-        abbrprofile_list = [i['abbr'] for i in data]
-        startyear_list = [i['yr'] for i in data]
-
-        filtered_data = LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
-                                                 plan__startyear__in=startyear_list,
-                                                 plan__file__status=4, synchronize=True).select_related("plan")
-
-        filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.plan.startyear}": i for i in filtered_data}
-
-        lineslink = PlanLinesLink.objects.filter(mira_id__in=[i['planlin'] for i in data])
-        lineslink_sorted = sorted(lineslink, key=lambda x: x.mira_id)
-        lineslink_by_id = {i.mira_id: i for i in lineslink_sorted}
-
-        result = []
-        for item in data:
-
-            line = filtered_data_sorted.get(f"{item['discpl']}_{item['abbr']}_{item['yr']}")
-
-            if line:
-
-                res = lineslink_by_id.get(item['planlin'], [])
-
-                if not res:
-
-                    res, created = PlanLinesLink.objects.get_or_create(
-                        cadmission=item['id_admission'],
-                        mira_id=item['planlin'],
-                        person=item['mira_id'],
-                        defaults={
-                            "cadmission": item['id_admission'],
-                            "mira_id": item['planlin'],
-                            "person": item['mira_id'],
-                            "status": PlanLinesLink.StatusChoices.appointed,
-                            "planlines_id": line.id,
-                        }
-                    )
-
-                result.append({
-                    **item,
-                    "id": res.id,
-                    "status": res.status,
-                    "status_verbose": res.status_verbose,
-                    "kafcode": res.planlines.caf,
-                    "discode": res.planlines.newdisid,
-                })
-
-
-        sorted_result = sorted(result, key=lambda x: (x['planlin'], x['mira_id']))
-        grouped_result = {key: list(items) for key, items in
-                          groupby(sorted_result, key=lambda x: (x['planlin'], x['mira_id']))}
-
-        res = []
-        for key, items in grouped_result.items():
-            temp = {
-                **items[0],
-                "type": [i['type'] for i in items],
-            }
-            res.append(temp)
+        res = GeneratorService.get_program_list(self.request.user.userprofile.mira_id)
 
         return Response(
             data=res,
         )
 
-    @action(methods=['POST'], url_path="save-scientific-data", detail=True)
+
+    @action(methods=['POST'], url_path="save-scientific-data", detail=True, permission_classes=[CanEditRPDProgram])
     def save_scientific_data(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -342,7 +282,7 @@ class GeneratorViewSet(
 
         return Response(data=data)
 
-    @action(methods=['POST'], url_path="save-scientific-data", detail=True)
+    @action(methods=['POST'], url_path="save-scientific-data", detail=True, permission_classes=[CanEditRPDProgram])
     def save_scientific_data(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -362,7 +302,7 @@ class GeneratorViewSet(
 
         return Response(data=serializer.data)
 
-    @action(methods=['DELETE'], url_path="del-scientific-work", detail=True)
+    @action(methods=['DELETE'], url_path="del-scientific-work", detail=True, permission_classes=[CanEditRPDProgram])
     def del_scientific_work(self, request, *args, **kwargs):
 
         ScientificData.objects.get(id=self.kwargs['pk']).delete()
@@ -461,7 +401,7 @@ class GeneratorViewSet(
 
         return Response(data)
 
-    @action(methods=['POST'], url_path="save-discipline-indicator", detail=False)
+    @action(methods=['POST'], url_path="save-discipline-indicator", detail=True, permission_classes=[CanEditRPDProgram])
     def save_discipline_indicator(self, request, *args, **kwargs):
         data = self.request.data
 
@@ -471,7 +411,7 @@ class GeneratorViewSet(
 
         return Response(serializer_data.data)
 
-    @action(methods=['POST'], url_path="save-discipline-themes", detail=False)
+    @action(methods=['POST'], url_path="save-discipline-themes", detail=True, permission_classes=[CanEditRPDProgram])
     def save_discipline_themes(self, request, *args, **kwargs):
         data = self.request.data
 
@@ -481,7 +421,7 @@ class GeneratorViewSet(
 
         return Response(serializer_data.data)
 
-    @action(methods=['GET'], url_path="delete-discipline-themes", detail=False)
+    @action(methods=['GET'], url_path="delete-discipline-themes", detail=True, permission_classes=[CanEditRPDProgram])
     def delete_discipline_themes(self, request, *args, **kwargs):
         pk = self.request.query_params['id']
 
@@ -489,7 +429,7 @@ class GeneratorViewSet(
 
         return Response({"success": True})
 
-    @action(methods=['POST'], url_path="save-discipline-work-hour", detail=False)
+    @action(methods=['POST'], url_path="save-discipline-work-hour", detail=True, permission_classes=[CanEditRPDProgram])
     def save_discipline_work(self, request, *args, **kwargs):
         data = self.request.data
 
@@ -499,7 +439,7 @@ class GeneratorViewSet(
 
         return Response(serializer_data.data)
 
-    @action(methods=['GET'], url_path="delete-discipline-work-hour", detail=False)
+    @action(methods=['GET'], url_path="delete-discipline-work-hour", detail=True, permission_classes=[CanEditRPDProgram])
     def delete_discipline_work_hour(self, request, *args, **kwargs):
         pk = self.request.query_params.get('id')
 
@@ -507,7 +447,7 @@ class GeneratorViewSet(
 
         return Response({"success": True})
 
-    @action(methods=['POST'], url_path="save-additional-info", detail=True)
+    @action(methods=['POST'], url_path="save-additional-info", detail=True, permission_classes=[CanEditRPDProgram])
     def save_additional_info(self, request, *args, **kwargs):
         data = self.request.data
 
@@ -591,7 +531,7 @@ class GeneratorViewSet(
         # return Response(result)
         return response
 
-    @action(methods=['GET'], url_path="send-rpd-on-review", detail=True)
+    @action(methods=['GET'], url_path="send-rpd-on-review", detail=True, permission_classes=[CanEditRPDProgram])
     def send_rpd_on_review(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.on_review

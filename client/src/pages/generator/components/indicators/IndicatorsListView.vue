@@ -13,6 +13,7 @@ const generatorViewStore = useGeneratorViewStore();
 
 const {
   disabled,
+  activeRpdId,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -30,7 +31,7 @@ const methods = ref(null)
 
 async function saveData() {
   // $q.loading.show({message: "Сохранение"})
-  let r = await api.post('/api/generator/save-discipline-indicator/', {
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-indicator/`, {
     indicator_id: props.data.id,
     planlineid_id: props.data.planlineid_id,
     know: know.value,

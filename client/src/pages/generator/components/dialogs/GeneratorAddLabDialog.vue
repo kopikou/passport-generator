@@ -20,6 +20,7 @@ const {
   rpdData,
   disciplineThemes,
   labDisciplineWorkHour,
+  activeRpdId,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({

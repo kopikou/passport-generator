@@ -20,6 +20,7 @@ const {
   formControl,
   rpdData,
   disabled,
+  activeRpdId,
 } = storeToRefs(generatorViewStore)
 
 const tab = ref(0)
@@ -67,7 +68,7 @@ async function deleteTheme(id) {
   }).onOk(async () => {
 
     $q.loading.show({message: "Удаление"})
-    let r = await api.get(`/api/generator/delete-discipline-themes/`, {params: {id: id}})
+    let r = await api.get(`/api/generator/${activeRpdId.value}/delete-discipline-themes/`, {params: {id: id}})
 
     rpdData.value.discipline_themes.splice(_.findKey(disciplineThemes.value, (x) => x.id == id), 1)
     rpdData.value.discipline_work_hour = _.filter(disciplineWorkHour.value, x => x.theme_id != id)
@@ -115,7 +116,7 @@ async function fieldDown(num, sem) {
 }
 
 async function saveThemeData(data) {
-  let r = await api.post('/api/generator/save-discipline-themes/', data)
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-themes/`, data)
   return r.data
 }
 
