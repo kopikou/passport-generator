@@ -706,3 +706,12 @@ class GeneratorViewSet(
                     lab_serializer.save()
 
         return Response(data={"success": True}, status=status.HTTP_200_OK)
+
+
+    @action(methods=['GET'], url_path="copy-new-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
+    def copy_new_rpd_program(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        new_pk = int(self.request.query_params['new_pk'])
+        instance = self.retrieve(request, *args, **kwargs).data
+
+        return Response(data={"success": True}, status=status.HTTP_200_OK)

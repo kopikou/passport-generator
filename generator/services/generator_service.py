@@ -1,5 +1,6 @@
 from itertools import groupby
 
+from app.utils import cache_function
 from arim.services import AISServices
 from generator.models import PlanLinesLink
 from rpd.models import LinesData
@@ -7,6 +8,7 @@ from rpd.models import LinesData
 
 class GeneratorService(object):
     @classmethod
+    @cache_function(timeout=60 * 1)
     def get_program_list(cls, user_mira_id):
         data = AISServices.get_disciplines_by_person(user_mira_id)
 
