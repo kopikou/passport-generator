@@ -31,6 +31,8 @@ import AspirantScientificPlansPage from "pages/scientificPlan/AspirantScientific
 // import AspirantScientificPlanView from "pages/scientificPlan/AspirantScientificPlanView.vue";
 import PracticeGeneratorListView from "pages/generator/PracticeGeneratorListView.vue";
 import GeneratorPracticeContent from "pages/generator/components/GeneratorPracticeContent.vue";
+import GeneratorPracticeReportView from "pages/generator/components/GeneratorPracticeReportView.vue";
+import GeneratorMainView from "pages/generator/components/GeneratorMainView.vue";
 
 
 const routes: RouteRecordRaw[] = [
@@ -100,6 +102,11 @@ const routes: RouteRecordRaw[] = [
             path: "practice-content",
             name: "PracticeGeneratorContent",
             component: GeneratorPracticeContent,
+          },
+          {
+            path: "practice-report",
+            name: "PracticeGeneratorReport",
+            component: GeneratorPracticeReportView,
           },
           {
             path: "library",
