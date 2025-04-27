@@ -37,26 +37,18 @@ const kpCheck = computed(() => {
 </script>
 
 <template>
-  <div style="width: 95%">
-    <span class="text-h6 q-pl-lg">Методические указания по дисциплине</span>
+  <div class="q-px-md">
+    <span class="text-h6">Методические указания по дисциплине</span>
     <p>Вы можете написать ссылку на электронный курс из <a href="https://el.istu.edu">el.istu.edu</a> оформленный по <a href="https://bibliostyle.ru/oformlenie-ssylok-na-elektronnye-dokumenty-sayty-internet-istochniki-po-gost-p-7-0-108-2022/" target="_blank">ГОСТ 7.0.108-2022</a></p>
     <q-separator class="q-mt-md q-mb-md"/>
     <q-list
       bordered
       style="border-bottom: none;"
     >
-      <div v-show="labCheck">
-        <GuidelinesExpansionItem label="Лабораторные работы" type="laboratory"/>
-      </div>
-      <div v-show="prCheck">
-        <GuidelinesExpansionItem label="Практические занятия" type="practice"/>
-      </div>
-      <div v-show="srsCheck">
-        <GuidelinesExpansionItem label="Самостоятельные занятия" type="independent"/>
-      </div>
-      <div v-show="krCheck || kpCheck">
-        <GuidelinesExpansionItem label="Курсовой проект/работа" type="course"/>
-      </div>
+         <GuidelinesExpansionItem  v-show="labCheck" label="Лабораторные работы" type="laboratory" :default-opened="true" group="info"/>
+        <GuidelinesExpansionItem v-show="prCheck" label="Практические занятия" type="practice" :default-opened="true" group="info"/>
+        <GuidelinesExpansionItem v-show="srsCheck" label="Самостоятельные занятия" type="independent" :default-opened="true" group="info"/>
+        <GuidelinesExpansionItem v-show="krCheck || kpCheck" label="Курсовой проект/работа" type="course" :default-opened="true" group="info"/>
     </q-list>
   </div>
 </template>

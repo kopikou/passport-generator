@@ -7,6 +7,7 @@ import {api} from "boot/axios";
 import {computed} from "vue";
 import _ from "lodash";
 import useMainStore from "stores/mainStore";
+import dayjs from "dayjs";
 
 const props = defineProps({
   id: {
@@ -33,37 +34,85 @@ const {
   admissionData,
   planlinesData,
   errors,
+  lekcHours,
+  srsHours,
+  prHours,
+  labHours,
+  hasTat,
 } = storeToRefs(generatorViewStore)
 
-const menuItems = [
-  // title (название), url (ссылка), allow (cadmkind, отображать)
-  {title: 'Титульный лист', url: 'main', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
-  {title: 'Компетенции', url: 'competences', allow: [1, 2, 3, 4], rpd: true, rpp: true},
-  {title: 'Индикаторы', url: 'indicators', allow: [1, 2, 3, 4], rpd: true, rpp: true},
-  {title: 'Результаты освоения программы', url: 'competences', allow: [5], rpd: true, rpp: true},
-  {title: 'Результаты освоения дисциплины ', url: 'indicators', allow: [5], rpd: true, rpp: true},
-  {title: 'Место дисциплины в структуре ООП', url: 'discipline-place', allow: [1, 2, 3, 4], rpd: true, rpp: false},
-  {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
-  {title: 'Содержание практики', url: 'practice-content', allow: [1, 2, 3, 4, 5], rpd: false, rpp: true},
-  {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1, 2, 3, 4, 5], rpd: true, rpp: false},
-  {title: 'Содержание лекционных занятий', url: 'discipline-lectures', 'right': true, allow: [1, 2, 3, 4, 5], rpd: true, rpp: false},
-  {title: 'Содержание лабораторных работ', url: 'discipline-lab', 'right': true, allow: [1, 2, 3, 4, 5], rpd: true, rpp: false},
-  {title: 'Содержание практических занятий', url: 'discipline-practice', 'right': true, allow: [1, 2, 3, 4, 5], rpd: true, rpp: false},
-  {title: 'Содержание самостоятельных работ', url: 'discipline-independent', 'right': true, allow: [1, 2, 3, 4, 5], rpd: true, rpp: false},
-  {title: 'Перечень учебно-методического обеспечения', url: 'guidelines', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
-  {title: 'Оценочные материалы по дисциплине для контроля текущей успеваемости', url: 'fos', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
-  {title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
-  {title: 'Литература', url: 'library', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
-  {title: 'Другие ресурсы', url: 'resources', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
-  {title: 'Перечень используемых информационных технологий', url: 'soft', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
-  {title: 'Материально-техническое обеспечение', url: 'logistics', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
-]
+const menuItems = computed(() => {
+  let items = [];
+  items.push(...[
+      // title (название), url (ссылка), allow (cadmkind, отображать)
+      {title: 'Титульный лист', url: 'main', allow: [1, 2, 3, 4, 5]},
+      {title: 'Компетенции', url: 'competences', allow: [1, 2, 3, 4]},
+      {title: 'Индикаторы', url: 'indicators', allow: [1, 2, 3, 4]},
+      {title: 'Результаты освоения программы', url: 'competences', allow: [5]},
+      {title: 'Результаты освоения дисциплины ', url: 'indicators', allow: [5]},
+      {title: 'Место дисциплины в структуре ООП', url: 'discipline-place', allow: [1, 2, 3, 4]},
+      {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5]},
+      {title: 'Содержание практики', url: 'practice-content', allow: [1, 2, 3, 4, 5], rpd: false, rpp: true},
+      {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1, 2, 3, 4, 5]},
+    ]
+  );
+
+  if (lekcHours.value) {
+    items.push({
+      title: 'Содержание лекционных занятий',
+      url: 'discipline-lectures',
+      'right': true,
+      allow: [1, 2, 3, 4, 5]
+    })
+  }
+  if (labHours.value) {
+    items.push({title: 'Содержание лабораторных работ', url: 'discipline-lab', 'right': true, allow: [1, 2, 3, 4, 5]})
+  }
+  if (prHours.value) {
+    items.push({
+      title: 'Содержание практических занятий',
+      url: 'discipline-practice',
+      'right': true,
+      allow: [1, 2, 3, 4, 5]
+    })
+  }
+  if (srsHours.value) {
+    items.push({
+      title: 'Содержание самостоятельных работ',
+      url: 'discipline-independent',
+      'right': true,
+      allow: [1, 2, 3, 4, 5]
+    })
+  }
+
+
+  items.push(...[
+    {title: 'Перечень учебно-методического обеспечения', url: 'guidelines', allow: [1, 2, 3, 4, 5]},
+    {
+      title: 'Оценочные материалы по дисциплине для контроля текущей успеваемости',
+      url: 'fos',
+      allow: [1, 2, 3, 4, 5]
+    },
+  ])
+
+  if (hasTat.value) {
+    items.push({title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat', allow: [1, 2, 3, 4, 5]});
+  }
+
+  items.push(...[
+    {title: 'Литература', url: 'library', allow: [1, 2, 3, 4, 5]},
+    {title: 'Другие ресурсы', url: 'resources', allow: [1, 2, 3, 4, 5]},
+    {title: 'Перечень используемых информационных технологий', url: 'soft', allow: [1, 2, 3, 4, 5]},
+    {title: 'Материально-техническое обеспечение', url: 'logistics', allow: [1, 2, 3, 4, 5]},
+  ]);
+
+  return items;
+});
 
 const filterMenuItems = computed(() => {
   if (planlinesData.value.viewpract) {
     return _(menuItems).filter(x => x.allow.includes(admissionData.value.cadmkind)).filter(x => x.rpp).value()
-  }
-  else {
+  } else {
     return _(menuItems).filter(x => x.allow.includes(admissionData.value.cadmkind)).filter(x => x.rpd).value()
   }
 })
@@ -89,7 +138,7 @@ async function sendToReview() {
 }
 
 function translateDate(date) {
-  let result = new Date(date).toLocaleString('ru')
+  let result = dayjs(new Date(date)).format("DD MMMM YYYY в HH:mm")
   return result
 }
 
@@ -101,81 +150,66 @@ function getErrors(url) {
 </script>
 
 <template>
-  <div class="bg-pink-3 rounded-borders" v-if="comment.length != 0">
-    <div class="text-subtitle1">{{ comment.user__last_name }} {{ comment.user__first_name }} оставил комментарий</div>
-    <div>
-      <div class="q-ma-xs text-subtitle2">
-        <div>
-          <div class="text-subtitle1 text-bold">{{ translateDate(comment.created_at) }}</div>
-          <div>
-            {{ comment.comment }}
-          </div>
-        </div>
-      </div>
+  <div style="display: grid; grid-template-rows: auto 1fr; overflow: hidden; height: 100%">
+    <div class="q-pa-sm" v-if="comment">
+      <q-expansion-item
+        class="bg-blue-2"
+        expand-separator
+        icon="mdi-information"
+        :label="`Комментарий от ${comment.user__last_name} ${comment.user__first_name}`"
+        :caption="translateDate(comment.created_at)"
+      >
+        <q-card class="q-pa-sm bg-blue-1" style="max-height: 300px; overflow-y: auto">
+          {{ comment.comment }}
+        </q-card>
+      </q-expansion-item>
+      <!--      <div class="bg-pink-2 q-pa-sm rounded-borders" v-if="comment.length != 0">-->
+      <!--        <div class="text-subtitle1">-->
+      <!--          {{ comment.user__last_name }} {{ comment.user__first_name }}-->
+      <!--          <small>оставил комментарий</small>-->
+      <!--        </div>-->
+      <!--        <div class="bg-grey-2 q-pa-sm rounded-borders" style="box-shadow: 0 0 4px silver inset">-->
+      <!--              -->
+      <!--        </div>-->
+      <!--        <div class="text-right q-mt-sm" style="font-size: 0.7rem"></div>-->
+      <!--      </div>-->
     </div>
-  </div>
-  <q-btn
-    color="primary"
-    class="full-width"
-    dense
-    label="Просмотр РПД"
-    :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-report/`"
-    target="_blank"
-  />
-  <div v-if="!disabled" class="q-mb-sm">
-    <q-btn
-      class="q-mt-xs"
-      color="secondary"
-      dense
-      @click="sendToReview"
-      style="width: 100%"
-      label="Отправить на согласование"
-      :disabled="criticalErrors.length != 0"
-    />
-  </div>
-  <div v-else class="text-center q-mb-md">
-    <q-btn
-      class="q-mt-xs"
-      color="secondary"
-      dense
-      disable
-      style="width: 100%"
-      :label="statusVerbose"
-    />
-  </div>
-  <q-list
-    bordered
-    separator
-  >
-    <q-item
-      v-for="item in filterMenuItems"
-      clickable
-      v-ripple
-      active-class="bg-amber-4 text-black"
-      :to="getUrl(item.url)"
-      dense
-      style="padding: 12px;"
+    <q-list
+      style="overflow-y: auto"
+      bordered
+      separator
     >
-      <q-item-section>
-        <q-item-label :class="item.right ? 'q-ml-lg' : ''">{{ item.title }}</q-item-label>
-        <!--        <q-item-label caption>Основная информация о программе</q-item-label>-->
-      </q-item-section>
-      <q-item-section avatar v-if="getErrors(item.url).length != 0">
-        <q-icon :name="getErrors(item.url)[0].level == 'warning' ? 'mdi-alert' : 'mdi-alert-box'" :color="getErrors(item.url)[0].level == 'warning' ? 'amber-8' : 'red-7'">
-          <q-tooltip class="text-white hide-scrollbar" :class="getErrors(item.url)[0].level == 'warning' ? 'bg-amber-8' : 'bg-red-9'" max-height="20%">
-            <div v-for="error in getErrors(item.url)" style="font-size: 14px;">
-              <div v-for="text in error.text">
-                {{ text }}
+      <q-item
+        v-for="item in filterMenuItems"
+        clickable
+        v-ripple
+        active-class="bg-amber-2 text-black"
+        :to="getUrl(item.url)"
+        dense
+        style="padding: 12px;"
+      >
+        <q-item-section>
+          <q-item-label :class="item.right ? 'q-ml-lg' : ''">{{ item.title }}</q-item-label>
+          <!--        <q-item-label caption>Основная информация о программе</q-item-label>-->
+        </q-item-section>
+        <q-item-section avatar v-if="getErrors(item.url).length != 0">
+          <q-icon :name="getErrors(item.url)[0].level == 'warning' ? 'mdi-alert' : 'mdi-alert-box'"
+                  :color="getErrors(item.url)[0].level == 'warning' ? 'amber-4' : 'red-7'">
+            <q-tooltip class="text-white hide-scrollbar"
+                       :class="getErrors(item.url)[0].level == 'warning' ? 'bg-amber-8' : 'bg-red-9'" max-height="20%">
+              <div v-for="error in getErrors(item.url)" style="font-size: 14px;">
+                <div v-for="text in error.text">
+                  {{ text }}
+                </div>
               </div>
-            </div>
-          </q-tooltip>
-        </q-icon>
-      </q-item-section>
-    </q-item>
+            </q-tooltip>
+          </q-icon>
+        </q-item-section>
+      </q-item>
 
-  </q-list>
+    </q-list>
 
-
+  </div>
 </template>
 
 <style scoped>

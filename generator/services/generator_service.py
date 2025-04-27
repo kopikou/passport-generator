@@ -1,0 +1,116 @@
+from itertools import groupby
+
+from app.utils import cache_function
+from arim.services import AISServices
+from generator.models import PlanLinesLink, DefaultsResources, PlanLinesLinkComments
+from generator.serializer import PlanLinesLinkSerializer
+from rpd.models import LinesData
+
+
+class GeneratorService(object):
+    @classmethod
+    @cache_function(timeout=60 * 1)
+    def get_program_list(cls, user_mira_id):
+        data = AISServices.get_disciplines_by_person(user_mira_id)
+
+        discpl_list = [i['discpl'] for i in data]
+        abbrprofile_list = [i['abbr'] for i in data]
+        startyear_list = [i['yr'] for i in data]
+
+        filtered_data = LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
+                                                 plan__startyear__in=startyear_list,
+                                                 plan__file__status=4, synchronize=True).select_related("plan")
+
+        filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.plan.startyear}": i for i in filtered_data}
+
+        lineslink = PlanLinesLink.objects.filter(mira_id__in=[i['planlin'] for i in data])
+        lineslink_sorted = sorted(lineslink, key=lambda x: x.mira_id)
+        lineslink_by_id = {i.mira_id: i for i in lineslink_sorted}
+
+        result = []
+        for item in data:
+
+            line = filtered_data_sorted.get(f"{item['discpl']}_{item['abbr']}_{item['yr']}")
+
+            if line:
+
+                res = lineslink_by_id.get(item['planlin'], [])
+
+                if not res:
+                    res, created = PlanLinesLink.objects.get_or_create(
+                        cadmission=item['id_admission'],
+                        mira_id=item['planlin'],
+                        person=item['mira_id'],
+                        defaults={
+                            "cadmission": item['id_admission'],
+                            "mira_id": item['planlin'],
+                            "person": item['mira_id'],
+                            "status": PlanLinesLink.StatusChoices.appointed,
+                            "planlines_id": line.id,
+                        }
+                    )
+
+                result.append({
+                    **item,
+                    "id": res.id,
+                    "status": res.status,
+                    "status_verbose": res.status_verbose,
+                    "kafcode": res.planlines.caf,
+                    "discode": res.planlines.newdisid,
+                })
+
+        sorted_result = sorted(result, key=lambda x: (x['planlin'], x['mira_id']))
+        grouped_result = {key: list(items) for key, items in
+                          groupby(sorted_result, key=lambda x: (x['planlin'], x['mira_id']))}
+
+        res = []
+        for key, items in grouped_result.items():
+            temp = {
+                **items[0],
+                "type": [i['type'] for i in items],
+            }
+            res.append(temp)
+
+        return res
+
+    @classmethod
+    def get_rpd_data(cls, plan_lines_link_id):
+        instance = (PlanLinesLink.objects.filter(id=plan_lines_link_id)
+                    .select_related("planlines", "planlines__plan")
+                    .prefetch_related("planlines__semesters", "planlines__indicators",
+                                      "planlines__indicators__discipline_indicator", "discipline_themes",
+                                      "discipline_work_hour").first())
+
+        if instance.status == PlanLinesLink.StatusChoices.appointed:
+            instance.status = PlanLinesLink.StatusChoices.is_filled
+            instance.save()
+
+        serializer = PlanLinesLinkSerializer(instance)
+
+        admission_info = AISServices.get_admissionn_info(serializer.data['cadmission'])
+
+        other_discipline = LinesData.objects.filter(plan_id=serializer.data['planlines']['plan_id'],
+                                                    synchronize=True).values("disid", "dis")
+
+        resources = DefaultsResources.objects.all().values("id", "name", "type", "url")
+
+        comment = PlanLinesLinkComments.objects.filter(planlineslink_id=instance.id).values(
+            "id",
+            "created_at",
+            "comment",
+            "user_id",
+            "user__first_name",
+            "user__last_name",
+        ).last()
+
+        old_rpd = AISServices.get_old_rpd_list(serializer.data['mira_id'])
+
+        result = {
+            "admission": admission_info[0],
+            "other_discipline": [i for i in other_discipline],
+            "resources": [i for i in resources],
+            "comment": comment,
+            "old": [i for i in old_rpd],
+            **serializer.data,
+        }
+        return result

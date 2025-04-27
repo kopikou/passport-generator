@@ -29,6 +29,7 @@ class AISServices(object):
             'ckaf_id',
             'cfac_id',
             'ckaf__name',
+            'ckaf__ccatdep__nameshort',
             'cfac__name',
             'cadmkind',
             'cadmkind__name',

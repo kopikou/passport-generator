@@ -14,7 +14,7 @@ const {
 
 const cols = ref([
   {name: 'competence_index', field: 'competence_index', label: 'Код', align: 'left'},
-  {name: 'competence', field: 'competence', label: 'Компетенция', align: 'left'},
+  {name: 'competence', field: 'competence', label: 'Компетенция', align: 'left', },
 ])
 
 const competenceList = ref([])
@@ -30,11 +30,10 @@ watch(indicatorsData, () =>{
 </script>
 
 <template>
-  <div>
-    <div style="width: 95%">
+  <div class="q-px-md">
       <div v-if="!planlinesData.viewpract">
-        <span v-if="admissionData.cadmkind != 5" class="text-h6 q-pl-lg">Компетенции по дисциплине</span>
-        <span v-else class="text-h6 q-pl-lg">Результаты освоения программы</span>
+        <span v-if="admissionData.cadmkind != 5" class="text-h6">Компетенции по дисциплине</span>
+        <span v-else class="text-h6">Результаты освоения программы</span>
       </div>
       <div v-else>
         <span class="text-h6 q-pl-lg" v-if="admissionData.cadmkind != 5">Компетенции по практике</span>
@@ -50,13 +49,13 @@ watch(indicatorsData, () =>{
         <q-table
           :columns="cols"
           :rows="filteredData"
+          wrap-cells
           no-data-label="Нет данных"
           :rows-per-page-options="[]"
         >
 
         </q-table>
       </div>
-    </div>
   </div>
 </template>
 

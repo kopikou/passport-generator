@@ -14,13 +14,13 @@ import {fasElevator} from "@quasar/extras/fontawesome-v6";
 
 const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   const cafData = ref([])
-  const rpdData = ref<GeneratorData[]>([])
+  const rpdData = ref<GeneratorData>({});
   const formControl = ref<GeneratorFormControlData[]>([])
   const independentTypes = ref<GeneratorIndependentTypesData[]>([])
   const activeRpdId = ref(null)
 
   const oldPlans = computed(() => {
-    return rpdData.value.old || []
+    return _.orderBy(rpdData.value.old || [], x => -x.startyear)
   })
 
   const status = computed(() => {
@@ -32,7 +32,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
   const disabled = computed(() => {
-    return [2, 3].includes(rpdData.value?.status)
+    return [2, 3].includes(rpdData.value?.status || 0)
   })
 
   const indicatorsData = computed<PlanIndicatorData[]>(() => {
@@ -44,7 +44,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
   const comment = computed(() => {
-    return rpdData.value?.comment || []
+    return rpdData.value?.comment
   })
 
   const admissionData = computed(() => {
@@ -136,6 +136,22 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
 
+  const criticalErrors = computed(() => {
+    return _.filter(errors.value, x => x.level == 'critical')
+  })
+
+  const hasTat = computed(() => {
+    return _.some(semestersData.value, x => {
+      return x.ekz || x.zach || x.zacho || x.kp || x.kr
+    })
+  })
+
+
+  const lekcHours = computed(() => _(semestersData.value).map(x => x.lekc).sum())
+  const srsHours = computed(() => _(semestersData.value).map(x => x.srs).sum())
+  const prHours = computed(() => _(semestersData.value).map(x => x.pr).sum())
+  const labHours = computed(() => _(semestersData.value).map(x => x.lab).sum())
+
   const $q = useQuasar()
 
   async function getCafData() {
@@ -158,11 +174,21 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     rpdData.value = r.data
   }
 
-  const errors = ref([])
+  const errors = ref<{
+    url: string,
+    title: string,
+    text: string[],
+    level: string,
+  }[]>([]);
 
   function rpdErrors() {
     const admkind = rpdData.value.admission.cadmkind
-    const data = []
+    const data: {
+      url: string,
+      title: string,
+      text: string[],
+      level: string,
+    }[] = []
 
     const indicators = _(indicatorsData.value)
       .map(x => x.discipline_indicator)
@@ -176,7 +202,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         level: 'critical',
       })
     } else {
-      const text = []
+      const text: string[] = []
       _.forEach(indicators, (x) => {
         const ind = _.find(indicatorsData.value, q => q.id == x.indicator_id)
         if (!x.know) text.push(`Не заполнены сведения о "Знать" для индикатора: ${ind?.indicator_index}`)
@@ -235,12 +261,9 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         }
       })
     }
-    const lekc = _(semestersData.value).map(x => x.lekc).sum()
-    const srs = _(semestersData.value).map(x => x.srs).sum()
-    const pr = _(semestersData.value).map(x => x.pr).sum()
-    const lab = _(semestersData.value).map(x => x.lab).sum()
 
-    if (lekc) {
+
+    if (lekcHours.value) {
       const lectures = _.filter(disciplineWorkHour.value, x => x.type == 0)
       if (lectures.length == 0) {
         data.push({
@@ -265,7 +288,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       }
     }
 
-    if (lab) {
+    if (labHours.value) {
       const laboratory = _.filter(disciplineWorkHour.value, x => x.type == 3)
       if (laboratory.length == 0) {
         data.push({
@@ -290,7 +313,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       }
     }
 
-    if (pr) {
+    if (prHours.value) {
       const practice = _.filter(disciplineWorkHour.value, x => x.type == 1)
       if (practice.length == 0) {
         data.push({
@@ -315,7 +338,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       }
     }
 
-    if (srs) {
+    if (srsHours.value) {
       const independent = _.filter(disciplineWorkHour.value, x => x.type == 2)
       if (independent.length == 0) {
         data.push({
@@ -340,7 +363,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       }
     }
 
-    function checkGuidelines(type, errorText) {
+    function checkGuidelines(type: string, errorText: string) {
       if (!_.get(guidelines.value, `[0].${type}`, null)) {
         data.push({
           url: 'guidelines',
@@ -408,7 +431,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       }
     })
 
-    function checkTat(type, errorText) {
+    function checkTat(type: string, errorText: string) {
       const r = _.find(tatInfo.value, x => x.type == type)
       if (!r) {
         data.push({
@@ -480,31 +503,32 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       }
     }
 
-    if (tatInfo.value.length == 0) {
-      data.push({
-        url: 'tat',
-        title: 'Не заполнены типовые оценочные средства',
-        text: [`Не заполнены типовые оценочные средства`],
-        level: 'critical',
-      })
-    } else {
-      let zach = false
-      let zacho = false
-      let ekz = false
-      let kp = false
+    if (hasTat.value) {
+      if (tatInfo.value.length == 0) {
+        data.push({
+          url: 'tat',
+          title: 'Не заполнены типовые оценочные средства',
+          text: [`Не заполнены типовые оценочные средства`],
+          level: 'critical',
+        })
+      } else {
+        let zach = false
+        let zacho = false
+        let ekz = false
+        let kp = false
 
-      _.forEach(semestersData.value, (x) => {
-        if (x.zach) zach = true
-        if (x.zacho) zacho = true
-        if (x.ekz) ekz = true
-        if (x.kp || x.kr) kp = true
-      })
+        _.forEach(semestersData.value, (x) => {
+          if (x.zach) zach = true
+          if (x.zacho) zacho = true
+          if (x.ekz) ekz = true
+          if (x.kp || x.kr) kp = true
+        })
 
-      if (zach) checkTat('zach', 'Зачет')
-      if (zacho) checkTat('zacho', 'Дифференцированный зачет')
-      if (ekz) checkTat('ekz', 'Экзамен')
-      if (kp) checkTat('krkp', 'Курсовой проекта/работа')
-
+        if (zach) checkTat('zach', 'Зачет')
+        if (zacho) checkTat('zacho', 'Дифференцированный зачет')
+        if (ekz) checkTat('ekz', 'Экзамен')
+        if (kp) checkTat('krkp', 'Курсовой проекта/работа')
+      }
     }
 
 
@@ -664,7 +688,9 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     status,
     statusVerbose,
     disabled,
+    hasTat,
     errors,
+    criticalErrors,
 
     activeRpdId,
     rpdData,
@@ -673,6 +699,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     semestersData,
     getData,
     checkErrors,
+    lekcHours,
+    srsHours,
+    prHours,
+    labHours,
   }
 })
 

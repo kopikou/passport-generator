@@ -77,6 +77,16 @@ class CLAdmKind(models.Model):
     name_prof = models.CharField(max_length=50)
 
 
+class CatDepartment(models.Model):
+    class Meta:
+        db_table = "catdep"
+        managed = False
+
+    nameshort = models.CharField(max_length=512)
+    name = models.CharField(max_length=512)
+
+
+
 class CatKaf(models.Model):
     class Meta:
         db_table = "catkaf"
@@ -85,7 +95,9 @@ class CatKaf(models.Model):
     name = models.CharField(max_length=128)
     zav = models.CharField(max_length=50)
     cfac = models.ForeignKey("CatFaculty", on_delete=models.CASCADE, db_column="cfac")
+    ccatdep = models.ForeignKey("CatDepartment", on_delete=models.CASCADE, db_column="ccatdep")
     czav = models.IntegerField()
+
 
 
 class CatFaculty(models.Model):

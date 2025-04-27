@@ -13,6 +13,7 @@ const generatorViewStore = useGeneratorViewStore();
 
 const {
   disabled,
+  activeRpdId,
   planlinesData,
 } = storeToRefs(generatorViewStore)
 
@@ -31,7 +32,7 @@ const methods = ref(null)
 
 async function saveData() {
   // $q.loading.show({message: "Сохранение"})
-  let r = await api.post('/api/generator/save-discipline-indicator/', {
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-indicator/`, {
     indicator_id: props.data.id,
     planlineid_id: props.data.planlineid_id,
     know: know.value,
@@ -85,6 +86,7 @@ onBeforeMount(() => {
         type="textarea"
         class="col"
         v-model="know"
+        bg-color="grey-4"
         :readonly="disabled"
         debounce="1000"
         @update:modelValue="saveData"
@@ -97,6 +99,7 @@ onBeforeMount(() => {
         class="col"
         v-model="able"
         :readonly="disabled"
+        bg-color="grey-4"
         debounce="1000"
         @update:modelValue="saveData"
       />
@@ -108,6 +111,7 @@ onBeforeMount(() => {
         class="col"
         v-model="own"
         :readonly="disabled"
+        bg-color="grey-4"
         debounce="1000"
         @update:modelValue="saveData"
       />
@@ -119,6 +123,7 @@ onBeforeMount(() => {
         class="col"
         v-model="criteria"
         :readonly="disabled"
+        bg-color="grey-4"
         debounce="1000"
         @update:modelValue="saveData"
       />
@@ -130,6 +135,7 @@ onBeforeMount(() => {
         class="col"
         v-model="methods"
         :readonly="disabled"
+        bg-color="grey-4"
         debounce="1000"
         @update:modelValue="saveData"
       />

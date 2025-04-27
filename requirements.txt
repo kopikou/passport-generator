@@ -11,3 +11,4 @@ mssql-django==1.4
 fabric
 sqlalchemy==2.0.39
 #pywin32 # on windows user
+django-redis==5.2

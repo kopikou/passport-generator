@@ -15,7 +15,7 @@ const {
 
 import {computed, onBeforeMount, ref, watch} from "vue";
 import {api} from "boot/axios";
-import {useQuasar} from "quasar";
+import {LocalStorage, SessionStorage, useQuasar} from "quasar";
 import {GeneratorListData} from "src/types";
 import {useRouter} from "vue-router";
 import {storeToRefs} from "pinia";
@@ -29,35 +29,31 @@ const router = useRouter()
 const listData = ref<GeneratorListData[]>([])
 
 const typeFilterLabel = {
-  rop: 'Руководитель программы',
+  rop: 'Руководитель ОП',
   fac: 'Директор',
   zav: 'Заведующий кафедры',
-  person: 'Преподаватель',
+  person: 'Разработчик РПД',
 }
 
 
 const groupFilter = ref($q.localStorage.getItem("surp_groupfilter") ? $q.localStorage.getItem("surp_groupfilter") : '')
 const discplFilter = ref($q.localStorage.getItem("surp_discplfilter") ? $q.localStorage.getItem("surp_discplfilter") : '')
+const myFilter = ref( LocalStorage.getItem('surp_myfilter') || 0)
+const textFilter = ref<String>( LocalStorage.getItem('surp_rpdfilter') || '')
 
 const filteredListData = computed(() => {
+  let txtFilter = textFilter.value.trim().toLowerCase();
+
   return _(listData.value)
-    // .filter(x => {
-    //   return type.value.length == 0 || x.type.some(q => type.value.includes(q));
-    // })
     .filter(x => {
-      if (groupFilter.value.length > 0) {
-        return x.abbr.toLowerCase().includes(groupFilter.value.toLowerCase())
-      }
-      return x
+      return (myFilter.value == 0 || x.type.includes('person'))
+        && ((txtFilter == '' ||  x.person.toLowerCase().includes(txtFilter))
+        || (txtFilter == '' ||  x.abbr.toLowerCase().includes(txtFilter))
+        || (txtFilter == '' ||  x.discode.toLowerCase().includes(txtFilter))
+        || (txtFilter == '' ||  x.discpl.toLowerCase().includes(txtFilter)))
     })
-    .filter(x => {
-      if (discplFilter.value.length > 0) {
-        return x.discpl.toLowerCase().includes(discplFilter.value.toLowerCase())
-      }
-      return x
-    })
-    .orderBy(x => x.discode, 'asc')
-    .groupBy(x => x.abbr)
+    .orderBy(x => [x.abbr, x.yr, x.discode], 'asc')
+    .groupBy(x => `${x.abbr}-${x.yr.toString().slice(-2)}`)
     .value()
 })
 
@@ -98,9 +94,12 @@ function getRowColor(number) {
   return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
 }
 
-watch([discplFilter, groupFilter], () => {
+watch([discplFilter, groupFilter, myFilter, textFilter], () => {
+  console.log(myFilter.value)
   $q.localStorage.setItem("surp_discplfilter", discplFilter.value)
   $q.localStorage.setItem("surp_groupfilter", groupFilter.value)
+  $q.localStorage.setItem("surp_myfilter", myFilter.value)
+  $q.localStorage.setItem("surp_rpdfilter", textFilter.value)
 })
 
 onBeforeMount(async () => {
@@ -114,11 +113,14 @@ onBeforeMount(async () => {
 <template>
   <layout-h-c-f>
     <template #header>
+      <div class="q-px-sm q-pb-sm">
       <div class="text-center text-h6 q-mb-md">Список рабочих программ дисциплин ИРНИТУ</div>
-      <div class="flex justify-between q-mb-sm q-px-sm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
-        <q-input outlined label="Группа" v-model="groupFilter"/>
-        <q-input outlined label="Дисциплина" v-model="discplFilter"/>
+      <div class="flex justify-between q-mb-sm q-px-sm" style="display: grid; grid-template-columns: 1fr auto; gap: 8px">
+        <q-input outlined label="Поиск по аббревиатуре, дисциплине, разработчику программы" v-model="textFilter"/>
+<!--        <q-input outlined label="Дисциплина" v-model="discplFilter"/>-->
+        <q-toggle outlined label="Только мои" v-model="myFilter" :true-value="1" :false-value="0"/>
       </div>
+        </div>
     </template>
     <template #content>
       <div class="q-pa-md">
@@ -130,6 +132,7 @@ onBeforeMount(async () => {
             <q-expansion-item
               v-for="items, key in filteredListData"
               :label="key"
+              group="programs"
             >
               <template #header>
                 <div class="q-item__section column q-item__section--main justify-center">

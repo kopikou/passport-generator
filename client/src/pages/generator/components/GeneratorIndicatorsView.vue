@@ -21,28 +21,28 @@ const filteredData = computed(() => {
 </script>
 
 <template>
-  <div>
-    <div style="width: 95%">
+  <div class="q-px-md">
       <div v-if="!planlinesData.viewpract">
-        <span v-if="admissionData.cadmkind != 5" class="text-h6 q-pl-lg">Индикаторы по дисциплине</span>
-        <span v-else class="text-h6 q-pl-lg">Результаты освоения дисциплины</span>
+        <span v-if="admissionData.cadmkind != 5" class="text-h6">Индикаторы по дисциплине</span>
+        <span v-else class="text-h6">Результаты освоения дисциплины</span>
       </div>
       <div v-else>
         <span v-if="admissionData.cadmkind != 5" class="text-h6 q-pl-lg">Индикаторы по практике</span>
         <span v-else class="text-h6 q-pl-lg">Результаты освоения практики</span>
       </div>
-      <p></p>
+      <p>Раскройте для заполнения</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-list bordered>
-        <div v-for="i in filteredData">
+        <div v-for="(i, index) in filteredData">
           <q-expansion-item
             :label="`${i.indicator_index} ${i.indicator}`"
+            :default-opened="index==0"
+            group="indicators"
           >
             <indicators-list-view :data="i"/>
           </q-expansion-item>
         </div>
       </q-list>
-    </div>
   </div>
 </template>
 

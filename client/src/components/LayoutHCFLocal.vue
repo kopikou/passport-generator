@@ -1,10 +1,5 @@
 <script setup lang="ts">
-const props = defineProps({
-  background: {
-    type: String,
-    default: 'white'
-  }
-})
+
 </script>
 
 <template>
@@ -33,8 +28,8 @@ const props = defineProps({
 }
 
 .layout-wrapper-header {
-  padding-top: 0.5rem;
-  background: v-bind('background');
+  padding-top: 1rem;
+  background: $grey-3;
   box-shadow: 0 4px 8px silver;
   width: 100%;
   overflow: hidden;

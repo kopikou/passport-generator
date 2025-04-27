@@ -7,6 +7,7 @@ import {storeToRefs} from "pinia";
 import _, {sumBy} from "lodash";
 import {api} from "boot/axios";
 import {moveArrayElement, useSortable} from "@vueuse/integrations/useSortable";
+import GeneratorPageView from "pages/generator/components/GeneratorPageView.vue";
 
 
 const $q = useQuasar()
@@ -19,6 +20,7 @@ const {
   formControl,
   rpdData,
   disabled,
+  activeRpdId,
 } = storeToRefs(generatorViewStore)
 
 const tab = ref(0)
@@ -43,7 +45,7 @@ function updateTheme(id) {
       id: id,
     },
   }).onOk(() => {
-   generatorViewStore.checkErrors()
+    generatorViewStore.checkErrors()
   })
 }
 
@@ -66,7 +68,7 @@ async function deleteTheme(id) {
   }).onOk(async () => {
 
     $q.loading.show({message: "Удаление"})
-    let r = await api.get(`/api/generator/delete-discipline-themes/`, {params: {id: id}})
+    let r = await api.get(`/api/generator/${activeRpdId.value}/delete-discipline-themes/`, {params: {id: id}})
 
     rpdData.value.discipline_themes.splice(_.findKey(disciplineThemes.value, (x) => x.id == id), 1)
     rpdData.value.discipline_work_hour = _.filter(disciplineWorkHour.value, x => x.theme_id != id)
@@ -114,7 +116,7 @@ async function fieldDown(num, sem) {
 }
 
 async function saveThemeData(data) {
-  let r = await api.post('/api/generator/save-discipline-themes/', data)
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-themes/`, data)
   return r.data
 }
 
@@ -129,21 +131,22 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div>
-    <div style="width: 95%">
-      <span class="text-h6 q-pl-lg">Содержание разделов и тем по дисциплине</span>
-      <p></p>
-      <q-separator class="q-mt-md q-mb-md"/>
-      <q-btn label="Добавить тему дисциплины" color="teal" class="q-mb-md" @click="addTheme" :disabled="disabled"/>
-      <q-tabs
+  <generator-page-view title="Содержание разделов и тем по дисциплине">
+    <template #title-right>
+      <q-btn label="Добавить тему дисциплины" icon="mdi-plus" color="white" text-color="black" class="q-mb-md" @click="addTheme" :disabled="disabled"/>
+    </template>
+    <template #header>
+       <q-tabs
         v-model="tab"
         align="left"
-        narrow-indicator
         class="q-mb-md"
+        active-bg-color="teal-1"
       >
-        <q-tab class="text-teal bg-grey-4" v-for="item in semestersData" :name="`${item.num}`"
+        <q-tab class="text-teal" v-for="item in semestersData" :name="`${item.num}`"
                :label="`Семестр ${item.num}`"/>
       </q-tabs>
+    </template>
+    <template #content>
       <q-tab-panels
         v-model="tab"
         animated
@@ -189,7 +192,7 @@ watchEffect(() => {
                   icon="mdi-delete" color="red" flat @click="deleteTheme(item.id)" :disabled="disabled"
                 />
                 <q-btn
-                  icon="mdi-update" color="green" flat @click="updateTheme(item.id)" :disabled="disabled"
+                  icon="mdi-pencil-outline" color="green" flat @click="updateTheme(item.id)" :disabled="disabled"
                 />
                 <q-btn v-if="item.num != 1"
                        icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
@@ -205,7 +208,10 @@ watchEffect(() => {
 
         </q-tab-panel>
       </q-tab-panels>
-    </div>
+    </template>
+  </generator-page-view>
+  <div>
+
   </div>
 </template>
 

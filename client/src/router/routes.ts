@@ -9,7 +9,7 @@ import PlxDocumentsView from "pages/plx/components/PlxDocumentsView.vue";
 import PlxIndicatorsView from "pages/plx/components/PlxIndicatorsView.vue";
 import PlxSemesterView from "pages/plx/components/PlxSemesterView.vue";
 import GeneratorView from "pages/generator/GeneratorView.vue";
-import GeneratorMainView from "pages/generator/components/GeneratorMainView.vue";
+// import GeneratorMainView from "pages/generator/components/GeneratorMainView.vue";
 import GeneratorCompetenceView from "pages/generator/components/GeneratorCompetenceView.vue";
 import GeneratorIndicatorsView from "pages/generator/components/GeneratorIndicatorsView.vue";
 import GeneratorDisciplinePlaceView from "pages/generator/components/GeneratorDisciplinePlaceView.vue";
@@ -28,7 +28,7 @@ import GeneratorFOSView from "pages/generator/components/GeneratorFOSView.vue";
 import GeneratorTATView from "pages/generator/components/GeneratorTATView.vue";
 import UploadView from "pages/upload/UploadView.vue";
 import AspirantScientificPlansPage from "pages/scientificPlan/AspirantScientificPlansPage.vue";
-import AspirantScientificPlanView from "pages/scientificPlan/AspirantScientificPlanView.vue";
+// import AspirantScientificPlanView from "pages/scientificPlan/AspirantScientificPlanView.vue";
 import PracticeGeneratorListView from "pages/generator/PracticeGeneratorListView.vue";
 import GeneratorPracticeContent from "pages/generator/components/GeneratorPracticeContent.vue";
 
@@ -53,7 +53,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: ':id',
         name: 'ScientificPlan',
-        component: AspirantScientificPlanView,
+        component: () => import("pages/scientificPlan/AspirantScientificPlanView.vue"),
         props: true,
       },
     ]
@@ -161,7 +161,7 @@ const routes: RouteRecordRaw[] = [
           {
             path: "main",
             name: "GeneratorMainView",
-            component: GeneratorMainView,
+            component: () => import("pages/generator/components/GeneratorMainView.vue"),
           },
           {
             path: "competences",

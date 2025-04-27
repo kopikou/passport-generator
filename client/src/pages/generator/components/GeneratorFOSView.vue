@@ -23,8 +23,8 @@ watch(disciplineThemes, () => {
 </script>
 
 <template>
-  <div style="width: 95%">
-    <span class="text-h6 q-pl-lg">Оценочные материалы по дисциплине</span>
+  <div class="q-px-md">
+    <span class="text-h6">Оценочные материалы по дисциплине</span>
     <p></p>
     <q-separator class="q-mt-md q-mb-md"/>
     <div v-if="choicesName.length > 0">
@@ -32,8 +32,8 @@ watch(disciplineThemes, () => {
         bordered
         style="border-bottom: none;"
       >
-        <div v-for="n in choicesName">
-          <generator-f-o-s-item :title="n.formcontrol_verbose" :type="n.formcontrol_id"/>
+        <div v-for="(n, index) in choicesName">
+          <generator-f-o-s-item :title="n.formcontrol_verbose" :type="n.formcontrol_id" group="fos" :default-opened="index==0"/>
         </div>
       </q-list>
     </div>

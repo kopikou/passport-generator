@@ -11,6 +11,7 @@ from django.utils.encoding import escape_uri_path
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.mixins import RetrieveModelMixin
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
@@ -21,10 +22,12 @@ from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
     DefaultsResources, PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
     ScientificDataDefault, DisciplineIndicators
+from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanAcceptRPDProgram
 from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
 from generator.services import ReportService
+from generator.services.generator_service import GeneratorService
 from rpd.models import LinesData, PlanData
 from rpd.services import RPDGenSerivce
 
@@ -35,52 +38,15 @@ class GeneratorViewSet(
 ):
     queryset = PlanLinesLink.objects.all()
     serializer_class = PlanLinesLinkSerializer
-    permission_classes = [UserProfileHasPermission(Permissions.can_use_generator)]
+    permission_classes = [UserProfileHasPermission(Permissions.can_use_generator) and CanViewRPDProgram]
 
     def retrieve(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
-        instance = (PlanLinesLink.objects.filter(id=pk)
-                    .select_related("planlines", "planlines__plan")
-                    .prefetch_related("planlines__semesters", "planlines__indicators",
-                                      "planlines__indicators__discipline_indicator", "discipline_themes",
-                                      "discipline_work_hour").first())
-
-        if instance.status == PlanLinesLink.StatusChoices.appointed:
-            instance.status = PlanLinesLink.StatusChoices.is_filled
-            instance.save()
-
-        serializer = self.get_serializer(instance)
-
-        admission_info = AISServices.get_admissionn_info(serializer.data['cadmission'])
-
-        other_discipline = LinesData.objects.filter(plan_id=serializer.data['planlines']['plan_id'],
-                                                    synchronize=True).values("disid", "dis")
-
-        resources = DefaultsResources.objects.all().values("id", "name", "type", "url")
-
-        comment = PlanLinesLinkComments.objects.filter(planlineslink_id=instance.id).values(
-            "id",
-            "created_at",
-            "comment",
-            "user_id",
-            "user__first_name",
-            "user__last_name",
-        ).last()
-
-        old_rpd = AISServices.get_old_rpd_list(serializer.data['mira_id'])
-
-        result = {
-            "admission": admission_info[0],
-            "other_discipline": [i for i in other_discipline],
-            "resources": [i for i in resources],
-            "comment": comment,
-            "old": [i for i in old_rpd],
-            **serializer.data,
-        }
-
+        result = GeneratorService.get_rpd_data(pk)
         return Response(result)
 
-    @action(methods=['POST'], url_path='save-asp-program-data', detail=True)
+
+    @action(methods=['POST'], url_path='save-asp-program-data', detail=True, permission_classes=[CanEditRPDProgram])
     def save_asp_program_data(self, request, *args, **kwargs):
 
         data = self.request.data
@@ -94,7 +60,7 @@ class GeneratorViewSet(
 
         return Response(serializer.data)
 
-    @action(methods=['GET'], url_path='copy-asp-program-data', detail=True)
+    @action(methods=['GET'], url_path='copy-asp-program-data', detail=True, permission_classes=[CanEditRPDProgram])
     def copy_asp_program_data(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -253,72 +219,10 @@ class GeneratorViewSet(
             "old": old_plans,
         })
 
-    @action(methods=['GET'], url_path="get-program-list", detail=False)
+    @action(methods=['GET'], url_path="get-program-list", detail=False, permission_classes=[IsAuthenticated])
     def get_program_list(self, request, *args, **kwargs):
 
-        user = self.request.user.userprofile.mira_id
-
-        data = AISServices.get_disciplines_by_person(user)
-
-        discpl_list = [i['discpl'] for i in data]
-        abbrprofile_list = [i['abbr'] for i in data]
-        startyear_list = [i['yr'] for i in data]
-
-        filtered_data = LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
-                                                 plan__startyear__in=startyear_list,
-                                                 plan__file__status=4, synchronize=True).select_related("plan")
-
-        filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.plan.startyear}": i for i in filtered_data}
-
-        lineslink = PlanLinesLink.objects.filter(mira_id__in=[i['planlin'] for i in data]).select_related("planlines")
-        lineslink_sorted = sorted(lineslink, key=lambda x: x.mira_id)
-        lineslink_by_id = {i.mira_id: i for i in lineslink_sorted}
-
-        result = []
-        for item in data:
-
-            line = filtered_data_sorted.get(f"{item['discpl']}_{item['abbr']}_{item['yr']}")
-
-            if line:
-
-                res = lineslink_by_id.get(item['planlin'], [])
-
-                if not res:
-
-                    res, created = PlanLinesLink.objects.get_or_create(
-                        cadmission=item['id_admission'],
-                        mira_id=item['planlin'],
-                        person=item['mira_id'],
-                        defaults={
-                            "cadmission": item['id_admission'],
-                            "mira_id": item['planlin'],
-                            "person": item['mira_id'],
-                            "status": PlanLinesLink.StatusChoices.appointed,
-                            "planlines_id": line.id,
-                        }
-                    )
-
-                result.append({
-                    **item,
-                    "id": res.id,
-                    "status": res.status,
-                    "status_verbose": res.status_verbose,
-                    "kafcode": res.planlines.caf,
-                    "discode": res.planlines.newdisid,
-                })
-
-
-        sorted_result = sorted(result, key=lambda x: (x['planlin'], x['mira_id']))
-        grouped_result = {key: list(items) for key, items in
-                          groupby(sorted_result, key=lambda x: (x['planlin'], x['mira_id']))}
-
-        res = []
-        for key, items in grouped_result.items():
-            temp = {
-                **items[0],
-                "type": [i['type'] for i in items],
-            }
-            res.append(temp)
+        res = GeneratorService.get_program_list(self.request.user.userprofile.mira_id)
 
         return Response(
             data=res,
@@ -392,7 +296,8 @@ class GeneratorViewSet(
             data=res,
         )
 
-    @action(methods=['POST'], url_path="save-scientific-data", detail=True)
+
+    @action(methods=['POST'], url_path="save-scientific-data", detail=True, permission_classes=[CanEditRPDProgram])
     def save_scientific_data(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -410,7 +315,7 @@ class GeneratorViewSet(
 
         return Response(data=data)
 
-    @action(methods=['POST'], url_path="save-scientific-data", detail=True)
+    @action(methods=['POST'], url_path="save-scientific-data", detail=True, permission_classes=[CanEditRPDProgram])
     def save_scientific_data(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -430,7 +335,7 @@ class GeneratorViewSet(
 
         return Response(data=serializer.data)
 
-    @action(methods=['DELETE'], url_path="del-scientific-work", detail=True)
+    @action(methods=['DELETE'], url_path="del-scientific-work", detail=True, permission_classes=[CanEditRPDProgram])
     def del_scientific_work(self, request, *args, **kwargs):
 
         ScientificData.objects.get(id=self.kwargs['pk']).delete()
@@ -491,7 +396,7 @@ class GeneratorViewSet(
         # return Response(result)
         return response
 
-    @action(methods=['GET'], url_path="search-book", detail=False)
+    @action(methods=['GET'], url_path="search-book", detail=False, permission_classes=[IsAuthenticated])
     def search_book(self, request, *args, **kwargs):
         val = self.request.query_params.get('val')
 
@@ -499,7 +404,7 @@ class GeneratorViewSet(
 
         return Response(data)
 
-    @action(methods=['GET'], url_path="search-software", detail=False)
+    @action(methods=['GET'], url_path="search-software", detail=False, permission_classes=[IsAuthenticated])
     def search_soft(self, request, *args, **kwargs):
         val = self.request.query_params.get('val')
 
@@ -507,7 +412,7 @@ class GeneratorViewSet(
 
         return Response(data)
 
-    @action(methods=['GET'], url_path="search-oborud", detail=False)
+    @action(methods=['GET'], url_path="search-oborud", detail=False, permission_classes=[IsAuthenticated])
     def search_oborud(self, request, *args, **kwargs):
         val = self.request.query_params.get('val')
         type = int(self.request.query_params.get('type'))
@@ -517,19 +422,19 @@ class GeneratorViewSet(
 
         return Response(data)
 
-    @action(methods=['GET'], url_path="get-form-control-data", detail=False)
+    @action(methods=['GET'], url_path="get-form-control-data", detail=False, permission_classes=[IsAuthenticated])
     def get_form_control_data(self, request, *args, **kwargs):
         data = FormControl.objects.all().values("id", "name", "type")
 
         return Response(data)
 
-    @action(methods=['GET'], url_path="get-independent-types-data", detail=False)
+    @action(methods=['GET'], url_path="get-independent-types-data", detail=False, permission_classes=[IsAuthenticated])
     def get_independent_types_data(self, request, *args, **kwargs):
         data = IndependentTypes.objects.all().values("id", "name", "type")
 
         return Response(data)
 
-    @action(methods=['POST'], url_path="save-discipline-indicator", detail=False)
+    @action(methods=['POST'], url_path="save-discipline-indicator", detail=True, permission_classes=[CanEditRPDProgram])
     def save_discipline_indicator(self, request, *args, **kwargs):
         data = self.request.data
 
@@ -539,7 +444,7 @@ class GeneratorViewSet(
 
         return Response(serializer_data.data)
 
-    @action(methods=['POST'], url_path="save-discipline-themes", detail=False)
+    @action(methods=['POST'], url_path="save-discipline-themes", detail=True, permission_classes=[CanEditRPDProgram])
     def save_discipline_themes(self, request, *args, **kwargs):
         data = self.request.data
 
@@ -549,7 +454,7 @@ class GeneratorViewSet(
 
         return Response(serializer_data.data)
 
-    @action(methods=['GET'], url_path="delete-discipline-themes", detail=False)
+    @action(methods=['GET'], url_path="delete-discipline-themes", detail=True, permission_classes=[CanEditRPDProgram])
     def delete_discipline_themes(self, request, *args, **kwargs):
         pk = self.request.query_params['id']
 
@@ -557,7 +462,7 @@ class GeneratorViewSet(
 
         return Response({"success": True})
 
-    @action(methods=['POST'], url_path="save-discipline-work-hour", detail=False)
+    @action(methods=['POST'], url_path="save-discipline-work-hour", detail=True, permission_classes=[CanEditRPDProgram])
     def save_discipline_work(self, request, *args, **kwargs):
         data = self.request.data
 
@@ -567,7 +472,7 @@ class GeneratorViewSet(
 
         return Response(serializer_data.data)
 
-    @action(methods=['GET'], url_path="delete-discipline-work-hour", detail=False)
+    @action(methods=['GET'], url_path="delete-discipline-work-hour", detail=True, permission_classes=[CanEditRPDProgram])
     def delete_discipline_work_hour(self, request, *args, **kwargs):
         pk = self.request.query_params.get('id')
 
@@ -575,7 +480,7 @@ class GeneratorViewSet(
 
         return Response({"success": True})
 
-    @action(methods=['POST'], url_path="save-additional-info", detail=True)
+    @action(methods=['POST'], url_path="save-additional-info", detail=True, permission_classes=[CanEditRPDProgram])
     def save_additional_info(self, request, *args, **kwargs):
         data = self.request.data
 
@@ -590,13 +495,13 @@ class GeneratorViewSet(
     def get_rpd_report(self, request, *args, **kwargs):
 
         instance = self.get_object()
-        result = self.retrieve(request, *args, **kwargs).data
-
         pk = self.kwargs['pk']
+
+        rpd_data = GeneratorService.get_rpd_data(pk)
 
         # filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(
         #     ',', ' ')
-        filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.pdf".replace(
+        filename = f"РПД_{instance.planlines.dis}_{rpd_data['admission']['abbr']}-{rpd_data['admission']['yr']}.pdf".replace(
             ',', ' ')
         path = f'templates/outputs/'
 
@@ -609,7 +514,7 @@ class GeneratorViewSet(
         path_doc_file = f"{os.path.abspath(path)}/{pk}.docx"
         path_pdf_file = f"{os.path.abspath(path)}/{pk}.pdf"
 
-        tpl = ReportService.get_rpd_report(result)
+        tpl = ReportService.get_rpd_report(rpd_data)
         # tpl.save(response)
 
         tpl.save(path_doc_file)
@@ -639,7 +544,6 @@ class GeneratorViewSet(
         if os.path.exists(path_pdf_file):
             os.remove(path_pdf_file)
 
-        # return Response(result)
         return response
 
     @action(methods=['GET'], url_path="get-rpd-annotation", detail=True)
@@ -659,7 +563,7 @@ class GeneratorViewSet(
         # return Response(result)
         return response
 
-    @action(methods=['GET'], url_path="send-rpd-on-review", detail=True)
+    @action(methods=['GET'], url_path="send-rpd-on-review", detail=True, permission_classes=[CanEditRPDProgram])
     def send_rpd_on_review(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.on_review
@@ -669,7 +573,7 @@ class GeneratorViewSet(
         return Response(data={'status_verbose': PlanLinesLink.StatusChoices.on_review.label,
                               'status': PlanLinesLink.StatusChoices.on_review})
 
-    @action(methods=['POST'], url_path="accept-rpd", detail=True)
+    @action(methods=['POST'], url_path="accept-rpd", detail=True, permission_classes=[CanAcceptRPDProgram])
     def accept_rpd(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.accepted
@@ -683,7 +587,7 @@ class GeneratorViewSet(
 
         return Response({"success": True})
 
-    @action(methods=['POST'], url_path="send-rpd-on-refile", detail=True)
+    @action(methods=['POST'], url_path="send-rpd-on-refile", detail=True, permission_classes=[CanAcceptRPDProgram])
     def send_rpd_on_refile(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.on_refile
@@ -702,7 +606,7 @@ class GeneratorViewSet(
 
         return Response([i for i in data])
 
-    @action(methods=['GET'], url_path="copy-old-rpd-program", detail=True)
+    @action(methods=['GET'], url_path="copy-old-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
     def get_old_rpd(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
 
@@ -831,5 +735,14 @@ class GeneratorViewSet(
                     })
                     lab_serializer.is_valid(raise_exception=True)
                     lab_serializer.save()
+
+        return Response(data={"success": True}, status=status.HTTP_200_OK)
+
+
+    @action(methods=['GET'], url_path="copy-new-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
+    def copy_new_rpd_program(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        new_pk = int(self.request.query_params['new_pk'])
+        instance = self.retrieve(request, *args, **kwargs).data
 
         return Response(data={"success": True}, status=status.HTTP_200_OK)

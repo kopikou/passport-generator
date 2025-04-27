@@ -183,6 +183,19 @@ export interface AdmissionInfo {
   cuchplan_id: number,
   spec_name: string,
   direct_name: string,
+  kvalif_name: string;
+  ckaf_id: number;
+  cfac_id: number;
+  ckaf__name: string;
+  cfac__name: string;
+  cadmkind: number;
+  cadmkind__name: string;
+  cadmkind__name_prof: string;
+  cdirection: number;
+  cdirection__name: string;
+  cdirection__cod: string;
+  cfob: number;
+  cfob__name: string;
 }
 
 export interface OtherDiscipline {
@@ -191,8 +204,8 @@ export interface OtherDiscipline {
 }
 
 export interface GeneratorData {
-  admission: AdmissionInfo[],
-  planlines: GeneratorPlanLineData[],
+  admission: AdmissionInfo,
+  planlines: GeneratorPlanLineData,
   other_discipline: OtherDiscipline[],
   discipline_themes: DisciplineThemesData[],
   discipline_work_hour: DisciplineWorkHour[],
@@ -209,6 +222,27 @@ export interface GeneratorData {
   logistics: GeneratorOborudData[],
   recources: DefaultRecources[],
   interactive_methods: string,
+  resources: {
+    id: number;
+    name: string;
+    type: number;
+    url: string;
+  }[];
+  comment: null;
+  old: {
+    abbrprofile: string;
+    startyear: number;
+    id: number;
+    species: string;
+  }[];
+  protocol_number: null;
+  protocol_date: null;
+  user_accepted_id: null;
+  user_type: null;
+  meeting: null;
+  review_date: null;
+  accept_date: null;
+  additional_info: any[]; // Можно уточнить тип, если известна структура
 }
 
 export interface GeneratorBookData {
@@ -253,9 +287,11 @@ export interface DisciplineThemesData {
   id: number,
   planlineslink_id: number,
   name: string,
+  num: number,
   hours: number,
   semester: number,
   formcontrol_id: number,
+  formcontrol_verbose: string,
   comment: string,
 }
 
