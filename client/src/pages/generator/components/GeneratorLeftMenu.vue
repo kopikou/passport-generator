@@ -110,7 +110,7 @@ function getErrors(url) {
 
 <template>
   <div style="display: grid; grid-template-rows: auto 1fr; overflow: hidden; height: 100%">
-    <div class="q-pa-sm" v-if="comment">
+    <div class="q-pa-sm" v-if="comment?.comment">
       <q-expansion-item
         class="bg-blue-2"
         expand-separator
