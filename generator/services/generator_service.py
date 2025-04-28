@@ -75,7 +75,7 @@ class GeneratorService(object):
         return res
 
     @classmethod
-    def get_rpd_data(cls, plan_lines_link_id):
+    def get_rpd_data(cls, plan_lines_link_id, user_mira_id=None):
         instance = (PlanLinesLink.objects.filter(id=plan_lines_link_id)
                     .select_related("planlines", "planlines__plan")
                     .prefetch_related("planlines__semesters", "planlines__indicators",
@@ -106,12 +106,22 @@ class GeneratorService(object):
 
         old_rpd = AISServices.get_old_rpd_list(serializer.data['mira_id'])
 
+        programs = []
+        if user_mira_id:
+            programs = cls.get_program_list(user_mira_id)
+
         result = {
             "admission": admission_info[0],
             "other_discipline": [i for i in other_discipline],
             "resources": [i for i in resources],
             "comment": comment,
             "old": [i for i in old_rpd],
+            "new": [{
+                'abbrprofile': i['abbr'],
+                'species': i['discpl'],
+                'startyear': i['yr'],
+                'id': i['id'],
+            } for i in programs if 'person' in i['type']],
             **serializer.data,
         }
         return result

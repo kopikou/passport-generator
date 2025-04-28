@@ -235,6 +235,12 @@ export interface GeneratorData {
     id: number;
     species: string;
   }[];
+   new: {
+    abbrprofile: string;
+    startyear: number;
+    id: number;
+    species: string;
+  }[];
   protocol_number: null;
   protocol_date: null;
   user_accepted_id: null;
