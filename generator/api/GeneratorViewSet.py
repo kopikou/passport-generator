@@ -669,11 +669,10 @@ class GeneratorViewSet(
 
         return Response(data={"success": True}, status=status.HTTP_200_OK)
 
-
-    @action(methods=['GET'], url_path="copy-new-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['GET'], url_path="copy-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
     def copy_new_rpd_program(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
-        new_pk = int(self.request.query_params['new_pk'])
-        instance = self.retrieve(request, *args, **kwargs).data
+        from_pk = int(self.request.data['from_pk'])
+        GeneratorService.copy_rpd_program(from_pk, pk)
 
         return Response(data={"success": True}, status=status.HTTP_200_OK)

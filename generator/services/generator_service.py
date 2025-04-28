@@ -2,9 +2,10 @@ from itertools import groupby
 
 from app.utils import cache_function
 from arim.services import AISServices
-from generator.models import PlanLinesLink, DefaultsResources, PlanLinesLinkComments
+from generator.models import PlanLinesLink, DefaultsResources, PlanLinesLinkComments, DisciplineThemes, \
+    DisciplineWorkHours, AdditionalInfo, DisciplineIndicators
 from generator.serializer import PlanLinesLinkSerializer
-from rpd.models import LinesData
+from rpd.models import LinesData, LinesIndicators
 
 
 class GeneratorService(object):
@@ -114,3 +115,52 @@ class GeneratorService(object):
             **serializer.data,
         }
         return result
+
+    @classmethod
+    def copy_rpd_program(cls, from_planlineslink_id, to_planlineslink_id):
+        themes_associations = {}
+
+        DisciplineThemes.objects.filter(planlineslink_id=to_planlineslink_id).delete()
+        from_themes = DisciplineThemes.objects.filter(planlineslink_id=from_planlineslink_id)
+
+        from_line_link = PlanLinesLink.objects.filter(id=from_planlineslink_id).first()
+        to_line_link = PlanLinesLink.objects.filter(id=to_planlineslink_id).first()
+
+        from_indicators = {
+            i.indicator.indicator: i
+            for i in DisciplineIndicators.objects.filter(planlineid=from_line_link.planlines_id).select_related("indicator")
+        }
+
+        DisciplineIndicators.objects.filter(planlineid=to_line_link.planlines_id).delete()
+        indicators = LinesIndicators.objects.filter(planlineid=to_line_link.planlines_id)
+
+        for ind in indicators:
+            indicator: DisciplineIndicators = from_indicators.get(ind.indicator)
+            if indicator:
+                indicator.id = None
+                indicator.planlineid_id = to_line_link.planlines_id
+                indicator.indicator_id = ind.id
+                indicator.save()
+
+        for theme in from_themes:
+            from_theme_id = theme.pk
+            theme.pk = None
+            theme.planlineslink_id = to_planlineslink_id
+            theme.save()
+            themes_associations[from_theme_id] = theme.pk
+
+        DisciplineWorkHours.objects.filter(planlineslink_id=to_planlineslink_id).delete()
+        from_work_hours = DisciplineWorkHours.objects.filter(planlineslink_id=from_planlineslink_id)
+        for wh in from_work_hours:
+            wh.planlineslink_id = to_planlineslink_id
+            wh.id = None
+            wh.theme_id = themes_associations[wh.theme_id]
+            wh.save()
+
+        AdditionalInfo.objects.filter(planlineslink_id=to_planlineslink_id).delete()
+        from_additional_info = AdditionalInfo.objects.filter(planlineslink_id=from_planlineslink_id)
+        for ai in from_additional_info:
+            ai.planlineslink_id = to_planlineslink_id
+            ai.id = None
+            ai.save()
+
