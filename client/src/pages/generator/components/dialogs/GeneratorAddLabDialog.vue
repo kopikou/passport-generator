@@ -64,7 +64,7 @@ async function onOKClick() {
 
   let data = _.keyBy(labDisciplineWorkHour.value, "id")
 
-  let r = await api.post('/api/generator/save-discipline-work-hour/', {
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-work-hour/`, {
     planlineslink_id: rpdData.value.id,
     theme_id: theme.value,
     type: 3,  // Лабораторные
