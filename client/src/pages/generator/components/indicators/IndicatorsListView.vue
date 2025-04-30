@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import {PlanIndicatorData} from "src/types";
-import {onBeforeMount, ref} from "vue";
+import {onBeforeMount, ref, watch} from "vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import useGeneratorViewStore from "stores/generatorViewStore";
@@ -62,7 +62,8 @@ async function saveData() {
 // $q.loading.hide()
 }
 
-onBeforeMount(() => {
+
+watch(() => props.data,() => {
   if (props.data.discipline_indicator.length != 0) {
     know.value = props.data.discipline_indicator[0].know || null
     able.value = props.data.discipline_indicator[0].able || null
@@ -70,6 +71,8 @@ onBeforeMount(() => {
     criteria.value = props.data.discipline_indicator[0].criteria || null
     methods.value = props.data.discipline_indicator[0].methods || null
   }
+}, {
+  immediate: true
 })
 
 </script>

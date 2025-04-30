@@ -14,6 +14,7 @@ const {
 
 
 const filteredData = computed(() => {
+  console.log(indicatorsData.value);
   return _.orderBy(indicatorsData.value, x => x.indicator_index)
 })
 
