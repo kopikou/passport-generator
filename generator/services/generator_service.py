@@ -137,7 +137,7 @@ class GeneratorService(object):
         to_line_link = PlanLinesLink.objects.filter(id=to_planlineslink_id).first()
 
         from_indicators = {
-            i.indicator.indicator: i
+            (i.indicator.indicator or "").replace(" ", ""): i
             for i in DisciplineIndicators.objects.filter(planlineid=from_line_link.planlines_id).select_related("indicator")
         }
 
@@ -145,7 +145,7 @@ class GeneratorService(object):
         indicators = LinesIndicators.objects.filter(planlineid=to_line_link.planlines_id)
 
         for ind in indicators:
-            indicator: DisciplineIndicators = from_indicators.get(ind.indicator)
+            indicator: DisciplineIndicators = from_indicators.get((ind.indicator or "").replace(" ", ""))
             if indicator:
                 indicator.id = None
                 indicator.planlineid_id = to_line_link.planlines_id
