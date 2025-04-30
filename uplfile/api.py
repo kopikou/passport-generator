@@ -55,8 +55,6 @@ class UploadFileViewSet(
 
         result = []
         for item in data:
-            if item['abbrprofile'] != 'АРб':
-                continue
             res = filtered_data_sorted.get(f"{item['abbrprofile']}_{item['startyear']}")
             if res:
                 result.append({
