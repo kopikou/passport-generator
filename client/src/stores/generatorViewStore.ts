@@ -165,12 +165,12 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   async function getFormControlData() {
     let r = await api.get('/api/generator/get-form-control-data/')
-    formControl.value = r.data
+    formControl.value = _.orderBy(r.data, 'name')
   }
 
   async function getIndependentTypesData() {
     let r = await api.get('/api/generator/get-independent-types-data/')
-    independentTypes.value = r.data
+    independentTypes.value = _.orderBy(r.data, 'name')
   }
 
   async function getData() {
