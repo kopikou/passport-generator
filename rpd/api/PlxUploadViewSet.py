@@ -36,12 +36,9 @@ class PlxUploadViewSet(
                 'status': 0,
             }
 
-            if RPDFile.objects.filter(title=filename).exists():
-                raise APIException({
-                    "message": f"Файл {filename} уже существует"
-                }, status.HTTP_400_BAD_REQUEST)
+            old_file = RPDFile.objects.filter(title=filename).first()
 
-            data_serializer = RpdFileSerializer(data=data)
+            data_serializer = RpdFileSerializer(instance=old_file, data=data)
 
             data_serializer.is_valid(raise_exception=True)
             data_serializer.save()
