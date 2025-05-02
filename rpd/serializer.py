@@ -3,6 +3,8 @@ from rest_framework import serializers
 from rpd.models import RPDFile, PlanData, Disciplines, LinesData, SemesterData, LinesIndicators, PlanDocuments
 
 
+
+
 class RpdFileSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     user_id = serializers.IntegerField()
@@ -23,6 +25,7 @@ class RpdFileSerializer(serializers.ModelSerializer):
             'status_verbose',
             'created_at',
         ]
+
 
 
 class SemesterDataSerializer(serializers.ModelSerializer):
@@ -224,4 +227,5 @@ class DisciplinesSerializer(serializers.ModelSerializer):
             'id',
             'name',
         ]
+
 

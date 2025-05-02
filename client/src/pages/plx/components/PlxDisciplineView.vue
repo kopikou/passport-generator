@@ -16,7 +16,6 @@ const {
   sync_option,
   linesData,
   disabled,
-  getLinesData,
   indicatorsDataById
 } = storeToRefs(planViewStore);
 

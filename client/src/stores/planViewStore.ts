@@ -77,13 +77,12 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
     let r = await api.get(`/api/plx/${activeFileId.value}/`)
 
     fileData.value = r.data.items
-    planData.value = r.data.parser.plan
-    linesData.value = r.data.parser.lines
+    planData.value = [r.data.parser.plan]
     semesterData.value = r.data.parser.semester
     indicatorsData.value = r.data.parser.indicators
     documentsData.value = r.data.parser.documents
-
-  }
+    linesData.value = r.data.parser.lines
+}
 
   async function fetchPlxFiles() {
     $q.loading.show()
@@ -111,7 +110,6 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
 
     await getCafData()
     await getDocTypesData()
-    await fetchPlxFiles();
 
     loadingData()
   })

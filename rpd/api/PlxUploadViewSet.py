@@ -9,10 +9,11 @@ from urllib3 import request
 from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from auths.models import Permissions
-from rpd.models import RPDFile, PlanData, LinesData, PlanDocuments, DocumentsTypes
+from rpd.models import RPDFile, PlanData, LinesData, PlanDocuments, DocumentsTypes, LinesIndicators, SemesterData
 from rpd.serializer import RpdFileSerializer, PlanDataSerializer, LinesDataSerializer, PlanDocumentsSerializer, \
-    BatchUpdateCafLinesSerializer
+    BatchUpdateCafLinesSerializer, LinesIndicatorsSerializer, SemesterDataSerializer
 from rpd.services import PLXParser
+from rpgen.models import PlanIndikator
 
 
 class PlxUploadViewSet(
@@ -37,11 +38,14 @@ class PlxUploadViewSet(
             }
 
             old_file = RPDFile.objects.filter(title=filename).first()
-
             data_serializer = RpdFileSerializer(instance=old_file, data=data)
-
             data_serializer.is_valid(raise_exception=True)
             data_serializer.save()
+
+            file.seek(0)
+
+            parser = PLXParser(file, data_serializer.data['id'])
+            parser.update_db()
 
         return Response(
             data={"success": "True"},
@@ -50,7 +54,7 @@ class PlxUploadViewSet(
 
 
     def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
+        instance: RPDFile = self.get_object()
 
         if instance.status == RPDFile.StatusChoice.download:
             instance.status = RPDFile.StatusChoice.in_review
@@ -58,10 +62,21 @@ class PlxUploadViewSet(
 
         serializer_data = RpdFileSerializer(instance)
 
-        parser = PLXParser(serializer_data.data['file'], serializer_data.data['id'])
+        plan_data = PlanData.objects.filter(file=instance).first()
+
+        lines_data = LinesData.objects.filter(plan=plan_data)
+        indikators = LinesIndicators.objects.filter(planlineid__in=lines_data)
+        semesters = SemesterData.objects.filter(planlineid__in=lines_data)
+
         return Response({
             "items": serializer_data.data,
-            "parser": parser.get_result_data(),
+            "parser": {
+                'documents': PlanDocumentsSerializer(plan_data.plan_documents.all(), many=True).data,
+                'indicators': LinesIndicatorsSerializer(indikators, many=True).data,
+                'lines': LinesDataSerializer(lines_data, many=True).data,
+                'plan': PlanDataSerializer(plan_data).data,
+                'semester': SemesterDataSerializer(semesters, many=True).data,
+            },
         }, status=status.HTTP_200_OK)
 
 
