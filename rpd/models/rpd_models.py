@@ -19,6 +19,7 @@ class RPDFile(TimestampsModel):
     file = models.FileField(upload_to="rpd_plan/%Y-%m-%d/", verbose_name="Файл РПД")
     status = models.IntegerField(choices=StatusChoice.choices, default=StatusChoice.download)
 
+
     @property
     def status_verbose(self):
         return RPDFile.StatusChoice.labels[self.status]

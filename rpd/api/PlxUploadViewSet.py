@@ -37,14 +37,24 @@ class PlxUploadViewSet(
                 'status': 0,
             }
 
+            # сохраняем файл в БД
             old_file = RPDFile.objects.filter(title=filename).first()
             data_serializer = RpdFileSerializer(instance=old_file, data=data)
             data_serializer.is_valid(raise_exception=True)
             data_serializer.save()
 
+            # удвляем старый файл привязанный к плану
             file.seek(0)
-
             parser = PLXParser(file, data_serializer.data['id'])
+            plan_data = parser.get_plan_data()
+            instance = PlanData.objects.filter(
+                abbrprofile=plan_data['abbrprofile'],
+                startyear=plan_data['startyear'],
+            ).first()
+            if instance:
+                RPDFile.objects.filter(id=instance.file_id).delete()
+
+            # обновляем план по новому файлу
             parser.update_db()
 
         return Response(
