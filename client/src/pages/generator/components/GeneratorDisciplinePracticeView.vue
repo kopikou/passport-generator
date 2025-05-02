@@ -38,7 +38,7 @@ const allPercentValue = computed(() => {
 })
 
 const allSemesterPercent = computed(() => {
-  let hoursList = _.map(_.filter(semestersData.value, (x) => tab.value == -1 ||  x.num == tab.value), (x) => x.pr)
+  let hoursList = _.map(_.filter(semestersData.value, (x) => tab.value == -1 || x.num == tab.value), (x) => x.pr)
   return _.sum(hoursList) || 0
 })
 
@@ -102,7 +102,7 @@ watchEffect(() => {
 })
 
 const filteredData = computed(() => {
-  return _.orderBy(practiceDisciplineWorkHour.value,  ['semester', 'num'])
+  return _.orderBy(practiceDisciplineWorkHour.value, ['semester', 'num'])
 })
 
 async function fieldUp(num, sem) {
@@ -111,9 +111,10 @@ async function fieldUp(num, sem) {
 
   _.set(practiceDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
   _.set(practiceDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await saveData(_.get(practiceDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveData(_.get(practiceDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveData(_.get(practiceDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveData(_.get(practiceDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 async function fieldDown(num, sem) {
@@ -122,9 +123,10 @@ async function fieldDown(num, sem) {
 
   _.set(practiceDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
   _.set(practiceDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await saveData(_.get(practiceDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveData(_.get(practiceDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveData(_.get(practiceDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveData(_.get(practiceDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 async function saveData(data) {
@@ -150,13 +152,13 @@ async function saveData(data) {
   >
     <template #content>
       <generator-discipline-work-hour-container
-          :data="filteredData"
-          v-model:sem="tab"
-          @field-down="fieldDown"
-          @field-up="fieldUp"
-          @delete="deletePractice"
-          @edit="updatePractice"
-        />
+        :data="filteredData"
+        v-model:sem="tab"
+        @field-down="fieldDown"
+        @field-up="fieldUp"
+        @delete="deletePractice"
+        @edit="updatePractice"
+      />
     </template>
   </generator-discipline-work-view-base>
 </template>

@@ -99,9 +99,10 @@ async function fieldUp(num, sem) {
 
   _.set(disciplineThemes.value, `[${oldKey}].num`, num - 1)
   _.set(disciplineThemes.value, `[${newKey}].num`, num)
-
-  await saveThemeData(_.get(disciplineThemes.value, `[${oldKey}]`))
-  await saveThemeData(_.get(disciplineThemes.value, `[${newKey}]`))
+  await Promise.all([
+    saveThemeData(_.get(disciplineThemes.value, `[${oldKey}]`)),
+    saveThemeData(_.get(disciplineThemes.value, `[${newKey}]`))
+  ])
 }
 
 async function fieldDown(num, sem) {
@@ -110,9 +111,10 @@ async function fieldDown(num, sem) {
 
   _.set(disciplineThemes.value, `[${oldKey}].num`, num + 1)
   _.set(disciplineThemes.value, `[${newKey}].num`, num)
-
-  await saveThemeData(_.get(disciplineThemes.value, `[${oldKey}]`))
-  await saveThemeData(_.get(disciplineThemes.value, `[${newKey}]`))
+  await Promise.all([
+    saveThemeData(_.get(disciplineThemes.value, `[${oldKey}]`)),
+    saveThemeData(_.get(disciplineThemes.value, `[${newKey}]`))
+  ])
 }
 
 async function saveThemeData(data) {
@@ -133,10 +135,11 @@ watchEffect(() => {
 <template>
   <generator-page-view title="Содержание разделов и тем по дисциплине">
     <template #title-right>
-      <q-btn label="Добавить тему дисциплины" icon="mdi-plus" color="white" text-color="black" class="q-mb-md" @click="addTheme" :disabled="disabled"/>
+      <q-btn label="Добавить тему дисциплины" icon="mdi-plus" color="white" text-color="black" class="q-mb-md"
+             @click="addTheme" :disabled="disabled"/>
     </template>
     <template #header>
-       <q-tabs
+      <q-tabs
         v-model="tab"
         align="left"
         class="q-mb-md"
@@ -167,7 +170,7 @@ watchEffect(() => {
             <div>
               Краткое описание темы
             </div>
-             <div>
+            <div>
               Семестр
             </div>
             <div>

@@ -42,7 +42,7 @@ const allSemesterPercent = computed(() => {
 })
 
 const allSemesterPercentValue = computed(() => {
-  let value = _.map(independentDisciplineWorkHour.value, (x) => tab.value == -1 ||  x.semester == tab.value ? x.hours : 0)
+  let value = _.map(independentDisciplineWorkHour.value, (x) => tab.value == -1 || x.semester == tab.value ? x.hours : 0)
   return _.sum(value) || 0
 })
 
@@ -111,7 +111,7 @@ const maxNumberInSemester = computed(() => {
 })
 
 const filteredData = computed(() => {
-  return _.orderBy(independentDisciplineWorkHour.value,  ['semester', 'num'])
+  return _.orderBy(independentDisciplineWorkHour.value, ['semester', 'num'])
 })
 
 async function fieldUp(num, sem) {
@@ -120,9 +120,10 @@ async function fieldUp(num, sem) {
 
   _.set(independentDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
   _.set(independentDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await saveData(_.get(independentDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveData(_.get(independentDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveData(_.get(independentDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveData(_.get(independentDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 async function fieldDown(num, sem) {
@@ -131,9 +132,10 @@ async function fieldDown(num, sem) {
 
   _.set(independentDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
   _.set(independentDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await saveData(_.get(independentDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveData(_.get(independentDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveData(_.get(independentDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveData(_.get(independentDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 async function saveData(data) {
@@ -162,14 +164,14 @@ function getRowColor(id) {
     @add-clicked="addIndependent"
   >
     <template #content>
-        <generator-discipline-work-hour-container
-          :data="filteredData"
-          v-model:sem="tab"
-          @field-down="fieldDown"
-          @field-up="fieldUp"
-          @delete="deleteIndependent"
-          @edit="updateIndependent"
-        />
+      <generator-discipline-work-hour-container
+        :data="filteredData"
+        v-model:sem="tab"
+        @field-down="fieldDown"
+        @field-up="fieldUp"
+        @delete="deleteIndependent"
+        @edit="updateIndependent"
+      />
     </template>
   </generator-discipline-work-view-base>
 

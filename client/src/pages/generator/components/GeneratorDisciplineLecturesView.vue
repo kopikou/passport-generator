@@ -98,7 +98,7 @@ function deleteLectures(id) {
 
 
 const filteredData = computed(() => {
-  return _.orderBy(lecturesDisciplineWorkHour.value,  ['semester', 'num'])
+  return _.orderBy(lecturesDisciplineWorkHour.value, ['semester', 'num'])
 })
 
 
@@ -113,9 +113,10 @@ async function fieldUp(num, sem) {
 
   _.set(lecturesDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
   _.set(lecturesDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 async function fieldDown(num, sem) {
@@ -124,9 +125,10 @@ async function fieldDown(num, sem) {
 
   _.set(lecturesDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
   _.set(lecturesDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 watchEffect(() => {
@@ -138,7 +140,7 @@ watchEffect(() => {
 <template>
 
   <generator-discipline-work-view-base
- :disabled="disabled"
+    :disabled="disabled"
     :all-percent="allPercent"
     :all-percent-value="allPercentValue"
     :all-semester-percent-value="allSemesterPercentValue"
@@ -151,13 +153,13 @@ watchEffect(() => {
   >
     <template #content>
       <generator-discipline-work-hour-container
-          :data="filteredData"
-          v-model:sem="tab"
-          @field-down="fieldDown"
-          @field-up="fieldUp"
-          @delete="deleteLectures"
-          @edit="updateLectures"
-        />
+        :data="filteredData"
+        v-model:sem="tab"
+        @field-down="fieldDown"
+        @field-up="fieldUp"
+        @delete="deleteLectures"
+        @edit="updateLectures"
+      />
     </template>
   </generator-discipline-work-view-base>
 </template>

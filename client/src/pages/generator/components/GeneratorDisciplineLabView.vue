@@ -102,7 +102,7 @@ watchEffect(() => {
 })
 
 const filteredData = computed(() => {
-  return _.orderBy(labDisciplineWorkHour.value,  ['semester', 'num'])
+  return _.orderBy(labDisciplineWorkHour.value, ['semester', 'num'])
 })
 
 async function saveData(data) {
@@ -117,8 +117,10 @@ async function fieldUp(num, sem) {
   _.set(labDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
   _.set(labDisciplineWorkHour.value, `[${newKey}].num`, num)
 
-  await saveData(_.get(labDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveData(_.get(labDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveData(_.get(labDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveData(_.get(labDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 async function fieldDown(num, sem) {
@@ -127,9 +129,10 @@ async function fieldDown(num, sem) {
 
   _.set(labDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
   _.set(labDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await saveData(_.get(labDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveData(_.get(labDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveData(_.get(labDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveData(_.get(labDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 </script>
@@ -148,14 +151,14 @@ async function fieldDown(num, sem) {
     @add-clicked="addLab"
   >
     <template #content>
-         <generator-discipline-work-hour-container
-          :data="filteredData"
-          v-model:sem="tab"
-          @field-down="fieldDown"
-          @field-up="fieldUp"
-          @delete="deleteLab"
-          @edit="updateLab"
-        />
+      <generator-discipline-work-hour-container
+        :data="filteredData"
+        v-model:sem="tab"
+        @field-down="fieldDown"
+        @field-up="fieldUp"
+        @delete="deleteLab"
+        @edit="updateLab"
+      />
     </template>
   </generator-discipline-work-view-base>
 </template>
@@ -186,9 +189,10 @@ async function fieldDown(num, sem) {
       border-bottom: none;
 
     }
-      &:last-child {
-        border-bottom: $border;
-      }
+
+    &:last-child {
+      border-bottom: $border;
+    }
   }
 }
 
