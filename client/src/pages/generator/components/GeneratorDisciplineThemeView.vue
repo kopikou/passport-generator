@@ -125,7 +125,7 @@ function getRowColor(number) {
 }
 
 watchEffect(() => {
-  tab.value = `${semestersData.value[0]?.num}`
+  tab.value = semestersData.value[0]?.num
 })
 
 </script>
@@ -142,8 +142,8 @@ watchEffect(() => {
         class="q-mb-md"
         active-bg-color="teal-1"
       >
-        <q-tab class="text-teal" v-for="item in semestersData" :name="`${item.num}`"
-               :label="`Семестр ${item.num}`"/>
+        <q-tab class="text-teal" v-for="item in [...semestersData, {num: -1}]" :name="item.num"
+               :label="item.num == -1 ? 'Все' : `Семестр ${item.num}`"/>
       </q-tabs>
     </template>
     <template #content>
@@ -153,7 +153,7 @@ watchEffect(() => {
         transition-prev="scale"
         transition-next="scale"
       >
-        <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="theme-container">
+        <q-tab-panel v-for="item in [...semestersData, {num: -1}]" :name="item.num" class="theme-container">
           <div v-if="item" class="theme-container__header text-center text-subtitle1 items-center bg-grey-2">
             <div>
               №
@@ -167,12 +167,16 @@ watchEffect(() => {
             <div>
               Краткое описание темы
             </div>
+             <div>
+              Семестр
+            </div>
             <div>
               Управление
             </div>
+
           </div>
           <div v-for="item in filteredData" class="theme-container__body">
-            <div v-if="item.semester == tab"
+            <div v-if="tab == -1 || item.semester == tab"
                  class="theme-container__body__cell text-subtitle1 text-center items-center"
                  :class="getRowColor(item.num)">
               <div>
@@ -186,6 +190,9 @@ watchEffect(() => {
               </div>
               <div class="text-justify">
                 {{ item.comment }}
+              </div>
+              <div>
+                {{ item.semester }}
               </div>
               <div>
                 <q-btn
@@ -224,7 +231,7 @@ watchEffect(() => {
 
   > .theme-container__header {
     display: grid;
-    grid-template-columns: 4% 20% 15% 1fr 20%;
+    grid-template-columns: 4% 20% 15% 1fr  10% 20%;
     font-weight: bold;
     border: $border;
     border-bottom: none;
@@ -238,7 +245,7 @@ watchEffect(() => {
   > .theme-container__body {
     > .theme-container__body__cell {
       display: grid;
-      grid-template-columns: 4% 20% 15% 1fr 20%;
+      grid-template-columns: 4% 20% 15% 1fr 10%  20%;
       border: $border;
       border-bottom: none;
 

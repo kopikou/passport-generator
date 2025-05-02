@@ -151,6 +151,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
 
+
   const lekcHours = computed(() => _(semestersData.value).map(x => x.lekc).sum())
   const srsHours = computed(() => _(semestersData.value).map(x => x.srs).sum())
   const prHours = computed(() => _(semestersData.value).map(x => x.pr).sum())

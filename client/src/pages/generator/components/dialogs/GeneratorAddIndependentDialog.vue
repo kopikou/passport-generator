@@ -3,19 +3,20 @@
 import {useDialogPluginComponent, useQuasar} from "quasar";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
-import {computed, ref, onBeforeMount} from "vue";
+import {computed, ref, onBeforeMount, watchEffect, watch} from "vue";
 import _ from "lodash";
 import {api} from "boot/axios";
 
 const generatorViewStore = useGeneratorViewStore();
 
-const{
+const {
   independentTypes,
   independentDisciplineWorkHour,
   rpdData,
   disciplineThemes,
   activeRpdId,
-}=storeToRefs(generatorViewStore)
+  semestersData,
+} = storeToRefs(generatorViewStore)
 
 defineEmits([
   ...useDialogPluginComponent.emits
@@ -30,19 +31,19 @@ const props = defineProps({
   },
   sem: {
     required: true,
+    type: Number
   }
 })
 
 const name = ref()
 const hourCount = ref(0)
 const theme = ref()
+const semNew = ref(0)
 // const num = ref()
 
-const disciplineThemesOptions = computed(() => {
-  return _(disciplineThemes.value)
-    .filter(x => props.sem == x.semester)
-    .value()
-})
+function getThemeOptionsLabel(theme) {
+  return   `${theme.semester} сем. - ${theme.name}`
+}
 
 const correct = computed(() => {
   if (!name.value || name.value.length < 3) return true
@@ -55,9 +56,9 @@ const correct = computed(() => {
 
 async function onOKClick() {
   $q.loading.show({message: "Сохранение"})
-    let maxNum = _.max(_(independentDisciplineWorkHour.value)
-      .filter((x) => x.semester == props.sem)
-      .map((q) => q.num).value())
+  let maxNum = _.max(_(independentDisciplineWorkHour.value)
+    .filter((x) => x.semester == props.sem)
+    .map((q) => q.num).value())
 
   if (!maxNum) maxNum = 1
   else maxNum += 1
@@ -70,7 +71,7 @@ async function onOKClick() {
     type: 2,  // Cамостоятельная
     name: name.value,
     hours: hourCount.value,
-    semester: props.sem,
+    semester: semNew.value,
     id: props.id,
     num: props.id ? data[props.id].num : maxNum,
   })
@@ -85,14 +86,18 @@ async function onOKClick() {
   onDialogOK()
 }
 
-onBeforeMount(() => {
+watch(() => props, () => {
+  let data = _.keyBy(independentDisciplineWorkHour.value, "id")
   if (props.id) {
-    let data = _.keyBy(independentDisciplineWorkHour.value, "id")
     name.value = data[props.id].name
     hourCount.value = data[props.id].hours
     theme.value = data[props.id].theme_id
-    // num.value = data[props.id].num
+    semNew.value = data[props.id].semester
+  } else {
+    semNew.value = parseInt(props.sem);
   }
+}, {
+  immediate: true
 })
 
 </script>
@@ -113,30 +118,40 @@ onBeforeMount(() => {
           map-options
           emit-value
         />
-<!--        <q-input-->
-<!--          stack-label-->
-<!--          label="Номер"-->
-<!--          v-model="num"-->
-<!--          filled-->
-<!--          :rules="[ val => val > 0 || 'Введите значение больше 0']"-->
-<!--          type="number"-->
-<!--        />-->
+        <!--        <q-input-->
+        <!--          stack-label-->
+        <!--          label="Номер"-->
+        <!--          v-model="num"-->
+        <!--          filled-->
+        <!--          :rules="[ val => val > 0 || 'Введите значение больше 0']"-->
+        <!--          type="number"-->
+        <!--        />-->
         <q-input
-            stack-label
-            label="Количество часов"
-            v-model="hourCount"
-            filled
-            type="number"
-            :rules="[ val => val > 0 || 'Введите значение больше 0']"
+          stack-label
+          label="Количество часов"
+          v-model="hourCount"
+          filled
+          type="number"
+          :rules="[ val => val > 0 || 'Введите значение больше 0']"
         />
         <q-select
           stack-label
           label="Тема дисциплины"
           filled
-          :options="disciplineThemesOptions"
+          :options="disciplineThemes"
           v-model="theme"
-          option-label="name"
+          :option-label="getThemeOptionsLabel"
           option-value="id"
+          map-options
+          emit-value
+        />
+        <q-select
+          stack-label
+          label="Семестр"
+          :options="semestersData"
+          v-model="semNew"
+          option-label="num"
+          option-value="num"
           map-options
           emit-value
         />

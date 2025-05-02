@@ -3,7 +3,7 @@
 import {useDialogPluginComponent, useQuasar} from "quasar";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
-import {computed, onBeforeMount, ref} from "vue";
+import {computed, onBeforeMount, ref, watch} from "vue";
 import {api} from "boot/axios";
 import _ from "lodash";
 
@@ -21,6 +21,7 @@ const {
   disciplineThemes,
   labDisciplineWorkHour,
   activeRpdId,
+  semestersData,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -28,20 +29,21 @@ const props = defineProps({
     required: true,
   },
   sem: {
-    required: true
+    required: true,
+    type: Number
   }
 })
 
 const name = ref('')
 const hourCount = ref(0)
 const theme = ref()
+const semNew = ref(0)
 // const num = ref()
 
-const disciplineThemesOptions = computed(() => {
-  return _(disciplineThemes.value)
-    .filter(x => props.sem == x.semester)
-    .value()
-})
+function getThemeOptionsLabel(theme) {
+  return   `${theme.semester} сем. - ${theme.name}`
+}
+
 
 const correct = computed(() => {
 
@@ -70,7 +72,7 @@ async function onOKClick() {
     type: 3,  // Лабораторные
     name: name.value,
     hours: hourCount.value,
-    semester: props.sem,
+    semester: semNew.value,
     id: props.id,
     num: props.id ? data[props.id].num : maxNum,
   })
@@ -85,14 +87,18 @@ async function onOKClick() {
   onDialogOK()
 }
 
-onBeforeMount(() => {
+watch(() => props, () => {
   if (props.id) {
     let data = _.keyBy(labDisciplineWorkHour.value, "id")
     name.value = data[props.id].name
     hourCount.value = data[props.id].hours
     theme.value = data[props.id].theme_id
-    // num.value = data[props.id].num
+    semNew.value = data[props.id].semester
+  } else {
+    semNew.value = parseInt(props.sem);
   }
+}, {
+  immediate: true
 })
 </script>
 
@@ -128,14 +134,23 @@ onBeforeMount(() => {
           stack-label
           label="Тема дисциплины"
           filled
-          :options="disciplineThemesOptions"
+          :options="disciplineThemes"
           v-model="theme"
-          option-label="name"
+          :option-label="getThemeOptionsLabel"
           option-value="id"
           map-options
           emit-value
         />
-
+ <q-select
+          stack-label
+          label="Семестр"
+          :options="semestersData"
+          v-model="semNew"
+          option-label="num"
+          option-value="num"
+          map-options
+          emit-value
+        />
       </div>
       <q-card-actions align="right">
         <q-btn flat color="teal" label="Сохранить" @click="onOKClick" :disabled="correct"/>
