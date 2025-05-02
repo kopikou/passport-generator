@@ -146,6 +146,7 @@ watchEffect(() => {
 </script>
 
 <template>
+
   <generator-discipline-work-view-base
  :disabled="disabled"
     :all-percent="allPercent"
