@@ -22,6 +22,6 @@ def deploy(ctx):
                 c.run("npm run build")
             with c.cd(folder):
                 c.run("python manage.py collectstatic --noinput")
-                c.run("pg_dump -c surp > \"/srv/surp/backups/surp_$(date '+%Y%m%d_%H%M%S').sql\"")
+                c.run("pg_dump -c surp > \"/srv/surp/backups/surp_predeploy_$(date '+%Y%m%d_%H%M%S').sql\"")
                 c.run("python manage.py migrate")
             c.run("systemctl restart --user surp.service")
