@@ -39,13 +39,13 @@ const codes = computed(() => {
 const codeFilter = ref([]);
 
 const abbrs = computed(() => {
-  let r = _(files.value).map(x => x.abbr).uniq().sortBy().value();
+  let r = _(files.value).map(x => x.abbrprofile).uniq().sortBy().value();
   return r;
 })
 const abbrFilter = ref([]);
 
 const years = computed(() => {
-  let r = _(files.value).map(x => x.year).uniq().sortBy().value();
+  let r = _(files.value).map(x => x.startyear).uniq().sortBy().value();
   return r;
 })
 const yearFilter = ref([]);
@@ -168,9 +168,9 @@ onBeforeMount(async () => {
         <div class="plx-file-cell" style="font-size: 1.25rem">
           <router-link :to="`/plx/${f.id}/disciplines`">{{ f.title }}</router-link>
         </div>
-        <div class="plx-file-cell">{{ f.abbr }}</div>
-        <div class="plx-file-cell">{{ f.code }}</div>
-        <div class="plx-file-cell">{{ f.year }}</div>
+        <div class="plx-file-cell">{{ f.abbrprofile}}</div>
+        <div class="plx-file-cell">{{ f.lastshifr }}</div>
+        <div class="plx-file-cell">{{ f.startyear }}</div>
         <div class="plx-file-cell">{{ f.status_verbose }}</div>
         <div class="plx-file-cell">{{ dayjs(f.created_at).format("YYYY-MM-DD HH:mm:ss") }}</div>
         <div class="plx-file-cell">

@@ -23,7 +23,7 @@ class PlxUploadViewSet(
     CreateModelMixin,
     GenericViewSet,
 ):
-    queryset = RPDFile.objects.all()
+    queryset = RPDFile.objects.select_related('plandata').all()
     serializer_class = RpdFileSerializer
     permission_classes = [UserProfileHasPermission(Permissions.can_upload_plx_files)]
 
@@ -41,18 +41,20 @@ class PlxUploadViewSet(
             old_file = RPDFile.objects.filter(title=filename).first()
             data_serializer = RpdFileSerializer(instance=old_file, data=data)
             data_serializer.is_valid(raise_exception=True)
-            data_serializer.save()
+            rpd_file_instance = data_serializer.save()
 
             # удвляем старый файл привязанный к плану
             file.seek(0)
-            parser = PLXParser(file, data_serializer.data['id'])
+            parser = PLXParser(file, rpd_file_instance.id)
             plan_data = parser.get_plan_data()
-            instance = PlanData.objects.filter(
+            plan_data_instance = PlanData.objects.filter(
                 abbrprofile=plan_data['abbrprofile'],
                 startyear=plan_data['startyear'],
             ).first()
-            if instance:
-                RPDFile.objects.filter(id=instance.file_id).delete()
+            if plan_data_instance:
+                RPDFile.objects.filter(id=plan_data_instance.file_id).delete()
+                rpd_file_instance.plandata = plan_data_instance
+                rpd_file_instance.save()
 
             # обновляем план по новому файлу
             parser.update_db()

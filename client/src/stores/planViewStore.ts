@@ -89,14 +89,14 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
     let r = await api.get("/api/plx/")
     files.value = _.sortBy(r.data, 'title')
 
-    for (let f of files.value) {
-      let m = f.title.match(/(\d{2}.\d{2}.\d{2})\s*\(([А-Яа-я]+)-(\d{2})/)
-      if (m) {
-        f.code = m[1]
-        f.abbr = m[2]
-        f.year = '20' + m[3]
-      }
-    }
+    // for (let f of files.value) {
+    //   let m = f.title.match(/(\d{2}.\d{2}.\d{2})\s*\(([А-Яа-я]+)-(\d{2})/)
+    //   if (m) {
+    //     f.code = m[1]
+    //     f.abbr = m[2]
+    //     f.year = '20' + m[3]
+    //   }
+    // }
 
     $q.loading.hide()
   }

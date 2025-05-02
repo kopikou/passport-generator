@@ -14,6 +14,7 @@ class RpdFileSerializer(serializers.ModelSerializer):
     status_verbose = serializers.CharField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
 
+
     class Meta:
         model = RPDFile
         fields = [
@@ -24,6 +25,9 @@ class RpdFileSerializer(serializers.ModelSerializer):
             'status',
             'status_verbose',
             'created_at',
+            'abbrprofile',
+            'startyear',
+            'lastshifr',
         ]
 
 
