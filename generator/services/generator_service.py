@@ -14,13 +14,13 @@ class GeneratorService(object):
     def get_program_list(cls, user_mira_id):
         data = AISServices.get_disciplines_by_person(user_mira_id)
 
-        discpl_list = [i['discpl'] for i in data]
-        abbrprofile_list = [i['abbr'] for i in data]
-        startyear_list = [i['yr'] for i in data]
+        discpl_list = list(set(i['discpl'] for i in data))
+        abbrprofile_list = list(set(i['abbr'] for i in data))
+        startyear_list = list(set(i['yr'] for i in data))
 
-        filtered_data = LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
+        filtered_data = list(LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
                                                  plan__startyear__in=startyear_list,
-                                                 plan__file__status=4, synchronize=True).select_related("plan")
+                                                 plan__file__status=4, synchronize=True).select_related("plan"))
 
         filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.plan.startyear}": i for i in filtered_data}
 

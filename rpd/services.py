@@ -15,7 +15,7 @@ from lxml import etree
 import re
 
 from rpd.models import PlanData, LinesData, Disciplines, SemesterData, LinesIndicators, ExceptionNames, AllowedNames, \
-    PlanDocuments, BaseDocuments, DocumentsTypes
+    PlanDocuments, BaseDocuments, DocumentsTypes, RPDFile
 from rpd.serializer import PlanDataSerializer, DisciplinesSerializer, LinesDataSerializer, SemesterDataSerializer, \
     LinesIndicatorsSerializer, PlanDocumentsSerializer
 
@@ -382,6 +382,8 @@ class PLXParser:
         obj = PlanDataSerializer(instance=instance, data=data)
         obj.is_valid(raise_exception=True)
         obj.save()
+
+        RPDFile.objects.filter(id=self.file_id).update(plandata_id=obj.data['id'])
 
         data['id'] = obj.data['id']
 
