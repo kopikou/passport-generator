@@ -495,6 +495,17 @@ class GeneratorViewSet(
         # return Response(result)
         return response
 
+    @action(methods=['GET'], url_path="send-rpd-on-edit", detail=True, permission_classes=[CanEditRPDProgram])
+    def send_rpd_on_edit(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.status = PlanLinesLink.StatusChoices.is_filled
+        instance.review_date = pendulum.now()
+        instance.save()
+
+        return Response(data={'status_verbose': PlanLinesLink.StatusChoices.is_filled.label,
+                              'status': PlanLinesLink.StatusChoices.is_filled})
+
+
     @action(methods=['GET'], url_path="send-rpd-on-review", detail=True, permission_classes=[CanEditRPDProgram])
     def send_rpd_on_review(self, request, *args, **kwargs):
         instance = self.get_object()
