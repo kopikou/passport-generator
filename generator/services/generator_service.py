@@ -2,9 +2,10 @@ from itertools import groupby
 
 from app.utils import cache_function
 from arim.services import AISServices
-from generator.models import PlanLinesLink, DefaultsResources, PlanLinesLinkComments
+from generator.models import PlanLinesLink, DefaultsResources, PlanLinesLinkComments, DisciplineThemes, \
+    DisciplineWorkHours, AdditionalInfo, DisciplineIndicators
 from generator.serializer import PlanLinesLinkSerializer
-from rpd.models import LinesData
+from rpd.models import LinesData, LinesIndicators
 
 
 class GeneratorService(object):
@@ -13,13 +14,13 @@ class GeneratorService(object):
     def get_program_list(cls, user_mira_id):
         data = AISServices.get_disciplines_by_person(user_mira_id)
 
-        discpl_list = [i['discpl'] for i in data]
-        abbrprofile_list = [i['abbr'] for i in data]
-        startyear_list = [i['yr'] for i in data]
+        discpl_list = list(set(i['discpl'] for i in data))
+        abbrprofile_list = list(set(i['abbr'] for i in data))
+        startyear_list = list(set(i['yr'] for i in data))
 
-        filtered_data = LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
+        filtered_data = list(LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
                                                  plan__startyear__in=startyear_list,
-                                                 plan__file__status=4, synchronize=True).select_related("plan")
+                                                 plan__file__status=4, synchronize=True).select_related("plan"))
 
         filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.plan.startyear}": i for i in filtered_data}
 
@@ -74,7 +75,7 @@ class GeneratorService(object):
         return res
 
     @classmethod
-    def get_rpd_data(cls, plan_lines_link_id):
+    def get_rpd_data(cls, plan_lines_link_id, user_mira_id=None):
         instance = (PlanLinesLink.objects.filter(id=plan_lines_link_id)
                     .select_related("planlines", "planlines__plan")
                     .prefetch_related("planlines__semesters", "planlines__indicators",
@@ -105,12 +106,71 @@ class GeneratorService(object):
 
         old_rpd = AISServices.get_old_rpd_list(serializer.data['mira_id'])
 
+        programs = []
+        if user_mira_id:
+            programs = cls.get_program_list(user_mira_id)
+
         result = {
             "admission": admission_info[0],
             "other_discipline": [i for i in other_discipline],
             "resources": [i for i in resources],
             "comment": comment,
             "old": [i for i in old_rpd],
+            "new": [{
+                'abbrprofile': i['abbr'],
+                'species': i['discpl'],
+                'startyear': i['yr'],
+                'id': i['id'],
+            } for i in programs if 'person' in i['type']],
             **serializer.data,
         }
         return result
+
+    @classmethod
+    def copy_rpd_program(cls, from_planlineslink_id, to_planlineslink_id):
+        themes_associations = {}
+
+        DisciplineThemes.objects.filter(planlineslink_id=to_planlineslink_id).delete()
+        from_themes = DisciplineThemes.objects.filter(planlineslink_id=from_planlineslink_id)
+
+        from_line_link = PlanLinesLink.objects.filter(id=from_planlineslink_id).first()
+        to_line_link = PlanLinesLink.objects.filter(id=to_planlineslink_id).first()
+
+        from_indicators = {
+            (i.indicator.indicator or "").replace(" ", ""): i
+            for i in DisciplineIndicators.objects.filter(planlineid=from_line_link.planlines_id).select_related("indicator")
+        }
+
+        DisciplineIndicators.objects.filter(planlineid=to_line_link.planlines_id).delete()
+        indicators = LinesIndicators.objects.filter(planlineid=to_line_link.planlines_id)
+
+        for ind in indicators:
+            indicator: DisciplineIndicators = from_indicators.get((ind.indicator or "").replace(" ", ""))
+            if indicator:
+                indicator.id = None
+                indicator.planlineid_id = to_line_link.planlines_id
+                indicator.indicator_id = ind.id
+                indicator.save()
+
+        for theme in from_themes:
+            from_theme_id = theme.pk
+            theme.pk = None
+            theme.planlineslink_id = to_planlineslink_id
+            theme.save()
+            themes_associations[from_theme_id] = theme.pk
+
+        DisciplineWorkHours.objects.filter(planlineslink_id=to_planlineslink_id).delete()
+        from_work_hours = DisciplineWorkHours.objects.filter(planlineslink_id=from_planlineslink_id)
+        for wh in from_work_hours:
+            wh.planlineslink_id = to_planlineslink_id
+            wh.id = None
+            wh.theme_id = themes_associations[wh.theme_id]
+            wh.save()
+
+        AdditionalInfo.objects.filter(planlineslink_id=to_planlineslink_id).delete()
+        from_additional_info = AdditionalInfo.objects.filter(planlineslink_id=from_planlineslink_id)
+        for ai in from_additional_info:
+            ai.planlineslink_id = to_planlineslink_id
+            ai.id = None
+            ai.save()
+

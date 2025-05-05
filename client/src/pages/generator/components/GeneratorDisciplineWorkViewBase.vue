@@ -43,8 +43,9 @@ const tab = defineModel('tab', {
           active-bg-color="teal-1"
           class="q-mb-md"
         >
-          <q-tab class="text-teal" v-for="item in semestersData" :name="`${item.num}`"
+          <q-tab class="text-teal" v-for="item in semestersData" :name="item.num"
                  :label="`Семестр ${item.num}`"/>
+          <q-tab class="text-teal" :name="-1">Все</q-tab>
         </q-tabs>
         <q-linear-progress class="q-mb-md" size="20px" rounded :value="allSemesterPercentValue / allSemesterPercent"
                            color="orange-3">

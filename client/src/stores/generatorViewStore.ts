@@ -23,6 +23,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return _.orderBy(rpdData.value.old || [], x => -x.startyear)
   })
 
+  const newPlans = computed(() => {
+    return _.orderBy(rpdData.value.new || [], x => [-x.startyear, x.species, x.abbrprofile].join("-"))
+  })
+
   const status = computed(() => {
     return rpdData.value?.status || -1
   })
@@ -147,6 +151,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
 
+
   const lekcHours = computed(() => _(semestersData.value).map(x => x.lekc).sum())
   const srsHours = computed(() => _(semestersData.value).map(x => x.srs).sum())
   const prHours = computed(() => _(semestersData.value).map(x => x.pr).sum())
@@ -161,12 +166,12 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   async function getFormControlData() {
     let r = await api.get('/api/generator/get-form-control-data/')
-    formControl.value = r.data
+    formControl.value = _.orderBy(r.data, 'name')
   }
 
   async function getIndependentTypesData() {
     let r = await api.get('/api/generator/get-independent-types-data/')
-    independentTypes.value = r.data
+    independentTypes.value = _.orderBy(r.data, 'name')
   }
 
   async function getData() {
@@ -661,6 +666,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   return {
     cafData,
     oldPlans,
+    newPlans,
     formControl,
     independentTypes,
     otherDiscipline,

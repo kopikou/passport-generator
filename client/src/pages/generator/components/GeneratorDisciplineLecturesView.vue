@@ -9,6 +9,7 @@ import _ from "lodash";
 import {api} from "boot/axios";
 import EmptyIcon from "components/EmptyIcon.vue";
 import GeneratorDisciplineWorkViewBase from "pages/generator/components/GeneratorDisciplineWorkViewBase.vue";
+import GeneratorDisciplineWorkHourContainer from "pages/generator/components/GeneratorDisciplineWorkHourContainer.vue";
 
 const $q = useQuasar()
 
@@ -23,7 +24,7 @@ const {
   activeRpdId,
 } = storeToRefs(generatorViewStore)
 
-const tab = ref(0)
+const tab = ref(-1)
 
 const allPercent = computed(() => {
   let hoursList = _.map(semestersData.value, (x) => x.lekc)
@@ -36,12 +37,12 @@ const allPercentValue = computed(() => {
 })
 
 const allSemesterPercent = computed(() => {
-  let hoursList = _.map(_.filter(semestersData.value, (x) => x.num == tab.value), (x) => x.lekc)
+  let hoursList = _.map(_.filter(semestersData.value, (x) => tab.value == -1 || x.num == tab.value), (x) => x.lekc)
   return _.sum(hoursList) || 0
 })
 
 const allSemesterPercentValue = computed(() => {
-  let value = _.map(lecturesDisciplineWorkHour.value, (x) => x.semester == tab.value ? x.hours : 0)
+  let value = _.map(lecturesDisciplineWorkHour.value, (x) => (tab.value == -1 || x.semester == tab.value) ? x.hours : 0)
   return _.sum(value) || 0
 })
 
@@ -95,22 +96,11 @@ function deleteLectures(id) {
   })
 }
 
-const disciplineThemesByValue = computed(() => {
-  return _.keyBy(disciplineThemes.value, 'id')
-})
-
-const maxNumberInSemester = computed(() => {
-  let data = _.filter(lecturesDisciplineWorkHour.value, (x) => x.semester == tab.value)
-  return _.max(_.map(data, (x) => x.num))
-})
 
 const filteredData = computed(() => {
-  return _.orderBy(lecturesDisciplineWorkHour.value, (x) => x.num, 'asc')
+  return _.orderBy(lecturesDisciplineWorkHour.value, ['semester', 'num'])
 })
 
-function getRowColor(number) {
-  return number % 2 == 0 ? 'bg-grey-4' : 'bg-white'
-}
 
 async function saveWorkHour(data) {
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-work-hour/`, data)
@@ -123,9 +113,10 @@ async function fieldUp(num, sem) {
 
   _.set(lecturesDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
   _.set(lecturesDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 async function fieldDown(num, sem) {
@@ -134,20 +125,22 @@ async function fieldDown(num, sem) {
 
   _.set(lecturesDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
   _.set(lecturesDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 watchEffect(() => {
-  tab.value = `${semestersData.value[0]?.num}`
+  tab.value = semestersData.value[0]?.num
 })
 
 </script>
 
 <template>
+
   <generator-discipline-work-view-base
- :disabled="disabled"
+    :disabled="disabled"
     :all-percent="allPercent"
     :all-percent-value="allPercentValue"
     :all-semester-percent-value="allSemesterPercentValue"
@@ -159,101 +152,19 @@ watchEffect(() => {
     @add-clicked="addLectures"
   >
     <template #content>
-        <q-tab-panels
-          v-model="tab"
-          animated
-          transition-prev="scale"
-          transition-next="scale"
-        >
-          <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="lectures-container">
-            <div v-if="item" class="lectures-container__header text-center text-subtitle1 items-center bg-grey-2">
-              <div>
-                №
-              </div>
-              <div>
-                Наименование лекционного занятия
-              </div>
-              <div>
-                Количество часов
-              </div>
-              <div>
-                Тема дисциплины
-              </div>
-              <div v-show="!disabled">
-                Управление
-              </div>
-            </div>
-            <div v-for="lectures in filteredData" class="lectures-container__body">
-              <div v-if="lectures.semester == tab"
-                   class="lectures-container__body__cell text-subtitle1 text-center items-center"
-                   :class="getRowColor(lectures.num)">
-                <div>
-                  {{ lectures.num }}
-                </div>
-                <div class="text-justify">
-                  {{ lectures.name }}
-                </div>
-                <div>
-                  {{ lectures.hours }}
-                </div>
-                <div>
-                  {{ disciplineThemesByValue[lectures.theme_id]?.num }}. {{ disciplineThemesByValue[lectures.theme_id]?.name }}
-                </div>
-                <div v-show="!disabled">
-                  <q-btn
-                    icon="mdi-delete" color="red" flat @click="deleteLectures(lectures.id)"
-                  />
-                  <q-btn
-                    icon="mdi-pencil-outline" color="green" flat @click="updateLectures(lectures.id)"
-                  />
-                  <q-btn v-if="lectures.num != 1"
-                         icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
-                         @click="fieldUp(lectures.num, lectures.semester)"
-                  />
-                  <q-btn v-if="lectures.num != maxNumberInSemester"
-                         icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
-                         @click="fieldDown(lectures.num, lectures.semester)"
-                  />
-                </div>
-              </div>
-            </div>
-          </q-tab-panel>
-        </q-tab-panels>
+      <generator-discipline-work-hour-container
+        :data="filteredData"
+        v-model:sem="tab"
+        @field-down="fieldDown"
+        @field-up="fieldUp"
+        @delete="deleteLectures"
+        @edit="updateLectures"
+      />
     </template>
   </generator-discipline-work-view-base>
 </template>
 
 <style scoped lang="scss">
 
-.lectures-container {
-
-  $border: solid 1px silver;
-
-  > .lectures-container__header {
-    display: grid;
-    grid-template-columns: 4% 1fr 15% 25% 20%;
-    font-weight: bold;
-    border: $border;
-    border-bottom: none;
-
-    &:last-child {
-      border-bottom: $border;
-    }
-  }
-
-  > .lectures-container__body {
-    > .lectures-container__body__cell {
-      display: grid;
-      grid-template-columns: 4% 1fr 15% 25% 20%;
-      border: $border;
-      border-bottom: none;
-
-    }
-
-    &:last-child {
-      border-bottom: $border;
-    }
-  }
-}
 
 </style>

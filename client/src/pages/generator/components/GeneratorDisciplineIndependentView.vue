@@ -9,6 +9,7 @@ import _ from "lodash";
 import {api} from "boot/axios";
 import EmptyIcon from "components/EmptyIcon.vue";
 import GeneratorDisciplineWorkViewBase from "pages/generator/components/GeneratorDisciplineWorkViewBase.vue";
+import GeneratorDisciplineWorkHourContainer from "pages/generator/components/GeneratorDisciplineWorkHourContainer.vue";
 
 const $q = useQuasar()
 
@@ -36,12 +37,12 @@ const allPercentValue = computed(() => {
 })
 
 const allSemesterPercent = computed(() => {
-  let hoursList = _.map(_.filter(semestersData.value, (x) => x.num == tab.value), (x) => x.srs)
+  let hoursList = _.map(_.filter(semestersData.value, (x) => tab.value == -1 || x.num == tab.value), (x) => x.srs)
   return _.sum(hoursList) || 0
 })
 
 const allSemesterPercentValue = computed(() => {
-  let value = _.map(independentDisciplineWorkHour.value, (x) => x.semester == tab.value ? x.hours : 0)
+  let value = _.map(independentDisciplineWorkHour.value, (x) => tab.value == -1 || x.semester == tab.value ? x.hours : 0)
   return _.sum(value) || 0
 })
 
@@ -97,7 +98,7 @@ function deleteIndependent(id) {
 }
 
 watchEffect(() => {
-  tab.value = `${semestersData.value[0]?.num}`
+  tab.value = semestersData.value[0]?.num
 })
 
 const disciplineThemesByValue = computed(() => {
@@ -110,7 +111,7 @@ const maxNumberInSemester = computed(() => {
 })
 
 const filteredData = computed(() => {
-  return _.orderBy(independentDisciplineWorkHour.value, (x) => x.theme_id, 'asc')
+  return _.orderBy(independentDisciplineWorkHour.value, ['semester', 'num'])
 })
 
 async function fieldUp(num, sem) {
@@ -119,9 +120,10 @@ async function fieldUp(num, sem) {
 
   _.set(independentDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
   _.set(independentDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await saveData(_.get(independentDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveData(_.get(independentDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveData(_.get(independentDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveData(_.get(independentDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 async function fieldDown(num, sem) {
@@ -130,9 +132,10 @@ async function fieldDown(num, sem) {
 
   _.set(independentDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
   _.set(independentDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await saveData(_.get(independentDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveData(_.get(independentDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveData(_.get(independentDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveData(_.get(independentDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 async function saveData(data) {
@@ -161,66 +164,14 @@ function getRowColor(id) {
     @add-clicked="addIndependent"
   >
     <template #content>
-        <q-tab-panels
-          v-model="tab"
-          animated
-          transition-prev="scale"
-          transition-next="scale"
-        >
-          <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="independent-container">
-            <div v-if="item" class="independent-container__header text-center text-subtitle1 items-center bg-grey-2">
-              <!--              <div>-->
-              <!--                Номер-->
-              <!--              </div>-->
-              <div>
-                Вид самостоятельной работы
-              </div>
-              <div>
-                Количество часов
-              </div>
-              <div>
-                Тема дисциплины
-              </div>
-              <div v-show="!disabled">
-                Управление
-              </div>
-            </div>
-            <div v-for="independent in filteredData" class="independent-container__body">
-              <div v-if="independent.semester == tab"
-                   class="independent-container__body__cell text-subtitle1 text-center items-center"
-                   :class="getRowColor(independent.id)">
-<!--                                <div>-->
-<!--                                  {{ independent.num }}-->
-<!--                                </div>-->
-                <div>
-                  {{ independent.name }}
-                </div>
-                <div>
-                  {{ independent.hours }}
-                </div>
-                <div>
-                  {{ disciplineThemesByValue[independent.theme_id]?.num }}. {{ disciplineThemesByValue[independent.theme_id]?.name }}
-                </div>
-                <div v-show="!disabled">
-                  <q-btn
-                    icon="mdi-delete" color="red" flat @click="deleteIndependent(independent.id)"
-                  />
-                  <q-btn
-                    icon="mdi-pencil-outline" color="green" flat @click="updateIndependent(independent.id)"
-                  />
-<!--                  <q-btn v-if="independent.num != 1"-->
-<!--                         icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"-->
-<!--                         @click="fieldUp(independent.num, independent.semester)"-->
-<!--                  />-->
-<!--                  <q-btn v-if="independent.num != maxNumberInSemester"-->
-<!--                         icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"-->
-<!--                         @click="fieldDown(independent.num, independent.semester)"-->
-<!--                  />-->
-                </div>
-              </div>
-            </div>
-          </q-tab-panel>
-        </q-tab-panels>
+      <generator-discipline-work-hour-container
+        :data="filteredData"
+        v-model:sem="tab"
+        @field-down="fieldDown"
+        @field-up="fieldUp"
+        @delete="deleteIndependent"
+        @edit="updateIndependent"
+      />
     </template>
   </generator-discipline-work-view-base>
 
@@ -233,7 +184,7 @@ function getRowColor(id) {
 
   > .independent-container__header {
     display: grid;
-    grid-template-columns: 1fr 15% 1fr 10%;
+    grid-template-columns: 1fr 15% 1fr 10% 10%;
     font-weight: bold;
     border: $border;
     border-bottom: none;
@@ -246,7 +197,7 @@ function getRowColor(id) {
   > .independent-container__body {
     > .independent-container__body__cell {
       display: grid;
-      grid-template-columns: 1fr 15% 1fr 10%;
+      grid-template-columns: 1fr 15% 1fr 10%  10%;
       border: $border;
       border-bottom: none;
 

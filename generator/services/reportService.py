@@ -109,9 +109,9 @@ class ReportService(object):
         competences_grouped = {key: list(items) for key, items in
                                groupby(competences_sorted, key=lambda item: item['competence_index'])}
         competence = []
-        for key, item in competences_grouped.items():
+        for sem, item in competences_grouped.items():
             competence.append({
-                "index": key,
+                "index": sem,
                 "content": item[0]['competence'],
                 "indicators": ", ".join([i['indicator_index'] for i in item]),
             })
@@ -337,8 +337,8 @@ class ReportService(object):
 
         discipline_themes = {item['id']: item for item in data['discipline_themes']}
         discipline_sorted = sorted(data['discipline_themes'], key=lambda item: (item['semester'], item['num']))
-        discipline_grouped = {key: list(item) for key, item in
-                              groupby(discipline_sorted, key=lambda item: item['semester'])}
+        discipline_grouped = {sem: list(item) for sem, item in
+                              groupby(discipline_sorted, key=lambda item: item['semester']) if sem in semester_hours_grouped}
 
         work_hour = []
         for e, item in enumerate(data['discipline_work_hour']):
@@ -354,28 +354,28 @@ class ReportService(object):
                 "tic": [s['ekz_hours'] for s in semester_hours if s['num'] == item['semester']],
                 "tic_all": [s['tic'] for s in semester_hours if s['num'] == item['semester']]
             })
-        work_hour_sorted = sorted(work_hour, key=lambda item: item['num'])
+        work_hour_sorted = sorted([i for i in work_hour if i['num'] in semester_hours_grouped], key=lambda item: item['num'])
         wk = {key: list(items) for key, items in
-              groupby(work_hour_sorted, key=lambda item: item['num'])}
+              groupby(work_hour_sorted, key=lambda item: item['num']) if key in semester_hours_grouped}
 
         lekc_work = get_work_hours(work_hour, 0)
         lekc_work_sorted = sorted(lekc_work, key=lambda item: (item['num'], item['number']))
-        lekc_work_grouped = {key: list(item) for key, item in groupby(lekc_work_sorted, key=lambda item: item['num'])}
+        lekc_work_grouped = {key: list(item) for key, item in groupby(lekc_work_sorted, key=lambda item: item['num']) if key in semester_hours_grouped}
 
         lab_work = get_work_hours(work_hour, 3)
         lab_work_sorted = sorted(lab_work, key=lambda item: (item['num'], item['number']))
-        lab_work_grouped = {key: list(item) for key, item in groupby(lab_work_sorted, key=lambda item: item['num'])}
+        lab_work_grouped = {key: list(item) for key, item in groupby(lab_work_sorted, key=lambda item: item['num']) if key in semester_hours_grouped}
 
         pr_work = get_work_hours(work_hour, 1)
         pr_work_sorted = sorted(pr_work, key=lambda item: (item['num'], item['number']))
-        pr_work_grouped = {key: list(item) for key, item in groupby(pr_work_sorted, key=lambda item: item['num'])}
+        pr_work_grouped = {key: list(item) for key, item in groupby(pr_work_sorted, key=lambda item: item['num']) if key in semester_hours_grouped}
 
         srs_work = get_work_hours(work_hour, 2)
         srs_work_sorted = sorted(srs_work, key=lambda item: (item['num'], item['content']))
-        srs_work_grouped = {key: list(item) for key, item in groupby(srs_work_sorted, key=lambda item: item['num'])}
+        srs_work_grouped = {key: list(item) for key, item in groupby(srs_work_sorted, key=lambda item: item['num']) if key in semester_hours_grouped}
 
         srs_work_res = {}
-        for key, items in srs_work_grouped.items():
+        for sem, items in srs_work_grouped.items():
             res_sorted = sorted(items, key=lambda i: i['content'])
             res_grouped = {k: list(i) for k, i in groupby(res_sorted, key=lambda item: item['content'])}
 
@@ -391,10 +391,13 @@ class ReportService(object):
                 })
                 v += 1
 
-            srs_work_res[key] = tmp
+            srs_work_res[sem] = tmp
 
         wk_data = {}
-        for key, items in discipline_grouped.items():
+        for sem, items in discipline_grouped.items():
+
+            if sem not in semester_hours_grouped:
+                continue
 
             res = []
             for item in items:
@@ -402,8 +405,8 @@ class ReportService(object):
                 tmp_lab = []
                 tmp_pr = []
                 tmp_lekc = []
-                if srs_work_grouped.get(key):
-                    for q in srs_work_grouped[key]:
+                if srs_work_grouped.get(sem):
+                    for q in srs_work_grouped[sem]:
                         if item['id'] == q['theme_id']:
                             tmp_srs.append({
                                 "hours": q['hours'],
@@ -412,8 +415,8 @@ class ReportService(object):
                                 "name": q['content'],
                             })
 
-                if lab_work_grouped.get(key):
-                    for q in lab_work_grouped[key]:
+                if lab_work_grouped.get(sem):
+                    for q in lab_work_grouped[sem]:
                         if item['id'] == q['theme_id']:
                             tmp_lab.append({
                                 "hours": q['hours'],
@@ -423,8 +426,8 @@ class ReportService(object):
                                 "number": q['number'],
                             })
 
-                if pr_work_grouped.get(key):
-                    for q in pr_work_grouped[key]:
+                if pr_work_grouped.get(sem):
+                    for q in pr_work_grouped[sem]:
                         if item['id'] == q['theme_id']:
                             tmp_pr.append({
                                 "hours": q['hours'],
@@ -434,8 +437,8 @@ class ReportService(object):
                                 "number": q['number'],
                             })
 
-                if lekc_work_grouped.get(key):
-                    for q in lekc_work_grouped[key]:
+                if lekc_work_grouped.get(sem):
+                    for q in lekc_work_grouped[sem]:
                         if item['id'] == q['theme_id']:
                             tmp_lekc.append({
                                 "hours": q['hours'],
@@ -453,18 +456,20 @@ class ReportService(object):
                     "lekc": tmp_lekc,
                 })
 
-            wk_data[key] = res
+            wk_data[sem] = res
 
-        for key, items in wk_data.items():
+        for sem, items in wk_data.items():
+            if sem not in semester_hours_grouped:
+                continue
 
             tmp = []
             for item in items:
                 res = []
                 if srs_work_grouped:
-                    for q in srs_work_grouped[key]:
+                    for q in srs_work_grouped[sem]:
                         if q['theme'] == item['name']:
                             r = list(filter(
-                                lambda x: x['content'] == q['content'], srs_work_res[key]
+                                lambda x: x['content'] == q['content'], srs_work_res[sem]
                             ))
                             res.append(str(r[0]['number']))
 
@@ -486,11 +491,11 @@ class ReportService(object):
                         [i['hours'] for i in item['srs']]) != 0 else '',
                 })
 
-            wk_data[key] = tmp
+            wk_data[sem] = tmp
 
-            wk_data[key].append({
+            wk_data[sem].append({
                 "name": 'Промежуточная аттестация',
-                "tic": semester_hours_grouped[key][0]['tic'],
+                "tic": semester_hours_grouped[sem][0]['tic'],
                 "num": '',
                 "lekc": '',
                 "lekc_hours": '',
@@ -499,11 +504,11 @@ class ReportService(object):
                 "pr": '',
                 "pr_hours": '',
                 "srs": '',
-                "srs_hours": semester_hours_grouped[key][0]['ekz_hours'] if semester_hours_grouped[key][0][
+                "srs_hours": semester_hours_grouped[sem][0]['ekz_hours'] if semester_hours_grouped[sem][0][
                                                                                 'ekz_hours'] != 0 else '',
             })
 
-            wk_data[key].append({
+            wk_data[sem].append({
                 "name": 'Всего',
                 "tic": '',
                 "num": '',

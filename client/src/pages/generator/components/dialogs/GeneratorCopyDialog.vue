@@ -5,6 +5,7 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import EmptyIcon from "components/EmptyIcon.vue";
 import {api} from "boot/axios";
+import {ref} from "vue";
 
 defineEmits([
   ...useDialogPluginComponent.emits
@@ -18,11 +19,13 @@ const generatorViewStore = useGeneratorViewStore();
 
 const {
   oldPlans,
+  newPlans,
   activeRpdId,
 } = storeToRefs(generatorViewStore)
 
+const typeTab = ref('old');
 
-async function copyProgram(id) {
+async function copyOldProgram(id: number) {
   $q.loading.show({
     message: "Копирую"
   })
@@ -46,6 +49,30 @@ async function copyProgram(id) {
   onDialogOK()
 }
 
+async function copyNewProgram(id: number) {
+  $q.loading.show({
+    message: "Копирую"
+  })
+  let r = await api.post(`/api/generator/${activeRpdId.value}/copy-rpd-program/`, {from_pk: id})
+
+  if (r.status == 200) {
+    $q.notify({
+      message: "УРА копирование удалось :)",
+      position: "top-right",
+      color: "positive",
+    })
+    await generatorViewStore.getData()
+  } else {
+    $q.notify({
+      message: "Ошибка копирования, напишите в поддержку о вашей проблеме",
+      position: "top-right",
+      color: "negative",
+    })
+  }
+  $q.loading.hide()
+  onDialogOK()
+}
+
 </script>
 
 <template>
@@ -58,38 +85,67 @@ async function copyProgram(id) {
       </q-card-section>
       <q-separator />
 
-      <q-card-section>
         <div class="bg-primary rounded-borders">
-          <p class="text-subtitle1 text-white q-pa-sm">
+          <div class="text-subtitle1 text-white q-px-md q-py-sm">
             Все данные об индикаторах и содержании тем дисциплины будут перезаписаны (в том числе часы)
-          </p>
+          </div>
         </div>
-
-      </q-card-section>
 
       <q-card-section>
-        <div class="text-subtitle1" v-if="oldPlans.length == 0">
-          Нет программ подходящих для копирования :(
-          <empty-icon/>
-        </div>
-        <div v-else class="q-gutter-sm">
-          <q-field
-            v-for="plan in oldPlans"
-            outlined
-            stack-label
-            :label="plan.species"
-          >
-            <template #control>
-              <div>
-                {{ plan.abbrprofile }}-{{ String(plan.startyear).slice(-2) }}
-              </div>
-            </template>
+         <q-tabs
+          v-model="typeTab"
+          class="text-grey"
+          active-color="primary"
+          indicator-color="primary"
+          align="justify"
+          narrow-indicator
+        >
+          <q-tab name="old" label="Из старого генератора" />
+          <q-tab name="new" label="Новые" />
+        </q-tabs>
 
-            <template #append>
-              <q-btn flat icon="mdi-clipboard-outline" color="black" @click="copyProgram(plan.id)"/>
-            </template>
-          </q-field>
-        </div>
+         <q-tab-panels v-model="typeTab" animated>
+          <q-tab-panel name="old">
+            <q-field
+              v-for="plan in oldPlans"
+              outlined
+              stack-label
+              :label="plan.species"
+            >
+              <template #control>
+                <div>
+                  {{ plan.abbrprofile }}-{{ String(plan.startyear).slice(-2) }}
+                </div>
+              </template>
+
+              <template #append>
+                <q-btn flat icon="mdi-clipboard-outline" color="black" @click="copyOldProgram(plan.id)"/>
+              </template>
+            </q-field>
+          </q-tab-panel>
+
+          <q-tab-panel name="new">
+            <q-field
+              v-for="plan in newPlans.filter(x => x.id != activeRpdId)"
+              outlined
+              stack-label
+              :label="plan.species"
+            >
+              <template #control>
+                <div>
+                  {{ plan.abbrprofile }}-{{ String(plan.startyear).slice(-2) }}
+                </div>
+              </template>
+
+              <template #append>
+                <q-btn flat icon="mdi-clipboard-outline" color="black" @click="copyNewProgram(plan.id)"/>
+              </template>
+            </q-field>
+          </q-tab-panel>
+
+        </q-tab-panels>
+
+
       </q-card-section>
       <q-separator />
       <q-card-actions align="right">

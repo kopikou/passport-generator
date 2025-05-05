@@ -77,27 +77,26 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
     let r = await api.get(`/api/plx/${activeFileId.value}/`)
 
     fileData.value = r.data.items
-    planData.value = r.data.parser.plan
-    linesData.value = r.data.parser.lines
+    planData.value = [r.data.parser.plan]
     semesterData.value = r.data.parser.semester
     indicatorsData.value = r.data.parser.indicators
     documentsData.value = r.data.parser.documents
-
-  }
+    linesData.value = r.data.parser.lines
+}
 
   async function fetchPlxFiles() {
     $q.loading.show()
     let r = await api.get("/api/plx/")
     files.value = _.sortBy(r.data, 'title')
 
-    for (let f of files.value) {
-      let m = f.title.match(/(\d{2}.\d{2}.\d{2})\s*\(([А-Яа-я]+)-(\d{2})/)
-      if (m) {
-        f.code = m[1]
-        f.abbr = m[2]
-        f.year = '20' + m[3]
-      }
-    }
+    // for (let f of files.value) {
+    //   let m = f.title.match(/(\d{2}.\d{2}.\d{2})\s*\(([А-Яа-я]+)-(\d{2})/)
+    //   if (m) {
+    //     f.code = m[1]
+    //     f.abbr = m[2]
+    //     f.year = '20' + m[3]
+    //   }
+    // }
 
     $q.loading.hide()
   }
@@ -111,7 +110,6 @@ const usePlanViewStore = defineStore('PlanViewStore', () => {
 
     await getCafData()
     await getDocTypesData()
-    await fetchPlxFiles();
 
     loadingData()
   })

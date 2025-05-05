@@ -9,6 +9,7 @@ import {useQuasar} from "quasar";
 import {computed, ref} from "vue";
 import useMainStore from "stores/mainStore";
 import LayoutHCF from "components/LayoutHCF.vue";
+import {PlanData} from "src/types";
 
 const $q = useQuasar()
 
@@ -58,24 +59,25 @@ const adms = ref<string[]>([])
 const studyformFilter = ref<string[]>([])
 const studyprogFilter = ref<string[]>([])
 
-function getFileUrl(planId: number, fileId: number) {
-  let files = _.filter(admissionData.value, (x) => x.plan_id == planId)[0]?.documents_files
-  let url = _.filter(files, (x) => x.type_id == getFileType(planId, fileId))[0]?.file
-  if (url) {
-    window.open(`${FORCE_SCRIPT_NAME.value}/uploads/` + url, "_blank")
+function getFileUrl(item: PlanData, typeId: number) {
+  let file = item.documents_files.find(x => x.type_id == typeId);
+  console.log(item.documents_files);
+  if (file) {
+    window.open(`${FORCE_SCRIPT_NAME.value}/uploads/` + file.url, "_blank")
   }
 }
 
-function getFileId(planId, fileId) {
-  let files = _.filter(admissionData.value, (x) => x.plan_id == planId)[0]?.documents_files
-  return _.filter(files, (x) => x.type_id == getFileType(planId, fileId))[0]?.id
+function getFileId(item: PlanData, fileId) {
+  let files = item.documents_files
+  return _.filter(files, (x) => x.type_id == getFileType(item, fileId))[0]?.id
 }
 
-function getFileType(planId, fileId) {
-  return _.filter(_.filter(admissionData.value, (x) => x.plan_id == planId)[0].plan_documents, (x) => x.id == fileId)[0].new_type
+function getFileType(item: PlanData, fileId) {
+  return _.filter(item.plan_documents, (x) => x.id == fileId)[0].new_type
 }
 
-async function deleteFile(planId, id) {
+async function deleteFile(item: PlanData, typeId: number) {
+
   $q.dialog({
     title: 'Удаление файла',
     message: 'Вы точно хотите удалить выбранный файл?',
@@ -92,19 +94,19 @@ async function deleteFile(planId, id) {
     persistent: true
   }).onOk(async () => {
     $q.loading.show()
-    let r = await api.delete(`/api/upload/${id}/`)
-    let admKey = _.findKey(admissionData.value, (x) => x.plan_id == planId)
-    let fileKey = _.findKey(admissionData.value[admKey].documents_files, (x) => x.id == id)
-    admissionData.value[admKey].documents_files.splice(fileKey, 1)
+    let file = _.find(item.documents_files, (x) => x.type_id == typeId)
+    let r = await api.delete(`/api/upload/${file.id}/`)
+    item.documents_files = item.documents_files.filter(x => x!= file);
     $q.loading.hide()
   })
 }
 
-function checkFile(planId, fileId) {
-  let filesIds = _.map(_.filter(admissionData.value, (x) => x.plan_id == planId)[0]?.documents_files, (x) => x.type_id)
-  let type = getFileType(planId, fileId)
-  if (filesIds.includes(type)) return true
-  else return false
+function checkFile(item: PlanData, typeId: number) {
+  return item.documents_files.find(x => x.type_id == typeId)
+  // let filesIds = _.map(item.documents_files, (x) => x.type_id)
+  // let type = getFileType(item, fileId)
+  // if (filesIds.includes(type)) return true
+  // else return false
 }
 
 
@@ -181,8 +183,8 @@ function checkFile(planId, fileId) {
                   {{ i.name }}
                 </div>
                 <div class="flex items-center" style="display: grid; grid-template-columns: 1fr auto">
-                  <div v-if="!checkFile(item.plan_id, i.id)">
-                    <file-uploader :title="i.new_type__name" :file-id="i.id" :plan-id="item.plan_id"/>
+                  <div v-if="!checkFile(item, i.type_id)">
+                    <file-uploader :title="i.type__name" :file-id="i.id" :plan-id="item.plan_id"/>
                   </div>
                   <div v-else>
                     <q-field
@@ -200,15 +202,15 @@ function checkFile(planId, fileId) {
                           flat
                           dense
                           style="height: 100%"
-                          v-show="checkFile(item.plan_id, i.id)"
+                          v-show="checkFile(item, i.type_id)"
                           color="secondary"
-                          @click="getFileUrl(item.plan_id, i.id)"
+                          @click="getFileUrl(item, i.type_id)"
                         />
                       </template>
                     </q-field>
                   </div>
-                  <q-btn v-show="checkFile(item.plan_id, i.id)" flat dense icon="mdi-delete" color="negative"
-                         @click="deleteFile(item.plan_id, getFileId(item.plan_id, i.id))"/>
+                  <q-btn v-show="checkFile(item, i.type_id)" flat dense icon="mdi-delete" color="negative"
+                         @click="deleteFile(item, i.type_id)"/>
                 </div>
               </div>
             </q-card-section>

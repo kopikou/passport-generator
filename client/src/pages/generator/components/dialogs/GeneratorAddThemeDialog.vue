@@ -3,7 +3,7 @@
 import {useDialogPluginComponent, useQuasar} from "quasar";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
-import {computed, onBeforeMount, ref} from "vue";
+import {computed, onBeforeMount, ref, watch} from "vue";
 import {api} from "boot/axios";
 import _ from "lodash";
 
@@ -13,7 +13,8 @@ const {
   formControl,
   rpdData,
   disciplineThemes,
-  activeRpdId
+  activeRpdId,
+  semestersData,
 } = storeToRefs(generatorViewStore)
 
 defineEmits([
@@ -28,12 +29,14 @@ const props = defineProps({
   },
   id: {
     required: true,
-  },
+    type: Number
+  }
 })
 
 const themeName = ref('')
 const control = ref()
 const comment = ref('')
+const semNew = ref(0)
 // const num = ref()
 
 const correct = computed(() => {
@@ -60,7 +63,7 @@ async function onOKClick() {
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-themes/`, {
     planlineslink_id: rpdData.value.id,
     name: themeName.value,
-    semester: props.sem,
+    semester: semNew.value,
     formcontrol_id: control.value,
     comment: comment.value,
     id: props.id,
@@ -77,15 +80,19 @@ async function onOKClick() {
   onDialogOK()
 }
 
-onBeforeMount(() => {
+watch(() => props, () => {
   if (props.id) {
     let data = _.keyBy(disciplineThemes.value, "id")
     themeName.value = data[props.id].name
     control.value = data[props.id].formcontrol_id
     comment.value = data[props.id].comment
+    semNew.value = data[props.id].semester
     // num.value = data[props.id].num
+    } else {
+    semNew.value = parseInt(props.sem);
   }
-
+}, {
+  immediate: true
 })
 
 </script>
@@ -129,6 +136,16 @@ onBeforeMount(() => {
           filled
           :rules="[ val => val.length >= 11 || 'Введите больше 10-ти символов']"
           type="textarea"
+        />
+         <q-select
+          stack-label
+          label="Семестр"
+          :options="semestersData"
+          v-model="semNew"
+          option-label="num"
+          option-value="num"
+          map-options
+          emit-value
         />
       </div>
       <q-card-actions align="right">

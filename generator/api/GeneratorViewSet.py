@@ -10,6 +10,7 @@ from django.http import HttpResponse
 from django.utils.encoding import escape_uri_path
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import APIException
 from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -42,7 +43,7 @@ class GeneratorViewSet(
 
     def retrieve(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
-        result = GeneratorService.get_rpd_data(pk)
+        result = GeneratorService.get_rpd_data(pk, self.request.user.userprofile.mira_id)
         return Response(result)
 
 
@@ -116,7 +117,7 @@ class GeneratorViewSet(
 
         return Response(data=serializer.data)
 
-    @action(methods=['get'], url_path="get-asp-program-list", detail=False)
+    @action(methods=['get'], url_path="get-asp-program-list", detail=False, permission_classes=[IsAuthenticated])
     def get_aps_program_list(self, request, *args, **kwargs):
         user = self.request.user.userprofile.mira_id
 
@@ -146,7 +147,7 @@ class GeneratorViewSet(
 
         return Response(data=result)
 
-    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True)
+    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True, permission_classes=[IsAuthenticated])
     def get_asp_program_detail(self, request, *args, **kwargs):
 
         pk = int(self.kwargs['pk'])
@@ -497,7 +498,7 @@ class GeneratorViewSet(
         instance = self.get_object()
         pk = self.kwargs['pk']
 
-        rpd_data = GeneratorService.get_rpd_data(pk)
+        rpd_data = GeneratorService.get_rpd_data(pk, self.request.user.userprofile.mira_id)
 
         # filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(
         #     ',', ' ')
@@ -738,11 +739,15 @@ class GeneratorViewSet(
 
         return Response(data={"success": True}, status=status.HTTP_200_OK)
 
-
-    @action(methods=['GET'], url_path="copy-new-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['POST'], url_path="copy-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
     def copy_new_rpd_program(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
-        new_pk = int(self.request.query_params['new_pk'])
-        instance = self.retrieve(request, *args, **kwargs).data
+        from_pk = int(self.request.data['from_pk'])
+
+        programs = GeneratorService.get_program_list(self.request.user.userprofile.mira_id)
+        if from_pk not in [i['id'] for i in programs if 'person' in i['type']]:
+            raise APIException("Вы можете копировать только со своих програм")
+
+        GeneratorService.copy_rpd_program(from_pk, pk)
 
         return Response(data={"success": True}, status=status.HTTP_200_OK)

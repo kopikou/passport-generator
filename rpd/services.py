@@ -1,18 +1,21 @@
+import codecs
 import os.path
 from builtins import enumerate
 from datetime import datetime
 from itertools import groupby
+from tempfile import NamedTemporaryFile
 
 import requests
 from django.conf import settings
 from urllib.parse import unquote
 
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db.models import Q
 from lxml import etree
 import re
 
 from rpd.models import PlanData, LinesData, Disciplines, SemesterData, LinesIndicators, ExceptionNames, AllowedNames, \
-    PlanDocuments, BaseDocuments, DocumentsTypes
+    PlanDocuments, BaseDocuments, DocumentsTypes, RPDFile
 from rpd.serializer import PlanDataSerializer, DisciplinesSerializer, LinesDataSerializer, SemesterDataSerializer, \
     LinesIndicatorsSerializer, PlanDocumentsSerializer
 
@@ -111,33 +114,56 @@ class RPDGenSerivce:
 
 
 class PLXParser:
+    study_prog = {
+        1: 'подготовка специалистов',
+        2: 'подготовка бакалавров',
+        3: 'подготовка магистров',
+        4: 'подготовка СПО',
+        5: 'подготовка СПО',
+        7: 'подготовка аспирантов',
+    }
 
-    XMLNS = ""
-    path = ""
 
     fileNameRegex = r"([А-я]*)-(\d*)"
     parser = etree.XMLParser(encoding='UTF-8')
 
-    semesteroncource = None
-    studylevel = None
 
-    fileId = None
-
-    def __init__(self, filePath, file_id):
+    def __init__(self, filePath, file_id=None):
         self.data = {}
-        with open((os.path.join(settings.BASE_DIR)) + unquote(filePath), "r", encoding="utf-16") as f:
-            self.parseXML(etree.parse(f, parser=self.parser), file_id)
+        self.filePath = filePath
+        self.file_id = file_id
+
+        self.semesteroncource = None
+        self.studylevel = None
+
+        self.XMLNS = ""
+        self.path = ""
+
+        if isinstance(filePath, InMemoryUploadedFile):
+            with NamedTemporaryFile(delete=False) as f:
+                f.write(filePath.read())
+                f.close()
+
+                with open(f.name, "r", encoding="utf-16") as f:
+                    self.tree = etree.parse(f, parser=self.parser)
+
+            filePath.seek(0)
+        else:
+            with open((os.path.join(settings.BASE_DIR)) + unquote(self.filePath), "r", encoding="utf-16") as f:
+                self.tree = etree.parse(f, parser=self.parser)
+
+        self.root = self.tree.getroot()
+
+        XHTML_NAMESPACE = self.root[0][0].nsmap[None]
+        self.XMLNS = "{%s}" % XHTML_NAMESPACE
+        self.path = ".//%s" % self.XMLNS
 
     def get_result_data(self):
         return self.data
 
-    def parseXML(self, tree, file_id):
-        self.fileId = file_id
-        root = tree.getroot()
-
-        XHTML_NAMESPACE = root[0][0].nsmap[None]
-        self.XMLNS = "{%s}" % XHTML_NAMESPACE
-        self.path = ".//%s" % self.XMLNS
+    def update_db(self):
+        if not self.file_id:
+            return
 
         allwd_names = AllowedNames.objects.values_list('name', flat=True)
         allowed_names = [i.lower() for i in allwd_names]
@@ -146,18 +172,18 @@ class PLXParser:
         exception_names = [i.lower() for i in except_names]
 
         planData_result = []
-        plnData = self.get_plan_data(root)
+        plnData = self.get_plan_data()
         planData = self.insert_plan_data(plnData)
         planData_result.append(planData)
 
         self.data['plan'] = planData_result
 
         if self.studylevel not in [4, 5]:
-            competences_data = self.get_competences_data(root)
+            competences_data = self.get_competences_data()
 
-        indikators_data = self.get_indicators_data(root)
+        indikators_data = self.get_indicators_data()
 
-        lnsdata = self.get_lines_data(root, planData['id'], indikators_data)
+        lnsdata = self.get_lines_data(planData['id'], indikators_data)
 
         for key, item in lnsdata.items():
 
@@ -208,8 +234,8 @@ class PLXParser:
             lines_data_result.append(items)
         self.data['lines'] = lines_data_result
 
-        lines_indicators = self.get_lines_ind_comp_bind_data(root)
-        semester_data = self.get_semester_data(root)
+        lines_indicators = self.get_lines_ind_comp_bind_data()
+        semester_data = self.get_semester_data()
 
         for key, items in lines_data.items():
             for v, value in lines_indicators.items():
@@ -265,36 +291,27 @@ class PLXParser:
                         break
                 lines_indicators_res.append(tmp_obj)
 
-
         lines_indicators_result = self.insert_lines_indicators(lines_indicators_res)
         self.data['indicators'] = lines_indicators_result
 
         plan_files = self.get_documents_plan(lines_data, planData['id'], allowed_names)
         self.data['documents'] = plan_files
 
-    study_prog = {
-        1: 'подготовка специалистов',
-        2: 'подготовка бакалавров',
-        3: 'подготовка магистров',
-        4: 'подготовка СПО',
-        5: 'подготовка СПО',
-        7: 'подготовка аспирантов',
-    }
 
-    def get_plan_data(self, root):
+    def get_plan_data(self):
 
         planData = {}
 
         planData['subtype'] = "Рабочий учебный план"
         planData['shifr'] = "SKYF"
-        planData['studyform'] = root.attrib['КодФормыОбучения']  # модифицировать
-        planData['studylevel'] = root.attrib.get('КодУровняОбразования')  # модифицировать
-        self.studylevel = int(root.attrib.get('КодУровняОбразования'))
-        planData['studyprog'] = self.study_prog[int(root.attrib.get('КодУровняОбразования'))]
-        planData['elementsinweek'] = int(root.attrib['ЭлементовВНеделе'])
+        planData['studyform'] = self.root.attrib['КодФормыОбучения']  # модифицировать
+        planData['studylevel'] = self.root.attrib.get('КодУровняОбразования')  # модифицировать
+        self.studylevel = int(self.root.attrib.get('КодУровняОбразования'))
+        planData['studyprog'] = self.study_prog[int(self.root.attrib.get('КодУровняОбразования'))]
+        planData['elementsinweek'] = int(self.root.attrib['ЭлементовВНеделе'])
         planData['faculty'] = ''
 
-        for child in root.findall(self.path + 'Планы'):
+        for child in self.root.findall(self.path + 'Планы'):
             # print(child.tag.strip(self.XMLNS), child.attrib)
 
             planData['species'] = child.attrib.get('Титул').rstrip().replace("\r\n", " ")
@@ -321,33 +338,33 @@ class PLXParser:
             except:
                 planData['abbrprofile'] = None
 
-        # for child in root.findall(self.path + 'ПланыПрофили'):
+        # for child in self.root.findall(self.path + 'ПланыПрофили'):
         #     planData['cvalif'] = child.attrib.get('Квалификация')
 
-        for child in root.findall(self.path + 'ООП'):
+        for child in self.root.findall(self.path + 'ООП'):
             if not child.attrib.get('КодРодительскогоООП'):
                 planData['lastshifr'] = child.attrib.get('Шифр')
                 planData['naprcode'] = child.attrib.get('Шифр')
                 planData['napr_e'] = child.attrib.get('Название')
 
-        for child in root.findall(self.path + 'Филиалы'):
+        for child in self.root.findall(self.path + 'Филиалы'):
             planData['vuzname'] = child.attrib['Полное_название']
             planData['head'] = child.attrib['Директор']
 
-        for child in root.findall(self.path + 'Факультеты'):
+        for child in self.root.findall(self.path + 'Факультеты'):
             planData['faculty'] = child.attrib['Факультет']
 
-        for child in root.findall(self.path + 'ФормаОбучения'):
+        for child in self.root.findall(self.path + 'ФормаОбучения'):
             if child.attrib.get('Код') == planData['studyform']:
                 planData['studyform'] = child.attrib.get('ФормаОбучения')
                 break
 
-        for child in root.findall(self.path + 'Уровень_образования'):
+        for child in self.root.findall(self.path + 'Уровень_образования'):
             if child.attrib.get('Код_записи') == planData['studylevel']:
                 planData['studylevel'] = child.attrib.get('Уровень')
                 break
 
-        for child in root.findall(self.path + 'УровеньОбразования'):
+        for child in self.root.findall(self.path + 'УровеньОбразования'):
             if child.attrib.get('Код') == planData['studyprog']:
                 planData['studyprog'] = child.attrib.get('Уровень')
                 break
@@ -355,25 +372,28 @@ class PLXParser:
         return planData
 
     def insert_plan_data(self, data):
-        data['file_id'] = self.fileId
-        try:
-            obj = PlanData.objects.values().get(file_id=self.fileId)
-            data = obj
-        except:
-            obj = PlanDataSerializer(data=data)
+        data['file_id'] = self.file_id
 
-            obj.is_valid(raise_exception=True)
-            obj.save()
+        instance = PlanData.objects.filter(
+            abbrprofile=data['abbrprofile'],
+            startyear=data['startyear'],
+        ).first()
 
-            data['id'] = obj.data['id']
+        obj = PlanDataSerializer(instance=instance, data=data)
+        obj.is_valid(raise_exception=True)
+        obj.save()
+
+        RPDFile.objects.filter(id=self.file_id).update(plandata_id=obj.data['id'])
+
+        data['id'] = obj.data['id']
 
         return data
 
-    def get_lines_data(self, root, plan_id, indicators):
+    def get_lines_data(self, plan_id, indicators):
 
         lines_data = {}
 
-        for child in root.findall(self.path + 'ПланыСтроки'):
+        for child in self.root.findall(self.path + 'ПланыСтроки'):
             temp_dict = {}
             temp_dict['plan_id'] = plan_id
             temp_dict['synchronize'] = True
@@ -393,7 +413,7 @@ class PLXParser:
             lines_code = int(child.attrib.get('Код'))
 
             tmp = []
-            for deep in root.findall(self.path + 'ПланыКомпетенцииДисциплины'):
+            for deep in self.root.findall(self.path + 'ПланыКомпетенцииДисциплины'):
                 indicators_code = abs(int(deep.attrib.get('КодКомпетенции')))
 
                 if lines_code == int(deep.attrib.get('КодСтроки')) and indicators_code in indicators:
@@ -415,7 +435,8 @@ class PLXParser:
             query |= Q(plan_id=i['plan_id'], dis=i['dis'], newdisid=i['newdisid'])
 
         lines = LinesData.objects.filter(query)
-        lines = {f"{i['plan_id']}_{i['dis']}_{i['newdisid']}": i for i in lines.values()}
+        lines = {f"{i.plan_id}_{i.dis}_{i.newdisid}": i for i in lines}
+        added_items = []
 
         for key, item in data.items():
             if not disciplines.get(item['dis']):
@@ -428,28 +449,30 @@ class PLXParser:
             else:
                 item['disid_id'] = disciplines.get(item['dis'])
 
-            if not lines.get(f"{item['plan_id']}_{item['dis']}_{item['newdisid']}"):
-                obj = LinesDataSerializer(data=item)
+            key = f"{item['plan_id']}_{item['dis']}_{item['newdisid']}"
+            obj = LinesDataSerializer(instance=lines.get(key), data=item)
+            obj.is_valid(raise_exception=True)
+            obj.save()
 
-                obj.is_valid(raise_exception=True)
-                obj.save()
-
-                item['id'] = obj.data['id']
-            else:
-                data[key] = lines.get(f"{item['plan_id']}_{item['dis']}_{item['newdisid']}")
-                data[key]['old_parent_id'] = item['parent_id']
+            item['id'] = obj.data['id']
+            item['old_parent_id'] = item['parent_id']
+            added_items.append(item['id'])
 
         for key, items in data.items():
             if items['parent_id']:
                 LinesData.objects.filter(id=items['id']).update(parent_id=data.get(items['old_parent_id'])['id'])
 
+        ids_to_delete = [i.id for i in lines.values() if i.id not in added_items]
+        if ids_to_delete:
+            LinesData.objects.filter(id__in=ids_to_delete).delete()
+
         return data
 
-    def get_semester_data(self, root):
+    def get_semester_data(self):
 
         data = {}
 
-        for child in root.findall(self.path + 'ПланыНовыеЧасы'):
+        for child in self.root.findall(self.path + 'ПланыНовыеЧасы'):
             num = 0
 
             if int(child.attrib.get('Семестр')) == 0:
@@ -485,32 +508,36 @@ class PLXParser:
         return data
 
     def insert_semester_data(self, data):
-
         query = Q()
         for item in data:
             query |= Q(planlineid_id=item['planlineid_id'], num=item['num'])
 
         semester = SemesterData.objects.filter(query)
-        semester = {f"{i['planlineid_id']}_{i['num']}": i for i in semester.values()}
+        semester = {f"{i.planlineid_id}_{i.num}": i for i in semester}
 
         result = []
+        ids_to_keep = []
         for item in data:
-            if not semester.get(f"{item['planlineid_id']}_{item['num']}"):
-                obj = SemesterDataSerializer(data=item)
+            key = f"{item['planlineid_id']}_{item['num']}"
+            obj = SemesterDataSerializer(instance=semester.get(key), data=item)
 
-                obj.is_valid(raise_exception=True)
-                obj.save()
+            obj.is_valid(raise_exception=True)
+            obj.save()
 
-                result.append(obj.data)
-            else:
-                result.append(semester.get(f"{item['planlineid_id']}_{item['num']}"))
+            result.append(obj.data)
+
+            ids_to_keep.append(obj.data['id'])
+
+        ids_to_delete = [i.id for i in semester.values() if i.id not in ids_to_keep]
+        if ids_to_delete:
+            SemesterData.objects.filter(id__in=ids_to_delete).delete()
 
         return result
 
-    def get_competences_data(self, root):
+    def get_competences_data(self):
         competences_data = {}
 
-        for child in root.findall(self.path + 'ПланыКомпетенции'):
+        for child in self.root.findall(self.path + 'ПланыКомпетенции'):
             if self.studylevel in [4, 5]:
                 competences_data[abs(int(child.attrib.get('Код')))] = {"code": child.attrib.get('Код'),
                                                                           "content": child.attrib.get('Наименование'),
@@ -526,10 +553,10 @@ class PLXParser:
 
         return competences_data
 
-    def get_indicators_data(self, root):
+    def get_indicators_data(self):
         indicators_data = {}
 
-        for child in root.findall(self.path + 'ПланыКомпетенции'):
+        for child in self.root.findall(self.path + 'ПланыКомпетенции'):
             if self.studylevel in [4, 5]:
                 indicators_data[abs(int(child.attrib.get('Код')))] = {"code": child.attrib.get('Код'),
                                                                       "content": child.attrib.get('Наименование'),
@@ -544,10 +571,10 @@ class PLXParser:
 
         return indicators_data
 
-    def get_lines_ind_comp_bind_data(self, root):
+    def get_lines_ind_comp_bind_data(self):
         ind_comp_bind_data = {}
 
-        for child in root.findall(self.path + 'ПланыКомпетенцииДисциплины'):
+        for child in self.root.findall(self.path + 'ПланыКомпетенцииДисциплины'):
             ind_comp_bind_data[abs(int(child.attrib.get('Код')))] = {
                 "КодКомпетенции": abs(int(child.attrib.get('КодКомпетенции'))),
                 "КодСтроки": abs(int(child.attrib.get('КодСтроки'))),
@@ -566,19 +593,23 @@ class PLXParser:
                 query |= Q(planlineid_id=item['planlineid_id'], indicator_index=item['indicator_index'], competence_index=item['competence_index'])
 
         indicators = LinesIndicators.objects.filter(query)
-        indicators = {f"{i['planlineid_id']}_{i['indicator_index']}": i for i in indicators.values()}
+        indicators = {f"{i.planlineid_id}_{i.indicator_index}": i for i in indicators}
 
         result = []
+        ids_to_keep = []
         for item in data:
-            if not indicators.get(f"{item['planlineid_id']}_{item['indicator_index']}"):
-                obj = LinesIndicatorsSerializer(data=item)
+            key = f"{item['planlineid_id']}_{item['indicator_index']}"
+            obj = LinesIndicatorsSerializer(instance=indicators.get(key), data=item)
 
-                obj.is_valid(raise_exception=True)
-                obj.save()
+            obj.is_valid(raise_exception=True)
+            obj.save()
 
-                result.append(obj.data)
-            else:
-                result.append(indicators.get(f"{item['planlineid_id']}_{item['indicator_index']}"))
+            result.append(obj.data)
+            ids_to_keep.append(obj.data['id'])
+
+        ids_to_delete = [i.id for i in indicators.values() if i.id not in ids_to_keep]
+        if ids_to_delete:
+            LinesIndicators.objects.filter(id__in=ids_to_delete).delete()
 
         return result
 

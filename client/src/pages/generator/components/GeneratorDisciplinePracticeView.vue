@@ -11,6 +11,7 @@ import EmptyIcon from "components/EmptyIcon.vue";
 import LayoutHCF from "components/LayoutHCF.vue";
 import GeneratorDiscipline_Work_View from "pages/generator/components/GeneratorDiscipline_Work_View.vue";
 import GeneratorDisciplineWorkViewBase from "pages/generator/components/GeneratorDisciplineWorkViewBase.vue";
+import GeneratorDisciplineWorkHourContainer from "pages/generator/components/GeneratorDisciplineWorkHourContainer.vue";
 
 const $q = useQuasar()
 
@@ -37,12 +38,12 @@ const allPercentValue = computed(() => {
 })
 
 const allSemesterPercent = computed(() => {
-  let hoursList = _.map(_.filter(semestersData.value, (x) => x.num == tab.value), (x) => x.pr)
+  let hoursList = _.map(_.filter(semestersData.value, (x) => tab.value == -1 || x.num == tab.value), (x) => x.pr)
   return _.sum(hoursList) || 0
 })
 
 const allSemesterPercentValue = computed(() => {
-  let value = _.map(practiceDisciplineWorkHour.value, (x) => x.semester == tab.value ? x.hours : 0)
+  let value = _.map(practiceDisciplineWorkHour.value, (x) => tab.value == -1 || x.semester == tab.value ? x.hours : 0)
   return _.sum(value) || 0
 })
 
@@ -97,20 +98,11 @@ function deletePractice(id) {
 }
 
 watchEffect(() => {
-  tab.value = `${semestersData.value[0]?.num}`
-})
-
-const disciplineThemesByValue = computed(() => {
-  return _.keyBy(disciplineThemes.value, 'id')
-})
-
-const maxNumberInSemester = computed(() => {
-  let data = _.filter(practiceDisciplineWorkHour.value, (x) => x.semester == tab.value)
-  return _.max(_.map(data, (x) => x.num))
+  tab.value = semestersData.value[0]?.num
 })
 
 const filteredData = computed(() => {
-  return _.orderBy(practiceDisciplineWorkHour.value, (x) => x.num, 'asc')
+  return _.orderBy(practiceDisciplineWorkHour.value, ['semester', 'num'])
 })
 
 async function fieldUp(num, sem) {
@@ -119,9 +111,10 @@ async function fieldUp(num, sem) {
 
   _.set(practiceDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
   _.set(practiceDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await saveData(_.get(practiceDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveData(_.get(practiceDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveData(_.get(practiceDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveData(_.get(practiceDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 async function fieldDown(num, sem) {
@@ -130,9 +123,10 @@ async function fieldDown(num, sem) {
 
   _.set(practiceDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
   _.set(practiceDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await saveData(_.get(practiceDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveData(_.get(practiceDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveData(_.get(practiceDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveData(_.get(practiceDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 async function saveData(data) {
@@ -140,9 +134,6 @@ async function saveData(data) {
   return r.data
 }
 
-function getRowColor(number) {
-  return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
-}
 
 </script>
 
@@ -160,71 +151,14 @@ function getRowColor(number) {
     @add-clicked="addPractice"
   >
     <template #content>
-      <q-tab-panels
-        v-model="tab"
-        animated
-        transition-prev="scale"
-        transition-next="scale"
-      >
-        <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="practice-container">
-          <div v-if="item" class="practice-container__header text-center text-subtitle1 items-center bg-grey-2">
-            <div>
-              №
-            </div>
-            <div>
-              Наименование практического занятия
-            </div>
-            <div>
-              Количество часов
-            </div>
-            <div>
-              Тема дисциплины
-            </div>
-            <div v-show="!disabled">
-              Управление
-            </div>
-          </div>
-          <div v-for="practice in filteredData" class="practice-container__body">
-            <div v-if="practice.semester == tab"
-                 class="practice-container__body__cell text-subtitle1 text-center items-center"
-                 :class="getRowColor(practice.num)">
-              <div>
-                {{ practice.num }}
-              </div>
-              <div class="text-justify">
-                {{ practice.name }}
-              </div>
-              <div>
-                {{ practice.hours }}
-              </div>
-              <div>
-                {{ disciplineThemesByValue[practice.theme_id]?.num }}.
-                {{ disciplineThemesByValue[practice.theme_id]?.name }}
-              </div>
-              <div v-show="!disabled">
-                <q-btn
-                  icon="mdi-delete" color="red" flat @click="deletePractice(practice.id)"
-                />
-                <q-btn
-                  icon="mdi-pencil-outline" color="green" flat @click="updatePractice(practice.id)"
-                />
-                <q-btn v-if="practice.num != 1"
-                       icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
-                       @click="fieldUp(practice.num, practice.semester)"
-                />
-                <q-btn v-if="practice.num != maxNumberInSemester"
-                       icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
-                       @click="fieldDown(practice.num, practice.semester)"
-                />
-              </div>
-            </div>
-          </div>
-        </q-tab-panel>
-      </q-tab-panels>
-      <div v-if="allPercent == 0">
-        <p class="text-h6">Нет часов по практическим занятиям</p>
-        <empty-icon/>
-      </div>
+      <generator-discipline-work-hour-container
+        :data="filteredData"
+        v-model:sem="tab"
+        @field-down="fieldDown"
+        @field-up="fieldUp"
+        @delete="deletePractice"
+        @edit="updatePractice"
+      />
     </template>
   </generator-discipline-work-view-base>
 </template>
@@ -236,7 +170,7 @@ function getRowColor(number) {
 
   > .practice-container__header {
     display: grid;
-    grid-template-columns: 4% 1fr 15% 25% 20%;
+    grid-template-columns: 4% 1fr 15% 25% 10%  20%;
     font-weight: bold;
     border: $border;
     border-bottom: none;
@@ -249,7 +183,7 @@ function getRowColor(number) {
   > .practice-container__body {
     > .practice-container__body__cell {
       display: grid;
-      grid-template-columns: 4% 1fr 15% 25% 20%;
+      grid-template-columns: 4% 1fr 15% 25% 10%  20%;
       border: $border;
       border-bottom: none;
 

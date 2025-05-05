@@ -10,6 +10,7 @@ import _ from "lodash";
 import {api} from "boot/axios";
 import EmptyIcon from "components/EmptyIcon.vue";
 import GeneratorDisciplineWorkViewBase from "pages/generator/components/GeneratorDisciplineWorkViewBase.vue";
+import GeneratorDisciplineWorkHourContainer from "pages/generator/components/GeneratorDisciplineWorkHourContainer.vue";
 
 
 const generatorViewStore = useGeneratorViewStore();
@@ -97,25 +98,12 @@ function deleteLab(id) {
 }
 
 watchEffect(() => {
-  tab.value = `${semestersData.value[0]?.num}`
-})
-
-const maxNumberInSemester = computed(() => {
-  let data = _.filter(labDisciplineWorkHour.value, (x) => x.semester == tab.value)
-  return _.max(_.map(data, (x) => x.num))
-})
-
-const disciplineThemesByValue = computed(() => {
-  return _.keyBy(disciplineThemes.value, 'id')
+  tab.value = semestersData.value[0]?.num
 })
 
 const filteredData = computed(() => {
-  return _.orderBy(labDisciplineWorkHour.value, (x) => x.num, 'asc')
+  return _.orderBy(labDisciplineWorkHour.value, ['semester', 'num'])
 })
-
-function getRowColor(number) {
-  return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
-}
 
 async function saveData(data) {
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-work-hour/`, data)
@@ -129,8 +117,10 @@ async function fieldUp(num, sem) {
   _.set(labDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
   _.set(labDisciplineWorkHour.value, `[${newKey}].num`, num)
 
-  await saveData(_.get(labDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveData(_.get(labDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveData(_.get(labDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveData(_.get(labDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 async function fieldDown(num, sem) {
@@ -139,9 +129,10 @@ async function fieldDown(num, sem) {
 
   _.set(labDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
   _.set(labDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await saveData(_.get(labDisciplineWorkHour.value, `[${oldKey}]`))
-  await saveData(_.get(labDisciplineWorkHour.value, `[${newKey}]`))
+  await Promise.all([
+    saveData(_.get(labDisciplineWorkHour.value, `[${oldKey}]`)),
+    saveData(_.get(labDisciplineWorkHour.value, `[${newKey}]`))
+  ])
 }
 
 </script>
@@ -160,66 +151,14 @@ async function fieldDown(num, sem) {
     @add-clicked="addLab"
   >
     <template #content>
-        <q-tab-panels
-          v-model="tab"
-          animated
-          transition-prev="scale"
-          transition-next="scale"
-        >
-          <q-tab-panel v-for="item in semestersData" :name="`${item.num}`" class="lab-container">
-            <div v-if="item" class="lab-container__header text-center text-subtitle1 items-center bg-grey-2">
-                            <div>
-                              №
-                            </div>
-              <div>
-                Наименование лабораторной работы
-              </div>
-              <div>
-                Количество часов
-              </div>
-              <div>
-                Тема дисциплины
-              </div>
-              <div v-show="!disabled">
-                Управление
-              </div>
-            </div>
-            <div v-for="lab in filteredData" class="lab-container__body">
-              <div v-if="lab.semester == tab"
-                   class="lab-container__body__cell text-subtitle1 text-center items-center"
-                   :class="getRowColor(lab.num)">
-                                <div>
-                                  {{ lab.num }}
-                                </div>
-                <div class="text-justify">
-                  {{ lab.name }}
-                </div>
-                <div>
-                  {{ lab.hours }}
-                </div>
-                <div>
-                  {{ disciplineThemesByValue[lab.theme_id]?.num }}. {{ disciplineThemesByValue[lab.theme_id]?.name }}
-                </div>
-                <div v-show="!disabled">
-                  <q-btn
-                    icon="mdi-delete" color="red" flat @click="deleteLab(lab.id)"
-                  />
-                  <q-btn
-                    icon="mdi-pencil-outline" color="green" flat @click="updateLab(lab.id)"
-                  />
-                  <q-btn v-if="lab.num != 1"
-                         icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
-                         @click="fieldUp(lab.num, lab.semester)"
-                  />
-                  <q-btn v-if="lab.num != maxNumberInSemester"
-                         icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
-                         @click="fieldDown(lab.num, lab.semester)"
-                  />
-                </div>
-              </div>
-            </div>
-          </q-tab-panel>
-        </q-tab-panels>
+      <generator-discipline-work-hour-container
+        :data="filteredData"
+        v-model:sem="tab"
+        @field-down="fieldDown"
+        @field-up="fieldUp"
+        @delete="deleteLab"
+        @edit="updateLab"
+      />
     </template>
   </generator-discipline-work-view-base>
 </template>
@@ -232,7 +171,7 @@ async function fieldDown(num, sem) {
 
   > .lab-container__header {
     display: grid;
-    grid-template-columns: 4% 1fr 15% 25% 20%;
+    grid-template-columns: 4% 1fr 15% 25% 10%  20%;
     font-weight: bold;
     border: $border;
     border-bottom: none;
@@ -245,14 +184,15 @@ async function fieldDown(num, sem) {
   > .lab-container__body {
     > .lab-container__body__cell {
       display: grid;
-      grid-template-columns: 4% 1fr 15% 25% 20%;
+      grid-template-columns: 4% 1fr 15% 25% 10%  20%;
       border: $border;
       border-bottom: none;
 
     }
-      &:last-child {
-        border-bottom: $border;
-      }
+
+    &:last-child {
+      border-bottom: $border;
+    }
   }
 }
 

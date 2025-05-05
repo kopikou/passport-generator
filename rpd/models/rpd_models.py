@@ -18,6 +18,20 @@ class RPDFile(TimestampsModel):
     title = models.TextField(verbose_name="Наименование файла")
     file = models.FileField(upload_to="rpd_plan/%Y-%m-%d/", verbose_name="Файл РПД")
     status = models.IntegerField(choices=StatusChoice.choices, default=StatusChoice.download)
+    plandata = models.ForeignKey("PlanData", on_delete=models.SET_NULL, null=True)
+
+    @property
+    def abbrprofile(self):
+        return self.plandata.abbrprofile
+
+    @property
+    def startyear(self):
+        return self.plandata.startyear
+
+
+    @property
+    def lastshifr(self):
+        return self.plandata.lastshifr
 
     @property
     def status_verbose(self):
@@ -25,7 +39,7 @@ class RPDFile(TimestampsModel):
 
 
 class PlanData(TimestampsModel):
-    file = models.ForeignKey(RPDFile, verbose_name="Файл", on_delete=models.CASCADE)
+    file = models.ForeignKey(RPDFile, verbose_name="Файл", on_delete=models.SET_NULL, related_name="plan_data_item", null=True)
     subtype = models.TextField()
     shifr = models.TextField()
     abbrprofile = models.TextField(null=True, blank=True)

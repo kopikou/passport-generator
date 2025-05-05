@@ -3,6 +3,8 @@ from rest_framework import serializers
 from rpd.models import RPDFile, PlanData, Disciplines, LinesData, SemesterData, LinesIndicators, PlanDocuments
 
 
+
+
 class RpdFileSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     user_id = serializers.IntegerField()
@@ -11,6 +13,7 @@ class RpdFileSerializer(serializers.ModelSerializer):
     status = serializers.IntegerField()
     status_verbose = serializers.CharField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
+
 
     class Meta:
         model = RPDFile
@@ -22,7 +25,11 @@ class RpdFileSerializer(serializers.ModelSerializer):
             'status',
             'status_verbose',
             'created_at',
+            'abbrprofile',
+            'startyear',
+            'lastshifr',
         ]
+
 
 
 class SemesterDataSerializer(serializers.ModelSerializer):
@@ -224,4 +231,5 @@ class DisciplinesSerializer(serializers.ModelSerializer):
             'id',
             'name',
         ]
+
 
