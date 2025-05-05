@@ -117,7 +117,7 @@ class GeneratorViewSet(
 
         return Response(data=serializer.data)
 
-    @action(methods=['get'], url_path="get-asp-program-list", detail=False)
+    @action(methods=['get'], url_path="get-asp-program-list", detail=False, permission_classes=[IsAuthenticated])
     def get_aps_program_list(self, request, *args, **kwargs):
         user = self.request.user.userprofile.mira_id
 
@@ -147,7 +147,7 @@ class GeneratorViewSet(
 
         return Response(data=result)
 
-    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True)
+    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True, permission_classes=[IsAuthenticated])
     def get_asp_program_detail(self, request, *args, **kwargs):
 
         pk = int(self.kwargs['pk'])
