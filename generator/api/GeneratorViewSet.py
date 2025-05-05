@@ -23,7 +23,7 @@ from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
     DefaultsResources, PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
     ScientificDataDefault, DisciplineIndicators
-from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanAcceptRPDProgram
+from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanAcceptRPDProgram, CanEditScientificProgram
 from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
@@ -47,7 +47,7 @@ class GeneratorViewSet(
         return Response(result)
 
 
-    @action(methods=['POST'], url_path='save-asp-program-data', detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['POST'], url_path='save-asp-program-data', detail=True, permission_classes=[CanEditScientificProgram])
     def save_asp_program_data(self, request, *args, **kwargs):
 
         data = self.request.data
@@ -61,7 +61,7 @@ class GeneratorViewSet(
 
         return Response(serializer.data)
 
-    @action(methods=['GET'], url_path='copy-asp-program-data', detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['GET'], url_path='copy-asp-program-data', detail=True, permission_classes=[CanEditScientificProgram])
     def copy_asp_program_data(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -119,35 +119,13 @@ class GeneratorViewSet(
 
     @action(methods=['get'], url_path="get-asp-program-list", detail=False, permission_classes=[IsAuthenticated])
     def get_aps_program_list(self, request, *args, **kwargs):
-        user = self.request.user.userprofile.mira_id
-
         year = self.request.query_params.get('year', pendulum.now().year)
 
-        data = AISServices.get_asp_napr(year, user)
-        data = sorted(data, key=lambda x: x['species'])
+        res = GeneratorService.get_asp_list(year, self.request.user)
 
-        result = {"items": data}
+        return Response(data=res)
 
-        if Permissions.scientific_admin in request.user.userprofile.permissions:
-
-            ais_plans = AISServices.get_all_asp(year)
-
-            scientific_plan = ScientificPlanData.objects.filter(startyear=year).values_list('mira_id', flat=True)
-            scientific_plan_ids = [i for i in scientific_plan]
-
-            res = []
-            for i in ais_plans:
-                res.append({
-                    **i,
-                    "created": True if i['id'] in scientific_plan_ids else False
-                })
-
-            res = sorted(res, key=lambda x: x['species'])
-            result.update({"admin_items": res})
-
-        return Response(data=result)
-
-    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True, permission_classes=[IsAuthenticated])
+    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True, permission_classes=[CanEditRPDProgram])
     def get_asp_program_detail(self, request, *args, **kwargs):
 
         pk = int(self.kwargs['pk'])
@@ -229,94 +207,24 @@ class GeneratorViewSet(
             data=res,
         )
 
-    @action(methods=['GET'], url_path="get-practice-list", detail=False)
+    @action(methods=['GET'], url_path="get-practice-list", detail=False, permission_classes=[IsAuthenticated])
     def get_practice_list(self, request, *args, **kwargs):
         user = self.request.user.userprofile.mira_id
 
-        data = AISServices.get_practice_by_person(user)
-
-        discpl_list = [i['discpl'] for i in data]
-        abbrprofile_list = [i['abbr'] for i in data]
-        startyear_list = [i['yr'] for i in data]
-
-        filtered_data = LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
-                                                 plan__startyear__in=startyear_list,
-                                                 plan__file__status=4, synchronize=True).select_related("plan")
-
-        filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.plan.startyear}": i for i in filtered_data}
-
-        lineslink = PlanLinesLink.objects.filter(mira_id__in=[i['planlin'] for i in data]).select_related("planlines")
-        lineslink_sorted = sorted(lineslink, key=lambda x: x.mira_id)
-        lineslink_by_id = {i.mira_id: i for i in lineslink_sorted}
-
-        result = []
-        for item in data:
-
-            line = filtered_data_sorted.get(f"{item['discpl']}_{item['abbr']}_{item['yr']}")
-
-            if line:
-
-                res = lineslink_by_id.get(item['planlin'], [])
-
-                if not res:
-                    res, created = PlanLinesLink.objects.get_or_create(
-                        cadmission=item['id_admission'],
-                        mira_id=item['planlin'],
-                        person=item['mira_id'],
-                        defaults={
-                            "cadmission": item['id_admission'],
-                            "mira_id": item['planlin'],
-                            "person": item['mira_id'],
-                            "status": PlanLinesLink.StatusChoices.appointed,
-                            "planlines_id": line.id,
-                        }
-                    )
-
-                result.append({
-                    **item,
-                    "id": res.id,
-                    "status": res.status,
-                    "status_verbose": res.status_verbose,
-                    "kafcode": res.planlines.caf,
-                    "discode": res.planlines.newdisid,
-                })
-
-        sorted_result = sorted(result, key=lambda x: (x['planlin'], x['mira_id']))
-        grouped_result = {key: list(items) for key, items in
-                          groupby(sorted_result, key=lambda x: (x['planlin'], x['mira_id']))}
-
-        res = []
-        for key, items in grouped_result.items():
-            temp = {
-                **items[0],
-                "type": [i['type'] for i in items],
-            }
-            res.append(temp)
+        res = GeneratorService.get_practice_list(user)
 
         return Response(
             data=res,
         )
 
-
-    @action(methods=['POST'], url_path="save-scientific-data", detail=True, permission_classes=[CanEditRPDProgram])
-    def save_scientific_data(self, request, *args, **kwargs):
-
-        pk = self.kwargs['pk']
-
-        serializer = ScientificDataSerializer(data={**request.data, "plan_id": pk})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        return Response(serializer.data)
-
-    @action(methods=['GET'], url_path="get-scientific-work", detail=False)
+    @action(methods=['GET'], url_path="get-scientific-work", detail=False, permission_classes=[IsAuthenticated])
     def get_scientific_work(self, request, *args, **kwargs):
 
         data = ScientificWorkType.objects.all().values('id', 'name')
 
         return Response(data=data)
 
-    @action(methods=['POST'], url_path="save-scientific-data", detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['POST'], url_path="save-scientific-data", detail=True, permission_classes=[CanEditScientificProgram])
     def save_scientific_data(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -336,14 +244,14 @@ class GeneratorViewSet(
 
         return Response(data=serializer.data)
 
-    @action(methods=['DELETE'], url_path="del-scientific-work", detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['DELETE'], url_path="del-scientific-work", detail=True, permission_classes=[CanEditScientificProgram])
     def del_scientific_work(self, request, *args, **kwargs):
 
         ScientificData.objects.get(id=self.kwargs['pk']).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['GET'], url_path="get-scientific-report", detail=True)
+    @action(methods=['GET'], url_path="get-scientific-report", detail=True, permission_classes=[IsAuthenticated])
     def get_scientific_report(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
