@@ -14,6 +14,7 @@ const {
   additionalInfo,
   tatInfo,
   disabled,
+  planlinesData,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -61,23 +62,22 @@ async function saveData() {
     "value": tatInfo.value,
   })
 
-    if (r.status == 200) {
-      $q.notify({
-        message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> сохранены!",
-        color: "secondary",
-        position: "bottom",
-        html: true,
-      })
+  if (r.status == 200) {
+    $q.notify({
+      message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> сохранены!",
+      color: "secondary",
+      position: "bottom",
+      html: true,
+    })
     generatorViewStore.checkErrors()
-    }
-    else {
-      $q.notify({
-        message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> не сохранены!",
-        color: "negative",
-        position: "bottom",
-        html: true,
-      })
-    }
+  } else {
+    $q.notify({
+      message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> не сохранены!",
+      color: "negative",
+      position: "bottom",
+      html: true,
+    })
+  }
   // $q.loading.hide()
 }
 
@@ -100,16 +100,16 @@ watchEffect(() => {
     <q-card>
       <q-card-section>
         <div class="q-gutter-md">
-<!--          <q-input-->
-<!--            label="Основная информация"-->
-<!--            type="textarea"-->
-<!--            filled-->
-<!--            stack-label-->
-<!--            v-model="main"-->
-<!--            :readonly="disabled"-->
-<!--            debounce="1000"-->
-<!--            @update:modelValue="saveData"-->
-<!--          />-->
+          <!--          <q-input-->
+          <!--            label="Основная информация"-->
+          <!--            type="textarea"-->
+          <!--            filled-->
+          <!--            stack-label-->
+          <!--            v-model="main"-->
+          <!--            :readonly="disabled"-->
+          <!--            debounce="1000"-->
+          <!--            @update:modelValue="saveData"-->
+          <!--          />-->
           <q-input
             label="Описание процедуры"
             type="textarea"

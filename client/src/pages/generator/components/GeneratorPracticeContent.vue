@@ -155,7 +155,6 @@ async function saveContent() {
 
   let key = _.findKey(additionalInfo.value, x => x.type == 'practiceContentText')
   _.set(additionalInfo.value, `[${key}].value.content`, content.value)
-  console.log(additionalInfo.value)
 }
 
 watchEffect(() => {
@@ -166,7 +165,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div>
+  <div class="q-px-md">
     <div style="width: 95%">
       <span class="text-h6 q-pl-lg">Содержание практики</span>
       <p></p>

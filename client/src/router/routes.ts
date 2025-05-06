@@ -134,11 +134,6 @@ const routes: RouteRecordRaw[] = [
             component: GeneratorGuidelinesView,
           },
           {
-            path: "fos",
-            name: "PracticeGeneratorFOSView",
-            component: GeneratorFOSView,
-          },
-          {
             path: "tat",
             name: "PracticeGeneratorTatView",
             component: GeneratorTATView,

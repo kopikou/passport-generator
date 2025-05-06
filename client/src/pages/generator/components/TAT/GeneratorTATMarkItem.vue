@@ -14,6 +14,7 @@ const {
   additionalInfo,
   tatInfo,
   disabled,
+  planlinesData,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -33,6 +34,10 @@ const great = ref('')
 const good = ref('')
 const satisfactorily = ref('')
 const unsatisfactory = ref('')
+
+const tat = ref('')
+const form = ref('')
+const formabout = ref('')
 
 async function saveData() {
   // $q.loading.show({message: "Сохранение данных"})
@@ -109,37 +114,65 @@ watchEffect(() => {
     <q-card>
       <q-card-section>
         <div class="q-gutter-md">
-<!--          <q-input-->
-<!--            label="Основная информация"-->
-<!--            type="textarea"-->
-<!--            filled-->
-<!--            stack-label-->
-<!--            v-model="main"-->
-<!--            :readonly="disabled"-->
-<!--            debounce="1000"-->
-<!--            @update:modelValue="saveData"-->
-<!--          />-->
-          <q-input
-            label="Описание процедуры"
-            type="textarea"
-            filled
-            stack-label
-            v-model="about"
-            :readonly="disabled"
-            debounce="1000"
-            @update:modelValue="saveData"
-          />
-          <q-input
-            label="Пример задания"
-            type="textarea"
-            filled
-            stack-label
-            v-model="example"
-            :readonly="disabled"
-            debounce="1000"
-            @update:modelValue="saveData"
-            hint="Если Вам не нужен пример задания, оставьте поле пустым"
-          />
+          <!--          <q-input-->
+          <!--            label="Основная информация"-->
+          <!--            type="textarea"-->
+          <!--            filled-->
+          <!--            stack-label-->
+          <!--            v-model="main"-->
+          <!--            :readonly="disabled"-->
+          <!--            debounce="1000"-->
+          <!--            @update:modelValue="saveData"-->
+          <!--          />-->
+          <div class="q-gutter-y-md" v-if="!planlinesData.viewpract">
+            <q-input
+              label="Описание процедуры"
+              type="textarea"
+              filled
+              stack-label
+              v-model="about"
+              :readonly="disabled"
+              debounce="1000"
+              @update:modelValue="saveData"
+            />
+            <q-input
+              label="Пример задания"
+              type="textarea"
+              filled
+              stack-label
+              v-model="example"
+              :readonly="disabled"
+              debounce="1000"
+              @update:modelValue="saveData"
+              hint="Если Вам не нужен пример задания, оставьте поле пустым"
+            />
+          </div>
+          <div class="q-gutter-y-md" v-else>
+            <q-input
+              label="Типовые оценочные средства"
+              type="text"
+              filled
+              stack-label
+              v-model="tat"
+              :debounce="500"
+            />
+            <q-input
+              label="Форма проведения зачета"
+              type="text"
+              filled
+              stack-label
+              v-model="form"
+              :debounce="500"
+            />
+            <q-input
+              label="Описание процедуры проведения зачета"
+              type="textarea"
+              filled
+              stack-label
+              v-model="formabout"
+              :debounce="500"
+            />
+          </div>
           <p class="text-subtitle1">Критерии оценивания</p>
           <q-list bordered>
             <q-expansion-item

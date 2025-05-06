@@ -51,7 +51,7 @@ const menuItems = computed(() => {
       {title: 'Результаты освоения программы', url: 'competences', allow: [5], rpd: true, rpp: true},
       {title: 'Результаты освоения дисциплины ', url: 'indicators', allow: [5], rpd: true, rpp: true},
       {title: 'Место дисциплины в структуре ООП', url: 'discipline-place', allow: [1, 2, 3, 4], rpd: true, rpp: false},
-      {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5], rpd: true, rpp: false},
+      {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
       {title: 'Содержание практики', url: 'practice-content', allow: [1, 2, 3, 4, 5], rpd: false, rpp: true},
       {title: 'Форма отчетности', url: 'practice-report', allow: [1, 2, 3, 4, 5], rpd: false, rpp: true},
       {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1, 2, 3, 4, 5], rpd: true, rpp: false},
@@ -92,7 +92,7 @@ const menuItems = computed(() => {
     {
       title: 'Оценочные материалы по дисциплине для контроля текущей успеваемости',
       url: 'fos',
-      allow: [1, 2, 3, 4, 5], rpd: true, rpp: true
+      allow: [1, 2, 3, 4, 5], rpd: true, rpp: false
     },
   ])
 
