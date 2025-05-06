@@ -17,6 +17,7 @@ class CanEditRPDProgram(IsAuthenticated):
             PlanLinesLink.StatusChoices.appointed,
             PlanLinesLink.StatusChoices.is_filled,
             PlanLinesLink.StatusChoices.on_refile,
+            PlanLinesLink.StatusChoices.accepted,
         ])
 
         program = int(pk) in [i['id'] for i in programms if 'person' in i['type']] and can_edit.exists()
