@@ -35,11 +35,44 @@ const typeFilterLabel = {
   person: 'Разработчик РПД',
 }
 
+const STATUSES = {
+  "Назначен": {
+    color: "grey-2",
+    textColor: "black",
+    index: 1,
+    title: "Назначен",
+  },
+  "Заполняется": {
+    color: "cyan-5",
+    textColor: "white",
+    index: 2,
+    title: "Заполняется",
+  },
+  "Отправлен на проверку": {
+    color: "amber-6",
+    textColor: "white",
+    index: 3,
+    title: "Отправлен на проверку",
+  },
+  "Требуются правки": {
+    color: "red-5",
+    textColor: "white",
+    index: 4,
+    title: "Требуются правки",
+  },
+  "Утвержден": {
+    color: "green-5",
+    textColor: "white",
+    index: 5,
+    title: "Утвержден",
+  },
+}
 
+const statusFilter = ref();
 const groupFilter = ref($q.localStorage.getItem("surp_groupfilter") ? $q.localStorage.getItem("surp_groupfilter") : '')
 const discplFilter = ref($q.localStorage.getItem("surp_discplfilter") ? $q.localStorage.getItem("surp_discplfilter") : '')
-const myFilter = ref( LocalStorage.getItem('surp_myfilter') || 0)
-const textFilter = ref<String>( LocalStorage.getItem('surp_rpdfilter') || '')
+const myFilter = ref(LocalStorage.getItem('surp_myfilter') || 0)
+const textFilter = ref<String>(LocalStorage.getItem('surp_rpdfilter') || '')
 
 const filteredListData = computed(() => {
   let txtFilter = textFilter.value.trim().toLowerCase();
@@ -47,13 +80,27 @@ const filteredListData = computed(() => {
   return _(listData.value)
     .filter(x => {
       return (myFilter.value == 0 || x.type.includes('person'))
-        && ((txtFilter == '' ||  x.person.toLowerCase().includes(txtFilter))
-        || (txtFilter == '' ||  x.abbr.toLowerCase().includes(txtFilter))
-        || (txtFilter == '' ||  x.discode.toLowerCase().includes(txtFilter))
-        || (txtFilter == '' ||  x.discpl.toLowerCase().includes(txtFilter)))
+        && ((txtFilter == '' || x.person.toLowerCase().includes(txtFilter))
+          || (txtFilter == '' || x.abbr.toLowerCase().includes(txtFilter))
+          || (txtFilter == '' || x.discode.toLowerCase().includes(txtFilter))
+          || (txtFilter == '' || x.discpl.toLowerCase().includes(txtFilter)))
+          && (!statusFilter.value || x.status_verbose == statusFilter.value)
     })
     .orderBy(x => [x.abbr, x.yr, x.discode], 'asc')
     .groupBy(x => `${x.abbr}-${x.yr.toString().slice(-2)}`)
+    .toPairs()
+    .map((item) => {
+      let items = item[1];
+      return [
+        item[0],
+        {
+          items: items,
+          types: _(items).map(x => x.type).flatten().uniq().value(),
+          statuses: _(items).orderBy(x => STATUSES[x["status_verbose"]].index).groupBy('status_verbose').value(),
+        }
+      ]
+    })
+    .fromPairs()
     .value()
 })
 
@@ -114,13 +161,23 @@ onBeforeMount(async () => {
   <layout-h-c-f>
     <template #header>
       <div class="q-px-sm q-pb-sm">
-      <div class="text-center text-h6 q-mb-md">Список рабочих программ дисциплин ИРНИТУ</div>
-      <div class="flex justify-between q-mb-sm q-px-sm" style="display: grid; grid-template-columns: 1fr auto; gap: 8px">
-        <q-input outlined label="Поиск по аббревиатуре, дисциплине, разработчику программы" v-model="textFilter"/>
-<!--        <q-input outlined label="Дисциплина" v-model="discplFilter"/>-->
-        <q-toggle outlined label="Только мои" v-model="myFilter" :true-value="1" :false-value="0"/>
-      </div>
+        <div class="text-center text-h6 q-mb-md">Список рабочих программ дисциплин ИРНИТУ</div>
+        <div class="flex justify-between q-mb-sm q-px-sm"
+             style="display: grid; grid-template-columns: 1fr 220px auto; gap: 8px">
+          <q-input outlined label="Поиск по аббревиатуре, дисциплине, разработчику программы" v-model="textFilter"/>
+          <!--        <q-input outlined label="Дисциплина" v-model="discplFilter"/>-->
+          <q-select v-model="statusFilter"
+                    label="Статус"
+                    :options="_.map(STATUSES)"
+                    option-label="title"
+                    option-value="title"
+                    emit-value
+                    map-options
+                    clearable
+          />
+          <q-toggle outlined label="Только мои" v-model="myFilter" :true-value="1" :false-value="0"/>
         </div>
+      </div>
     </template>
     <template #content>
       <div class="q-pa-md">
@@ -130,18 +187,27 @@ onBeforeMount(async () => {
             separator
           >
             <q-expansion-item
-              v-for="items, key in filteredListData"
+              v-for="(value, key) in filteredListData"
               :label="key"
               group="programs"
             >
               <template #header>
                 <div class="q-item__section column q-item__section--main justify-center">
                   <div class="q-item__label">
-                    <div style="display: flex; gap: 8px;">
-                      <div style="width: 70px">{{ key }}</div>
-                      <q-badge v-for="type in _(items).map(x => x.type).flatten().uniq().value()">
-                        {{ typeFilterLabel[type] }}
-                      </q-badge>
+                    <div style="display: flex; gap: 8px; justify-content: space-between">
+                      <div style="display: flex; gap: 8px;">
+                        <div style="width: 70px">{{ key }}</div>
+
+                        <q-badge v-for="type in value.types">
+                          {{ typeFilterLabel[type] }}
+                        </q-badge>
+                      </div>
+
+                      <div style="display: flex; gap: 8px;">
+                        <q-badge :text-color="STATUSES[status].textColor" :color="STATUSES[status].color" v-for="(status_items, status) in value.statuses">
+                          {{ status }}: {{ status_items.length }}
+                        </q-badge>
+                      </div>
                     </div>
                   </div>
 
@@ -158,14 +224,14 @@ onBeforeMount(async () => {
                       <div>Статус</div>
                       <div>Управление</div>
                     </div>
-                    <div class="rpd-row rpd-row__body text-center" v-for="item, key in items">
+                    <div :class="{[`status-${item.status}`]: true}" class="rpd-row rpd-row__body text-center" v-for="(item, key) in value.items">
                       <!--                       @click="router.push(`/generator/${item.id}/main`)"-->
-                      <div :class="getRowColor(key)">{{ item.discode }}</div>
-                      <div :class="getRowColor(key)">{{ item.discpl }}</div>
-                      <div :class="getRowColor(key)">{{ item.person }}</div>
-                      <div :class="getRowColor(key)">{{ cafDataById[item.kafcode]?.label }}</div>
-                      <div :class="getRowColor(key)">{{ item.status_verbose }}</div>
-                      <div :class="getRowColor(key)">
+                      <div>{{ item.discode }}</div>
+                      <div>{{ item.discpl }}</div>
+                      <div>{{ item.person }}</div>
+                      <div>{{ cafDataById[item.kafcode]?.label }}</div>
+                      <div>{{ item.status_verbose }}</div>
+                      <div>
                         <q-btn v-if="getEditRules(item.type)" dense flat color="primary" icon="mdi-pencil"
                                label="заполнить" @click="router.push(`/generator/${item.id}/main`)"/>
                         <q-btn v-if="getViewRules(item.type)" dense flat color="secondary" icon="mdi-briefcase-eye"
@@ -196,6 +262,23 @@ onBeforeMount(async () => {
 
 .rpd-row {
   display: contents;
+
+  &.status-0 > div { // "Назначен"
+    background: white;
+  }
+  &.status-1 > div { // "Заполняется"
+    background: $light-blue-1;
+  }
+  &.status-2 > div { // "Отправлен на проверку"
+    background: $amber-1;
+  }
+  &.status-3 > div { // "Утвержден"
+    background: $green-1;
+  }
+  &.status-4 > div { // "Требуются правки"
+    background: $red-1;
+  }
+
 
   $border: solid 1px silver;
 
