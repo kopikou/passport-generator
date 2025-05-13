@@ -9,6 +9,7 @@ from docxtpl import DocxTemplate
 
 from app.settings import BASE_DIR
 from arim.models import CatPerson
+from arim.services import AISServices
 from generator.models import PlanLinesLink, ScientificData
 from rpd.models import LinesIndicators, PlanData
 
@@ -526,11 +527,16 @@ class ReportService(object):
                     [i['srs_hours'] for i in tmp if i['srs_hours'] != '']) != 0 else '',
             })
 
-        if data['admission']['ckaf_id'] == 105:
-            podrazdelene = data['admission']['cfac__name'].strip()
-        else:
-            podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
+        ckafs = AISServices.get_kaf_codes()
+        ckafs_by_id = {i['value']: i['label'] for i in ckafs}
 
+        if data['planlines']['caf']:
+            podrazdelene = ckafs_by_id.get(data['planlines']['caf'], '')
+        else:
+            if data['admission']['ckaf_id'] == 105:
+                podrazdelene = data['admission']['cfac__name'].strip()
+            else:
+                podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
         context = {
             "now": pendulum.now().start_of("day"),
             "current_year": pendulum.now().year,
