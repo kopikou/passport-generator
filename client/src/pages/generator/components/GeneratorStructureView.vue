@@ -30,49 +30,55 @@ async function saveMethods() {
       "interactiveMethods": methods.value
     }
   })
-  if (r.status == 200) {
-    $q.notify({
-      message: "Данные <span class='text-bold'>о структуре дисциплины</span> сохранены!",
-      color: "secondary",
-      position: "bottom",
-      html: true,
-    })
-    let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
-    if (key) _.set(additionalInfo.value, `[${key}].value.interactiveMethods`, methods.value)
-    else additionalInfo.value.push({
-      id: r.data.id,
-      planlineslink_id: activeRpdId.value,
-      type: 'interactiveMethods',
-      value: {
-        interactiveMethods: methods.value,
-      }
-    })
-    generatorViewStore.checkErrors()
-  } else {
-
-    $q.notify({
-      message: "Данные <span class='text-bold'>о структуре дисциплины</span> не сохранены!",
-      color: "negative",
-      position: "bottom",
-      html: true,
-    })
-  }
+  await generatorViewStore.getData();
+  generatorViewStore.checkErrors()
+  // if (r.status == 200) {
+  //   $q.notify({
+  //     message: "Данные <span class='text-bold'>о структуре дисциплины</span> сохранены!",
+  //     color: "secondary",
+  //     position: "bottom",
+  //     html: true,
+  //   })
+  //   let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
+  //   if (key) _.set(additionalInfo.value, `[${key}].value.interactiveMethods`, methods.value)
+  //   else additionalInfo.value.push({
+  //     id: r.data.id,
+  //     planlineslink_id: activeRpdId.value,
+  //     type: 'interactiveMethods',
+  //     value: {
+  //       interactiveMethods: methods.value,
+  //     }
+  //   })
+  //   generatorViewStore.checkErrors()
+  // } else {
+  //
+  //   $q.notify({
+  //     message: "Данные <span class='text-bold'>о структуре дисциплины</span> не сохранены!",
+  //     color: "negative",
+  //     position: "bottom",
+  //     html: true,
+  //   })
+  // }
 
   // $q.loading.hide()
 }
 
 watch(semestersData, () => {
   tab.value = `${semestersData.value[0].num}`
+}, {
+  immediate: true
 })
 
 watch(interactiveMethods, () => {
   methods.value = interactiveMethods.value[0]?.value['interactiveMethods']
+}, {
+  immediate: true
 })
 
-onBeforeMount(() => {
-  tab.value = `${semestersData.value[0]?.num}`
-  methods.value = interactiveMethods.value[0]?.value['interactiveMethods']
-})
+// onBeforeMount(() => {
+//   tab.value = `${semestersData.value[0]?.num}`
+//   methods.value = interactiveMethods.value[0]?.value['interactiveMethods']
+// })
 
 </script>
 

@@ -2,6 +2,7 @@ import os
 import platform
 from itertools import groupby
 from subprocess import run
+from time import sleep
 
 import pendulum
 from django.core.exceptions import ObjectDoesNotExist

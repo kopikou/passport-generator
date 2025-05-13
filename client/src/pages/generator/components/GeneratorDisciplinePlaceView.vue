@@ -29,6 +29,9 @@ const filteredOthderDiscipline = computed(() => {
 })
 
 async function savePrecSubDiscipline() {
+  if (generatorViewStore.abortGetDataController)
+    generatorViewStore.abortGetDataController.abort()
+
   // $q.loading.show({message: "Сохранение"})
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "disciplinePlace",
@@ -45,22 +48,22 @@ async function savePrecSubDiscipline() {
       html: true,
     })
 
-    let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
-    if (key) {
-      _.set(additionalInfo.value, `[${key}].value.precedence`, precedence.value)
-      _.set(additionalInfo.value, `[${key}].value.subsequent`, subsequent.value)
-    } else {
-      additionalInfo.value.push({
-        id: r.data.id,
-        planlineslink_id: activeRpdId.value,
-        type: 'disciplinePlace',
-        value: {
-          "precedence": precedence.value,
-          "subsequent": subsequent.value,
-        }
-      })
-    }
-
+    // let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
+    // if (key) {
+    //   _.set(additionalInfo.value, `[${key}].value.precedence`, precedence.value)
+    //   _.set(additionalInfo.value, `[${key}].value.subsequent`, subsequent.value)
+    // } else {
+    //   additionalInfo.value.push({
+    //     id: r.data.id,
+    //     planlineslink_id: activeRpdId.value,
+    //     type: 'disciplinePlace',
+    //     value: {
+    //       "precedence": precedence.value,
+    //       "subsequent": subsequent.value,
+    //     }
+    //   })
+    // }
+    await generatorViewStore.getData()
     generatorViewStore.checkErrors()
 
   } else {
@@ -75,9 +78,11 @@ async function savePrecSubDiscipline() {
   }
 }
 
-watchEffect(() => {
+watch(disciplinePlace, () => {
   precedence.value = disciplinePlace.value[0]?.value['precedence'] || []
   subsequent.value = disciplinePlace.value[0]?.value['subsequent'] || []
+}, {
+  immediate: true
 })
 
 </script>

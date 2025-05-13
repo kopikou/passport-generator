@@ -38,14 +38,14 @@ const clicense__type_options = ref([
 async function onOKClick() {
   $q.loading.show({message: "Сохранение"})
 
-  disciplineSoftware.value[0]?.value.push({
-    id: Math.floor(Math.random() * 100000),
+  // disciplineSoftware.value[0]?.value.push()
+
+  $q.loading.hide()
+  onDialogOK({
+    id: -1,
     clicense__name: clicense__name.value,
     clicense__type: clicense__type.value,
   })
-
-  $q.loading.hide()
-  onDialogOK()
 }
 
 </script>

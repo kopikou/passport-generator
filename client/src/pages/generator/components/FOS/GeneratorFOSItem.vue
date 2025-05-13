@@ -3,7 +3,7 @@
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import {useQuasar} from "quasar";
-import {computed, onBeforeMount, ref, watch, watchEffect} from "vue";
+import {computed, nextTick, onBeforeMount, ref, watch, watchEffect} from "vue";
 import _, {forEach} from "lodash";
 import {api} from "boot/axios";
 
@@ -35,45 +35,58 @@ const themes = computed(() => {
 })
 
 async function saveData() {
-  // $q.loading.show({message: "Сохранение данных"})
-  const key = _.findKey(fosInfo.value, x => x.type == props.type)
-  if (!key) {
-    fosInfo.value.push({
-      "about": about.value,
-      "criteria": criteria.value,
-      "title": props.title,
-      "type": props.type,
-    })
-  } else {
-    _.set(fosInfo.value, `[${key}]`, {
-      "about": about.value,
-      "criteria": criteria.value,
-      "title": props.title,
-      "type": props.type,
-    })
-  }
+  if (generatorViewStore.abortGetDataController)
+    generatorViewStore.abortGetDataController.abort()
 
-let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
-  "type": "fos",
-  "value": fosInfo.value,
-})
+  fosInfo.value = [...((fosInfo.value || []).filter((x: any) => x.type != props.type)), {
+    "about": about.value,
+    "criteria": criteria.value,
+    "title": props.title,
+    "type": props.type,
+  }];
 
-if (r.status == 200) {
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+    "type": "fos",
+    "value": fosInfo.value,
+  })
+
+  //   if (r.status == 200) {
   $q.notify({
     message: "Данные <span class='text-bold'>о фонде оценочных средств дисциплине</span> сохранены!",
     color: "secondary",
     position: "bottom",
     html: true,
   })
+  await generatorViewStore.getData()
   generatorViewStore.checkErrors()
-} else {
-  $q.notify({
-    message: "Данные <span class='text-bold'>о фонде оценочных средств дисциплине</span> не сохранены!",
-    color: "negative",
-    position: "bottom",
-    html: true,
-  })
-}
+  //   } else {
+  //     $q.notify({
+  //       message: "Данные <span class='text-bold'>о фонде оценочных средств дисциплине</span> не сохранены!",
+  //       color: "negative",
+  //       position: "bottom",
+  //       html: true,
+  //     })
+  //   }
+  // })
+  //
+  // const key = _.findKey(fosInfo.value || [], x => x.type == props.type)
+  // if (!key) {
+  //   fosInfo.value.push({
+  //     "about": about.value,
+  //     "criteria": criteria.value,
+  //     "title": props.title,
+  //     "type": props.type,
+  //   })
+  // } else {
+  //   _.set(fosInfo.value, `[${key}]`, {
+  //     "about": about.value,
+  //     "criteria": criteria.value,
+  //     "title": props.title,
+  //     "type": props.type,
+  //   })
+  // }
+
+
 // $q.loading.hide()
 }
 

@@ -43,12 +43,16 @@ function deleteOborud(id) {
 }
 
 async function saveOborud() {
+  if (generatorViewStore.abortGetDataController)
+    generatorViewStore.abortGetDataController.abort()
+
   // $q.loading.show()
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "logistics",
     value: oborudData.value,
   })
-  _.set(disciplineLogistics.value, '[0].value', oborudData.value)
+  // _.set(disciplineLogistics.value, '[0].value', oborudData.value)
+  await generatorViewStore.getData()
   generatorViewStore.checkErrors()
   // $q.loading.hide()
 }
@@ -79,16 +83,16 @@ function checkTaken(id) {
 }
 
 function addMTO() {
-  if (!disciplineLogistics.value[0]) {
-    _.set(disciplineLogistics.value, "[0].value", [])
-    saveOborud()
-  }
+  // if (!disciplineLogistics.value[0]) {
+  //   _.set(disciplineLogistics.value, "[0].value", [])
+  //   saveOborud()
+  // }
 
   $q.notify({
     message: "Убедитесь, что выбранный источник доступен всем студентам и в достаточном количестве.",
     color: "secondary",
     type: "info",
-    position: "center",
+    position: "top",
     progress: true,
     timeout: 3500,
   })
@@ -96,13 +100,15 @@ function addMTO() {
   $q.dialog({
     component: GeneratorAddLogisticsDialog,
   }).onOk(() => {
-    oborudData.value = disciplineLogistics.value[0]?.value || []
+    // oborudData.value = disciplineLogistics.value[0]?.value || []
     saveOborud()
   })
 }
 
-watchEffect(() => {
+watch(disciplineLogistics, () => {
   oborudData.value = disciplineLogistics.value[0]?.value || []
+}, {
+  immediate: true
 })
 
 </script>

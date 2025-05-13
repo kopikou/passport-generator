@@ -18,19 +18,16 @@ const {
 const $q = useQuasar()
 
 api.interceptors.response.use((response) => response, (error) => {
-  // if (error.response.data.detail) {
-  //   throw error
-  // }
-
-  $q.notify({
-    color: 'negative',
-    message: error.response?.data?.detail || 'Ошибка получения данных, перезагрузите страницу',
-    icon: 'mdi-alert-box',
-    position: 'top',
-  })
   $q.loading.hide()
-
-  throw error
+  if (error.code != "ERR_CANCELED") {
+    $q.notify({
+      color: 'negative',
+      message: error.response?.data?.detail || 'Ошибка получения данных, перезагрузите страницу',
+      icon: 'mdi-alert-box',
+      position: 'top',
+    })
+    throw error
+  }
 })
 
 onBeforeMount(async () => {

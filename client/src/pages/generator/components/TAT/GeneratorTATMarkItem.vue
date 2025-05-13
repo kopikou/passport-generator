@@ -36,56 +36,34 @@ const unsatisfactory = ref('')
 
 async function saveData() {
   // $q.loading.show({message: "Сохранение данных"})
+  if (generatorViewStore.abortGetDataController)
+    generatorViewStore.abortGetDataController.abort()
 
-  const key = _.findKey(tatInfo.value, x => x.type == props.type)
-
-  if (!key) {
-    tatInfo.value.push({
-      "about": about.value,
-      "example": example.value,
-      "great": great.value,
-      "good": good.value,
-      "satisfactorily": satisfactorily.value,
-      "unsatisfactory": unsatisfactory.value,
-      "title": props.title,
-      "type": props.type,
-    })
-  } else {
-    _.set(tatInfo.value, `[${key}]`, {
-      "about": about.value,
-      "example": example.value,
-      "great": great.value,
-      "good": good.value,
-      "satisfactorily": satisfactorily.value,
-      "unsatisfactory": unsatisfactory.value,
-      "title": props.title,
-      "type": props.type,
-    })
-  }
+  tatInfo.value = [...((tatInfo.value || []).filter((x: any) => x.type != props.type)), {
+    "about": about.value,
+    "example": example.value,
+    "great": great.value,
+    "good": good.value,
+    "satisfactorily": satisfactorily.value,
+    "unsatisfactory": unsatisfactory.value,
+    "title": props.title,
+    "type": props.type,
+  }];
 
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'tat',
     "value": tatInfo.value,
   })
-  if (r.status == 200) {
-    $q.notify({
-      message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> сохранены!",
-      color: "secondary",
-      position: "bottom",
-      html: true,
-    })
-    generatorViewStore.checkErrors()
+  $q.notify({
+    message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> сохранены!",
+    color: "secondary",
+    position: "bottom",
+    html: true,
+  })
+  await generatorViewStore.getData()
+  generatorViewStore.checkErrors()
 
-  } else {
-
-    $q.notify({
-      message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> не сохранены!",
-      color: "negative",
-      position: "bottom",
-      html: true,
-    })
-  }
-  // $q.loading.hide()
+  $q.loading.hide()
 }
 
 watchEffect(() => {
