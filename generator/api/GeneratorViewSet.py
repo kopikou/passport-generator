@@ -16,12 +16,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from app.utils import UserProfileHasPermission, RPGEN
+from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
-    DefaultsResources, PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
+    PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
     ScientificDataDefault, DisciplineIndicators
 from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanAcceptRPDProgram, CanEditScientificProgram
 from generator.serializer import PlanLinesLinkSerializer, \
@@ -29,7 +29,7 @@ from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
 from generator.services import ReportService
 from generator.services.generator_service import GeneratorService
-from rpd.models import LinesData, PlanData
+from rpd.models import PlanData
 from rpd.services import RPDGenSerivce
 
 
@@ -422,8 +422,10 @@ class GeneratorViewSet(
 
         path_doc_file = f"{os.path.abspath(path)}/{pk}.docx"
         path_pdf_file = f"{os.path.abspath(path)}/{pk}.pdf"
-
-        tpl = ReportService.get_rpd_report(rpd_data)
+        if rpd_data['planlines']['viewpract']:
+            tpl = ReportService.get_practice_report(rpd_data)
+        else:
+            tpl = ReportService.get_rpd_report(rpd_data)
         # tpl.save(response)
 
         tpl.save(path_doc_file)

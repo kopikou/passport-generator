@@ -43,29 +43,36 @@ async function saveData() {
   // $q.loading.show({message: "Сохранение данных"})
 
   const key = _.findKey(tatInfo.value, x => x.type == props.type)
+  let data = {}
+  if (planlinesData.value.viewpract) {
+    data = {
+      "tat": tat.value,
+      "form": form.value,
+      "formabout": formabout.value,
+      "great": great.value,
+      "good": good.value,
+      "satisfactorily": satisfactorily.value,
+      "unsatisfactory": unsatisfactory.value,
+      "title": props.title,
+      "type": props.type,
+    }
+  } else {
+    data = {
+      "about": about.value,
+      "example": example.value,
+      "great": great.value,
+      "good": good.value,
+      "satisfactorily": satisfactorily.value,
+      "unsatisfactory": unsatisfactory.value,
+      "title": props.title,
+      "type": props.type,
+    }
+  }
 
   if (!key) {
-    tatInfo.value.push({
-      "about": about.value,
-      "example": example.value,
-      "great": great.value,
-      "good": good.value,
-      "satisfactorily": satisfactorily.value,
-      "unsatisfactory": unsatisfactory.value,
-      "title": props.title,
-      "type": props.type,
-    })
+    tatInfo.value.push(data)
   } else {
-    _.set(tatInfo.value, `[${key}]`, {
-      "about": about.value,
-      "example": example.value,
-      "great": great.value,
-      "good": good.value,
-      "satisfactorily": satisfactorily.value,
-      "unsatisfactory": unsatisfactory.value,
-      "title": props.title,
-      "type": props.type,
-    })
+    _.set(tatInfo.value, `[${key}]`, data)
   }
 
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
@@ -102,6 +109,9 @@ watchEffect(() => {
     satisfactorily.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'satisfactorily', '')
     unsatisfactory.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'unsatisfactory', '')
     example.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'example', '')
+    tat.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'tat', '')
+    form.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'form', '')
+    formabout.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'formabout', '')
   }
 })
 
@@ -154,7 +164,8 @@ watchEffect(() => {
               filled
               stack-label
               v-model="tat"
-              :debounce="500"
+              :debounce="1000"
+              @update:modelValue="saveData"
             />
             <q-input
               label="Форма проведения зачета"
@@ -162,7 +173,8 @@ watchEffect(() => {
               filled
               stack-label
               v-model="form"
-              :debounce="500"
+              :debounce="1000"
+              @update:modelValue="saveData"
             />
             <q-input
               label="Описание процедуры проведения зачета"
@@ -170,7 +182,8 @@ watchEffect(() => {
               filled
               stack-label
               v-model="formabout"
-              :debounce="500"
+              :debounce="1000"
+              @update:modelValue="saveData"
             />
           </div>
           <p class="text-subtitle1">Критерии оценивания</p>

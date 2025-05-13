@@ -33,28 +33,40 @@ const example = ref('')
 const passed = ref('')
 const unpassed = ref('')
 
+const tat = ref('')
+const form = ref('')
+const formabout = ref('')
+
 async function saveData() {
   // $q.loading.show({message: "Сохранение данных"})
   const key = _.findKey(tatInfo.value, x => x.type == props.type)
 
-  if (!key) {
-    tatInfo.value.push({
-      "about": about.value,
-      "example": example.value,
+  let data = {}
+  if (planlinesData.value.viewpract) {
+    data = {
+      "tat": tat.value,
+      "form": form.value,
+      "formabout": formabout.value,
       "passed": passed.value,
       "unpassed": unpassed.value,
       "title": props.title,
       "type": props.type,
-    })
+    }
   } else {
-    _.set(tatInfo.value, `[${key}]`, {
+    data = {
       "about": about.value,
       "example": example.value,
       "passed": passed.value,
       "unpassed": unpassed.value,
       "title": props.title,
       "type": props.type,
-    })
+    }
+  }
+
+  if (!key) {
+    tatInfo.value.push(data)
+  } else {
+    _.set(tatInfo.value, `[${key}]`, data)
   }
 
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
@@ -88,6 +100,9 @@ watchEffect(() => {
     passed.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'passed', '')
     unpassed.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'unpassed', '')
     example.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'example', '')
+    tat.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'tat', '')
+    form.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'form', '')
+    formabout.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'formabout', '')
   }
 })
 
@@ -110,27 +125,58 @@ watchEffect(() => {
           <!--            debounce="1000"-->
           <!--            @update:modelValue="saveData"-->
           <!--          />-->
-          <q-input
-            label="Описание процедуры"
-            type="textarea"
-            filled
-            stack-label
-            v-model="about"
-            :readonly="disabled"
-            debounce="1000"
-            @update:modelValue="saveData"
-          />
-          <q-input
-            label="Пример задания"
-            type="textarea"
-            filled
-            stack-label
-            v-model="example"
-            :readonly="disabled"
-            debounce="1000"
-            @update:modelValue="saveData"
-            hint="Если Вам не нужен пример задания, оставьте поле пустым"
-          />
+          <div class="q-gutter-y-md" v-if="!planlinesData.viewpract">
+            <q-input
+              label="Описание процедуры"
+              type="textarea"
+              filled
+              stack-label
+              v-model="about"
+              :readonly="disabled"
+              debounce="1000"
+              @update:modelValue="saveData"
+            />a
+            <q-input
+              label="Пример задания"
+              type="textarea"
+              filled
+              stack-label
+              v-model="example"
+              :readonly="disabled"
+              debounce="1000"
+              @update:modelValue="saveData"
+              hint="Если Вам не нужен пример задания, оставьте поле пустым"
+            />
+          </div>
+          <div class="q-gutter-y-md" v-else>
+            <q-input
+              label="Типовые оценочные средства"
+              type="text"
+              filled
+              stack-label
+              v-model="tat"
+              :debounce="1000"
+              @update:modelValue="saveData"
+            />
+            <q-input
+              label="Форма проведения зачета"
+              type="text"
+              filled
+              stack-label
+              v-model="form"
+              :debounce="1000"
+              @update:modelValue="saveData"
+            />
+            <q-input
+              label="Описание процедуры проведения зачета"
+              type="textarea"
+              filled
+              stack-label
+              v-model="formabout"
+              :debounce="1000"
+              @update:modelValue="saveData"
+            />
+          </div>
           <p class="text-subtitle1">Критерии оценивания</p>
           <q-list bordered>
             <q-expansion-item

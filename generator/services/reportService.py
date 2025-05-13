@@ -9,6 +9,7 @@ from docxtpl import DocxTemplate
 
 from app.settings import BASE_DIR
 from arim.models import CatPerson
+from arim.services import AISServices
 from generator.models import PlanLinesLink, ScientificData
 from rpd.models import LinesIndicators, PlanData
 
@@ -93,6 +94,46 @@ class ReportService(object):
         }
 
         doc.render(context)
+        return doc
+
+    @staticmethod
+    def get_practice_report(data):
+
+        path = f'{BASE_DIR}{Path("/templates/docxRPD/practice.docx")}'
+
+        doc = DocxTemplate(path)
+
+        if data['admission']['ckaf_id'] == 105:
+            podrazdelene = data['admission']['cfac__name'].strip()
+        else:
+            podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
+
+        discipline = data['planlines']['dis'].split(': ')
+
+        contex = {
+            "now": pendulum.now().start_of("day"),
+            "current_year": pendulum.now().year,
+            "kaf_name": data['admission']['ckaf__name'],
+            "fac_name": data['admission']['cfac__name'],
+            "podrazdelene": podrazdelene,
+            "discipline": discipline[1],
+            "kvalif": data['admission']['kvalif_name'],
+            "spec_name": data['admission']['spec_name'],
+            "kind": data['admission']['cadmkind__name_prof'],
+            "kind_direct": 'Специальность' if data['admission']['cadmkind'] == 1 else 'Направление',
+            "direction": data['admission']['cdirection__name'],
+            "direction_code": data['admission']['cdirection__cod'],
+            "year_post": data['admission']['yr'],
+            "protocol_number": data['protocol_number'] if data['protocol_number'] else '',
+            "meeting": data['meeting'] if data['meeting'] else '',
+            "accept_date": data['accept_date'] if data['accept_date'] else '',
+            "review_date": data['review_date'] if data['review_date'] else '',
+            "fob": data['admission']['cfob__name'],
+            "status": data['status'],
+        }
+
+        doc.render(contex)
+
         return doc
 
     @staticmethod
@@ -526,10 +567,16 @@ class ReportService(object):
                     [i['srs_hours'] for i in tmp if i['srs_hours'] != '']) != 0 else '',
             })
 
-        if data['admission']['ckaf_id'] == 105:
-            podrazdelene = data['admission']['cfac__name'].strip()
+        ckafs = AISServices.get_kaf_codes()
+        ckafs_by_id = {i['value']: i['label'] for i in ckafs}
+
+        if data['planlines']['caf']:
+            podrazdelene = ckafs_by_id.get(data['planlines']['caf'], '')
         else:
-            podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
+            if data['admission']['ckaf_id'] == 105:
+                podrazdelene = data['admission']['cfac__name'].strip()
+            else:
+                podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
 
         context = {
             "now": pendulum.now().start_of("day"),
