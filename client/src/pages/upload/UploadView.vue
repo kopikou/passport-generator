@@ -23,7 +23,7 @@ const uploadFileViewStore = useUploadFileViewStore();
 
 const {
   admissionData,
-  baseDocuments,
+  baseDocumentsById,
 } = storeToRefs(uploadFileViewStore)
 
 
@@ -75,6 +75,18 @@ function getFileId(item: PlanData, fileId) {
 
 function getFileType(item: PlanData, fileId) {
   return _.filter(item.plan_documents, (x) => x.id == fileId)[0].new_type
+}
+
+function getRules(data, item) {
+  if (data.can_upload == 'f') return true
+  let rule
+  if (data.admin) {
+    rule = 0
+  } else {
+    rule = 1
+  }
+  const doc = baseDocumentsById.value[item.type_id]
+  return doc.can_upload.includes(rule)
 }
 
 async function deleteFile(item: PlanData, typeId: number) {
@@ -185,7 +197,7 @@ function checkFile(item: PlanData, typeId: number) {
                 </div>
                 <div class="flex items-center" style="display: grid; grid-template-columns: 1fr auto">
                   <div v-if="!checkFile(item, i.type_id)">
-                    <file-uploader :title="i.type__name" :file-id="i.id" :plan-id="item.plan_id"/>
+                    <file-uploader :title="i.type__name" :file-id="i.id" :plan-id="item.plan_id" :disable="getRules(item, i)"/>
                   </div>
                   <div v-else>
                     <q-field
@@ -211,7 +223,7 @@ function checkFile(item: PlanData, typeId: number) {
                     </q-field>
                   </div>
                   <q-btn v-show="checkFile(item, i.type_id)" flat dense icon="mdi-delete" color="negative"
-                         @click="deleteFile(item, i.type_id)"/>
+                         @click="deleteFile(item, i.type_id)" :disable="getRules(item, i)"/>
                 </div>
               </div>
             </q-card-section>

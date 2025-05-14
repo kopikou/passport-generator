@@ -261,4 +261,5 @@ class RpdUsers(models.Model):
     isspo = models.CharField(max_length=1, choices=BoolChoice)
     cfac = models.ForeignKey("CatFaculty", on_delete=models.CASCADE, db_column="cfac")
     isspoadm = models.CharField(max_length=1, choices=BoolChoice)
+    can_upload = models.CharField(max_length=1, choices=BoolChoice)
 

@@ -13,6 +13,10 @@ const useUploadFileViewStore = defineStore('UploadFileViewStore', () => {
   const admissionData = ref<PlanData[]>([])
   const baseDocuments = ref([])
 
+  const baseDocumentsById = computed(() => {
+    return _.keyBy(baseDocuments.value, x => x.new_type_id)
+  })
+
   async function getAdmissionData() {
     let r = await api.get('/api/upload/get-admission-data/')
     admissionData.value = r.data
@@ -35,6 +39,7 @@ const useUploadFileViewStore = defineStore('UploadFileViewStore', () => {
   return {
     admissionData,
     baseDocuments,
+    baseDocumentsById,
   }
 })
 
