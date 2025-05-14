@@ -48,8 +48,14 @@ const STATUSES = {
     index: 2,
     title: "Заполняется",
   },
-  "Отправлен на проверку": {
+  "Требует моего согласования/утверждения": {
     color: "amber-6",
+    textColor: "black",
+    index: 3,
+    title: "Требует моего согласования/утверждения",
+  },
+  "Отправлен на проверку": {
+    color: "light-green-6",
     textColor: "white",
     index: 3,
     title: "Отправлен на проверку",
@@ -221,15 +227,19 @@ onBeforeMount(async () => {
                       <div>Дисциплина</div>
                       <div>Составитель</div>
                       <div>Кафедра</div>
+                      <div>Согласован</div>
+                      <div>Утвержден</div>
                       <div>Статус</div>
                       <div>Управление</div>
                     </div>
                     <div :class="{[`status-${item.status}`]: true}" class="rpd-row rpd-row__body text-center" v-for="(item, key) in value.items">
                       <!--                       @click="router.push(`/generator/${item.id}/main`)"-->
-                      <div>{{ item.discode }}</div>
+                      <div>{{ item.discode }}{{item}}</div>
                       <div>{{ item.discpl }}</div>
                       <div>{{ item.person }}</div>
                       <div>{{ cafDataById[item.kafcode]?.label }}</div>
+                      <div>{{ item.user_confirmed_name }}</div>
+                      <div>{{ item.user_accepted_name }}</div>
                       <div>{{ item.status_verbose }}</div>
                       <div>
                         <q-btn v-if="getEditRules(item.type)" dense flat color="primary" icon="mdi-pencil"
@@ -257,7 +267,7 @@ onBeforeMount(async () => {
 <style scoped lang="scss">
 .rpd-container {
   display: grid;
-  grid-template-columns: auto repeat(3, 1fr) auto auto;
+  grid-template-columns: auto repeat(5, 1fr) auto auto;
 }
 
 .rpd-row {

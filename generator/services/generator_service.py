@@ -1,5 +1,7 @@
 from itertools import groupby
 
+from django.core.cache import cache
+
 from app.utils import cache_function
 from arim.services import AISServices
 from generator.models import PlanLinesLink, DefaultsResources, PlanLinesLinkComments, DisciplineThemes, \
@@ -9,9 +11,20 @@ from rpd.models import LinesData, LinesIndicators
 
 
 class GeneratorService(object):
+
     @classmethod
-    @cache_function(timeout=60 * 1)
+    def reset_program_list_cache(cls, user_mira_id):
+        key = f"rpd_get_program_list_{user_mira_id}"
+        result = cache.delete(key)
+
+    @classmethod
+    # @cache_function(timeout=60 * 1)
     def get_program_list(cls, user_mira_id):
+        key = f"rpd_get_program_list_{user_mira_id}"
+        result = cache.get(key)
+        if result:
+            return result
+
         data = AISServices.get_disciplines_by_person(user_mira_id)
 
         discpl_list = list(set(i['discpl'] for i in data))
@@ -38,7 +51,7 @@ class GeneratorService(object):
                 res = lineslink_by_id.get(item['planlin'], [])
 
                 if not res:
-                    res, created = PlanLinesLink.objects.get_or_create(
+                    res, created = PlanLinesLink.objects.select_related("user_accepted__userprofile", "user_confirmed__userprofile").get_or_create(
                         cadmission=item['id_admission'],
                         mira_id=item['planlin'],
                         person=item['mira_id'],
@@ -57,7 +70,12 @@ class GeneratorService(object):
                     "status": res.status,
                     "status_verbose": res.status_verbose,
                     "kafcode": res.planlines.caf,
-                    "discode": res.planlines.newdisid,
+                    "user_confirmed": res.user_confirmed_id,
+                    "user_confirmed_name": res.user_confirmed.username if res.user_confirmed else None,
+                    "user_accepted": res.user_accepted_id,
+                    "user_accepted_name": res.user_accepted.username if res.user_accepted else None,
+                    "accept_date": res.accept_date,
+                    "confirm_date": res.confirm_date,
                 })
 
         sorted_result = sorted(result, key=lambda x: (x['planlin'], x['mira_id']))
@@ -71,6 +89,21 @@ class GeneratorService(object):
                 "type": [i['type'] for i in items],
             }
             res.append(temp)
+
+        for item in res:
+            if item['status'] == PlanLinesLink.StatusChoices.on_review:
+                require_my_accept = 'zav' in item['type'] and not item['user_accepted']
+                require_my_confirm = 'rop' in item['type'] and not item['user_confirmed']
+                if require_my_accept or require_my_confirm:
+                    item['status_verbose'] = "Требует моего согласования/утверждения"
+                # item['require_my_accept'] = require_my_accept
+                # item['require_my_confirm'] = require_my_confirm
+            # elif require_my_accept:
+            #     item['status_verbose'] = "Требует согласования"
+            # elif require_my_confirm:
+            #     item['status_verbose'] = "Требует утверждения"
+
+        cache.set(key, res, 60)
 
         return res
 

@@ -3,7 +3,7 @@
 
 import {useDialogPluginComponent, useQuasar} from "quasar";
 import {api} from "boot/axios";
-import {computed, ref} from "vue";
+import {computed, ref, watch} from "vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import EmptyIcon from "components/EmptyIcon.vue";
@@ -28,6 +28,8 @@ const props = defineProps({
   }
 })
 
+const $q = useQuasar()
+
 const comment = ref('')
 const oldCommentView = ref(false)
 const oldComments = ref([])
@@ -39,18 +41,23 @@ const disabled = computed(() => {
 
   return false
 })
-const protocolNumber = ref()
-const protocolDate = ref()
+const protocolNumber = ref($q.localStorage.getItem('rpd_protocolNumber'))
+const protocolDate = ref($q.localStorage.getItem('rpd_protocolDate'))
 const acceptRPD = ref(false)
 const userType = ref(0)
-const meeting = ref("заседании кафедры")
+const meeting = ref($q.localStorage.getItem('rpd_meeting') || "заседании кафедры")
 const userTypeOptions = [
   {value: 0, label: 'Руководитель программы'},
   {value: 1, label: 'Заведующий кафедрой'},
   // {value: 2, label: 'Директор института'},
 ]
 
-const $q = useQuasar()
+
+watch([meeting, protocolNumber, protocolDate], () => {
+  $q.localStorage.set('rpd_meeting', meeting.value);
+  $q.localStorage.set('rpd_protocolNumber', protocolNumber.value);
+  $q.localStorage.set('rpd_protocolDate', protocolDate.value);
+})
 
 async function getRPD() {
   window.location.href = `${FORCE_SCRIPT_NAME.value}/api/generator/${props.id}/get-rpd-report/`
@@ -67,6 +74,20 @@ async function onAcceptClick() {
     userType: userType.value,
     meeting: meeting.value,
   })
+  onDialogOK()
+}
+
+async function onAcceptButtonClick() {
+  acceptRPD.value = true;
+}
+
+async function onAcceptConfirmButtonClick() {
+  let r = await api.post(`/api/generator/${props.id}/confirm-rpd/`)
+  await onAcceptClick();
+}
+
+async function onConfirmButtonClick() {
+  let r = await api.post(`/api/generator/${props.id}/confirm-rpd/`)
   onDialogOK()
 }
 
@@ -107,14 +128,10 @@ function getStatusColor(status) {
 
 <template>
   <q-dialog ref="dialogRef" @hide="onDialogHide" persistent>
-    <q-card class="q-dialog-plugin" style="width: 700px;">
+    <q-card class="q-dialog-plugin" style="width: 700px; max-width: 80vw;">
       <q-card-section>
-        <div class="text-h6">Просмотр РПД
-          <q-chip style="max-width: 500px" :label="`${props.data.abbr}-${props.data.yr} ${props.data.discpl}`" square>
-            <q-tooltip>
-              {{ props.data.abbr }}-{{ props.data.yr }} {{ props.data.discpl }}
-            </q-tooltip>
-          </q-chip>
+        <div class="text-h6">
+          {{ data.abbr }}-{{ data.yr }} - {{ data.discpl }}
         </div>
         <div class="text-subtitle2">Составитель:
           <q-chip style="max-width: 500px" square :label="props.data.person">
@@ -135,22 +152,21 @@ function getStatusColor(status) {
 
       <q-card-section>
 
-        <div class="row q-gutter-x-md">
+        <div class="row">
           <q-btn
             class="col"
-            label="РПД"
+            label="Открыть файл РПД"
             :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-report/`"
             target="_blank"
           />
-<!--          <q-btn-->
-<!--            class="col"-->
-<!--            label="Аннотация"-->
-<!--            :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-annotation/`"-->
-<!--            target="_blank"-->
-<!--          />-->
+          <!--          <q-btn-->
+          <!--            class="col"-->
+          <!--            label="Аннотация"-->
+          <!--            :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-annotation/`"-->
+          <!--            target="_blank"-->
+          <!--          />-->
         </div>
       </q-card-section>
-
       <q-card-section v-if="props.data.status != 3">
         <q-input
           label="Комментарий"
@@ -169,12 +185,46 @@ function getStatusColor(status) {
         />
       </q-card-section>
 
-      <q-card-actions align="right">
-        <q-btn flat color="teal" label="Утвердить" @click="acceptRPD = true" :disable="props.data.status == 3"/>
-        <q-btn flat color="warning" label="Отправить на доработку" @click="onRefileClick"
-               :disable="props.data.status == 3"/>
-        <q-btn flat color="red" label="Отмена" @click="onDialogCancel"/>
-      </q-card-actions>
+      <q-card-section style="display: flex; gap: 8px; justify-content: space-between">
+        <template v-if="data.status == 2 || data.status == 3">
+          <q-btn v-if="data.type.includes('rop') && data.type.includes('zav')" flat class="bg-light-green-1"
+                 color="light-green-8"
+                 @click="onAcceptConfirmButtonClick" :disable="!!data.user_accepted">
+            <div v-if="data.user_accepted">
+              Согласован и утвержден <br>{{ data.user_accepted_name }}
+            </div>
+            <div v-else>
+              Согласовать и утвердить
+            </div>
+          </q-btn>
+
+          <template v-else>
+            <q-btn flat class="bg-light-green-1" color="light-green-8"
+                   @click="onAcceptButtonClick" :disable="!data.type.includes('zav') || !!data.user_accepted">
+              <div v-if="data.user_accepted">
+                Утвержден <br>{{ data.user_accepted_name }}
+              </div>
+              <div v-else>
+                <template v-if="data.type.includes('zav')">Утвердить</template>
+                <template v-else>Не утвержден</template>
+              </div>
+            </q-btn>
+            <q-btn  flat class="bg-light-green-1" color="light-green-8"
+                   @click="onConfirmButtonClick" :disable="!data.type.includes('rop') ||!!data.user_confirmed">
+              <div v-if="data.user_confirmed">
+                Согласован <br>{{ data.user_confirmed_name }}
+              </div>
+              <div v-else>
+                <template v-if="data.type.includes('rop')">Согласовать</template>
+                <template v-else>Не согласован</template>
+              </div>
+            </q-btn>
+          </template>
+        </template>
+          <q-btn  v-if="data.status == 2" flat class="bg-amber-1 " color="amber-8" label="Отправить на доработку"
+                 @click="onRefileClick"/>
+          <q-btn  flat class="bg-grey-3" color="silver" label="Отмена" @click="onDialogCancel"/>
+      </q-card-section>
     </q-card>
   </q-dialog>
 

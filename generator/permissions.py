@@ -38,4 +38,17 @@ class CanAcceptRPDProgram(IsAuthenticated):
             PlanLinesLink.StatusChoices.on_review,
         ])
 
-        return int(pk) in [i['id'] for i in programms if 'zav' in i['type'] or 'rop' in i['type']] and can_accept.exists()
+        return int(pk) in [i['id'] for i in programms if 'zav' in i['type']] and can_accept.exists()
+
+
+class CanConfirmRPDProgram(IsAuthenticated):
+    message = 'У вас нет прав для согласования этого РПД'
+    def has_permission(self, request, view):
+        programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
+        pk = view.kwargs['pk']
+
+        can_accept = PlanLinesLink.objects.filter(id=pk, status__in=[
+            PlanLinesLink.StatusChoices.on_review,
+        ])
+
+        return int(pk) in [i['id'] for i in programms if 'rop' in i['type']] and can_accept.exists()
