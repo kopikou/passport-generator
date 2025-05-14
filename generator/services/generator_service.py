@@ -1,5 +1,6 @@
 from itertools import groupby
 
+from django.conf import settings
 from django.core.cache import cache
 
 from app.utils import cache_function
@@ -20,10 +21,11 @@ class GeneratorService(object):
     @classmethod
     # @cache_function(timeout=60 * 1)
     def get_program_list(cls, user_mira_id):
-        cache_key = f"rpd_get_program_list_{user_mira_id}"
-        result = cache.get(cache_key)
-        if result:
-            return result
+        if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
+            cache_key = f"rpd_get_program_list_{user_mira_id}"
+            result = cache.get(cache_key)
+            if result:
+                return result
 
         data = AISServices.get_disciplines_by_person(user_mira_id)
 
