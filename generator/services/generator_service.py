@@ -76,6 +76,7 @@ class GeneratorService(object):
                     "user_accepted_name": res.user_accepted.username if res.user_accepted else None,
                     "accept_date": res.accept_date,
                     "confirm_date": res.confirm_date,
+                    "discode": res.planlines.newdisid,
                 })
 
         sorted_result = sorted(result, key=lambda x: (x['planlin'], x['mira_id']))

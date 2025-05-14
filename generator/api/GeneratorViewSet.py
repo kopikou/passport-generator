@@ -500,7 +500,11 @@ class GeneratorViewSet(
     def send_rpd_on_edit(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.is_filled
-        instance.review_date = pendulum.now()
+        instance.user_confirmed = None
+        instance.user_accepted = None
+        instance.review_date = None
+        instance.accept_date = None
+        instance.confirm_date = None
         instance.save()
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
 

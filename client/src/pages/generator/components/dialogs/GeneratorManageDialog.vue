@@ -45,6 +45,8 @@ const protocolNumber = ref($q.localStorage.getItem('rpd_protocolNumber'))
 const protocolDate = ref($q.localStorage.getItem('rpd_protocolDate'))
 const acceptRPD = ref(false)
 const userType = ref(0)
+
+const bothAcceptAndConfirm = ref(false);
 const meeting = ref($q.localStorage.getItem('rpd_meeting') || "заседании кафедры")
 const userTypeOptions = [
   {value: 0, label: 'Руководитель программы'},
@@ -68,7 +70,11 @@ async function getAnnot() {
 }
 
 async function onAcceptClick() {
-  let r = await api.post(`/api/generator/${props.id}/accept-rpd/`, {
+  if (bothAcceptAndConfirm.value) {
+    await api.post(`/api/generator/${props.id}/confirm-rpd/`)
+  }
+
+  await api.post(`/api/generator/${props.id}/accept-rpd/`, {
     date: protocolDate.value,
     number: protocolNumber.value,
     userType: userType.value,
@@ -78,20 +84,23 @@ async function onAcceptClick() {
 }
 
 async function onAcceptButtonClick() {
+  bothAcceptAndConfirm.value = false;
   acceptRPD.value = true;
 }
 
 async function onAcceptConfirmButtonClick() {
-  let r = await api.post(`/api/generator/${props.id}/confirm-rpd/`)
-  await onAcceptClick();
+  bothAcceptAndConfirm.value = true;
+  acceptRPD.value = true;
 }
 
 async function onConfirmButtonClick() {
+  bothAcceptAndConfirm.value = false;
   let r = await api.post(`/api/generator/${props.id}/confirm-rpd/`)
   onDialogOK()
 }
 
 async function onRefileClick() {
+  bothAcceptAndConfirm.value = false;
   let r = await api.post(`/api/generator/${props.id}/send-rpd-on-refile/`, {comment: comment.value})
   onDialogOK()
 }

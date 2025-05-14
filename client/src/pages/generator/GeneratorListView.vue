@@ -234,7 +234,7 @@ onBeforeMount(async () => {
                     </div>
                     <div :class="{[`status-${item.status}`]: true}" class="rpd-row rpd-row__body text-center" v-for="(item, key) in value.items">
                       <!--                       @click="router.push(`/generator/${item.id}/main`)"-->
-                      <div>{{ item.discode }}{{item}}</div>
+                      <div>{{ item.discode }}</div>
                       <div>{{ item.discpl }}</div>
                       <div>{{ item.person }}</div>
                       <div>{{ cafDataById[item.kafcode]?.label }}</div>
