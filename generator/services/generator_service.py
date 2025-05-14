@@ -21,8 +21,8 @@ class GeneratorService(object):
     @classmethod
     # @cache_function(timeout=60 * 1)
     def get_program_list(cls, user_mira_id):
+        cache_key = f"rpd_get_program_list_{user_mira_id}"
         if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
-            cache_key = f"rpd_get_program_list_{user_mira_id}"
             result = cache.get(cache_key)
             if result:
                 return result
