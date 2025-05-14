@@ -23,6 +23,7 @@ const uploadFileViewStore = useUploadFileViewStore();
 
 const {
   admissionData,
+  baseDocuments,
 } = storeToRefs(uploadFileViewStore)
 
 

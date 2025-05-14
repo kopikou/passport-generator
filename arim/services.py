@@ -81,10 +81,13 @@ class AISServices(object):
         ckaf = CatKaf.objects.filter(czav=id)
         adm_user = RpdUsers.objects.filter(cperson=id).first()
 
+        admin = False
+
         now = pendulum.now().start_of("day")
         left_time = now.add(years=-6).year
         query = Q()
         if adm_user:
+            admin = True
             if adm_user.isadmin == 't':
                 query |= Q(fordel='f', startyear__gte=left_time)
             elif adm_user.isspo == 't':
@@ -98,6 +101,9 @@ class AISServices(object):
             query |= Q(fordel='f', cperson=id, startyear__gte=left_time)
 
         data = UchPlanPlan.objects.filter(query).values()
+
+        for i in data:
+            i = {**i, "admin": admin}
 
         return data
 

@@ -11,21 +11,30 @@ const useUploadFileViewStore = defineStore('UploadFileViewStore', () => {
   const $q = useQuasar()
 
   const admissionData = ref<PlanData[]>([])
+  const baseDocuments = ref([])
 
   async function getAdmissionData() {
-    $q.loading.show({message: "Загрузка данных о планах"})
     let r = await api.get('/api/upload/get-admission-data/')
     admissionData.value = r.data
-    $q.loading.hide()
+  }
+
+  async function getBaseDocuments() {
+    let r = await api.get('/api/upload/get-base-documents/')
+    baseDocuments.value = r.data
   }
 
 
-  onAuthenticated(() => {
-    getAdmissionData()
+  onAuthenticated(async () => {
+    $q.loading.show({message: "Загрузка данных"})
+    await getBaseDocuments()
+    await getAdmissionData()
+    $q.loading.hide()
+
   })
 
   return {
     admissionData,
+    baseDocuments,
   }
 })
 

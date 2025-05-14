@@ -19,4 +19,3 @@ class UploadFiles(TimestampsModel):
     line = models.ForeignKey(PlanLinesLink, on_delete=models.CASCADE, null=True)
 
 
-
