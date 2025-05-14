@@ -28,12 +28,18 @@ class PlanLinesLink(TimestampsModel):
     status = models.IntegerField(choices=StatusChoices.choices, default=StatusChoices.appointed)
     protocol_number = models.TextField(null=True, blank=True)
     protocol_date = models.DateField(null=True, blank=True)
-    user_accepted = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+
+    # user_accepted = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     user_type = models.IntegerField(choices=UserTypeChoices.choices, default=None, null=True, blank=True)
+
+    user_confirmed = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Кто согласовал, должен РОП", related_name="confirmed_plans")
+    user_accepted = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Кто утвердил, должен зав.каф", related_name="accepted_plans")
+
     meeting = models.TextField(null=True, blank=True)
 
     review_date = models.DateField(null=True, blank=True)
     accept_date = models.DateField(null=True, blank=True)
+    confirm_date = models.DateField(null=True, blank=True)
 
     @property
     def status_verbose(self):

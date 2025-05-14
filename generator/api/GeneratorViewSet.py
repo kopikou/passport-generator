@@ -24,7 +24,7 @@ from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
     PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
     ScientificDataDefault, DisciplineIndicators
-from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanAcceptRPDProgram, CanEditScientificProgram
+from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanConfirmRPDProgram, CanAcceptRPDProgram, CanEditScientificProgram
 from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
@@ -479,8 +479,13 @@ class GeneratorViewSet(
     def send_rpd_on_edit(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.is_filled
-        instance.review_date = pendulum.now()
+        instance.user_confirmed = None
+        instance.user_accepted = None
+        instance.review_date = None
+        instance.accept_date = None
+        instance.confirm_date = None
         instance.save()
+        GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
 
         return Response(data={'status_verbose': PlanLinesLink.StatusChoices.is_filled.label,
                               'status': PlanLinesLink.StatusChoices.is_filled})
@@ -492,6 +497,7 @@ class GeneratorViewSet(
         instance.status = PlanLinesLink.StatusChoices.on_review
         instance.review_date = pendulum.now()
         instance.save()
+        GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
 
         return Response(data={'status_verbose': PlanLinesLink.StatusChoices.on_review.label,
                               'status': PlanLinesLink.StatusChoices.on_review})
@@ -499,22 +505,44 @@ class GeneratorViewSet(
     @action(methods=['POST'], url_path="accept-rpd", detail=True, permission_classes=[CanAcceptRPDProgram])
     def accept_rpd(self, request, *args, **kwargs):
         instance = self.get_object()
-        instance.status = PlanLinesLink.StatusChoices.accepted
+        # instance.status = PlanLinesLink.StatusChoices.accepted
         instance.protocol_number = self.request.data['number']
         instance.protocol_date = self.request.data['date']
-        instance.user_type = self.request.data['userType']
         instance.meeting = self.request.data['meeting']
+        # instance.user_type = self.request.data['userType']
+
         instance.user_accepted = self.request.user
         instance.accept_date = pendulum.now()
+
+        if instance.user_confirmed and instance.user_accepted:
+            instance.status = PlanLinesLink.StatusChoices.accepted
         instance.save()
+
+        GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
 
         return Response({"success": True})
 
-    @action(methods=['POST'], url_path="send-rpd-on-refile", detail=True, permission_classes=[CanAcceptRPDProgram])
+    @action(methods=['POST'], url_path="confirm-rpd", detail=True, permission_classes=[CanConfirmRPDProgram])
+    def confirm_rpd(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.user_confirmed = self.request.user
+        instance.confirm_date = pendulum.now()
+
+        if instance.user_confirmed and instance.user_accepted:
+            instance.status = PlanLinesLink.StatusChoices.accepted
+        instance.save()
+
+        GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
+
+        return Response({"success": True})
+
+    @action(methods=['POST'], url_path="send-rpd-on-refile", detail=True, permission_classes=[CanAcceptRPDProgram | CanConfirmRPDProgram])
     def send_rpd_on_refile(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.on_refile
         instance.save()
+
+        GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
 
         PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], user_id=self.request.user.id,
                                              planlineslink_id=instance.id)
