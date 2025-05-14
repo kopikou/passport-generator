@@ -15,13 +15,13 @@ class GeneratorService(object):
     @classmethod
     def reset_program_list_cache(cls, user_mira_id):
         key = f"rpd_get_program_list_{user_mira_id}"
-        result = cache.delete(key)
+        cache.delete(key)
 
     @classmethod
     # @cache_function(timeout=60 * 1)
     def get_program_list(cls, user_mira_id):
-        key = f"rpd_get_program_list_{user_mira_id}"
-        result = cache.get(key)
+        cache_key = f"rpd_get_program_list_{user_mira_id}"
+        result = cache.get(cache_key)
         if result:
             return result
 
@@ -104,7 +104,7 @@ class GeneratorService(object):
             # elif require_my_confirm:
             #     item['status_verbose'] = "Требует утверждения"
 
-        cache.set(key, res, 60)
+        cache.set(cache_key, res, 60)
 
         return res
 
