@@ -1,5 +1,5 @@
 import {defineStore} from "pinia";
-import {computed, nextTick, ref, watch, watchEffect} from "vue";
+import {computed, nextTick, ref, watch, watchEffect, WritableComputedRef} from "vue";
 import {api} from "boot/axios";
 import {onAuthenticated} from "src/composables/onAuthenticated";
 import {useQuasar} from "quasar";
@@ -11,6 +11,7 @@ import {
   GeneratorPlanLineData, GeneratorSoftwareData, OtherDiscipline, PlanIndicatorData, PlanSemestrData,
 } from "src/types";
 import {fasElevator} from "@quasar/extras/fontawesome-v6";
+import {CanceledError} from "axios";
 
 const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   const cafData = ref([])
@@ -18,6 +19,23 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   const formControl = ref<GeneratorFormControlData[]>([])
   const independentTypes = ref<GeneratorIndependentTypesData[]>([])
   const activeRpdId = ref(null)
+
+  const additionalInfoGetterSetter = (key: string) => {
+    return {
+      get() {
+        return _.filter(rpdData.value.additional_info, (x) => x.type == key)[0]?.value || []
+      },
+      set(newValue: any) {
+        rpdData.value = {
+          ...rpdData.value,
+          additional_info: [...((rpdData.value.additional_info || []).filter((x: any) => x.type != key)), {
+            type: key,
+            value: newValue
+          }]
+        }
+      }
+    }
+  }
 
   const oldPlans = computed(() => {
     return _.orderBy(rpdData.value.old || [], x => -x.startyear)
@@ -95,21 +113,13 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return _.filter(rpdData.value.additional_info, (x) => x.type == "resources")
   })
 
-  const guidelines = computed(() => {
-    return _.filter(rpdData.value.additional_info, (x) => x.type == "guidelines")[0]?.value || []
-  })
+  const guidelines = computed(additionalInfoGetterSetter("guidelines"))
 
-  const tatInfo = computed(() => {
-    return _.filter(rpdData.value.additional_info, (x) => x.type == "tat")[0]?.value || []
-  })
+  const tatInfo = computed(additionalInfoGetterSetter('tat'))
 
-  const fosInfo = computed(() => {
-    return _.filter(rpdData.value.additional_info, (x) => x.type == "fos")[0]?.value || []
-  })
+  const fosInfo: WritableComputedRef<any> = computed(additionalInfoGetterSetter('fos'))
 
-  const disciplineGoal = computed(() => {
-    return _.filter(rpdData.value.additional_info, (x) => x.type == "disciplineGoal")[0]?.value || ''
-  })
+  const disciplineGoal = computed(additionalInfoGetterSetter('disciplineGoal'))
 
   const additionalInfo = computed(() => {
     return rpdData.value.additional_info || []
@@ -151,7 +161,6 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
 
-
   const lekcHours = computed(() => _(semestersData.value).map(x => x.lekc).sum())
   const srsHours = computed(() => _(semestersData.value).map(x => x.srs).sum())
   const prHours = computed(() => _(semestersData.value).map(x => x.pr).sum())
@@ -174,9 +183,22 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     independentTypes.value = _.orderBy(r.data, 'name')
   }
 
+  let abortGetDataController = new AbortController();
+
   async function getData() {
-    let r = await api.get(`/api/generator/${activeRpdId.value}/`)
-    rpdData.value = r.data
+    abortGetDataController.abort()
+    abortGetDataController = new AbortController();
+
+    try {
+      let r = await api.get(`/api/generator/${activeRpdId.value}/`, {
+        signal: abortGetDataController.signal
+      })
+      rpdData.value = r.data
+    } catch (err: any) {
+      if (err.code != "ERR_CANCELED") {
+        throw err
+      }
+    }
   }
 
   const errors = ref<{
@@ -697,6 +719,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     hasTat,
     errors,
     criticalErrors,
+
+    abortGetDataController,
 
     activeRpdId,
     rpdData,

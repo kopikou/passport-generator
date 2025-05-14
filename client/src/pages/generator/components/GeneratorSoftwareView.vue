@@ -17,6 +17,7 @@ const {
   disciplineSoftware,
   rpdData,
   disabled,
+  abortGetDataController,
 } = storeToRefs(generatorViewStore)
 
 const searchVal = ref('')
@@ -32,19 +33,22 @@ function addSoftware(data) {
   saveSoftware()
 }
 
-function deleteSoftware(id) {
-  let key = _.findKey(softwareData.value, (x) => x.id == id)
-  softwareData.value.splice(key, 1)
+function deleteSoftware(item) {
+  softwareData.value = softwareData.value.filter(x => x != item)
   saveSoftware()
 }
 
 async function saveSoftware() {
   // $q.loading.show()
+  if (generatorViewStore.abortGetDataController)
+    generatorViewStore.abortGetDataController.abort()
+
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "software",
     value: softwareData.value,
   })
-  _.set(disciplineSoftware.value, "[0].value", softwareData.value)
+  // _.set(disciplineSoftware.value, "[0].value", softwareData.value)
+  await generatorViewStore.getData()
   generatorViewStore.checkErrors()
   // $q.loading.hide()
 }
@@ -65,29 +69,32 @@ async function searchSoft() {
 }
 
 function addPO() {
-  if (!disciplineSoftware.value[0]) {
-    _.set(disciplineSoftware.value, "[0].value", [])
-    saveSoftware()
-  }
+  // if (!disciplineSoftware.value[0]) {
+  //   _.set(disciplineSoftware.value, "[0].value", [])
+  //   saveSoftware()
+  // }
   $q.notify({
     message: "Убедитесь, что выбранный источник доступен всем студентам и в достаточном количестве.",
     color: "secondary",
     type: "info",
-    position: "center",
+    position: "top",
     progress: true,
     timeout: 3500,
   })
 
     $q.dialog({
     component: GeneratorAddSoftwareDialog,
-  }).onOk(() => {
-    softwareData.value = disciplineSoftware.value[0]?.value || []
-    saveSoftware()
+  }).onOk((data) => {
+      addSoftware(data);
+    // softwareData.value = disciplineSoftware.value[0]?.value || []
+    // saveSoftware()
   })
 }
 
-watchEffect(() => {
+watch(disciplineSoftware, () => {
   softwareData.value = disciplineSoftware.value[0]?.value || []
+}, {
+  immediate: true
 })
 
 </script>
@@ -126,7 +133,7 @@ watchEffect(() => {
                   <q-chip v-if="item.clicense__type">{{ item.clicense__type }}</q-chip>
                   <div class="q-gutter-x-md q-mt-md" v-show="!disabled">
                     <q-btn color="red" label="Убрать"
-                           @click="deleteSoftware(item.id)"/>
+                           @click="deleteSoftware(item)"/>
                   </div>
                 </div>
               </template>

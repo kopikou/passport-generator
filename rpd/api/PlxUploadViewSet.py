@@ -9,7 +9,8 @@ from urllib3 import request
 from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from auths.models import Permissions
-from rpd.models import RPDFile, PlanData, LinesData, PlanDocuments, DocumentsTypes, LinesIndicators, SemesterData
+from rpd.models import RPDFile, PlanData, LinesData, PlanDocuments, DocumentsTypes, LinesIndicators, SemesterData, \
+    BaseDocuments
 from rpd.serializer import RpdFileSerializer, PlanDataSerializer, LinesDataSerializer, PlanDocumentsSerializer, \
     BatchUpdateCafLinesSerializer, LinesIndicatorsSerializer, SemesterDataSerializer
 from rpd.services import PLXParser
@@ -189,3 +190,4 @@ class PlxUploadViewSet(
         data = DocumentsTypes.objects.all().values()
 
         return Response([i for i in data], status=status.HTTP_200_OK)
+

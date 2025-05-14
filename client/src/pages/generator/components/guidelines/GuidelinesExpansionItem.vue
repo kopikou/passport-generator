@@ -28,34 +28,24 @@ const $q = useQuasar()
 const guidelines_text = ref<string>('')
 
 async function saveData() {
-  // $q.loading.show({message: "Сохранение данных"})
+  if (generatorViewStore.abortGetDataController)
+    generatorViewStore.abortGetDataController.abort()
 
   _.set(guidelines.value, `[0].${props.type}`, guidelines_text.value)
 
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'guidelines',
-    "value": guidelines.value,
+    "value": guidelines.value
   })
 
-    if (r.status == 200) {
-      $q.notify({
-        message: "Данные <span class='text-bold'>об методических указаний</span> сохранены!",
-        color: "secondary",
-        position: "bottom",
-        html: true,
-      })
-
-      generatorViewStore.checkErrors()
-    }
-    else {
-      $q.notify({
-        message: "Данные <span class='text-bold'>об методических указаний</span> не сохранены!",
-        color: "negative",
-        position: "bottom",
-        html: true,
-      })
-    }
-  // $q.loading.hide()
+  $q.notify({
+    message: "Данные <span class='text-bold'>об методических указаний</span> сохранены!",
+    color: "secondary",
+    position: "bottom",
+    html: true,
+  })
+  await generatorViewStore.getData();
+  generatorViewStore.checkErrors()
 }
 
 watchEffect(() => {
@@ -66,29 +56,29 @@ watchEffect(() => {
 
 <template>
   <q-expansion-item
-      :label=props.label
-      v-bind="$attrs"
+    :label=props.label
+    v-bind="$attrs"
   >
     <q-card>
       <q-card-section>
 
         <q-input
-            label="Методические указания"
-            type="textarea"
-            filled
-            v-model="guidelines_text"
-            :readonly="disabled"
-            debounce="1000"
-            @update:modelValue="saveData"
+          label="Методические указания"
+          type="textarea"
+          filled
+          v-model="guidelines_text"
+          :readonly="disabled"
+          debounce="1000"
+          @update:modelValue="saveData"
         />
 
-<!--        <q-btn-->
-<!--            class="q-mt-md"-->
-<!--            label="Сохранить"-->
-<!--            color="primary"-->
-<!--            @click="saveData"-->
-<!--            v-show="!disabled"-->
-<!--        />-->
+        <!--        <q-btn-->
+        <!--            class="q-mt-md"-->
+        <!--            label="Сохранить"-->
+        <!--            color="primary"-->
+        <!--            @click="saveData"-->
+        <!--            v-show="!disabled"-->
+        <!--        />-->
 
       </q-card-section>
     </q-card>

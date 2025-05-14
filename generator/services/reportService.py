@@ -577,7 +577,6 @@ class ReportService(object):
                 podrazdelene = data['admission']['cfac__name'].strip()
             else:
                 podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
-
         context = {
             "now": pendulum.now().start_of("day"),
             "current_year": pendulum.now().year,

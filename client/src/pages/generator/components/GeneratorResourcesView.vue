@@ -23,6 +23,9 @@ const resources_bd = ref('')
 const $q = useQuasar()
 
 async function saveData() {
+  if (generatorViewStore.abortGetDataController)
+    generatorViewStore.abortGetDataController.abort()
+
   // $q.loading.show({message: "Сохранение данных"})
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "resources",
@@ -32,29 +35,33 @@ async function saveData() {
     }
   })
 
-  if (r.status == 200) {
-    $q.notify({
-      message: "Данные <span class='text-bold'>об используемых ресурсах</span> сохранены!",
-      color: "secondary",
-      position: "bottom",
-      html: true,
-    })
-    let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
-    if (key === undefined) {
-      additionalInfo.value.push(r.data)
-    } else {
-      _.set(additionalInfo.value, `[${key}].value`, r.data.value)
-    }
-    generatorViewStore.checkErrors()
-  } else {
-    $q.notify({
-      message: "Данные <span class='text-bold'>об используемых ресурсах</span> не сохранены!",
-      color: "negative",
-      position: "bottom",
-      html: true,
-    })
-  }
-// $q.loading.hide()
+  await generatorViewStore.getData();
+
+  $q.notify({
+    message: "Данные <span class='text-bold'>об используемых ресурсах</span> сохранены!",
+    color: "secondary",
+    position: "bottom",
+    html: true,
+  })
+  generatorViewStore.checkErrors()
+
+  // if (r.status == 200) {
+  //   let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
+  //   if (key === undefined) {
+  //     additionalInfo.value.push(r.data)
+  //   } else {
+  //     _.set(additionalInfo.value, `[${key}].value`, r.data.value)
+  //   }
+  //   generatorViewStore.checkErrors()
+  // } else {
+  //   $q.notify({
+  //     message: "Данные <span class='text-bold'>об используемых ресурсах</span> не сохранены!",
+  //     color: "negative",
+  //     position: "bottom",
+  //     html: true,
+  //   })
+  // }
+  // $q.loading.hide()
 }
 
 watch(resources, () => {

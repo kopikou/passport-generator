@@ -23,7 +23,12 @@ const uploadFileViewStore = useUploadFileViewStore();
 
 const {
   admissionData,
+  baseDocumentsById,
 } = storeToRefs(uploadFileViewStore)
+
+const {
+  userId,
+} = storeToRefs(mainStore)
 
 
 const admissionList = computed(() => {
@@ -76,6 +81,18 @@ function getFileType(item: PlanData, fileId) {
   return _.filter(item.plan_documents, (x) => x.id == fileId)[0].new_type
 }
 
+function getRules(data, item) {
+  if (data.can_upload == 'f') return true
+  let rule
+  if (data.admin) {
+    rule = 0
+  } else {
+    rule = 1
+  }
+  const doc = baseDocumentsById.value[item.type_id]
+  return doc.can_upload.includes(rule)
+}
+
 async function deleteFile(item: PlanData, typeId: number) {
 
   $q.dialog({
@@ -107,6 +124,14 @@ function checkFile(item: PlanData, typeId: number) {
   // let type = getFileType(item, fileId)
   // if (filesIds.includes(type)) return true
   // else return false
+}
+
+function checkUser(item: PlanData, typeId: number) {
+  const data = item.documents_files.find(x => x.type_id == typeId)
+  if (data) {
+    return data.user_id == userId.value
+  }
+  return false
 }
 
 
@@ -184,7 +209,7 @@ function checkFile(item: PlanData, typeId: number) {
                 </div>
                 <div class="flex items-center" style="display: grid; grid-template-columns: 1fr auto">
                   <div v-if="!checkFile(item, i.type_id)">
-                    <file-uploader :title="i.type__name" :file-id="i.id" :plan-id="item.plan_id"/>
+                    <file-uploader :title="i.type__name" :file-id="i.id" :plan-id="item.plan_id" :disable="getRules(item, i)"/>
                   </div>
                   <div v-else>
                     <q-field
@@ -209,8 +234,8 @@ function checkFile(item: PlanData, typeId: number) {
                       </template>
                     </q-field>
                   </div>
-                  <q-btn v-show="checkFile(item, i.type_id)" flat dense icon="mdi-delete" color="negative"
-                         @click="deleteFile(item, i.type_id)"/>
+                  <q-btn v-show="checkFile(item, i.type_id) && !getRules(item, i) && checkUser(item, i.type_id)" flat dense icon="mdi-delete" color="negative"
+                         @click="deleteFile(item, i.type_id)" />
                 </div>
               </div>
             </q-card-section>

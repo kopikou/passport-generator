@@ -13,7 +13,7 @@ from rest_framework.viewsets import GenericViewSet
 from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from auths.models import Permissions
-from rpd.models import PlanData, PlanDocuments
+from rpd.models import PlanData, PlanDocuments, BaseDocuments
 from uplfile.models import UploadFiles
 from uplfile.serializer import UploadFilesSerializer
 
@@ -66,7 +66,7 @@ class UploadFileViewSet(
                         "type__name": i.new_type.name
                     } for i in res.plan_documents.all()],
                     "documents_files": [{
-                        "user": i.user_id,
+                        "user_id": i.user_id,
                         "title": i.title,
                         "url": i.file.url,
                         "type_id": i.type_id,
@@ -98,3 +98,10 @@ class UploadFileViewSet(
 
         return Response(data_serializer.data)
 
+
+    @action(methods=['GET'], url_path="get-base-documents", detail=False)
+    def get_base_documents(self, request, *args, **kwargs):
+
+        res = BaseDocuments.objects.all().values()
+
+        return Response([i for i in res], status=status.HTTP_200_OK)
