@@ -196,7 +196,7 @@ watchEffect(() => {
                     <q-btn v-if="checkTaken(item.id) == 'dop'" readonly>В дополнительной литературе</q-btn>
                   </div>
                   <div v-else class="q-gutter-x-md q-mt-md">
-                    <q-btn color="primary" :label="item.cnt < 10 && item.bib_disc.indexOf('[Электронный ресурс]') == -1 ? 'Недостаточно экземпляров' : 'В основную литературу'" :disabled="item.cnt < 10 && item.bib_disc.indexOf('[Электронный ресурс]') == -1"
+                    <q-btn color="primary" :label="item.cnt < 10 && item.izd_type == 'традиционный' ? 'Недостаточно экземпляров' : 'В основную литературу'" :disabled="item.cnt < 10 && item.izd_type == 'традиционный'"
                            @click="addMainBook(item)"/>
                     <q-btn color="secondary" label="В дополнительную литературу"
                            @click="addDopBook(item)"/>

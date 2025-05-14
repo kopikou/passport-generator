@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from app.utils import TimestampsModel
@@ -150,6 +151,11 @@ class AllowedNames(TimestampsModel):
 
 
 class BaseDocuments(TimestampsModel):
+    class UserTypeChoices(models.IntegerChoices):
+        rop = 0, 'Руководитель программы'
+        edu_department = 1, 'Учебный отдел'
+        kaf = 2, 'Кафедра'
+
     name = models.TextField(verbose_name='Наименование файла')
     type = models.IntegerField(verbose_name='Тип')
     new_type = models.ForeignKey("DocumentsTypes", on_delete=models.CASCADE, default=None, null=True)
@@ -158,6 +164,8 @@ class BaseDocuments(TimestampsModel):
     magistrate = models.BooleanField(verbose_name='Магистратура')
     spo = models.BooleanField(verbose_name='СПО')
     aspirant = models.BooleanField(verbose_name='Аспирантура')
+    can_upload = ArrayField(models.IntegerField(choices=UserTypeChoices.choices, default=UserTypeChoices.rop), default=list())
+
 
     def __str__(self):
         return f"{self.name}"
