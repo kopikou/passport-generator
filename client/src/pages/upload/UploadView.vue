@@ -26,6 +26,10 @@ const {
   baseDocumentsById,
 } = storeToRefs(uploadFileViewStore)
 
+const {
+  userId,
+} = storeToRefs(mainStore)
+
 
 const admissionList = computed(() => {
   let txt = textFilter.value.toLowerCase();
@@ -120,6 +124,14 @@ function checkFile(item: PlanData, typeId: number) {
   // let type = getFileType(item, fileId)
   // if (filesIds.includes(type)) return true
   // else return false
+}
+
+function checkUser(item: PlanData, typeId: number) {
+  const data = item.documents_files.find(x => x.type_id == typeId)
+  if (data) {
+    return data.user_id == userId.value
+  }
+  return false
 }
 
 
@@ -222,8 +234,8 @@ function checkFile(item: PlanData, typeId: number) {
                       </template>
                     </q-field>
                   </div>
-                  <q-btn v-show="checkFile(item, i.type_id)" flat dense icon="mdi-delete" color="negative"
-                         @click="deleteFile(item, i.type_id)" :disable="getRules(item, i)"/>
+                  <q-btn v-show="checkFile(item, i.type_id) && !getRules(item, i) && checkUser(item, i.type_id)" flat dense icon="mdi-delete" color="negative"
+                         @click="deleteFile(item, i.type_id)" />
                 </div>
               </div>
             </q-card-section>

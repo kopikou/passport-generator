@@ -66,7 +66,7 @@ class UploadFileViewSet(
                         "type__name": i.new_type.name
                     } for i in res.plan_documents.all()],
                     "documents_files": [{
-                        "user": i.user_id,
+                        "user_id": i.user_id,
                         "title": i.title,
                         "url": i.file.url,
                         "type_id": i.type_id,
