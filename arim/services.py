@@ -85,20 +85,20 @@ class AISServices(object):
 
         now = pendulum.now().start_of("day")
         left_time = now.add(years=-6).year
-        query = Q()
+        query = Q(fordel='f', startyear__gte=left_time)
         if adm_user:
             admin = True
             if adm_user.isadmin == 't':
-                query |= Q(fordel='f', startyear__gte=left_time)
+                query |= Q()
             elif adm_user.isspo == 't':
-                query |= Q(fordel='f', startyear__gte=left_time, ckaf__in=[1988587, 1988517, 1988516])
-        elif cfac:
-            uchplans = [i.cuchplan for i in Catadmission.objects.filter(cfac__in=[j.id for j in cfac], active='t', yr__gte=left_time, cuchplan__isnull=False)]
-            query |= Q(fordel='f', id__in=[i.id for i in uchplans])
-        elif ckaf:
-            query |= Q(fordel='f', ckaf__in=[i.id for i in ckaf], startyear__gte=left_time)
+                query |= Q(ckaf__in=[1988587, 1988517, 1988516])
         else:
-            query |= Q(fordel='f', cperson=id, startyear__gte=left_time)
+            query &= Q(cperson=id)
+        if cfac:
+            uchplans = [i.cuchplan for i in Catadmission.objects.filter(cfac__in=[j.id for j in cfac], active='t', yr__gte=left_time, cuchplan__isnull=False)]
+            query |= Q(id__in=[i.id for i in uchplans])
+        if ckaf:
+            query |= Q(ckaf__in=[i.id for i in ckaf])
 
         data = [i for i in UchPlanPlan.objects.filter(query).values()]
 

@@ -93,9 +93,7 @@ onBeforeMount(async () => {
     <q-page-container class="container">
       <q-page style="overflow: hidden">
         <router-view v-slot="{ Component }">
-          <keep-alive>
             <component :is="Component" />
-          </keep-alive>
         </router-view>
       </q-page>
     </q-page-container>
