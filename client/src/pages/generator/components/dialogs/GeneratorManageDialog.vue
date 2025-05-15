@@ -61,6 +61,14 @@ watch([meeting, protocolNumber, protocolDate], () => {
   $q.localStorage.set('rpd_protocolDate', protocolDate.value);
 })
 
+const canSendToRefill = computed(() => {
+    return props.data.status == 2 &&
+      (
+        (props.data.type.includes('rop') && !props.data.user_confirmed)
+        || (props.data.type.includes('zav') && !props.data.user_accepted)
+      )
+})
+
 async function getRPD() {
   window.location.href = `${FORCE_SCRIPT_NAME.value}/api/generator/${props.id}/get-rpd-report/`
 }
@@ -230,7 +238,7 @@ function getStatusColor(status) {
             </q-btn>
           </template>
         </template>
-          <q-btn  v-if="data.status == 2" flat class="bg-amber-1 " color="amber-8" label="Отправить на доработку"
+          <q-btn  v-if="canSendToRefill" flat class="bg-amber-1 " color="amber-8" label="Отправить на доработку"
                  @click="onRefileClick"/>
           <q-btn  flat class="bg-grey-3" color="silver" label="Отмена" @click="onDialogCancel"/>
       </q-card-section>
