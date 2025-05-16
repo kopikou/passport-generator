@@ -18,7 +18,7 @@ class AISServices(object):
 
         data = Catadmission.objects.filter(
             id=pk,
-        ).select_related("ckaf", "cfac").values(
+        ).values(
             'id',
             'yr',
             'abbr',
