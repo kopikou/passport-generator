@@ -239,7 +239,7 @@ onBeforeMount(async () => {
                       <div>{{ cafDataById[item.kafcode]?.label }}</div>
                       <div>{{ item.user_confirmed_name }}</div>
                       <div>{{ item.user_accepted_name }}</div>
-                      <div>{{ item.status_verbose }} {{item.only_zav_required}}</div>
+                      <div>{{ item.status_verbose }}</div>
                       <div>
                         <q-btn v-if="getEditRules(item.type)" dense flat color="primary" icon="mdi-pencil"
                                label="заполнить" @click="router.push(`/generator/${item.id}/main`)"/>
