@@ -85,7 +85,7 @@ async function onAcceptClick() {
   await api.post(`/api/generator/${props.id}/accept-rpd/`, {
     date: protocolDate.value,
     number: protocolNumber.value,
-    userType: userType.value,
+    // userType: userType.value,
     meeting: meeting.value,
   })
   onDialogOK()
@@ -279,15 +279,15 @@ function getStatusColor(status) {
       </q-card-section>
       <q-card-section>
         <div class="q-gutter-md">
-          <q-select
-            v-model="userType"
-            label="Кто утвердил"
-            :options="userTypeOptions"
-            stack-label
-            map-options
-            emit-value
-            filled
-          />
+<!--          <q-select-->
+<!--            v-model="userType"-->
+<!--            label="Кто утвердил"-->
+<!--            :options="userTypeOptions"-->
+<!--            stack-label-->
+<!--            map-options-->
+<!--            emit-value-->
+<!--            filled-->
+<!--          />-->
           <q-input
             v-model="meeting"
             type="text"
