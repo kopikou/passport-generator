@@ -619,7 +619,7 @@ class GeneratorViewSet(
 
                 theme_serializer = DisciplineThemeSerializer(data={
                     "planlineslink_id": pk,
-                    "name": i['tema'],
+                    "name": i['tema'] or '-',
                     "semester": item['semestr'],
                     "formcontrol_id": form_control_id,
                     "comment": i['note'],
@@ -632,7 +632,7 @@ class GeneratorViewSet(
                     "planlineslink_id": pk,
                     "theme_id": theme_serializer.data['id'],
                     "type": DisciplineWorkHours.TypeChoices.lectures,
-                    "name": i['tema'],
+                    "name": i['tema'] or '-',
                     "hours": i['hour'] or 0,
                     "semester": item['semestr'],
                     "num": i['num'] or 1,
@@ -643,13 +643,13 @@ class GeneratorViewSet(
                 d2sam = RPDGenSerivce.get_displ2sam(i['id'])
 
                 for sam in d2sam:
-                    independent = kind_srs_by_id.get(sam['ckindsrs'], 'Написание отчета')
+                    independent = kind_srs_by_id.get(sam['ckindsrs'], '-')
 
                     sam_serializer = DisciplineWorkHoursSerializer(data={
                         "planlineslink_id": pk,
                         "theme_id": theme_serializer.data['id'],
                         "type": DisciplineWorkHours.TypeChoices.independent,
-                        "name": independent,
+                        "name": independent or '-',
                         "hours": sam['hour'] or 0,
                         "semester": item['semestr'],
                         "num": sam['num'] or 1,
@@ -664,7 +664,7 @@ class GeneratorViewSet(
                         "planlineslink_id": pk,
                         "theme_id": theme_serializer.data['id'],
                         "type": DisciplineWorkHours.TypeChoices.practice,
-                        "name": pract['tema'],
+                        "name": pract['tema'] or '-',
                         "hours": pract['hour'] or 0,
                         "semester": item['semestr'],
                         "num": pract['num'] or 1,
@@ -679,7 +679,7 @@ class GeneratorViewSet(
                         "planlineslink_id": pk,
                         "theme_id": theme_serializer.data['id'],
                         "type": DisciplineWorkHours.TypeChoices.laboratory,
-                        "name": lab['tema'],
+                        "name": lab['tema'] or '-',
                         "hours": lab['hour'] or 0,
                         "semester": item['semestr'],
                         "num": lab['num'] or 1,

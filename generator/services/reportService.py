@@ -634,7 +634,6 @@ class ReportService(object):
                 "protocol_date": f'{protocol_date.format("DD.MM.YYYY")}',
                 "protocol_year": protocol_date.year,
                 "user_accepted": f"{user_accepted.last_name} {user_accepted.first_name} {user_accepted.userprofile.middle_name}",
-                "user_type": PlanLinesLink.UserTypeChoices.labels[data['user_type']],
             })
 
         doc.render(context)

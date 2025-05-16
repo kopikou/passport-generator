@@ -148,7 +148,6 @@ function getRowColor(number) {
 }
 
 watch([discplFilter, groupFilter, myFilter, textFilter], () => {
-  console.log(myFilter.value)
   $q.localStorage.setItem("surp_discplfilter", discplFilter.value)
   $q.localStorage.setItem("surp_groupfilter", groupFilter.value)
   $q.localStorage.setItem("surp_myfilter", myFilter.value)
