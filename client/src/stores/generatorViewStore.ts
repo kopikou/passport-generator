@@ -159,9 +159,15 @@ const semesterYearLabel = computed(() => {
   })
 
   const hasTat = computed(() => {
-    return _.some(semestersData.value, x => {
+    let res = false
+    res = _.some(semestersData.value, x => {
       return x.ekz || x.zach || x.zacho || x.kp || x.kr
     })
+    if (admissionData.value?.cadmkind == 5 && ['Иностранный язык', 'История и философия науки'].includes(rpdData.value?.planlines?.dis)) {
+      res = true
+    }
+
+    return res
   })
 
 

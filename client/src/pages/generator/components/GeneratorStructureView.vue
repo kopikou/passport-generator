@@ -17,6 +17,7 @@ const {
   interactiveMethods,
   additionalInfo,
   disabled,
+  admissionData,
 } = storeToRefs(generatorViewStore)
 
 const tab = ref<string>('')
@@ -183,9 +184,11 @@ watch(interactiveMethods, () => {
               <template v-slot:control>
                 <div class="self-center full-width no-outline text-center">
                   <span v-if="item.ekz">Экзамен</span>
-                  <span v-if="item.zach">Зачет</span>
-                  <span v-if="item.zacho">Зачет с оценкой></span>
-                  <span v-if="!item.ekz && !item.zach && !item.zacho">Отсутствует</span>
+                  <span v-else-if="item.zach">Зачет</span>
+                  <span v-else-if="item.zacho">Зачет с оценкой></span>
+                  <span v-else-if="admissionData?.cadmkind == 5 && rpdData.planlines?.dis == 'Иностранный язык'">Кандидатский экзамен по иностранному языку</span>
+                  <span v-else-if="admissionData?.cadmkind == 5 && rpdData.planlines?.dis == 'История и философия науки'">Кандидатский экзамен по истории и философии науки</span>
+                  <span v-else-if="!item.ekz && !item.zach && !item.zacho">Отсутствует</span>
                 </div>
               </template>
             </q-field>

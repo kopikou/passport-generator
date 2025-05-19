@@ -14,8 +14,14 @@ from generator.models import PlanLinesLink, ScientificData
 from rpd.models import LinesIndicators, PlanData
 
 
-def get_tic_name(data):
+def get_tic_name(data, plan_data=None):
     result = []
+
+    if plan_data['admission']['cadmkind'] == 5:
+        if plan_data['planlines']['dis'] == 'Иностранный язык':
+            result.append('Кандидатский экзамен по иностранному языку')
+        if plan_data['planlines']['dis'] == 'История и философия науки':
+            result.append('Кандидатский экзамен по истории и философии науки')
 
     if data['zach']:
         result.append('Зачет')
@@ -82,7 +88,7 @@ class ReportService(object):
 
         tic_all = []
         for item in data['planlines']['semesters']:
-            tic_all.append(", ".join(get_tic_name(item)))
+            tic_all.append(", ".join(get_tic_name(item, data)))
 
         context = {
             "disciplGoal": discipline_goal,
@@ -114,7 +120,7 @@ class ReportService(object):
             competence.append({
                 "index": sem,
                 "content": item[0]['competence'],
-                "indicators": ", ".join([i['indicator_index'] for i in item]),
+                "indicators": ", ".join([i['indicator_index'] for i in item]) if data['admission']['cadmkind'] != 5 else "\n".join([f"{i['indicator_index']} {i['indicator']}" for i in item]),
             })
 
         indicators = []
@@ -141,6 +147,8 @@ class ReportService(object):
             'zacho': 'Типовые оценочные средства для проведения дифференцированного зачета по дисциплине',
             'zach': 'Типовые оценочные средства для проведения зачета по дисциплине',
             'krkp': 'Типовые оценочные средства для курсовой работы/курсового проектирования по дисциплине',
+            'foreign': 'Типовые оценочные средства для кандидатского экзамена по иностранному языку',
+            'philosophy': 'Типовые оценочные средства для кандидатского экзамена по истории и философии науки',
         }
 
         asp_spec = ''
@@ -283,7 +291,7 @@ class ReportService(object):
         semester_hours = []
         semesters = []
         for item in data['planlines']['semesters']:
-            tic_all[item['num']] = ", ".join(get_tic_name(item))
+            tic_all[item['num']] = ", ".join(get_tic_name(item, data))
             semesters.append(item['num'])
             semester_hours.append({
                 "num": item['num'],
