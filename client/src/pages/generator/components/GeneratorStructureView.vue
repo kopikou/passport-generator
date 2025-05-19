@@ -43,17 +43,18 @@ async function savePracticeWay() {
       position: "bottom",
       html: true,
     })
-    let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
-    if (key) _.set(additionalInfo.value, `[${key}].value.practiceWay`, way.value)
-    else additionalInfo.value.push({
-      id: r.data.id,
-      planlineslink_id: activeRpdId.value,
-      type: 'practiceWay',
-      value: {
-        practiceWay: way.value,
-      }
-    })
+    await generatorViewStore.getData();
     generatorViewStore.checkErrors()
+    // let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
+    // if (key) _.set(additionalInfo.value, `[${key}].value.practiceWay`, way.value)
+    // else additionalInfo.value.push({
+    //   id: r.data.id,
+    //   planlineslink_id: activeRpdId.value,
+    //   type: 'practiceWay',
+    //   value: {
+    //     practiceWay: way.value,
+    //   }
+    // })
   } else {
 
     $q.notify({

@@ -36,9 +36,10 @@ async function saveData() {
     html: true,
   })
 
-  let key = _.findKey(additionalInfo.value, x => x.type == 'practiceReport')
-  _.set(additionalInfo.value, `[${key}].value.documents`, documents.value)
-  _.set(additionalInfo.value, `[${key}].value.requirements`, requirements.value)
+  await generatorViewStore.getData();
+  // let key = _.findKey(additionalInfo.value, x => x.type == 'practiceReport')
+  // _.set(additionalInfo.value, `[${key}].value.documents`, documents.value)
+  // _.set(additionalInfo.value, `[${key}].value.requirements`, requirements.value)
 
 }
 

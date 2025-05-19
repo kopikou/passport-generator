@@ -55,13 +55,13 @@ async function saveRow() {
     value: rows.value,
   })
 
-  let key = _.findKey(additionalInfo.value, x => x.type == 'practiceContent')
-
-  if (key) {
-    _.set(additionalInfo.value, key, r.data)
-  } else {
-    additionalInfo.value.push(r.data)
-  }
+  await generatorViewStore.getData();
+  // let key = _.findKey(additionalInfo.value, x => x.type == 'practiceContent')
+  // if (key) {
+  //   _.set(additionalInfo.value, key, r.data)
+  // } else {
+  //   additionalInfo.value.push(r.data)
+  // }
 }
 
 function updateRow(id) {
@@ -152,9 +152,10 @@ async function saveContent() {
     position: "bottom",
     html: true,
   })
+  await generatorViewStore.getData();
 
-  let key = _.findKey(additionalInfo.value, x => x.type == 'practiceContentText')
-  _.set(additionalInfo.value, `[${key}].value.content`, content.value)
+  // let key = _.findKey(additionalInfo.value, x => x.type == 'practiceContentText')
+  // _.set(additionalInfo.value, `[${key}].value.content`, content.value)
 }
 
 watchEffect(() => {
