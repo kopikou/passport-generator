@@ -64,7 +64,7 @@ async function saveMethods() {
 }
 
 watch(semestersData, () => {
-  tab.value = `${semestersData.value[0].num}`
+  tab.value = `${semestersData.value[0]?.num}`
 }, {
   immediate: true
 })
@@ -95,7 +95,7 @@ watch(interactiveMethods, () => {
         active-bg-color="teal-1"
       >
         <q-tab class="text-teal" v-for="item in semestersData" :name="`${item.num}`"
-               :label="`Семестр ${item.num}`"/>
+               :label="`${generatorViewStore.semesterYearLabel} ${item.num}`"/>
       </q-tabs>
 
       <q-tab-panels

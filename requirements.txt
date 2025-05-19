@@ -12,4 +12,4 @@ fabric
 sqlalchemy==2.0.39
 #pywin32 # on windows user
 django-redis==5.2
-django-constance
+django-constance==4.3.2

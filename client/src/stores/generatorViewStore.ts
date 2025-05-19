@@ -70,7 +70,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
   const admissionData = computed(() => {
-    return rpdData.value?.admission || []
+    return rpdData.value?.admission || null
   })
 
   const semestersData = computed<PlanSemestrData[]>(() => {
@@ -148,6 +148,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   const defaultResources = computed<DefaultRecources[]>(() => {
     return rpdData.value.resources || []
   })
+
+const semesterYearLabel = computed(() => {
+  return admissionData.value?.cfob__name == 'заочная' ? 'учебный год' : 'семестр'
+})
 
 
   const criticalErrors = computed(() => {
@@ -720,6 +724,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     srsHours,
     prHours,
     labHours,
+    semesterYearLabel,
   }
 })
 

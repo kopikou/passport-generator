@@ -93,7 +93,7 @@ const menuItems = computed(() => {
 });
 
 const filterMenuItems = computed(() => {
-  return _.filter(menuItems.value, x => x.allow.includes(admissionData.value.cadmkind))
+  return _.filter(menuItems.value, x => x.allow.includes(admissionData.value?.cadmkind))
 })
 
 function translateDate(date) {
