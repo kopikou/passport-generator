@@ -95,8 +95,8 @@ class GeneratorService(object):
             }
             res.append(temp)
 
+        lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
         for item in res:
-            lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
             item['only_zav_required'] = item['discpl'] in lst
             if item['status'] == PlanLinesLink.StatusChoices.on_review:
                 require_my_accept = 'zav' in item['type'] and not item['user_accepted']

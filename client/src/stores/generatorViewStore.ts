@@ -70,7 +70,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
   const admissionData = computed(() => {
-    return rpdData.value?.admission || []
+    return rpdData.value?.admission || null
   })
 
   const semestersData = computed<PlanSemestrData[]>(() => {
@@ -149,15 +149,25 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return rpdData.value.resources || []
   })
 
+const semesterYearLabel = computed(() => {
+  return admissionData.value?.cfob__name == 'заочная' ? 'учебный год' : 'семестр'
+})
+
 
   const criticalErrors = computed(() => {
     return _.filter(errors.value, x => x.level == 'critical')
   })
 
   const hasTat = computed(() => {
-    return _.some(semestersData.value, x => {
+    let res = false
+    res = _.some(semestersData.value, x => {
       return x.ekz || x.zach || x.zacho || x.kp || x.kr
     })
+    if (admissionData.value?.cadmkind == 5 && ['Иностранный язык', 'История и философия науки'].includes(rpdData.value?.planlines?.dis)) {
+      res = true
+    }
+
+    return res
   })
 
 
@@ -733,6 +743,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     srsHours,
     prHours,
     labHours,
+    semesterYearLabel,
   }
 })
 
