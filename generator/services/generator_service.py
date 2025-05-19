@@ -1,5 +1,6 @@
 from itertools import groupby
 
+from constance import config
 from django.conf import settings
 from django.core.cache import cache
 
@@ -95,9 +96,12 @@ class GeneratorService(object):
             res.append(temp)
 
         for item in res:
+            lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
+            item['only_zav_required'] = item['discpl'] in lst
             if item['status'] == PlanLinesLink.StatusChoices.on_review:
                 require_my_accept = 'zav' in item['type'] and not item['user_accepted']
-                require_my_confirm = 'rop' in item['type'] and not item['user_confirmed']
+                require_my_confirm = not item['only_zav_required'] \
+                                     and 'rop' in item['type'] and not item['user_confirmed']
                 if require_my_accept or require_my_confirm:
                     item['status_verbose'] = "Требует моего согласования/утверждения"
                 # item['require_my_accept'] = require_my_accept

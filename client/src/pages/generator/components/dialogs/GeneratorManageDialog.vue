@@ -217,7 +217,8 @@ function getStatusColor(status) {
 
           <template v-else>
             <q-btn flat class="bg-light-green-1" color="light-green-8"
-                   @click="onAcceptButtonClick" :disable="!data.type.includes('zav') || !!data.user_accepted">
+                   @click="onAcceptButtonClick"
+                   :disable="!data.type.includes('zav') || !!data.user_accepted">
               <div v-if="data.user_accepted">
                 Утвержден <br>{{ data.user_accepted_name }}
               </div>
@@ -226,8 +227,9 @@ function getStatusColor(status) {
                 <template v-else>Не утвержден</template>
               </div>
             </q-btn>
-            <q-btn  flat class="bg-light-green-1" color="light-green-8"
-                   @click="onConfirmButtonClick" :disable="!data.type.includes('rop') ||!!data.user_confirmed">
+            <q-btn  v-if="!data.only_zav_required" flat class="bg-light-green-1" color="light-green-8"
+                   @click="onConfirmButtonClick"
+                    :disable="!data.type.includes('rop') ||!!data.user_confirmed">
               <div v-if="data.user_confirmed">
                 Согласован <br>{{ data.user_confirmed_name }}
               </div>
