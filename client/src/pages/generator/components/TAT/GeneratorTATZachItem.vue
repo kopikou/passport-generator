@@ -63,11 +63,11 @@ async function saveData() {
     }
   }
 
-  if (!key) {
-    tatInfo.value.push(data)
-  } else {
-    _.set(tatInfo.value, `[${key}]`, data)
-  }
+  // if (!key) {
+  //   tatInfo.value.push(data)
+  // } else {
+  //   _.set(tatInfo.value, `[${key}]`, data)
+  // }
 
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'tat',
@@ -81,6 +81,7 @@ async function saveData() {
       position: "bottom",
       html: true,
     })
+    await generatorViewStore.getData()
     generatorViewStore.checkErrors()
   } else {
     $q.notify({
@@ -135,7 +136,8 @@ watchEffect(() => {
               :readonly="disabled"
               debounce="1000"
               @update:modelValue="saveData"
-            />a
+            />
+            a
             <q-input
               label="Пример задания"
               type="textarea"

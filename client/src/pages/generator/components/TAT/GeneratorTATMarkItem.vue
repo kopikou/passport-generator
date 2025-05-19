@@ -71,11 +71,11 @@ async function saveData() {
     }
   }
 
-  if (!key) {
-    tatInfo.value.push(data)
-  } else {
-    _.set(tatInfo.value, `[${key}]`, data)
-  }
+  // if (!key) {
+  //   tatInfo.value.push(data)
+  // } else {
+  //   _.set(tatInfo.value, `[${key}]`, data)
+  // }
 
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'tat',
