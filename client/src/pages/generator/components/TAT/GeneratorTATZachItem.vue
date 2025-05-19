@@ -39,27 +39,26 @@ const formabout = ref('')
 
 async function saveData() {
   // $q.loading.show({message: "Сохранение данных"})
-  const key = _.findKey(tatInfo.value, x => x.type == props.type)
+  // const key = _.findKey(tatInfo.value, x => x.type == props.type)
 
-  let data = {}
+  let res = {
+      "passed": passed.value,
+      "unpassed": unpassed.value,
+      "title": props.title,
+      "type": props.type,
+  }
   if (planlinesData.value.viewpract) {
-    data = {
+    res = {
+      ...res,
       "tat": tat.value,
       "form": form.value,
       "formabout": formabout.value,
-      "passed": passed.value,
-      "unpassed": unpassed.value,
-      "title": props.title,
-      "type": props.type,
     }
   } else {
-    data = {
+    res = {
+      ...res,
       "about": about.value,
       "example": example.value,
-      "passed": passed.value,
-      "unpassed": unpassed.value,
-      "title": props.title,
-      "type": props.type,
     }
   }
 
@@ -69,10 +68,11 @@ async function saveData() {
   //   _.set(tatInfo.value, `[${key}]`, data)
   // }
 
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
-    "type": 'tat',
-    "value": tatInfo.value,
-  })
+  const data = [...((tatInfo.value || []).filter((x: any) => x.type != props.type)), res]
+  // let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+  //   "type": 'tat',
+  //   "value": data,
+  // })
 
   if (r.status == 200) {
     $q.notify({
