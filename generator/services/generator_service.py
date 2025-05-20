@@ -80,6 +80,7 @@ class GeneratorService(object):
                     "accept_date": res.accept_date,
                     "confirm_date": res.confirm_date,
                     "discode": res.planlines.newdisid,
+                    "plan_id": line.plan_id,
                 })
 
         sorted_result = sorted(result, key=lambda x: (x['planlin'], x['mira_id']))

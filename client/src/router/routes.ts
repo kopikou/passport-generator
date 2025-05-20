@@ -208,9 +208,6 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/upload",
     name: "UploadMainPage",
-    meta: {
-      permissions: [Permissions.can_upload_files]
-    },
     children: [
       {
         path: '',

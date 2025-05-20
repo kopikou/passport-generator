@@ -118,26 +118,26 @@ watch(additionalInfo, () => {
           <div class="self-center full-width no-outline">{{ rpdData.planlines?.dis }}</div>
         </template>
       </q-field>
-      <span v-if="admissionData.cadmkind != 5" class="text-subtitle1">Профиль/Специальность</span>
-      <q-field outlined dense v-if="admissionData.cadmkind != 5">
+      <span v-if="admissionData?.cadmkind != 5" class="text-subtitle1">Профиль/Специальность</span>
+      <q-field outlined dense v-if="admissionData?.cadmkind != 5">
         <template v-slot:control>
           <div class="self-center full-width no-outline">{{ rpdData.admission?.spec_name }}</div>
         </template>
       </q-field>
-      <span v-if="admissionData.cadmkind != 5" class="text-subtitle1">Наименование направления</span>
-      <q-field outlined dense v-if="admissionData.cadmkind != 5">
+      <span v-if="admissionData?.cadmkind != 5" class="text-subtitle1">Наименование направления</span>
+      <q-field outlined dense v-if="admissionData?.cadmkind != 5">
         <template v-slot:control>
           <div class="self-center full-width no-outline">{{ rpdData.admission?.direct_name }}</div>
         </template>
       </q-field>
-      <span v-if="admissionData.cadmkind == 5" class="text-subtitle1">Наименование направления</span>
-      <q-field outlined dense v-if="admissionData.cadmkind == 5">
+      <span v-if="admissionData?.cadmkind == 5" class="text-subtitle1">Наименование направления</span>
+      <q-field outlined dense v-if="admissionData?.cadmkind == 5">
         <template v-slot:control>
           <div class="self-center full-width no-outline">{{ getSpecName(rpdData.admission?.spec_name) }}</div>
         </template>
       </q-field>
-      <span v-if="admissionData.cadmkind == 5" class="text-subtitle1">Направленность</span>
-      <q-field outlined dense v-if="admissionData.cadmkind == 5">
+      <span v-if="admissionData?.cadmkind == 5" class="text-subtitle1">Направленность</span>
+      <q-field outlined dense v-if="admissionData?.cadmkind == 5">
         <template v-slot:control>
           <div class="self-center full-width no-outline">{{ getSpecNapr(rpdData.admission?.spec_name) }}</div>
         </template>
@@ -145,7 +145,7 @@ watch(additionalInfo, () => {
       <span class="text-subtitle1">Факультет</span>
       <q-field outlined dense>
         <template v-slot:control>
-          <div class="self-center full-width no-outline">{{ admissionData.cfac__name }}</div>
+          <div class="self-center full-width no-outline">{{ admissionData?.cfac__name }}</div>
         </template>
       </q-field>
       <span class="text-subtitle1">Кафедра</span>

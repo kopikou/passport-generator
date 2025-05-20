@@ -68,7 +68,7 @@ function getFileUrl(item: PlanData, typeId: number) {
   let file = item.documents_files.find(x => x.type_id == typeId);
   console.log(item.documents_files);
   if (file) {
-    window.open(`${FORCE_SCRIPT_NAME.value}/uploads/` + file.url, "_blank")
+    window.open(`${FORCE_SCRIPT_NAME.value}` + file.url, "_blank")
   }
 }
 
@@ -134,6 +134,9 @@ function checkUser(item: PlanData, typeId: number) {
   return false
 }
 
+function sortDocuments(val) {
+  return _.sortBy(val, x => _.get(baseDocumentsById.value, x.type_id, [])?.can_upload)
+}
 
 </script>
 
@@ -203,7 +206,7 @@ function checkUser(item: PlanData, typeId: number) {
                   Загруженные файлы
                 </div>
               </div>
-              <div class="card-container" v-for="i in item.plan_documents">
+              <div class="card-container" v-for="i in sortDocuments(item.plan_documents)">
                 <div>
                   {{ i.name }}
                 </div>

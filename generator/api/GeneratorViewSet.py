@@ -31,7 +31,7 @@ from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
 from generator.services import ReportService
 from generator.services.generator_service import GeneratorService
-from rpd.models import LinesData, PlanData
+from rpd.models import LinesData, PlanData, LinesIndicators
 from rpd.services import RPDGenSerivce
 
 
@@ -617,6 +617,7 @@ class GeneratorViewSet(
             indicator_id = instance_indicators_by_index.get(indicator[0]['index'])
 
             if indicator_id:
+
                 dis_indicator_serializer = DisciplineIndicatorsAddSerializer(data={
                     "indicator_id": indicator_id,
                     "planlineid_id": instance['planlines']['id'],

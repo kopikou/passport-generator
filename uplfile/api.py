@@ -13,6 +13,7 @@ from rest_framework.viewsets import GenericViewSet
 from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from auths.models import Permissions
+from generator.permissions import CanEditRPDProgram, CanUploadFiles, CanViewFileList
 from rpd.models import PlanData, PlanDocuments, BaseDocuments
 from uplfile.models import UploadFiles
 from uplfile.serializer import UploadFilesSerializer
@@ -27,7 +28,7 @@ class UploadFileViewSet(
 ):
     queryset = UploadFiles
     serializer_class = UploadFilesSerializer
-    permission_classes = [UserProfileHasPermission(Permissions.can_upload_files)]
+    permission_classes = [CanViewFileList | UserProfileHasPermission(Permissions.can_upload_files)]
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -77,12 +78,12 @@ class UploadFileViewSet(
                 })
         return Response(result)
 
-    @action(methods=['POST'], url_path="save-file", detail=True)
+    @action(methods=['POST'], url_path="save-file", detail=True, permission_classes=[CanUploadFiles])
     def save_file(self, request, *args, **kwargs):
         data = {}
         for filename, file in request.FILES.items():
             if self.request.POST['type'] == 'document':
-                doc_data = PlanDocuments.objects.get(id=kwargs['pk'])
+                doc_data = PlanDocuments.objects.get(id=self.request.POST['fileId'])
                 data = {
                     'user_id': request.user.id,
                     'file': file,

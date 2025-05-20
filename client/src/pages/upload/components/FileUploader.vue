@@ -38,7 +38,8 @@ watch(file, async () => {
   const formData = new FormData()
   formData.append('file', file.value)
   formData.append('type', 'document')
-  let r = await api.post(`/api/upload/${props.fileId}/save-file/`, formData)
+  formData.append('fileId', props.fileId)
+  let r = await api.post(`/api/upload/${props.planId}/save-file/`, formData)
   let admKey = _.findKey(admissionData.value, (x) => x.plan_id == props.planId)
 
   r.data.file = r.data.file.replace('/uploads', '')

@@ -171,7 +171,7 @@ watchEffect(() => {
               Краткое описание темы
             </div>
             <div>
-              Семестр
+              {{ generatorViewStore.semesterYearLabel }}
             </div>
             <div>
               Управление

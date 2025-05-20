@@ -149,9 +149,9 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return rpdData.value.resources || []
   })
 
-const semesterYearLabel = computed(() => {
-  return admissionData.value?.cfob__name == 'заочная' ? 'учебный год' : 'семестр'
-})
+  const semesterYearLabel = computed(() => {
+    return admissionData.value?.cfob__name == 'заочная' ? 'учебный год' : 'семестр'
+  })
 
 
   const criticalErrors = computed(() => {

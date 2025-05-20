@@ -4,7 +4,7 @@ import {storeToRefs} from "pinia";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import {Permissions} from "src/types";
-import {onBeforeMount} from "vue";
+import {onBeforeMount, ref} from "vue";
 
 const mainStore = useMainStore();
 const {
@@ -12,6 +12,7 @@ const {
   isStaff,
   lastName,
   firstName,
+  permissions,
   FORCE_SCRIPT_NAME,
 } = storeToRefs(mainStore)
 
@@ -30,10 +31,20 @@ api.interceptors.response.use((response) => response, (error) => {
   }
 })
 
+const listData = ref([])
+
+async function getProgramData() {
+  listData.value = []
+  let r = await api.get("/api/generator/get-program-list/")
+  listData.value = r.data
+}
+
 onBeforeMount(async () => {
   if (!isAuthenticated.value) {
     await mainStore.checkLogin()
   }
+  await getProgramData()
+
 })
 
 </script>
@@ -41,7 +52,6 @@ onBeforeMount(async () => {
 <template>
 
   <q-layout view="hHh lpR fFf">
-
     <q-header elevated class="bg-white text-black">
       <q-toolbar>
         <q-toolbar-title to="/">
@@ -58,7 +68,7 @@ onBeforeMount(async () => {
 
         <q-tabs inline-label dense shrink stretch v-if="isAuthenticated">
           <q-route-tab icon="mdi-upload-box" label="Загрузка файлов программ" to="/upload"
-                       v-permissions-required="Permissions.can_upload_files"
+                       v-show="listData || permissions.includes('can_upload_plx_files')"
           />
           <q-route-tab icon="mdi-generator-portable" label="РПД" to="/generator"
                        v-permissions-required="Permissions.can_use_generator"

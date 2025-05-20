@@ -60,7 +60,7 @@ const emit = defineEmits(['delete', 'edit', 'fieldUp', 'fieldDown'])
           Тема
         </div>
         <div>
-          Семестр
+          {{ generatorViewStore.semesterYearLabel }}
         </div>
         <div v-show="!disabled">
           Управление
