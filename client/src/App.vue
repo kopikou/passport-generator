@@ -5,6 +5,7 @@ import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import {Permissions} from "src/types";
 import {onBeforeMount, ref} from "vue";
+import _ from "lodash";
 
 const mainStore = useMainStore();
 const {
@@ -36,7 +37,7 @@ const listData = ref([])
 async function getProgramData() {
   listData.value = []
   let r = await api.get("/api/generator/get-program-list/")
-  listData.value = r.data
+  listData.value = _.filter(r.data, x => x.type.some(q => ['rop', 'fac', 'zav'].includes(q)))
 }
 
 onBeforeMount(async () => {
@@ -63,12 +64,10 @@ onBeforeMount(async () => {
           <q-btn to="/" flat v-if="!$q.screen.xs">
             Управление рабочими программами
           </q-btn>
-
         </q-toolbar-title>
-
         <q-tabs inline-label dense shrink stretch v-if="isAuthenticated">
           <q-route-tab icon="mdi-upload-box" label="Загрузка файлов программ" to="/upload"
-                       v-show="listData || permissions.includes('can_upload_plx_files')"
+                       v-show="_.size(listData) > 0 || permissions.includes('can_upload_files')"
           />
           <q-route-tab icon="mdi-generator-portable" label="РПД" to="/generator"
                        v-permissions-required="Permissions.can_use_generator"

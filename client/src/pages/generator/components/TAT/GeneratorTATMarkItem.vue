@@ -116,7 +116,6 @@ watchEffect(() => {
             :readonly="disabled"
             debounce="1000"
             @update:modelValue="saveData"
-            hint="Если Вам не нужен пример задания, оставьте поле пустым"
           />
           <p class="text-subtitle1">Критерии оценивания</p>
           <q-list bordered>
