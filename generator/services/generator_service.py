@@ -126,6 +126,7 @@ class GeneratorService(object):
 
         filtered_data = LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
                                                  plan__startyear__in=startyear_list,
+                                                 type=3,
                                                  plan__file__status=4, synchronize=True).select_related("plan")
 
         filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.plan.startyear}": i for i in filtered_data}

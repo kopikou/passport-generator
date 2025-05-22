@@ -77,8 +77,16 @@ async function saveDiscplineGoal() {
   $q.loading.hide()
 }
 
+const practiceName = computed(() => {
+  let result = rpdData.value.planlines?.dis.split(/:\s*/)
+  return {
+    'type': result[0] ?? '',
+    'text': _.capitalize(result[1] ?? ''),
+  }
+})
+
 function getPracticeNamePart(text) {
-  return text.split(/:\s*/)
+
 }
 
 function getSpecNapr(name) {
@@ -133,13 +141,13 @@ watch(additionalInfo, () => {
           <span class="text-subtitle1">Вид практики</span>
           <q-field outlined dense>
             <template v-slot:control>
-              <div class="self-center full-width no-outline">{{ getPracticeNamePart(rpdData.planlines?.dis)[0] }}</div>
+              <div class="self-center full-width no-outline">{{ practiceName.type }}</div>
             </template>
           </q-field>
           <span class="text-subtitle1">Тип практики</span>
           <q-field outlined dense>
             <template v-slot:control>
-              <div class="self-center full-width no-outline">{{ getPracticeNamePart(rpdData.planlines?.dis)[1][0].toUpperCase() }}{{ getPracticeNamePart(rpdData.planlines?.dis)[1].slice(1) }}</div>
+              <div class="self-center full-width no-outline">{{ practiceName.text }}</div>
             </template>
           </q-field>
         </div>
