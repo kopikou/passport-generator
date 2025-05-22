@@ -23,11 +23,11 @@ const filteredData = computed(() => {
 <template>
   <div class="q-px-md">
       <div v-if="!planlinesData.viewpract">
-        <span v-if="admissionData.cadmkind != 5" class="text-h6">Индикаторы по дисциплине</span>
+        <span v-if="admissionData?.cadmkind != 5" class="text-h6">Индикаторы по дисциплине</span>
         <span v-else class="text-h6">Результаты освоения дисциплины</span>
       </div>
       <div v-else>
-        <span v-if="admissionData.cadmkind != 5" class="text-h6 q-pl-lg">Индикаторы по практике</span>
+        <span v-if="admissionData?.cadmkind != 5" class="text-h6 q-pl-lg">Индикаторы по практике</span>
         <span v-else class="text-h6 q-pl-lg">Результаты освоения практики</span>
       </div>
       <p>Раскройте для заполнения</p>
