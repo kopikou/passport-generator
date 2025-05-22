@@ -12,6 +12,8 @@ const generatorViewStore = useGeneratorViewStore();
 
 const{
   semestersData,
+  admissionData,
+  rpdData,
 }=storeToRefs(generatorViewStore)
 
 const ekzCheck = computed(() => {
@@ -49,6 +51,8 @@ const krCheck = computed(() => {
       <generator-t-a-t-mark-item v-if="zachoCheck" title="Дифференцированный зачет" type="zacho"/>
       <generator-t-a-t-zach-item v-if="zachCheck" title="Зачет" type="zach"/>
       <generator-t-a-t-mark-item v-if="kpCheck || krCheck" title="Курсовая работа/проект" type="krkp"/>
+      <generator-t-a-t-mark-item v-if="admissionData?.cadmkind == 5 && rpdData?.planlines?.dis == 'Иностранный язык'" title="Кандидатский экзамен по иностранному языку" type="foreign" />
+      <generator-t-a-t-mark-item v-if="admissionData?.cadmkind == 5 && rpdData?.planlines?.dis == 'История и философия науки'" title="Кандидатский экзамен по истории и философии науки" type="philosophy" />
     </q-list>
   </div>
 </template>

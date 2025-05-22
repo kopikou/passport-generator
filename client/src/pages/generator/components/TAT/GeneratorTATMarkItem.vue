@@ -44,42 +44,35 @@ async function saveData() {
   if (generatorViewStore.abortGetDataController)
     generatorViewStore.abortGetDataController.abort()
 
-  const key = _.findKey(tatInfo.value, x => x.type == props.type)
-  let data = {}
+
+  let res = {
+      "great": great.value,
+      "good": good.value,
+      "satisfactorily": satisfactorily.value,
+      "unsatisfactory": unsatisfactory.value,
+      "title": props.title,
+      "type": props.type,
+  }
   if (planlinesData.value.viewpract) {
-    data = {
+    res = {
+      ...res,
       "tat": tat.value,
       "form": form.value,
       "formabout": formabout.value,
-      "great": great.value,
-      "good": good.value,
-      "satisfactorily": satisfactorily.value,
-      "unsatisfactory": unsatisfactory.value,
-      "title": props.title,
-      "type": props.type,
     }
   } else {
-    data = {
+    res = {
+      ...res,
       "about": about.value,
       "example": example.value,
-      "great": great.value,
-      "good": good.value,
-      "satisfactorily": satisfactorily.value,
-      "unsatisfactory": unsatisfactory.value,
-      "title": props.title,
-      "type": props.type,
     }
   }
 
-  if (!key) {
-    tatInfo.value.push(data)
-  } else {
-    _.set(tatInfo.value, `[${key}]`, data)
-  }
+  const data = [...((tatInfo.value || []).filter((x: any) => x.type != props.type)), res]
 
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'tat',
-    "value": tatInfo.value,
+    "value": data,
   })
   $q.notify({
     message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> сохранены!",
@@ -94,17 +87,17 @@ async function saveData() {
 }
 
 watchEffect(() => {
-  const key = _.findKey(tatInfo.value, x => x.type == props.type)
-  if (key) {
-    about.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'about', '')
-    great.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'great', '')
-    good.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'good', '')
-    satisfactorily.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'satisfactorily', '')
-    unsatisfactory.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'unsatisfactory', '')
-    example.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'example', '')
-    tat.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'tat', '')
-    form.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'form', '')
-    formabout.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'formabout', '')
+  const data = _.find(tatInfo.value, x => x.type == props.type)
+  if (data) {
+    about.value = _.get(data, 'about', '')
+    great.value = _.get(data, 'great', '')
+    good.value = _.get(data, 'good', '')
+    satisfactorily.value = _.get(data, 'satisfactorily', '')
+    unsatisfactory.value = _.get(data, 'unsatisfactory', '')
+    example.value = _.get(data, 'example', '')
+    tat.value = _.get(data, 'tat', '')
+    form.value = _.get(data, 'form', '')
+    formabout.value = _.get(data, 'formabout', '')
   }
 })
 

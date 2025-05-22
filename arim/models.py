@@ -35,9 +35,9 @@ class Catadmission(models.Model):
     active = models.CharField(max_length=1, choices=BoolChoice)
     onsite = models.CharField(max_length=1, choices=BoolChoice)
     cfac = models.ForeignKey("CatFaculty", null=True, on_delete=models.CASCADE, db_column="cfac")
-    ckaf = models.ForeignKey("CatKaf", null=True, on_delete=models.CASCADE, db_column="ckaf")
+    ckaf = models.ForeignKey("CatKaf", null=True,  on_delete=models.CASCADE, db_column="ckaf")
     kvalif_name = models.CharField(max_length=100)
-    cadmkind = models.ForeignKey("CLAdmKind", null=True, on_delete=models.CASCADE, db_column="cadmkind")
+    cadmkind = models.ForeignKey("CLAdmKind", null=True,  on_delete=models.CASCADE, db_column="cadmkind")
     cfob = models.ForeignKey("CLFob", null=True, on_delete=models.CASCADE, db_column="cfob")
 
 

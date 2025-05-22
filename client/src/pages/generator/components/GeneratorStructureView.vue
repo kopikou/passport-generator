@@ -17,6 +17,7 @@ const {
   interactiveMethods,
   additionalInfo,
   disabled,
+  admissionData,
   planlinesData,
 } = storeToRefs(generatorViewStore)
 
@@ -43,17 +44,18 @@ async function savePracticeWay() {
       position: "bottom",
       html: true,
     })
-    let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
-    if (key) _.set(additionalInfo.value, `[${key}].value.practiceWay`, way.value)
-    else additionalInfo.value.push({
-      id: r.data.id,
-      planlineslink_id: activeRpdId.value,
-      type: 'practiceWay',
-      value: {
-        practiceWay: way.value,
-      }
-    })
+    await generatorViewStore.getData();
     generatorViewStore.checkErrors()
+    // let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
+    // if (key) _.set(additionalInfo.value, `[${key}].value.practiceWay`, way.value)
+    // else additionalInfo.value.push({
+    //   id: r.data.id,
+    //   planlineslink_id: activeRpdId.value,
+    //   type: 'practiceWay',
+    //   value: {
+    //     practiceWay: way.value,
+    //   }
+    // })
   } else {
 
     $q.notify({
@@ -107,7 +109,7 @@ async function saveMethods() {
 }
 
 watch(semestersData, () => {
-  tab.value = `${semestersData.value[0].num}`
+  tab.value = `${semestersData.value[0]?.num}`
 }, {
   immediate: true
 })
@@ -140,7 +142,7 @@ watchEffect(() => {
         active-bg-color="teal-1"
       >
         <q-tab class="text-teal" v-for="item in semestersData" :name="`${item.num}`"
-               :label="`Семестр ${item.num}`"/>
+               :label="`${generatorViewStore.semesterYearLabel} ${item.num}`"/>
       </q-tabs>
 
       <q-tab-panels
@@ -228,9 +230,11 @@ watchEffect(() => {
               <template v-slot:control>
                 <div class="self-center full-width no-outline text-center">
                   <span v-if="item.ekz">Экзамен</span>
-                  <span v-if="item.zach">Зачет</span>
-                  <span v-if="item.zacho">Зачет с оценкой</span>
-                  <span v-if="!item.ekz && !item.zach && !item.zacho">Отсутствует</span>
+                  <span v-else-if="item.zach">Зачет</span>
+                  <span v-else-if="item.zacho">Зачет с оценкой</span>
+                  <span v-else-if="admissionData?.cadmkind == 5 && rpdData.planlines?.dis == 'Иностранный язык'">Кандидатский экзамен по иностранному языку</span>
+                  <span v-else-if="admissionData?.cadmkind == 5 && rpdData.planlines?.dis == 'История и философия науки'">Кандидатский экзамен по истории и философии науки</span>
+                  <span v-else-if="!item.ekz && !item.zach && !item.zacho">Отсутствует</span>
                 </div>
               </template>
             </q-field>

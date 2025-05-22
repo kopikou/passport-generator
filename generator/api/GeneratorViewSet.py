@@ -5,6 +5,7 @@ from subprocess import run
 from time import sleep
 
 import pendulum
+from constance import config
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import HttpResponse
@@ -514,7 +515,9 @@ class GeneratorViewSet(
         instance.user_accepted = self.request.user
         instance.accept_date = pendulum.now()
 
-        if instance.user_confirmed and instance.user_accepted:
+        if instance.planlines.dis in config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n"):
+            instance.status = PlanLinesLink.StatusChoices.accepted
+        elif instance.user_confirmed and instance.user_accepted:
             instance.status = PlanLinesLink.StatusChoices.accepted
         instance.save()
 

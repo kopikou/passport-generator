@@ -146,7 +146,7 @@ watchEffect(() => {
         active-bg-color="teal-1"
       >
         <q-tab class="text-teal" v-for="item in [...semestersData, {num: -1}]" :name="item.num"
-               :label="item.num == -1 ? 'Все' : `Семестр ${item.num}`"/>
+               :label="item.num == -1 ? 'Все' : `${generatorViewStore.semesterYearLabel} ${item.num}`"/>
       </q-tabs>
     </template>
     <template #content>

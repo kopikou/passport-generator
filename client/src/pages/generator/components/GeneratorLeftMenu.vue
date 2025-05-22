@@ -114,9 +114,8 @@ const filterMenuItems = computed(() => {
    if (planlinesData.value.viewpract) {
     return _(menuItems.value).filter(x => x.allow.includes(admissionData.value.cadmkind)).filter(x => x.rpp).value()
   } else {
-    return _(menuItems.value).filter(x => x.allow.includes(admissionData.value.cadmkind)).filter(x => x.rpd).value()
+    return _(menuItems.value).filter(x => x.allow.includes(admissionData.value?.cadmkind)).filter(x => x.rpd).value()
   }
-
 })
 
 const criticalErrors = computed(() => {

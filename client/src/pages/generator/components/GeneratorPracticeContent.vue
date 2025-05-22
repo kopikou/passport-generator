@@ -55,7 +55,7 @@ async function saveRow() {
     value: rows.value,
   })
 
-  await generatorViewStore.getData()
+  await generatorViewStore.getData();
 }
 
 function updateRow(id) {
@@ -146,6 +146,7 @@ async function saveContent() {
     position: "bottom",
     html: true,
   })
+  await generatorViewStore.getData();
 
   await generatorViewStore.getData()
   // let key = _.findKey(additionalInfo.value, x => x.type == 'practiceContentText')

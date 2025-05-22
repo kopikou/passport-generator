@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import EmptyIcon from "components/EmptyIcon.vue";
 import LayoutHCF from "components/LayoutHCF.vue";
-import {ref} from "vue";
+import {computed, ref} from "vue";
 import GeneratorPageView from "pages/generator/components/GeneratorPageView.vue";
+import useGeneratorViewStore from "stores/generatorViewStore";
 
 const props = defineProps({
   disabled: Boolean,
@@ -15,11 +16,15 @@ const props = defineProps({
   buttonAddTitle: String
 })
 
+const generatorViewStore = useGeneratorViewStore();
+
 const emit = defineEmits(["addClicked"])
 
 const tab = defineModel('tab', {
   default: 0
 });
+
+
 
 </script>
 
@@ -44,7 +49,7 @@ const tab = defineModel('tab', {
           class="q-mb-md"
         >
           <q-tab class="text-teal" v-for="item in semestersData" :name="item.num"
-                 :label="`Семестр ${item.num}`"/>
+                 :label="`${generatorViewStore.semesterYearLabel} ${item.num}`"/>
           <q-tab class="text-teal" :name="-1">Все</q-tab>
         </q-tabs>
         <q-linear-progress class="q-mb-md" size="20px" rounded :value="allSemesterPercentValue / allSemesterPercent"

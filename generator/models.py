@@ -178,3 +178,5 @@ class ScientificDataDefault(TimestampsModel):
 
     def __str__(self):
         return f"{self.kurs} | {self.semester} | {self.order} | {self.name}"
+
+
