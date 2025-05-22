@@ -101,7 +101,8 @@ watch(() => props.id,
       <div style="justify-content: flex-end; display: flex; gap: 8px">
         <q-btn
           color="purple-5"
-          label="Просмотр РПД"
+          label="Выгрузить в PDF"
+          no-caps
           icon="mdi-file-pdf-box"
           :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-report/`"
           target="_blank"
