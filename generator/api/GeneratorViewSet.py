@@ -224,7 +224,7 @@ class GeneratorViewSet(
 
     @action(methods=['GET'], url_path="get-program-list", detail=False, permission_classes=[IsAuthenticated])
     def get_program_list(self, request, *args, **kwargs):
-        res = GeneratorService.get_program_list(self.request.user.userprofile.mira_id)
+        res = GeneratorService.get_program_list(self.request.user.userprofile.mira_id, 2025)
 
         return Response(
             data=res,
@@ -425,7 +425,7 @@ class GeneratorViewSet(
 
         return Response(serializer_data.data)
 
-    @action(methods=['GET'], url_path="get-rpd-report", detail=True)
+    @action(methods=['GET'], url_path="get-rpd-report", detail=True, permission_classes=[IsAuthenticated])
     def get_rpd_report(self, request, *args, **kwargs):
 
         instance = self.get_object()

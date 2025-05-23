@@ -13,6 +13,7 @@ from rest_framework.viewsets import GenericViewSet
 from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from auths.models import Permissions
+from generator.models import PlanLinesLink
 from generator.permissions import CanEditRPDProgram, CanUploadFiles, CanViewFileList
 from rpd.models import PlanData, PlanDocuments, BaseDocuments
 from uplfile.models import UploadFiles
@@ -78,7 +79,7 @@ class UploadFileViewSet(
                 })
         return Response(result)
 
-    @action(methods=['POST'], url_path="save-file", detail=True, permission_classes=[CanUploadFiles])
+    @action(methods=['POST'], url_path="save-file", detail=True)
     def save_file(self, request, *args, **kwargs):
         data = {}
         for filename, file in request.FILES.items():
@@ -99,10 +100,28 @@ class UploadFileViewSet(
 
         return Response(data_serializer.data)
 
-
     @action(methods=['GET'], url_path="get-base-documents", detail=False)
     def get_base_documents(self, request, *args, **kwargs):
 
         res = BaseDocuments.objects.all().values()
 
         return Response([i for i in res], status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], url_path="get-programs", detail=True)
+    def get_programs(self, request, *args, **kwargs):
+
+        pk = self.kwargs.get('pk')
+
+        data = PlanLinesLink.objects.filter(planlines__plan_id=pk).select_related('planlines')
+        res = []
+
+        for i in data:
+            res.append({
+                'id': i.id,
+                'status': i.status,
+                'status_verbose': i.status_verbose,
+                'dis': i.planlines.dis,
+                'type': i.planlines.type,
+            })
+
+        return Response(data=res, status=status.HTTP_200_OK)

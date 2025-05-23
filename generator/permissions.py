@@ -81,6 +81,18 @@ class CanUploadFiles(IsAuthenticated):
 
     def has_permission(self, request, view):
         programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
-        pk = view.kwargs['pk']
+        programms_types = []
 
-        return int(pk) in [i['plan_id'] for i in programms]
+        for i in programms:
+            for j in i['type']:
+                if j not in programms_types:
+                    programms_types.append(j)
+
+        res = False
+
+        for i in ['zav', 'fac', 'rop']:
+            if i in programms_types:
+                res = True
+                return res
+
+        return res

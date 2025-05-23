@@ -88,10 +88,16 @@ class AISServices(object):
         query = Q(fordel='f', startyear__gte=left_time)
         if adm_user:
             admin = True
-            if adm_user.isadmin == 't':
-                query |= Q()
+            if adm_user.isadmin == 'f':
+                query |= Q(cperson=id)
             elif adm_user.isspo == 't':
                 query |= Q(ckaf__in=[1988587, 1988517, 1988516])
+
+            if adm_user.cfac_id:
+                uchplans = [i.cuchplan for i in
+                            Catadmission.objects.filter(cfac_id=adm_user.cfac_id, active='t', yr__gte=left_time,
+                                                        cuchplan__isnull=False)]
+                query |= Q(id__in=[i.id for i in uchplans])
         else:
             query &= Q(cperson=id)
         if cfac:
@@ -158,14 +164,19 @@ class AISServices(object):
 
     @staticmethod
     # @cache_function(timeout=10 * 1)
-    def get_disciplines_by_person(id):
+    def get_disciplines_by_person(id, year):
 
         # q = f"""exec rpd_list_for_person %s"""
         q = f"""
 
             declare @id INT;
+            declare @year INT;
+            declare @cfacADM int;
+            DECLARE @adm varchar;
+            SET @id = %s;
+            SET @year = %s;
+            (SELECT @cfacADM = cfac, @adm = isadmin from rpdusers where cperson = @id)
 
-            SET @id = %s
 
             SELECT
             DISTINCT
@@ -183,7 +194,7 @@ class AISServices(object):
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
-            where u.cperson = @id and p.fordel = 'f' and u.fordel = 'f' and u.type != 3
+            where u.cperson = @id and p.fordel = 'f' and u.fordel = 'f' and u.type != 3 and p.startyear = @year
 
             UNION ALL
 
@@ -192,7 +203,7 @@ class AISServices(object):
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
             LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where u.ckaf in (SELECT id FROM dbo.catkaf WHERE czav = @id AND isreal = 't') and p.fordel = 'f' and u.fordel = 'f' and  u.type != 3
+            where u.ckaf in (SELECT id FROM dbo.catkaf WHERE czav = @id AND isreal = 't') and p.fordel = 'f' and u.fordel = 'f' and  u.type != 3 and p.startyear = @year
 
             UNION ALL
 
@@ -201,7 +212,7 @@ class AISServices(object):
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
             LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where a.cfac in (SELECT id FROM dbo.catfaculty WHERE cdean = @id AND realfac = 't') and p.fordel = 'f' and u.fordel = 'f' and  u.type != 3
+            where a.cfac in (SELECT id FROM dbo.catfaculty WHERE cdean = @id AND realfac = 't') and p.fordel = 'f' and u.fordel = 'f' and  u.type != 3 and p.startyear = @year
 
             UNION ALL
 
@@ -213,8 +224,20 @@ class AISServices(object):
             where p.cperson = @id
             --a.cspec in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id) OR a.cprofili in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id)
             --OR a.cdirection in (SELECT id FROM dbo.[cl$direction] WHERE cperson = @id)
-            AND p.fordel = 'f' and u.fordel = 'f' and  u.type != 3
+            AND p.fordel = 'f' and u.fordel = 'f' and  u.type != 3 and p.startyear = @year
 
+			UNION ALL
+
+			SELECT DISTINCT d.name as discpl,d.id as id_discpl, u.id as planlin, p.abbrprofile as abbr, p.startyear as yr, p.cadmission as id_admission,  u.cperson AS mira_id, 'view' AS type  -- Руководитель программы
+            FROM uchplan_lines u
+            left join uchplan_discpl d on (u.disid = d.id)
+            left join uchplan_plan p on (p.id = u.planid)
+            LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
+            where
+			((@cfacADM is not null and a.cfac = @cfacADM) or @adm = 't')
+            --a.cspec in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id) OR a.cprofili in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id)
+            --OR a.cdirection in (SELECT id FROM dbo.[cl$direction] WHERE cperson = @id)
+            AND p.fordel = 'f' and u.fordel = 'f' and  u.type != 3 and p.startyear = @year
             ) t
             LEFT JOIN dbo.catperson cp ON cp.id = t.mira_id
             WHERE t.mira_id IS NOT NULL
@@ -229,7 +252,7 @@ class AISServices(object):
         #
         # data = r.json()['RecordSet']
 
-        data = Mira.fetch(q, [int(id)])
+        data = Mira.fetch(q, [int(id), int(year)])
 
         return data
 

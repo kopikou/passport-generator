@@ -21,14 +21,14 @@ class GeneratorService(object):
 
     @classmethod
     # @cache_function(timeout=60 * 1)
-    def get_program_list(cls, user_mira_id):
+    def get_program_list(cls, user_mira_id, year=2025):
         cache_key = f"rpd_get_program_list_{user_mira_id}"
         if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
             result = cache.get(cache_key)
             if result:
                 return result
 
-        data = AISServices.get_disciplines_by_person(user_mira_id)
+        data = AISServices.get_disciplines_by_person(user_mira_id, year)
 
         discpl_list = list(set(i['discpl'] for i in data))
         abbrprofile_list = list(set(i['abbr'] for i in data))
@@ -40,7 +40,7 @@ class GeneratorService(object):
 
         filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.plan.startyear}": i for i in filtered_data}
 
-        lineslink = PlanLinesLink.objects.filter(mira_id__in=[i['planlin'] for i in data])
+        lineslink = PlanLinesLink.objects.filter(mira_id__in=[i['planlin'] for i in data]).select_related("planlines", "user_confirmed", "user_accepted")
         lineslink_sorted = sorted(lineslink, key=lambda x: x.mira_id)
         lineslink_by_id = {i.mira_id: i for i in lineslink_sorted}
 
