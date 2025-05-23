@@ -66,10 +66,10 @@ const studyprogFilter = ref<string[]>([])
 
 function getFileUrl(item: PlanData, typeId: number) {
   let file = item.documents_files.find(x => x.type_id == typeId);
-  console.log(item.documents_files);
-  if (file) {
+  if (file.url)
     window.open(`${FORCE_SCRIPT_NAME.value}` + file.url, "_blank")
-  }
+  else if (file.file)
+    window.open(`${FORCE_SCRIPT_NAME.value}` + file.file, "_blank")
 }
 
 function getFileId(item: PlanData, fileId) {
