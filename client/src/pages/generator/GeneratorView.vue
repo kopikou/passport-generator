@@ -61,6 +61,16 @@ async function sendToReview() {
   $q.loading.hide()
 }
 
+async function sendToApprove() {
+  $q.loading.show()
+  let r = await api.post(`/api/generator/${activeRpdId.value}/accept-rpd/`)
+  rpdData.value.status = r.data.status
+  rpdData.value.status_verbose = r.data.status_verbose
+  await generatorViewStore.getData()
+  $q.loading.hide()
+}
+
+
 async function onEditClick() {
   $q.dialog({
     message: "Подтвердите, что хотите скорректировать план. После корректировки РПД, вам необходимо будет снова переутвердить РПД",
@@ -116,8 +126,8 @@ watch(() => props.id,
         />
         <q-btn v-if="!disabled"
                color="secondary"
-               @click="sendToReview"
-               label="Отправить на согласование"
+               @click="planlinesData.viewpract ? sendToApprove() : sendToReview()"
+               :label="planlinesData.viewpract ? 'Утвердить' : 'Отправить на согласование'"
                :disabled="criticalErrors.length != 0"
         />
         <template v-else>

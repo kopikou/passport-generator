@@ -21,6 +21,11 @@ class GeneratorService(object):
         cache.delete(key)
 
     @classmethod
+    def reset_practice_list_cache(cls, user_mira_id):
+        key = f"rpd_get_practice_list_{user_mira_id}"
+        cache.delete(key)
+
+    @classmethod
     # @cache_function(timeout=60 * 1)
     def get_program_list(cls, user_mira_id):
         cache_key = f"rpd_get_program_list_{user_mira_id}"
@@ -118,6 +123,12 @@ class GeneratorService(object):
     @classmethod
     @cache_function(timeout=60 * 1)
     def get_practice_list(cls, user_mira_id):
+        cache_key = f"rpd_get_practice_list_{user_mira_id}"
+        if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
+            result = cache.get(cache_key)
+            if result:
+                return result
+
         data = AISServices.get_practice_by_person(user_mira_id)
 
         discpl_list = [i['discpl'] for i in data]
@@ -178,6 +189,8 @@ class GeneratorService(object):
                 "type": [i['type'] for i in items],
             }
             res.append(temp)
+
+        cache.set(cache_key, res, 60)
 
         return res
 

@@ -487,6 +487,7 @@ class GeneratorViewSet(
         instance.confirm_date = None
         instance.save()
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
+        GeneratorService.reset_practice_list_cache(self.request.user.userprofile.mira_id)
 
         return Response(data={'status_verbose': PlanLinesLink.StatusChoices.is_filled.label,
                               'status': PlanLinesLink.StatusChoices.is_filled})
@@ -499,6 +500,7 @@ class GeneratorViewSet(
         instance.review_date = pendulum.now()
         instance.save()
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
+        GeneratorService.reset_practice_list_cache(self.request.user.userprofile.mira_id)
 
         return Response(data={'status_verbose': PlanLinesLink.StatusChoices.on_review.label,
                               'status': PlanLinesLink.StatusChoices.on_review})
@@ -507,9 +509,9 @@ class GeneratorViewSet(
     def accept_rpd(self, request, *args, **kwargs):
         instance = self.get_object()
         # instance.status = PlanLinesLink.StatusChoices.accepted
-        instance.protocol_number = self.request.data['number']
-        instance.protocol_date = self.request.data['date']
-        instance.meeting = self.request.data['meeting']
+        instance.protocol_number = self.request.data.get('number')
+        instance.protocol_date = self.request.data.get('date')
+        instance.meeting = self.request.data.get('meeting')
         # instance.user_type = self.request.data['userType']
 
         instance.user_accepted = self.request.user
@@ -519,9 +521,12 @@ class GeneratorViewSet(
             instance.status = PlanLinesLink.StatusChoices.accepted
         elif instance.user_confirmed and instance.user_accepted:
             instance.status = PlanLinesLink.StatusChoices.accepted
+        elif instance.planlines.viewpract:
+            instance.status = PlanLinesLink.StatusChoices.accepted
         instance.save()
 
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
+        GeneratorService.reset_practice_list_cache(self.request.user.userprofile.mira_id)
 
         return Response({"success": True})
 
@@ -536,6 +541,7 @@ class GeneratorViewSet(
         instance.save()
 
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
+        GeneratorService.reset_practice_list_cache(self.request.user.userprofile.mira_id)
 
         return Response({"success": True})
 
@@ -546,6 +552,7 @@ class GeneratorViewSet(
         instance.save()
 
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
+        GeneratorService.reset_practice_list_cache(self.request.user.userprofile.mira_id)
 
         PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], user_id=self.request.user.id,
                                              planlineslink_id=instance.id)
