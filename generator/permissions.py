@@ -1,7 +1,9 @@
 from rest_framework.permissions import BasePermission, IsAuthenticated
 
+from arim.services import AISServices
 from generator.models import PlanLinesLink
 from generator.services.generator_service import GeneratorService
+from uplfile.service import UploadFileService
 
 
 class CanEditRPDProgram(IsAuthenticated):
@@ -58,29 +60,16 @@ class CanViewFileList(IsAuthenticated):
     message = 'У вас нет прав для просмотра файлов'
 
     def has_permission(self, request, view):
-        programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
-        programms_types = []
+        programms = UploadFileService.get_admission_data(request.user.userprofile.mira_id)
 
-        for i in programms:
-            for j in i['type']:
-                if j not in programms_types:
-                    programms_types.append(j)
-
-        res = False
-
-        for i in ['zav', 'fac', 'rop']:
-            if i in programms_types:
-                res = True
-                return res
-
-        return res
+        return len(programms) > 0
 
 
 class CanUploadFiles(IsAuthenticated):
     message = 'У вас нет прав для отправки файлов'
 
     def has_permission(self, request, view):
-        programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
+        programms = UploadFileService.get_admission_data(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
 
-        return int(pk) in [i['plan_id'] for i in programms]
+        return int(pk) in [i['plan_id'] for i in programms if i['cperson'] == request.user.userprofile.mira_id]
