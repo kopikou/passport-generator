@@ -200,15 +200,18 @@ class ReportService(object):
 
             if item['type'] == 'fos':
                 q = 0
+
+                fos_choiced = set([i['formcontrol_id'] for i in data['discipline_themes']])
                 for i in item['value']:
-                    q += 1
-                    fos.append({
-                        'number': q,
-                        'type': i['type'],
-                        'title': i['title'],
-                        'about': i['about'] if 'about' in i else '',
-                        'criteria': i['criteria'] if 'criteria' in i else '',
-                    })
+                    if i['type'] in fos_choiced:
+                        q += 1
+                        fos.append({
+                            'number': q,
+                            'type': i['type'],
+                            'title': i['title'],
+                            'about': i['about'] if 'about' in i else '',
+                            'criteria': i['criteria'] if 'criteria' in i else '',
+                        })
 
             if item['type'] == 'resources':
                 resources = item['value']
