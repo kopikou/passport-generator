@@ -9,7 +9,7 @@ import requests
 from django.conf import settings
 from urllib.parse import unquote
 
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 from django.db.models import Q
 from lxml import etree
 import re
@@ -139,7 +139,7 @@ class PLXParser:
         self.XMLNS = ""
         self.path = ""
 
-        if isinstance(filePath, InMemoryUploadedFile):
+        if isinstance(filePath, InMemoryUploadedFile) or isinstance(filePath, TemporaryUploadedFile):
             with NamedTemporaryFile(delete=False) as f:
                 f.write(filePath.read())
                 f.close()
