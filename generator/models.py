@@ -81,12 +81,20 @@ class DisciplineThemes(TimestampsModel):
     planlineslink = models.ForeignKey("PlanLinesLink", on_delete=models.CASCADE, related_name="discipline_themes")
     name = models.TextField()
     semester = models.IntegerField()
-    formcontrol = ArrayField(models.ForeignKey("FormControl", on_delete=models.CASCADE), default=list)
+    formcontrol = models.ForeignKey("FormControl", on_delete=models.CASCADE)
+    formcontrol_list = ArrayField(models.IntegerField(), default=list, null=True)
     comment = models.TextField()
     num = models.IntegerField()
 
     @property
     def formcontrol_verbose(self):
+
+        # formcontrol_names_by_id = {i.id: i.name for i in FormControl.objects.all()}
+        # res = []
+        # for i in self.formcontrol:
+        #     res.append(formcontrol_names_by_id[i])
+        #
+        # return ', '.join(res)
         return FormControl.objects.get(id=self.formcontrol_id).name
 
 

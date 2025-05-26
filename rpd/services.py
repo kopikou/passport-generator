@@ -394,35 +394,36 @@ class PLXParser:
         lines_data = {}
 
         for child in self.root.findall(self.path + 'ПланыСтроки'):
-            temp_dict = {}
-            temp_dict['plan_id'] = plan_id
-            temp_dict['synchronize'] = True
+            if child.attrib.get('Дисциплина'):
+                temp_dict = {}
+                temp_dict['plan_id'] = plan_id
+                temp_dict['synchronize'] = True
 
-            temp_dict['dis'] = child.attrib.get('Дисциплина')
-            temp_dict['newdisid'] = child.attrib.get('ДисциплинаКод')
-            temp_dict['mustbesdudied'] = int(child.attrib.get('ПодлежитИзучениюЧасов')) if child.attrib.get('ПодлежитИзучениюЧасов') else None
-            temp_dict['hoursinzet'] = int(child.attrib.get('ЧасовВЗЕТ')) if child.attrib.get('ЧасовВЗЕТ') else None
-            temp_dict['caf'] = int(child.attrib.get('КодКафедры')) if child.attrib.get('КодКафедры') else None
-            temp_dict['nocalccontrol'] = True if child.attrib.get('НеСчитатьКонтроль') == 'true' else False
-            temp_dict['type'] = int(child.attrib.get('ТипОбъекта')) if child.attrib.get('ТипОбъекта') else None
-            temp_dict['viewpract'] = int(child.attrib.get('ВидПрактики')) if child.attrib.get('ВидПрактики') else None
-            temp_dict['viewobject'] = int(child.attrib.get('ВидОбъекта')) if child.attrib.get('ВидОбъекта') else None
-            temp_dict['parent_id'] = abs(int(child.attrib.get('КодРодителя'))) if child.attrib.get('КодРодителя') else None
-            temp_dict['old_parent_id'] = abs(int(child.attrib.get('КодРодителя'))) if child.attrib.get('КодРодителя') else None
+                temp_dict['dis'] = child.attrib.get('Дисциплина')
+                temp_dict['newdisid'] = child.attrib.get('ДисциплинаКод')
+                temp_dict['mustbesdudied'] = int(child.attrib.get('ПодлежитИзучениюЧасов')) if child.attrib.get('ПодлежитИзучениюЧасов') else None
+                temp_dict['hoursinzet'] = int(child.attrib.get('ЧасовВЗЕТ')) if child.attrib.get('ЧасовВЗЕТ') else None
+                temp_dict['caf'] = int(child.attrib.get('КодКафедры')) if child.attrib.get('КодКафедры') else None
+                temp_dict['nocalccontrol'] = True if child.attrib.get('НеСчитатьКонтроль') == 'true' else False
+                temp_dict['type'] = int(child.attrib.get('ТипОбъекта')) if child.attrib.get('ТипОбъекта') else None
+                temp_dict['viewpract'] = int(child.attrib.get('ВидПрактики')) if child.attrib.get('ВидПрактики') else None
+                temp_dict['viewobject'] = int(child.attrib.get('ВидОбъекта')) if child.attrib.get('ВидОбъекта') else None
+                temp_dict['parent_id'] = abs(int(child.attrib.get('КодРодителя'))) if child.attrib.get('КодРодителя') else None
+                temp_dict['old_parent_id'] = abs(int(child.attrib.get('КодРодителя'))) if child.attrib.get('КодРодителя') else None
 
-            lines_code = int(child.attrib.get('Код'))
+                lines_code = int(child.attrib.get('Код'))
 
-            tmp = []
-            for deep in self.root.findall(self.path + 'ПланыКомпетенцииДисциплины'):
-                indicators_code = abs(int(deep.attrib.get('КодКомпетенции')))
+                tmp = []
+                for deep in self.root.findall(self.path + 'ПланыКомпетенцииДисциплины'):
+                    indicators_code = abs(int(deep.attrib.get('КодКомпетенции')))
 
-                if lines_code == int(deep.attrib.get('КодСтроки')) and indicators_code in indicators:
-                    tmp.append(indicators[indicators_code]['index'])
+                    if lines_code == int(deep.attrib.get('КодСтроки')) and indicators_code in indicators:
+                        tmp.append(indicators[indicators_code]['index'])
 
-            temp_dict['kompetences'] = ','.join(tmp)
+                temp_dict['kompetences'] = ','.join(tmp)
 
-            lines_data[abs(lines_code)] = {}
-            lines_data[abs(lines_code)].update(temp_dict)
+                lines_data[abs(lines_code)] = {}
+                lines_data[abs(lines_code)].update(temp_dict)
 
         return lines_data
 
