@@ -34,7 +34,7 @@ const props = defineProps({
 })
 
 const themeName = ref('')
-const control = ref()
+const control = ref([])
 const comment = ref('')
 const semNew = ref(0)
 // const num = ref()
@@ -128,6 +128,8 @@ watch(() => props, () => {
           option-value="id"
           map-options
           emit-value
+          multiple
+          use-chips
         />
         <q-input
           stack-label

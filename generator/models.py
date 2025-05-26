@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models.enums import TextChoices, IntegerChoices
 
@@ -80,7 +81,7 @@ class DisciplineThemes(TimestampsModel):
     planlineslink = models.ForeignKey("PlanLinesLink", on_delete=models.CASCADE, related_name="discipline_themes")
     name = models.TextField()
     semester = models.IntegerField()
-    formcontrol = models.ForeignKey("FormControl", on_delete=models.CASCADE)
+    formcontrol = ArrayField(models.ForeignKey("FormControl", on_delete=models.CASCADE), default=list)
     comment = models.TextField()
     num = models.IntegerField()
 
