@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.db import models, connection
 from django.http import JsonResponse
-from pywin.scintilla import view
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
