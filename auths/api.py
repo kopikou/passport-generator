@@ -1,18 +1,21 @@
 from django.conf import settings
 from django.db import models, connection
 from django.http import JsonResponse
+from pywin.scintilla import view
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 
-from auths.models import UserProfile
+from auths.models import UserProfile, Permissions
 from auths.serializer import UserSerializer
 
 import django.middleware.csrf
 import requests
 
 from rpd.models import RPDFile
+from uplfile.service import UploadFileService
+
 
 def foreign_tables(table, all_tables):
     result = []
@@ -67,7 +70,11 @@ class UserApiViewSet(ListModelMixin, GenericViewSet):
             'FORCE_SCRIPT_NAME': settings.FORCE_SCRIPT_NAME or "",
         }
 
+
         if self.request.user.is_authenticated:
+            can_upload = Permissions.can_upload_files in self.request.user.userprofile.permissions
+            have_files = len(UploadFileService.get_admission_data(request.user.userprofile.mira_id)) > 0
+
             data.update({
                 "user_id": self.request.user.id,
                 "username": self.request.user.username,
@@ -79,6 +86,7 @@ class UserApiViewSet(ListModelMixin, GenericViewSet):
                 'is_student': self.request.user.userprofile.is_student,
                 'is_teacher': self.request.user.userprofile.is_teacher,
                 'permissions': self.request.user.userprofile.permissions,
+                'can_upload': can_upload or have_files,
             })
 
         return JsonResponse(data)

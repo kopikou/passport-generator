@@ -15,15 +15,10 @@ const {
   lastName,
   firstName,
   permissions,
+  can_upload,
   FORCE_SCRIPT_NAME,
 } = storeToRefs(mainStore)
 
-
-const uploadFileViewStore = useUploadFileViewStore();
-
-const {
-  admissionData,
-} = storeToRefs(uploadFileViewStore)
 
 const $q = useQuasar()
 
@@ -66,7 +61,7 @@ onBeforeMount(async () => {
         </q-toolbar-title>
         <q-tabs inline-label dense shrink stretch v-if="isAuthenticated">
           <q-route-tab icon="mdi-upload-box" label="Загрузка файлов программ" to="/upload"
-                       v-show="_.size(admissionData) > 0 || permissions.includes('can_upload_files')"
+                       v-show="can_upload"
           />
           <q-route-tab icon="mdi-generator-portable" label="РПД" to="/generator"
                        v-permissions-required="Permissions.can_use_generator"

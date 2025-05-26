@@ -57,7 +57,8 @@ class CanConfirmRPDProgram(IsAuthenticated):
 
 
 class CanViewFileList(IsAuthenticated):
-    message = 'У вас нет прав для просмотра файлов'
+    # message = 'У вас нет прав для просмотра файлов'
+    message = 'Нет файлов для просмотра'
 
     def has_permission(self, request, view):
         programms = UploadFileService.get_admission_data(request.user.userprofile.mira_id)

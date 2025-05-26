@@ -18,6 +18,8 @@ const useMainStore = defineStore("MainStore", () => {
   const csrf = ref('');
   const permissions = ref<Permissions[]>([]);
 
+  const can_upload = ref(false)
+
   const router = useRouter();
 
   async function checkLogin() {
@@ -37,6 +39,9 @@ const useMainStore = defineStore("MainStore", () => {
     FORCE_SCRIPT_NAME.value = r.data.FORCE_SCRIPT_NAME
     VISIT_TOKEN_TIMEOUT.value = r.data.VISIT_TOKEN_TIMEOUT
     csrf.value = r.data.csrf
+    can_upload.value = r.data.can_upload
+
+
     api.defaults.headers.common['X-CSRFToken'] = r.data.csrf
 
     let baseTag = document.querySelector("base")
@@ -62,6 +67,7 @@ const useMainStore = defineStore("MainStore", () => {
     FORCE_SCRIPT_NAME,
     VISIT_TOKEN_TIMEOUT,
     csrf,
+    can_upload,
     permissions,
     checkLogin,
   }
