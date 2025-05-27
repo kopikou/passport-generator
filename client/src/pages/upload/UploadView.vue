@@ -143,7 +143,7 @@ function sortDocuments(val) {
 <template>
   <layout-h-c-f>
     <template #header>
-      <div class="text-center text-h6 q-mb-md">Список рабочих программ ИРНИТУ</div>
+      <div class="text-center text-h6 q-mb-md"></div>
       <div class="q-pa-md" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px">
         <q-input v-model="textFilter" label="Направление"></q-input>
 <!--        <q-select-->
