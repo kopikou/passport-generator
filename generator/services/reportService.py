@@ -17,11 +17,12 @@ from rpd.models import LinesIndicators, PlanData
 def get_tic_name(data, plan_data=None):
     result = []
 
-    if plan_data['admission']['cadmkind'] == 5:
-        if plan_data['planlines']['dis'] == 'Иностранный язык':
-            result.append('Кандидатский экзамен по иностранному языку')
-        if plan_data['planlines']['dis'] == 'История и философия науки':
-            result.append('Кандидатский экзамен по истории и философии науки')
+    if plan_data:
+        if plan_data['admission']['cadmkind'] == 5:
+            if plan_data['planlines']['dis'] == 'Иностранный язык':
+                result.append('Кандидатский экзамен по иностранному языку')
+            if plan_data['planlines']['dis'] == 'История и философия науки':
+                result.append('Кандидатский экзамен по истории и философии науки')
 
     if data['zach']:
         result.append('Зачет')
@@ -103,6 +104,188 @@ class ReportService(object):
         return doc
 
     @staticmethod
+    def get_practice_report(data):
+
+        path = f'{BASE_DIR}{Path("/templates/docxRPD/practice.docx")}'
+
+        doc = DocxTemplate(path)
+
+        competences_sorted = sorted(data['planlines']['indicators'], key=lambda item: item['competence_index'])
+        competences_grouped = {key: list(items) for key, items in
+                               groupby(competences_sorted, key=lambda item: item['competence_index'])}
+        competence = []
+        for sem, item in competences_grouped.items():
+            competence.append({
+                "index": sem,
+                "content": item[0]['competence'],
+                "indicators": ", ".join([i['indicator_index'] for i in item]),
+                "ind_content": ", ".join([i['indicator'] for i in item]),
+            })
+
+        indicators = []
+        for item in data['planlines']['indicators']:
+            indicators.append({
+                'index': item['indicator_index'],
+                'content': item['indicator'],
+                'know': item['discipline_indicator'][0]['know'] if item['discipline_indicator'] else '',
+                'able': item['discipline_indicator'][0]['able'] if item['discipline_indicator'] else '',
+                'own': item['discipline_indicator'][0]['own'] if item['discipline_indicator'] else '',
+                'criteria': item['discipline_indicator'][0]['criteria'] if item['discipline_indicator'] else '',
+                'methods': item['discipline_indicator'][0]['methods'] if item['discipline_indicator'] else '',
+            })
+
+        if data['admission']['ckaf_id'] == 105:
+            podrazdelene = data['admission']['cfac__name'].strip()
+        else:
+            podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
+
+        discipline = data['planlines']['dis'].split(': ')
+
+        additional_library = []
+        main_library = []
+        tat = []
+        resources = []
+        software = []
+        logistics = []
+        practice_way = []
+        practice_content_text = ''
+        practice_content = []
+        practice_report = []
+        practice_report_req = ''
+        for item in data['additional_info']:
+            if item['type'] == 'practiceWay':
+                practice_way = item['value']['practiceWay']
+
+            if item['type'] == 'practiceContent':
+                practice_content = item['value']
+
+            if item['type'] == 'practiceContentText':
+                practice_content_text = item['value']['content']
+
+            if item['type'] == 'practiceReport':
+                practice_report_req = item['value']['requirements']
+                practice_report = item['value']['documents'].split('\n')
+
+            if item['type'] == 'resources':
+                resources = item['value']
+
+            if item['type'] == 'library':
+                for k, i in enumerate(item['value']['dopBook'], start=1):
+                    additional_library.append({
+                        "number": k,
+                        "bib_disc": i['bib_disc'],
+                    })
+
+                for k, i in enumerate(item['value']['mainBook'], start=1):
+                    main_library.append({
+                        "number": k,
+                        "bib_disc": i['bib_disc'],
+                    })
+
+            if item['type'] == 'software':
+                for k, i in enumerate(item['value'], start=1):
+                    if 'clicense__type' in i:
+                        software.append({
+                            'number': k,
+                            'content': 'Свободно распространяемое программное обеспечение ' + i['clicense__name']
+                            if i['clicense__type'] == 'Свободное'
+                            else 'Лицензионное программное обеспечение ' + i['clicense__name'],
+                        })
+                    else:
+                        software.append({
+                            'number': k,
+                            'content': i['clicense__name'],
+                        })
+
+            if item['type'] == 'logistics':
+                for k, i in enumerate(item['value'], start=1):
+                    logistics.append({
+                        'number': k,
+                        'name': i['name'],
+                    })
+
+            if item['type'] == 'tat':
+                q = 0
+                for i in item['value']:
+                    q += 1
+                    if i['type'] == 'zach':
+                        tat.append({
+                            'number': q,
+                            'type': i['type'],
+                            'title': i['title'].lower(),
+                            'form': i['form'],
+                            'formabout': i['formabout'],
+                            "tat": i['tat'],
+                            'passed': i['passed'],
+                            'unpassed': i['unpassed'],
+                        })
+                    else:
+                        tat.append({
+                            'number': q,
+                            'type': i['type'],
+                            'title': i['title'].lower(),
+                            'form': i['form'],
+                            'formabout': i['formabout'],
+                            "tat": i['tat'],
+                            'great': i['great'],
+                            'good': i['good'],
+                            'satisfactorily': i['satisfactorily'],
+                            'unsatisfactory': i['unsatisfactory'],
+                        })
+
+        semesters = []
+        for item in data['planlines']['semesters']:
+            semesters.append({
+                "num": item['num'],
+                "kurs": (item['num'] + 1) // 2,
+                "srs_hours": item['srs'] or 0,
+                "weeks": int(item['srs'] / 54),
+                "zet": int(item['zet']) or 0,
+                "tic": ', '.join(get_tic_name(item)),
+            })
+
+        contex = {
+            "now": pendulum.now().start_of("day"),
+            "current_year": pendulum.now().year,
+            "kaf_name": data['admission']['ckaf__name'],
+            "fac_name": data['admission']['cfac__name'],
+            "podrazdelene": podrazdelene,
+            "view_pract": discipline[0],
+            "discipline": discipline[1],
+            "kvalif": data['admission']['kvalif_name'],
+            "spec_name": data['admission']['spec_name'],
+            "kind": data['admission']['cadmkind__name_prof'],
+            "kind_direct": 'Специальность' if data['admission']['cadmkind'] == 1 else 'Направление',
+            "direction": data['admission']['cdirection__name'],
+            "direction_code": data['admission']['cdirection__cod'],
+            "year_post": data['admission']['yr'],
+            "protocol_number": data['protocol_number'] if data['protocol_number'] else '',
+            "meeting": data['meeting'] if data['meeting'] else '',
+            "accept_date": data['accept_date'] if data['accept_date'] else '',
+            "review_date": data['review_date'] if data['review_date'] else '',
+            "fob": data['admission']['cfob__name'],
+            "semesters": semesters,
+            "status": data['status'],
+            "practice_way": ', '.join(practice_way),
+            "competence": competence,
+            "indicators": indicators,
+            "practice_content_text": practice_content_text,
+            "practice_content": practice_content,
+            "practice_report_req": practice_report_req,
+            "practice_report": practice_report,
+            "additional_library": additional_library,
+            "main_library": main_library,
+            "resources": resources,
+            "software": software,
+            "logistics": logistics,
+            "tat": tat,
+        }
+
+        doc.render(contex)
+
+        return doc
+
+    @staticmethod
     def get_rpd_report(data):
 
         path = f'{BASE_DIR}{Path("/templates/docxRPD/rpd.docx")}'
@@ -121,6 +304,7 @@ class ReportService(object):
                 "index": sem,
                 "content": item[0]['competence'],
                 "indicators": ", ".join([i['indicator_index'] for i in item]) if data['admission']['cadmkind'] != 5 else "\n".join([f"{i['indicator_index']} {i['indicator']}" for i in item]),
+                "ind_content": ", ".join([i['indicator'] for i in item]),
             })
 
         indicators = []

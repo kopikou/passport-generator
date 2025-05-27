@@ -29,6 +29,10 @@ import GeneratorTATView from "pages/generator/components/GeneratorTATView.vue";
 import UploadView from "pages/upload/UploadView.vue";
 import AspirantScientificPlansPage from "pages/scientificPlan/AspirantScientificPlansPage.vue";
 // import AspirantScientificPlanView from "pages/scientificPlan/AspirantScientificPlanView.vue";
+import PracticeGeneratorListView from "pages/generator/PracticeGeneratorListView.vue";
+import GeneratorPracticeContent from "pages/generator/components/GeneratorPracticeContent.vue";
+import GeneratorPracticeReportView from "pages/generator/components/GeneratorPracticeReportView.vue";
+import GeneratorMainView from "pages/generator/components/GeneratorMainView.vue";
 
 
 const routes: RouteRecordRaw[] = [
@@ -53,6 +57,88 @@ const routes: RouteRecordRaw[] = [
         name: 'ScientificPlan',
         component: () => import("pages/scientificPlan/AspirantScientificPlanView.vue"),
         props: true,
+      },
+    ]
+  },
+  {
+    path: '/practice_generator/',
+    name: 'PracticeGeneratorListPage',
+    meta: {
+      permissions: [Permissions.can_use_generator],
+    },
+    children: [
+      {
+        path: '',
+        name: "PracticeGeneratorListView",
+        component: PracticeGeneratorListView,
+      },
+      {
+        path: ':id',
+        name: 'PracticeGeneratorView',
+        component: GeneratorView,
+        props: true,
+        children: [
+          {
+            path: "main",
+            name: "PracticeGeneratorMainView",
+            component: GeneratorMainView,
+          },
+          {
+            path: "competences",
+            name: "PracticeGeneratorCompetencesView",
+            component: GeneratorCompetenceView,
+          },
+          {
+            path: "indicators",
+            name: "PracticeGeneratorindicatorsView",
+            component: GeneratorIndicatorsView,
+          },
+          {
+            path: "structure",
+            name: "PracticeGeneratorStructureView",
+            component: GeneratorStructureView,
+          },
+          {
+            path: "practice-content",
+            name: "PracticeGeneratorContent",
+            component: GeneratorPracticeContent,
+          },
+          {
+            path: "practice-report",
+            name: "PracticeGeneratorReport",
+            component: GeneratorPracticeReportView,
+          },
+          {
+            path: "library",
+            name: "PracticeGeneratorLibraryView",
+            component: GeneratorLibraryView,
+          },
+          {
+            path: "soft",
+            name: "PracticeGeneratorSoftwareView",
+            component: GeneratorSoftwareView,
+          },
+          {
+            path: "logistics",
+            name: "PracticeGeneratorLogisticsView",
+            component: GeneratorLogisticsView,
+          },
+          {
+            path: "resources",
+            name: "PracticeGeneratorResourcesView",
+            component: GeneratorResourcesView,
+          },
+          {
+            path: "guidelines",
+            name: "PracticeGeneratorGuidelinesView",
+            component: GeneratorGuidelinesView,
+          },
+          {
+            path: "tat",
+            name: "PracticeGeneratorTatView",
+            component: GeneratorTATView,
+          },
+        ]
       },
     ]
   },

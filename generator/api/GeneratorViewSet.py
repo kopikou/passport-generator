@@ -18,20 +18,20 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from app.utils import UserProfileHasPermission, RPGEN
+from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
-    DefaultsResources, PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
+    PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
     ScientificDataDefault, DisciplineIndicators
-from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanAcceptRPDProgram, CanConfirmRPDProgram
+from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanConfirmRPDProgram, CanAcceptRPDProgram, CanEditScientificProgram
 from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
 from generator.services import ReportService
 from generator.services.generator_service import GeneratorService
-from rpd.models import LinesData, PlanData, LinesIndicators
+from rpd.models import PlanData, LinesIndicators
 from rpd.services import RPDGenSerivce
 
 
@@ -49,7 +49,7 @@ class GeneratorViewSet(
         return Response(result)
 
 
-    @action(methods=['POST'], url_path='save-asp-program-data', detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['POST'], url_path='save-asp-program-data', detail=True, permission_classes=[CanEditScientificProgram])
     def save_asp_program_data(self, request, *args, **kwargs):
 
         data = self.request.data
@@ -63,7 +63,7 @@ class GeneratorViewSet(
 
         return Response(serializer.data)
 
-    @action(methods=['GET'], url_path='copy-asp-program-data', detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['GET'], url_path='copy-asp-program-data', detail=True, permission_classes=[CanEditScientificProgram])
     def copy_asp_program_data(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -121,35 +121,13 @@ class GeneratorViewSet(
 
     @action(methods=['get'], url_path="get-asp-program-list", detail=False, permission_classes=[IsAuthenticated])
     def get_aps_program_list(self, request, *args, **kwargs):
-        user = self.request.user.userprofile.mira_id
-
         year = self.request.query_params.get('year', pendulum.now().year)
 
-        data = AISServices.get_asp_napr(year, user)
-        data = sorted(data, key=lambda x: x['species'])
+        res = GeneratorService.get_asp_list(year, self.request.user)
 
-        result = {"items": data}
+        return Response(data=res)
 
-        if Permissions.scientific_admin in request.user.userprofile.permissions:
-
-            ais_plans = AISServices.get_all_asp(year)
-
-            scientific_plan = ScientificPlanData.objects.filter(startyear=year).values_list('mira_id', flat=True)
-            scientific_plan_ids = [i for i in scientific_plan]
-
-            res = []
-            for i in ais_plans:
-                res.append({
-                    **i,
-                    "created": True if i['id'] in scientific_plan_ids else False
-                })
-
-            res = sorted(res, key=lambda x: x['species'])
-            result.update({"admin_items": res})
-
-        return Response(data=result)
-
-    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True, permission_classes=[IsAuthenticated])
+    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True, permission_classes=[CanEditRPDProgram])
     def get_asp_program_detail(self, request, *args, **kwargs):
 
         pk = int(self.kwargs['pk'])
@@ -224,32 +202,31 @@ class GeneratorViewSet(
 
     @action(methods=['GET'], url_path="get-program-list", detail=False, permission_classes=[IsAuthenticated])
     def get_program_list(self, request, *args, **kwargs):
+
         res = GeneratorService.get_program_list(self.request.user.userprofile.mira_id)
 
         return Response(
             data=res,
         )
 
+    @action(methods=['GET'], url_path="get-practice-list", detail=False, permission_classes=[IsAuthenticated])
+    def get_practice_list(self, request, *args, **kwargs):
+        user = self.request.user.userprofile.mira_id
 
-    @action(methods=['POST'], url_path="save-scientific-data", detail=True, permission_classes=[CanEditRPDProgram])
-    def save_scientific_data(self, request, *args, **kwargs):
+        res = GeneratorService.get_practice_list(user)
 
-        pk = self.kwargs['pk']
+        return Response(
+            data=res,
+        )
 
-        serializer = ScientificDataSerializer(data={**request.data, "plan_id": pk})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        return Response(serializer.data)
-
-    @action(methods=['GET'], url_path="get-scientific-work", detail=False)
+    @action(methods=['GET'], url_path="get-scientific-work", detail=False, permission_classes=[IsAuthenticated])
     def get_scientific_work(self, request, *args, **kwargs):
 
         data = ScientificWorkType.objects.all().values('id', 'name')
 
         return Response(data=data)
 
-    @action(methods=['POST'], url_path="save-scientific-data", detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['POST'], url_path="save-scientific-data", detail=True, permission_classes=[CanEditScientificProgram])
     def save_scientific_data(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -269,14 +246,14 @@ class GeneratorViewSet(
 
         return Response(data=serializer.data)
 
-    @action(methods=['DELETE'], url_path="del-scientific-work", detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['DELETE'], url_path="del-scientific-work", detail=True, permission_classes=[CanEditScientificProgram])
     def del_scientific_work(self, request, *args, **kwargs):
 
         ScientificData.objects.get(id=self.kwargs['pk']).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['GET'], url_path="get-scientific-report", detail=True)
+    @action(methods=['GET'], url_path="get-scientific-report", detail=True, permission_classes=[IsAuthenticated])
     def get_scientific_report(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -448,7 +425,10 @@ class GeneratorViewSet(
         path_doc_file = f"{os.path.abspath(path)}/{pk}.docx"
         path_pdf_file = f"{os.path.abspath(path)}/{pk}.pdf"
 
-        tpl = ReportService.get_rpd_report(rpd_data)
+        if rpd_data['planlines']['viewpract']:
+            tpl = ReportService.get_practice_report(rpd_data)
+        else:
+            tpl = ReportService.get_rpd_report(rpd_data)
         # tpl.save(response)
 
         tpl.save(path_doc_file)
@@ -508,6 +488,7 @@ class GeneratorViewSet(
         instance.confirm_date = None
         instance.save()
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
+        GeneratorService.reset_practice_list_cache(self.request.user.userprofile.mira_id)
 
         return Response(data={'status_verbose': PlanLinesLink.StatusChoices.is_filled.label,
                               'status': PlanLinesLink.StatusChoices.is_filled})
@@ -520,6 +501,7 @@ class GeneratorViewSet(
         instance.review_date = pendulum.now()
         instance.save()
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
+        GeneratorService.reset_practice_list_cache(self.request.user.userprofile.mira_id)
 
         return Response(data={'status_verbose': PlanLinesLink.StatusChoices.on_review.label,
                               'status': PlanLinesLink.StatusChoices.on_review})
@@ -528,9 +510,9 @@ class GeneratorViewSet(
     def accept_rpd(self, request, *args, **kwargs):
         instance = self.get_object()
         # instance.status = PlanLinesLink.StatusChoices.accepted
-        instance.protocol_number = self.request.data['number']
-        instance.protocol_date = self.request.data['date']
-        instance.meeting = self.request.data['meeting']
+        instance.protocol_number = self.request.data.get('number')
+        instance.protocol_date = self.request.data.get('date')
+        instance.meeting = self.request.data.get('meeting')
         # instance.user_type = self.request.data['userType']
 
         instance.user_accepted = self.request.user
@@ -540,9 +522,12 @@ class GeneratorViewSet(
             instance.status = PlanLinesLink.StatusChoices.accepted
         elif instance.user_confirmed and instance.user_accepted:
             instance.status = PlanLinesLink.StatusChoices.accepted
+        elif instance.planlines.viewpract:
+            instance.status = PlanLinesLink.StatusChoices.accepted
         instance.save()
 
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
+        GeneratorService.reset_practice_list_cache(self.request.user.userprofile.mira_id)
 
         return Response({"success": True})
 
@@ -557,6 +542,7 @@ class GeneratorViewSet(
         instance.save()
 
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
+        GeneratorService.reset_practice_list_cache(self.request.user.userprofile.mira_id)
 
         return Response({"success": True})
 
@@ -567,6 +553,7 @@ class GeneratorViewSet(
         instance.save()
 
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
+        GeneratorService.reset_practice_list_cache(self.request.user.userprofile.mira_id)
 
         PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], user_id=self.request.user.id,
                                              planlineslink_id=instance.id)

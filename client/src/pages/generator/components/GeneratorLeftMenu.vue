@@ -32,6 +32,7 @@ const {
   disabled,
   rpdData,
   admissionData,
+  planlinesData,
   errors,
   lekcHours,
   srsHours,
@@ -44,28 +45,45 @@ const menuItems = computed(() => {
   let items = [];
   items.push(...[
       // title (название), url (ссылка), allow (cadmkind, отображать)
-      {title: 'Титульный лист', url: 'main', allow: [1, 2, 3, 4, 5]},
-      {title: 'Компетенции', url: 'competences', allow: [1, 2, 3, 4]},
-      {title: 'Индикаторы', url: 'indicators', allow: [1, 2, 3, 4]},
-      {title: 'Результаты освоения программы', url: 'competences', allow: [5]},
-      {title: 'Результаты освоения дисциплины ', url: 'indicators', allow: [5]},
-      {title: 'Место дисциплины в структуре ООП', url: 'discipline-place', allow: [1, 2, 3, 4]},
-      {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5]},
-      {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1, 2, 3, 4, 5]},
+      {title: 'Титульный лист', url: 'main', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
+      {title: 'Компетенции', url: 'competences', allow: [1, 2, 3, 4], rpd: true, rpp: true},
+      {title: 'Индикаторы', url: 'indicators', allow: [1, 2, 3, 4], rpd: true, rpp: true},
+      {title: 'Результаты освоения программы', url: 'competences', allow: [5], rpd: true, rpp: true},
+      {title: 'Результаты освоения дисциплины ', url: 'indicators', allow: [5], rpd: true, rpp: true},
+      {title: 'Место дисциплины в структуре ООП', url: 'discipline-place', allow: [1, 2, 3, 4], rpd: true, rpp: false},
+      {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
+      {title: 'Содержание практики', url: 'practice-content', allow: [1, 2, 3, 4, 5], rpd: false, rpp: true},
+      {title: 'Форма отчетности', url: 'practice-report', allow: [1, 2, 3, 4, 5], rpd: false, rpp: true},
+      {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1, 2, 3, 4, 5], rpd: true, rpp: false},
     ]
   );
 
   if (lekcHours.value) {
-    items.push({title: 'Содержание лекционных занятий', url: 'discipline-lectures', 'right': true, allow: [1, 2, 3, 4, 5]})
+    items.push({
+      title: 'Содержание лекционных занятий',
+      url: 'discipline-lectures',
+      'right': true,
+      allow: [1, 2, 3, 4, 5], rpd: true, rpp: false
+    })
   }
   if (labHours.value) {
-    items.push({title: 'Содержание лабораторных работ', url: 'discipline-lab', 'right': true, allow: [1, 2, 3, 4, 5]})
+    items.push({title: 'Содержание лабораторных работ', url: 'discipline-lab', 'right': true, allow: [1, 2, 3, 4, 5], rpd: true, rpp: false})
   }
   if (prHours.value) {
-    items.push({title: 'Содержание практических занятий', url: 'discipline-practice', 'right': true, allow: [1, 2, 3, 4, 5]})
+    items.push({
+      title: 'Содержание практических занятий',
+      url: 'discipline-practice',
+      'right': true,
+      allow: [1, 2, 3, 4, 5], rpd: true, rpp: false
+    })
   }
   if (srsHours.value) {
-    items.push( {title: 'Содержание самостоятельных работ', url: 'discipline-independent', 'right': true, allow: [1, 2, 3, 4, 5]})
+    items.push({
+      title: 'Содержание самостоятельных работ',
+      url: 'discipline-independent',
+      'right': true,
+      allow: [1, 2, 3, 4, 5], rpd: true, rpp: false
+    })
   }
 
 
@@ -74,27 +92,51 @@ const menuItems = computed(() => {
     {
       title: 'Оценочные материалы по дисциплине для контроля текущей успеваемости',
       url: 'fos',
-      allow: [1, 2, 3, 4, 5]
+      allow: [1, 2, 3, 4, 5], rpd: true, rpp: false
     },
-    ])
+  ])
 
   if (hasTat.value) {
-    items.push({title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat', allow: [1, 2, 3, 4, 5]});
+    items.push({title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true});
   }
 
   items.push(...[
-    {title: 'Литература', url: 'library', allow: [1, 2, 3, 4, 5]},
-    {title: 'Другие ресурсы', url: 'resources', allow: [1, 2, 3, 4, 5]},
-    {title: 'Перечень используемых информационных технологий', url: 'soft', allow: [1, 2, 3, 4, 5]},
-    {title: 'Материально-техническое обеспечение', url: 'logistics', allow: [1, 2, 3, 4, 5]},
+    {title: 'Литература', url: 'library', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
+    {title: 'Другие ресурсы', url: 'resources', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
+    {title: 'Перечень используемых информационных технологий', url: 'soft', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
+    {title: 'Материально-техническое обеспечение', url: 'logistics', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
   ]);
 
   return items;
 });
 
 const filterMenuItems = computed(() => {
-  return _.filter(menuItems.value, x => x.allow.includes(admissionData.value?.cadmkind))
+   if (planlinesData.value.viewpract) {
+    return _(menuItems.value).filter(x => x.allow.includes(admissionData.value.cadmkind)).filter(x => x.rpp).value()
+  } else {
+    return _(menuItems.value).filter(x => x.allow.includes(admissionData.value?.cadmkind)).filter(x => x.rpd).value()
+  }
 })
+
+const criticalErrors = computed(() => {
+  return _.filter(errors.value, x => x.level == 'critical')
+})
+
+function getUrl(url) {
+  if (planlinesData.value.viewpract) {
+    return `/practice_generator/${props.id}/${url}`
+  } else {
+    return `/generator/${props.id}/${url}`
+  }
+}
+
+async function sendToReview() {
+  $q.loading.show()
+  let r = await api.get(`/api/generator/${activeRpdId.value}/send-rpd-on-review/`)
+  rpdData.value.status = r.data.status
+  rpdData.value.status_verbose = r.data.status_verbose
+  $q.loading.hide()
+}
 
 function translateDate(date) {
   let result = dayjs(new Date(date)).format("DD MMMM YYYY в HH:mm")
@@ -119,19 +161,19 @@ function getErrors(url) {
         :caption="translateDate(comment.created_at)"
       >
         <q-card class="q-pa-sm bg-blue-1" style="max-height: 300px; overflow-y: auto">
-         {{ comment.comment }}
-          </q-card>
+          {{ comment.comment }}
+        </q-card>
       </q-expansion-item>
-<!--      <div class="bg-pink-2 q-pa-sm rounded-borders" v-if="comment.length != 0">-->
-<!--        <div class="text-subtitle1">-->
-<!--          {{ comment.user__last_name }} {{ comment.user__first_name }}-->
-<!--          <small>оставил комментарий</small>-->
-<!--        </div>-->
-<!--        <div class="bg-grey-2 q-pa-sm rounded-borders" style="box-shadow: 0 0 4px silver inset">-->
-<!--              -->
-<!--        </div>-->
-<!--        <div class="text-right q-mt-sm" style="font-size: 0.7rem"></div>-->
-<!--      </div>-->
+      <!--      <div class="bg-pink-2 q-pa-sm rounded-borders" v-if="comment.length != 0">-->
+      <!--        <div class="text-subtitle1">-->
+      <!--          {{ comment.user__last_name }} {{ comment.user__first_name }}-->
+      <!--          <small>оставил комментарий</small>-->
+      <!--        </div>-->
+      <!--        <div class="bg-grey-2 q-pa-sm rounded-borders" style="box-shadow: 0 0 4px silver inset">-->
+      <!--              -->
+      <!--        </div>-->
+      <!--        <div class="text-right q-mt-sm" style="font-size: 0.7rem"></div>-->
+      <!--      </div>-->
     </div>
     <q-list
       style="overflow-y: auto"
@@ -143,7 +185,7 @@ function getErrors(url) {
         clickable
         v-ripple
         active-class="bg-amber-2 text-black"
-        :to="`/generator/${id}/${item.url}`"
+        :to="getUrl(item.url)"
         dense
         style="padding: 12px;"
       >

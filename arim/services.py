@@ -18,7 +18,7 @@ class AISServices(object):
 
         data = Catadmission.objects.filter(
             id=pk,
-        ).select_related("ckaf", "cfac").values(
+        ).values(
             'id',
             'yr',
             'abbr',
@@ -88,7 +88,7 @@ class AISServices(object):
         query = Q(fordel='f', startyear__gte=left_time)
         if adm_user:
             admin = True
-            if adm_user.isadmin == 't':
+            if adm_user.isadmin == 't' :
                 query |= Q()
             elif adm_user.isspo == 't':
                 query |= Q(ckaf__in=[1988587, 1988517, 1988516])
