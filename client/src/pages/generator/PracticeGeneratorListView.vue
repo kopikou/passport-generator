@@ -57,7 +57,7 @@ const filteredListData = computed(() => {
 
 async function fetchPractice() {
   $q.loading.show({message: "Загружаем список практик"})
-  let r = await api.get(`${FORCE_SCRIPT_NAME}/api/generator/get-practice-list/`)
+  let r = await api.get(`${FORCE_SCRIPT_NAME.value}/api/generator/get-practice-list/`)
   practiceList.value = r.data
   $q.loading.hide()
 }
