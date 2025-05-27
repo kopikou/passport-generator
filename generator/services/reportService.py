@@ -17,11 +17,12 @@ from rpd.models import LinesIndicators, PlanData
 def get_tic_name(data, plan_data=None):
     result = []
 
-    if plan_data['admission']['cadmkind'] == 5:
-        if plan_data['planlines']['dis'] == 'Иностранный язык':
-            result.append('Кандидатский экзамен по иностранному языку')
-        if plan_data['planlines']['dis'] == 'История и философия науки':
-            result.append('Кандидатский экзамен по истории и философии науки')
+    if plan_data:
+        if plan_data['admission']['cadmkind'] == 5:
+            if plan_data['planlines']['dis'] == 'Иностранный язык':
+                result.append('Кандидатский экзамен по иностранному языку')
+            if plan_data['planlines']['dis'] == 'История и философия науки':
+                result.append('Кандидатский экзамен по истории и философии науки')
 
     if data['zach']:
         result.append('Зачет')

@@ -10,6 +10,7 @@ import GeneratorLeftMenu from "pages/generator/components/GeneratorLeftMenu.vue"
 import GeneratorCopyDialog from "pages/generator/components/dialogs/GeneratorCopyDialog.vue";
 import useMainStore from "stores/mainStore";
 import {api} from "boot/axios";
+import GeneratorAcceptDialog from "pages/generator/components/dialogs/GeneratorAcceptDialog.vue";
 
 const generatorViewStore = useGeneratorViewStore();
 
@@ -62,12 +63,18 @@ async function sendToReview() {
 }
 
 async function sendToApprove() {
-  $q.loading.show()
-  let r = await api.post(`/api/generator/${activeRpdId.value}/accept-rpd/`)
-  rpdData.value.status = r.data.status
-  rpdData.value.status_verbose = r.data.status_verbose
-  await generatorViewStore.getData()
-  $q.loading.hide()
+
+  $q.dialog({
+    component: GeneratorAcceptDialog
+  }).onOk(async (res) => {
+    let r = await api.post(`/api/generator/${activeRpdId.value}/accept-rpd/`, {
+      "date": res.date,
+      "number": res.number,
+      "meeting": res.meeting,
+    })
+    rpdData.value.status = r.data.status
+    await generatorViewStore.getData()
+  })
 }
 
 
@@ -76,11 +83,11 @@ async function onEditClick() {
     message: "Подтвердите, что хотите скорректировать план. После корректировки РПД, вам необходимо будет снова переутвердить РПД",
     cancel: true,
   }).onOk(async () => {
-      $q.loading.show()
-      let r = await api.get(`/api/generator/${activeRpdId.value}/send-rpd-on-edit/`)
-      rpdData.value.status = r.data.status
-      rpdData.value.status_verbose = r.data.status_verbose
-      $q.loading.hide()
+    $q.loading.show()
+    let r = await api.get(`/api/generator/${activeRpdId.value}/send-rpd-on-edit/`)
+    rpdData.value.status = r.data.status
+    rpdData.value.status_verbose = r.data.status_verbose
+    $q.loading.hide()
   })
 }
 
@@ -137,7 +144,8 @@ watch(() => props.id,
               disable
               :label="statusVerbose"
             />
-            <q-btn color="teal-2" text-color="black" v-if="statusVerbose == 'Утвержден'" icon="mdi-pencil" @click="onEditClick">
+            <q-btn color="teal-2" text-color="black" v-if="statusVerbose == 'Утвержден'" icon="mdi-pencil"
+                   @click="onEditClick">
             </q-btn>
           </q-btn-group>
         </template>
@@ -155,6 +163,7 @@ watch(() => props.id,
       <router-view/>
     </div>
   </div>
+
 </template>
 
 <style scoped lang="scss">

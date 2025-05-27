@@ -424,6 +424,7 @@ class GeneratorViewSet(
 
         path_doc_file = f"{os.path.abspath(path)}/{pk}.docx"
         path_pdf_file = f"{os.path.abspath(path)}/{pk}.pdf"
+
         if rpd_data['planlines']['viewpract']:
             tpl = ReportService.get_practice_report(rpd_data)
         else:
