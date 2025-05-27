@@ -75,11 +75,9 @@ onBeforeMount(async () => {
 
 <template>
   <div class="q-pa-lg">
-    <div class="text-center text-h6 q-mb-md">Список рабочих программ практик ИРНИТУ</div>
     <div>
       <div>
-        <div class="text-center text-subtitle1">Список РПП</div>
-        <div class="flex justify-between q-mb-sm">
+        <div class="flex justify-between q-my-sm">
           <q-input style="width: 48%" outlined label="Группа" v-model="groupFilter"/>
           <q-input style="width: 48%" outlined label="Дисциплина" v-model="discplFilter"/>
         </div>
