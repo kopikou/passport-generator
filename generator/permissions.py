@@ -36,7 +36,7 @@ class CanEditScientificProgram(IsAuthenticated):
         pk = view.kwargs['pk']
 
         year = request.query_params.get('year', pendulum.now().year)
-        plans = GeneratorService.get_asp_list(year, request.user)
+        plans = GeneratorService.get_asp_list(year, request.user).get('items', [])
 
         return int(pk) in [i['id'] for i in plans]
 

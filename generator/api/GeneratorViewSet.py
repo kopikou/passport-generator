@@ -127,7 +127,7 @@ class GeneratorViewSet(
 
         return Response(data=res)
 
-    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True, permission_classes=[CanEditScientificProgram])
     def get_asp_program_detail(self, request, *args, **kwargs):
 
         pk = int(self.kwargs['pk'])
