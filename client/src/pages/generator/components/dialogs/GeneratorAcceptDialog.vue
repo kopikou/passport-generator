@@ -83,7 +83,7 @@ watch([meeting, protocolNumber, protocolDate], () => {
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat color="secondary" label="Утвердить" :disable="disabled" @click="onAcceptClick" v-close-popup/>
+        <q-btn flat color="secondary" label="Утвердить" :disable="disabled" @click="onAcceptClick"/>
         <q-btn flat color="negative" label="Отмена" v-close-popup/>
       </q-card-actions>
     </q-card>
