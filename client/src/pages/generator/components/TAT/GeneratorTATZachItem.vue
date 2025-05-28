@@ -137,7 +137,6 @@ watchEffect(() => {
               debounce="1000"
               @update:modelValue="saveData"
             />
-            a
             <q-input
               label="Пример задания"
               type="textarea"
