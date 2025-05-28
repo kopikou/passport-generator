@@ -67,12 +67,13 @@ async function saveData() {
   // } else {
   //   _.set(tatInfo.value, `[${key}]`, data)
   // }
+  generatorViewStore.abortGetDataController.abort()
 
   const data = [...((tatInfo.value || []).filter((x: any) => x.type != props.type)), res]
-  // let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
-  //   "type": 'tat',
-  //   "value": data,
-  // })
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+    "type": 'tat',
+    "value": data,
+  })
 
   if (r.status == 200) {
     $q.notify({
