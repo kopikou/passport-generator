@@ -88,7 +88,7 @@ const menuItems = computed(() => {
 
 
   items.push(...[
-    {title: 'Перечень учебно-методического обеспечения', url: 'guidelines', allow: [1, 2, 3, 4, 5]},
+    {title: 'Перечень учебно-методического обеспечения', url: 'guidelines', allow: [1, 2, 3, 4, 5], rpd: true, rpp: false},
     {
       title: 'Оценочные материалы по дисциплине для контроля текущей успеваемости',
       url: 'fos',
