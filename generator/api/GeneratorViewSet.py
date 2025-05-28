@@ -522,8 +522,6 @@ class GeneratorViewSet(
             instance.status = PlanLinesLink.StatusChoices.accepted
         elif instance.user_confirmed and instance.user_accepted:
             instance.status = PlanLinesLink.StatusChoices.accepted
-        elif instance.planlines.viewpract:
-            instance.status = PlanLinesLink.StatusChoices.accepted
         instance.save()
 
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)

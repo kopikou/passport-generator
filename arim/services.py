@@ -183,7 +183,7 @@ class AISServices(object):
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
-            where u.cperson = @id and p.fordel = 'f' and u.fordel = 'f' and u.type != 3
+            where u.cperson = @id and p.fordel = 'f' and u.fordel = 'f' --and u.type != 3
 
             UNION ALL
 
@@ -192,7 +192,7 @@ class AISServices(object):
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
             LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where u.ckaf in (SELECT id FROM dbo.catkaf WHERE czav = @id AND isreal = 't') and p.fordel = 'f' and u.fordel = 'f' and  u.type != 3
+            where u.ckaf in (SELECT id FROM dbo.catkaf WHERE czav = @id AND isreal = 't') and p.fordel = 'f' and u.fordel = 'f'-- and  u.type != 3
 
             UNION ALL
 
@@ -201,7 +201,7 @@ class AISServices(object):
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
             LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where a.cfac in (SELECT id FROM dbo.catfaculty WHERE cdean = @id AND realfac = 't') and p.fordel = 'f' and u.fordel = 'f' and  u.type != 3
+            where a.cfac in (SELECT id FROM dbo.catfaculty WHERE cdean = @id AND realfac = 't') and p.fordel = 'f' and u.fordel = 'f'-- and  u.type != 3
 
             UNION ALL
 
@@ -213,7 +213,7 @@ class AISServices(object):
             where p.cperson = @id
             --a.cspec in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id) OR a.cprofili in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id)
             --OR a.cdirection in (SELECT id FROM dbo.[cl$direction] WHERE cperson = @id)
-            AND p.fordel = 'f' and u.fordel = 'f' and  u.type != 3
+            AND p.fordel = 'f' and u.fordel = 'f' --and  u.type != 3
 
             ) t
             LEFT JOIN dbo.catperson cp ON cp.id = t.mira_id
