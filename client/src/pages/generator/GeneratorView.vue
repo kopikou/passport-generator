@@ -133,8 +133,8 @@ watch(() => props.id,
         />
         <q-btn v-if="!disabled"
                color="secondary"
-               @click="planlinesData.viewpract ? sendToApprove() : sendToReview()"
-               :label="planlinesData.viewpract ? 'Утвердить' : 'Отправить на согласование'"
+               @click="sendToReview()"
+               label="Отправить на согласование"
                :disabled="criticalErrors.length != 0"
         />
         <template v-else>
