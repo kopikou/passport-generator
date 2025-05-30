@@ -37,6 +37,7 @@ const krCheck = computed(() => {
 })
 
 function aspGetType(dis) {
+  console.log(dis)
   if (dis == 'Иностранный язык') {
     return 'foreign'
   } else if (dis == 'История и философия науки') {
@@ -61,7 +62,6 @@ function aspGetType(dis) {
       <generator-t-a-t-mark-item v-if="zachoCheck" title="Дифференцированный зачет" type="zacho"/>
       <generator-t-a-t-zach-item v-if="zachCheck" title="Зачет" type="zach"/>
       <generator-t-a-t-mark-item v-if="kpCheck || krCheck" title="Курсовая работа/проект" type="krkp"/>
-
       <generator-t-a-t-mark-item v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'foreign'"
                                  title="Кандидатский экзамен по иностранному языку" type="foreign"/>
       <generator-t-a-t-mark-item
