@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {onBeforeMount, ref, watch} from "vue";
+import {onBeforeMount, ref, watch, watchEffect} from "vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import {api} from "boot/axios";
@@ -18,10 +18,54 @@ const {
   additionalInfo,
   disabled,
   admissionData,
+  planlinesData,
 } = storeToRefs(generatorViewStore)
 
 const tab = ref<string>('')
 const methods = ref<string>('')
+const way = ref([])
+
+const wayOptions = [
+  'Стационарная',
+  'Выездная',
+]
+
+async function savePracticeWay() {
+  let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
+    type: "practiceWay",
+    value: {
+      "practiceWay": way.value
+    }
+  })
+  if (r.status == 200) {
+    $q.notify({
+      message: "Данные <span class='text-bold'>о способе проведения практики</span> сохранены!",
+      color: "secondary",
+      position: "bottom",
+      html: true,
+    })
+    await generatorViewStore.getData();
+    generatorViewStore.checkErrors()
+    // let key = _.findKey(additionalInfo.value, (x) => x.id == r.data.id)
+    // if (key) _.set(additionalInfo.value, `[${key}].value.practiceWay`, way.value)
+    // else additionalInfo.value.push({
+    //   id: r.data.id,
+    //   planlineslink_id: activeRpdId.value,
+    //   type: 'practiceWay',
+    //   value: {
+    //     practiceWay: way.value,
+    //   }
+    // })
+  } else {
+
+    $q.notify({
+      message: "Данные <span class='text-bold'>о способе проведения практики</span> не сохранены!",
+      color: "negative",
+      position: "bottom",
+      html: true,
+    })
+  }
+}
 
 async function saveMethods() {
   // $q.loading.show()
@@ -70,15 +114,16 @@ watch(semestersData, () => {
   immediate: true
 })
 
-watch(interactiveMethods, () => {
-  methods.value = interactiveMethods.value[0]?.value['interactiveMethods']
-}, {
-  immediate: true
+watchEffect(() => {
+  if (planlinesData.value.viewpract) {
+    way.value = _.filter(additionalInfo.value, (x) => x.type == 'practiceWay')[0]?.value['practiceWay']
+  } else {
+    methods.value = interactiveMethods.value[0]?.value['interactiveMethods']
+  }
 })
 
 // onBeforeMount(() => {
 //   tab.value = `${semestersData.value[0]?.num}`
-//   methods.value = interactiveMethods.value[0]?.value['interactiveMethods']
 // })
 
 </script>
@@ -86,7 +131,8 @@ watch(interactiveMethods, () => {
 <template>
   <div class="q-px-md">
       <span class="text-h6">Структура дисциплины</span>
-      <p>Количество академических часов, выделенных на дисциплину "{{ rpdData.planlines?.dis }}". Данные автоматически получены их учебного
+      <p>Количество академических часов, выделенных на дисциплину "{{ rpdData.planlines?.dis }}". Данные автоматически
+        получены их учебного
         плана.</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <q-tabs
@@ -185,7 +231,7 @@ watch(interactiveMethods, () => {
                 <div class="self-center full-width no-outline text-center">
                   <span v-if="item.ekz">Экзамен</span>
                   <span v-else-if="item.zach">Зачет</span>
-                  <span v-else-if="item.zacho">Зачет с оценкой></span>
+                  <span v-else-if="item.zacho">Зачет с оценкой</span>
                   <span v-else-if="admissionData?.cadmkind == 5 && rpdData.planlines?.dis == 'Иностранный язык'">Кандидатский экзамен по иностранному языку</span>
                   <span v-else-if="admissionData?.cadmkind == 5 && rpdData.planlines?.dis == 'История и философия науки'">Кандидатский экзамен по истории и философии науки</span>
                   <span v-else-if="!item.ekz && !item.zach && !item.zacho">Отсутствует</span>
@@ -207,7 +253,7 @@ watch(interactiveMethods, () => {
           </div>
         </q-tab-panel>
       </q-tab-panels>
-      <div class="q-gutter-md">
+      <div class="q-gutter-md" v-if="!planlinesData.viewpract">
         <div class="text-h6">
           Интерактивные методы обучения можно посмотреть по <a target="_blank"
                                                                href="https://edu.itmo.ru/ru/edutech_iteractiv/">ссылке</a>
@@ -229,6 +275,24 @@ watch(interactiveMethods, () => {
         <!--          @click="saveMethods"-->
         <!--          v-show="!disabled"-->
         <!--        />-->
+      </div>
+      <div v-else>
+        <div class="text-h6">
+          Способ проведения практики
+        </div>
+        <q-select
+          label="Способы проведения практики"
+          filled
+          stack-label
+          :options="wayOptions"
+          v-model="way"
+          clearable
+          multiple
+          use-chips
+          :readonly="disabled"
+          @update:modelValue="savePracticeWay"
+          debounce="1000"
+        />
       </div>
   </div>
 </template>

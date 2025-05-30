@@ -6,8 +6,9 @@ from django.core.cache import cache
 
 from app.utils import cache_function
 from arim.services import AISServices
+from auths.models import Permissions
 from generator.models import PlanLinesLink, DefaultsResources, PlanLinesLinkComments, DisciplineThemes, \
-    DisciplineWorkHours, AdditionalInfo, DisciplineIndicators
+    DisciplineWorkHours, AdditionalInfo, DisciplineIndicators, ScientificPlanData
 from generator.serializer import PlanLinesLinkSerializer
 from rpd.models import LinesData, LinesIndicators
 
@@ -17,6 +18,11 @@ class GeneratorService(object):
     @classmethod
     def reset_program_list_cache(cls, user_mira_id):
         key = f"rpd_get_program_list_{user_mira_id}"
+        cache.delete(key)
+
+    @classmethod
+    def reset_practice_list_cache(cls, user_mira_id):
+        key = f"rpd_get_practice_list_{user_mira_id}"
         cache.delete(key)
 
     @classmethod
@@ -114,6 +120,107 @@ class GeneratorService(object):
         cache.set(cache_key, res, 60)
 
         return res
+
+    @classmethod
+    @cache_function(timeout=60 * 1)
+    def get_practice_list(cls, user_mira_id):
+        cache_key = f"rpd_get_practice_list_{user_mira_id}"
+        if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
+            result = cache.get(cache_key)
+            if result:
+                return result
+
+        data = AISServices.get_practice_by_person(user_mira_id)
+
+        discpl_list = [i['discpl'] for i in data]
+        abbrprofile_list = [i['abbr'] for i in data]
+        startyear_list = [i['yr'] for i in data]
+
+        filtered_data = LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
+                                                 plan__startyear__in=startyear_list,
+                                                 type=3,
+                                                 plan__file__status=4, synchronize=True).select_related("plan")
+
+        filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.plan.startyear}": i for i in filtered_data}
+
+        lineslink = PlanLinesLink.objects.filter(mira_id__in=[i['planlin'] for i in data]).select_related("planlines")
+        lineslink_sorted = sorted(lineslink, key=lambda x: x.mira_id)
+        lineslink_by_id = {i.mira_id: i for i in lineslink_sorted}
+
+        result = []
+        for item in data:
+
+            line = filtered_data_sorted.get(f"{item['discpl']}_{item['abbr']}_{item['yr']}")
+
+            if line:
+
+                res = lineslink_by_id.get(item['planlin'], [])
+
+                if not res:
+                    res, created = PlanLinesLink.objects.get_or_create(
+                        cadmission=item['id_admission'],
+                        mira_id=item['planlin'],
+                        person=item['mira_id'],
+                        defaults={
+                            "cadmission": item['id_admission'],
+                            "mira_id": item['planlin'],
+                            "person": item['mira_id'],
+                            "status": PlanLinesLink.StatusChoices.appointed,
+                            "planlines_id": line.id,
+                        }
+                    )
+
+                result.append({
+                    **item,
+                    "id": res.id,
+                    "status": res.status,
+                    "status_verbose": res.status_verbose,
+                    "kafcode": res.planlines.caf,
+                    "discode": res.planlines.newdisid,
+                })
+
+        sorted_result = sorted(result, key=lambda x: (x['planlin'], x['mira_id']))
+        grouped_result = {key: list(items) for key, items in
+                          groupby(sorted_result, key=lambda x: (x['planlin'], x['mira_id']))}
+
+        res = []
+        for key, items in grouped_result.items():
+            temp = {
+                **items[0],
+                "type": [i['type'] for i in items],
+            }
+            res.append(temp)
+
+        cache.set(cache_key, res, 60)
+
+        return res
+
+    @classmethod
+    @cache_function(timeout=60 * 1)
+    def get_asp_list(cls, year, user):
+        data = AISServices.get_asp_napr(year, user.userprofile.mira_id)
+        data = sorted(data, key=lambda x: x['species'])
+
+        result = {"items": data}
+
+        if Permissions.scientific_admin in user.userprofile.permissions:
+
+            ais_plans = AISServices.get_all_asp(year)
+
+            scientific_plan = ScientificPlanData.objects.filter(startyear=year).values_list('mira_id', flat=True)
+            scientific_plan_ids = [i for i in scientific_plan]
+
+            res = []
+            for i in ais_plans:
+                res.append({
+                    **i,
+                    "created": True if i['id'] in scientific_plan_ids else False
+                })
+
+            res = sorted(res, key=lambda x: x['species'])
+            result.update({"admin_items": res})
+
+        return result
 
     @classmethod
     def get_rpd_data(cls, plan_lines_link_id, user_mira_id=None):

@@ -159,6 +159,12 @@ class LinesDataSerializer(serializers.ModelSerializer):
     kompetences = serializers.CharField(allow_null=True, allow_blank=True)
     synchronize = serializers.BooleanField()
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if data['dis'] == 'Педагогическая практика':
+            data['viewpract'] = 7
+        return data
+
     class Meta:
         model = LinesData
         fields = [

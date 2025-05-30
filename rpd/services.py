@@ -9,7 +9,7 @@ import requests
 from django.conf import settings
 from urllib.parse import unquote
 
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 from django.db.models import Q
 from lxml import etree
 import re
@@ -139,7 +139,7 @@ class PLXParser:
         self.XMLNS = ""
         self.path = ""
 
-        if isinstance(filePath, InMemoryUploadedFile):
+        if isinstance(filePath, InMemoryUploadedFile) or isinstance(filePath, TemporaryUploadedFile):
             with NamedTemporaryFile(delete=False) as f:
                 f.write(filePath.read())
                 f.close()
@@ -464,8 +464,10 @@ class PLXParser:
                 LinesData.objects.filter(id=items['id']).update(parent_id=data.get(items['old_parent_id'])['id'])
 
         ids_to_delete = [i.id for i in lines.values() if i.id not in added_items]
-        if ids_to_delete:
-            LinesData.objects.filter(id__in=ids_to_delete).delete()
+
+        if data:
+            if ids_to_delete:
+                LinesData.objects.filter(id__in=ids_to_delete).delete()
 
         return data
 
@@ -530,8 +532,10 @@ class PLXParser:
             ids_to_keep.append(obj.data['id'])
 
         ids_to_delete = [i.id for i in semester.values() if i.id not in ids_to_keep]
-        if ids_to_delete:
-            SemesterData.objects.filter(id__in=ids_to_delete).delete()
+
+        if data:
+            if ids_to_delete:
+                SemesterData.objects.filter(id__in=ids_to_delete).delete()
 
         return result
 
@@ -608,9 +612,10 @@ class PLXParser:
             result.append(obj.data)
             ids_to_keep.append(obj.data['id'])
 
-        ids_to_delete = [i.id for i in indicators.values() if i.id not in ids_to_keep]
-        if ids_to_delete:
-            LinesIndicators.objects.filter(id__in=ids_to_delete).delete()
+        if data:
+            ids_to_delete = [i.id for i in indicators.values() if i.id not in ids_to_keep]
+            if ids_to_delete:
+                LinesIndicators.objects.filter(id__in=ids_to_delete).delete()
 
         return result
 
