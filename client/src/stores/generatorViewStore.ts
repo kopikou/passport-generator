@@ -163,7 +163,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     res = _.some(semestersData.value, x => {
       return x.ekz || x.zach || x.zacho || x.kp || x.kr
     })
-    if (admissionData.value?.cadmkind == 5 && ['Иностранный язык', 'История и философия науки'].includes(rpdData.value?.planlines?.dis)) {
+    if (admissionData.value?.cadmkind == 5) {
       res = true
     }
 
