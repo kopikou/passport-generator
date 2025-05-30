@@ -10,9 +10,11 @@ from docxtpl import DocxTemplate
 from app.settings import BASE_DIR
 from arim.models import CatPerson
 from arim.services import AISServices
-from generator.models import PlanLinesLink, ScientificData
+from generator.models import PlanLinesLink, ScientificData, FormControl
 from rpd.models import LinesIndicators, PlanData
 
+def flatten(xss):
+    return [x for xs in xss for x in xs]
 
 def get_tic_name(data, plan_data=None):
     result = []
@@ -299,6 +301,9 @@ class ReportService(object):
 
         doc = DocxTemplate(path)
 
+        formcontrols = FormControl.objects.all()
+        formcontrol_by_id = {i.id: i.name for i in formcontrols}
+
         competences_sorted = sorted(data['planlines']['indicators'], key=lambda item: item['competence_index'])
         competences_grouped = {key: list(items) for key, items in
                                groupby(competences_sorted, key=lambda item: item['competence_index'])}
@@ -389,7 +394,7 @@ class ReportService(object):
             if item['type'] == 'fos':
                 q = 0
 
-                fos_choiced = set([i['formcontrol_id'] for i in data['discipline_themes']])
+                fos_choiced = set(flatten([i['formcontrol_list'] for i in data['discipline_themes']]))
                 for i in item['value']:
                     if i['type'] in fos_choiced:
                         q += 1
@@ -546,7 +551,7 @@ class ReportService(object):
                 "num": item['semester'],
                 "theme": discipline_themes[item['theme_id']]['name'],
                 "theme_id": item['theme_id'],
-                "formcontrol": discipline_themes[item['theme_id']]['formcontrol_verbose'],
+                "formcontrol": ', '.join([formcontrol_by_id[i] for i in discipline_themes[item['theme_id']]['formcontrol_list']]),
                 "type": item['type'],
                 "content": item['name'],
                 "hours": item['hours'],
@@ -675,7 +680,7 @@ class ReportService(object):
 
                 tmp.append({
                     "name": item['name'],
-                    "tic": item['formcontrol_verbose'],
+                    "tic": ', '.join([formcontrol_by_id[i] for i in item['formcontrol_list']]),
                     "num": item['num'],
                     "lekc": item['num'],
                     "lekc_hours": sum([i['hours'] for i in item['lekc']]) if sum(

@@ -64,7 +64,7 @@ async function onOKClick() {
     planlineslink_id: rpdData.value.id,
     name: themeName.value,
     semester: semNew.value,
-    formcontrol_id: control.value,
+    formcontrol_list: control.value,
     comment: comment.value,
     id: props.id,
     num: props.id ? data[props.id].num : maxNum,
@@ -84,7 +84,7 @@ watch(() => props, () => {
   if (props.id) {
     let data = _.keyBy(disciplineThemes.value, "id")
     themeName.value = data[props.id].name
-    control.value = data[props.id].formcontrol_id
+    control.value = data[props.id].formcontrol_list
     comment.value = data[props.id].comment
     semNew.value = data[props.id].semester
     // num.value = data[props.id].num

@@ -31,7 +31,7 @@ const about = ref('')
 const criteria = ref('')
 
 const themes = computed(() => {
-  return _.filter(disciplineThemes.value, x => x.formcontrol_verbose == props.title)
+  return _.filter(disciplineThemes.value, x => x.formcontrol_list.includes(props.type))
 })
 
 async function saveData() {

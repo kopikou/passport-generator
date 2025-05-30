@@ -183,6 +183,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     cafData.value = r.data
   }
 
+  const formControlByValue = computed(() => {
+    return _.keyBy(formControl.value, 'id')
+  })
+
   async function getFormControlData() {
     let r = await api.get('/api/generator/get-form-control-data/')
     formControl.value = _.orderBy(r.data, 'name')
@@ -744,6 +748,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     prHours,
     labHours,
     semesterYearLabel,
+    formControlByValue,
   }
 })
 

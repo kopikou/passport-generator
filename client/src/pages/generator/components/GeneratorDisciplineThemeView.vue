@@ -18,6 +18,7 @@ const {
   disciplineThemes,
   disciplineWorkHour,
   formControl,
+  formControlByValue,
   rpdData,
   disabled,
   activeRpdId,
@@ -79,11 +80,6 @@ async function deleteTheme(id) {
   })
 
 }
-
-const formControlByValue = computed(() => {
-  return _.keyBy(formControl.value, 'id')
-})
-
 const maxNumberInSemester = computed(() => {
   let data = _.filter(disciplineThemes.value, (x) => x.semester == tab.value)
   return _.max(_.map(data, (x) => x.num))
@@ -189,7 +185,7 @@ watchEffect(() => {
                 {{ item.name }}
               </div>
               <div>
-                {{ formControlByValue[item.formcontrol_id]?.name }}
+                {{ _.map(item.formcontrol_list, x => formControlByValue[x]?.name).join(', ') }}
               </div>
               <div class="text-justify">
                 {{ item.comment }}
