@@ -50,7 +50,6 @@ class AISServices(object):
     @cache_function(timeout=60 * 1)
     def get_kaf_codes():
 
-
         data = UchPlanKaf.objects.extra(
             select={
                 "value": "ckaf2rpgen",
@@ -90,10 +89,18 @@ class AISServices(object):
             admin = True
             if adm_user.isspo == 't':
                 query &= Q(ckaf__in=[1988587, 1988517, 1988516])
+            if adm_user.cfac_id:
+                uchplans = [i.cuchplan for i in
+                            Catadmission.objects.filter(cfac=adm_user.cfac_id, active='t', yr__gte=left_time,
+                                                        cuchplan__isnull=False)]
+                query &= Q(id__in=[i.id for i in uchplans])
         else:
             query &= Q(cperson=id)
+
         if cfac:
-            uchplans = [i.cuchplan for i in Catadmission.objects.filter(cfac__in=[j.id for j in cfac], active='t', yr__gte=left_time, cuchplan__isnull=False)]
+            uchplans = [i.cuchplan for i in
+                        Catadmission.objects.filter(cfac__in=[j.id for j in cfac], active='t', yr__gte=left_time,
+                                                    cuchplan__isnull=False)]
             query |= Q(id__in=[i.id for i in uchplans])
         if ckaf:
             query |= Q(ckaf__in=[i.id for i in ckaf], fordel='f', startyear__gte=left_time)
