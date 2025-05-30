@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models.enums import TextChoices, IntegerChoices
 
@@ -81,11 +82,19 @@ class DisciplineThemes(TimestampsModel):
     name = models.TextField()
     semester = models.IntegerField()
     formcontrol = models.ForeignKey("FormControl", on_delete=models.CASCADE)
+    formcontrol_list = ArrayField(models.IntegerField(), default=list, null=True)
     comment = models.TextField()
     num = models.IntegerField()
 
     @property
     def formcontrol_verbose(self):
+
+        # formcontrol_names_by_id = {i.id: i.name for i in FormControl.objects.all()}
+        # res = []
+        # for i in self.formcontrol:
+        #     res.append(formcontrol_names_by_id[i])
+        #
+        # return ', '.join(res)
         return FormControl.objects.get(id=self.formcontrol_id).name
 
 

@@ -100,7 +100,8 @@ class DisciplineThemeSerializer(serializers.Serializer):
     planlineslink_id = serializers.IntegerField()
     name = serializers.CharField()
     semester = serializers.IntegerField()
-    formcontrol_id = serializers.IntegerField()
+    formcontrol_id = serializers.IntegerField(required=False)
+    formcontrol_list = serializers.ListField(child=serializers.IntegerField())
     formcontrol_verbose = serializers.CharField(read_only=True)
     comment = serializers.CharField(allow_blank=True, allow_null=False)
     num = serializers.IntegerField()
@@ -112,7 +113,8 @@ class DisciplineThemeSerializer(serializers.Serializer):
             'planlineslink_id',
             'name',
             'semester',
-            'formcontrol_id',
+            'formcontrol',
+            'formcontrol_list',
             'formcontrol_verbose',
             'comment',
             'num',

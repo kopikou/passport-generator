@@ -164,7 +164,7 @@ class BaseDocuments(TimestampsModel):
     magistrate = models.BooleanField(verbose_name='Магистратура')
     spo = models.BooleanField(verbose_name='СПО')
     aspirant = models.BooleanField(verbose_name='Аспирантура')
-    can_upload = ArrayField(models.IntegerField(choices=UserTypeChoices.choices, default=UserTypeChoices.rop), default=list())
+    can_upload = ArrayField(models.IntegerField(choices=UserTypeChoices.choices, default=UserTypeChoices.rop), default=list)
 
 
     def __str__(self):

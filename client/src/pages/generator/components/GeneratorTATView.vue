@@ -37,7 +37,7 @@ const krCheck = computed(() => {
 })
 
 function aspGetType(dis) {
-  console.log(dis)
+  // console.log(dis)
   if (dis == 'Иностранный язык') {
     return 'foreign'
   } else if (dis == 'История и философия науки') {
