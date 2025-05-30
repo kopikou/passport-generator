@@ -35,6 +35,10 @@ def get_tic_name(data, plan_data=None):
     if data['kr']:
         result.append('Курсовая работа')
 
+    if not result and plan_data['admission']['cadmkind'] == 5:
+        result.append('Кандидатский экзамен по спец. дисциплине')
+
+
     return result
 
 def get_work_hours(data, type):

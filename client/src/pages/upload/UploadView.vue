@@ -28,6 +28,7 @@ const {
 
 const {
   userId,
+  mira_id,
 } = storeToRefs(mainStore)
 
 
@@ -83,14 +84,15 @@ function getFileType(item: PlanData, fileId) {
 
 function getRules(data, item) {
   if (data.can_upload == 'f') return true
-  let rule
-  if (data.admin) {
-    rule = 0
-  } else {
-    rule = 1
-  }
   const doc = baseDocumentsById.value[item.type_id]
-  return doc.can_upload.includes(rule)
+  let rule = []
+  if (data.admin) rule.push(0)
+  if (data.cperson == mira_id) rule.push(1)
+
+  _.map(rule, x => {
+    return doc.can_upload.includes(x)
+  })
+
 }
 
 async function deleteFile(item: PlanData, typeId: number) {

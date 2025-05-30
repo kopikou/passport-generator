@@ -10,11 +10,11 @@ import _ from "lodash";
 
 const generatorViewStore = useGeneratorViewStore();
 
-const{
+const {
   semestersData,
   admissionData,
   rpdData,
-}=storeToRefs(generatorViewStore)
+} = storeToRefs(generatorViewStore)
 
 const ekzCheck = computed(() => {
   return _.some(semestersData.value, {'ekz': true})
@@ -36,6 +36,16 @@ const krCheck = computed(() => {
   return _.some(semestersData.value, {'kr': true})
 })
 
+function aspGetType(dis) {
+  if (dis == 'Иностранный язык') {
+    return 'foreign'
+  } else if (dis == 'История и философия науки') {
+    return 'philosophy'
+  } else {
+    return 'base'
+  }
+}
+
 </script>
 
 <template>
@@ -51,8 +61,15 @@ const krCheck = computed(() => {
       <generator-t-a-t-mark-item v-if="zachoCheck" title="Дифференцированный зачет" type="zacho"/>
       <generator-t-a-t-zach-item v-if="zachCheck" title="Зачет" type="zach"/>
       <generator-t-a-t-mark-item v-if="kpCheck || krCheck" title="Курсовая работа/проект" type="krkp"/>
-      <generator-t-a-t-mark-item v-if="admissionData?.cadmkind == 5 && rpdData?.planlines?.dis == 'Иностранный язык'" title="Кандидатский экзамен по иностранному языку" type="foreign" />
-      <generator-t-a-t-mark-item v-if="admissionData?.cadmkind == 5 && rpdData?.planlines?.dis == 'История и философия науки'" title="Кандидатский экзамен по истории и философии науки" type="philosophy" />
+
+      <generator-t-a-t-mark-item v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'foreign'"
+                                 title="Кандидатский экзамен по иностранному языку" type="foreign"/>
+      <generator-t-a-t-mark-item
+        v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'philosophy'"
+        title="Кандидатский экзамен по истории и философии науки" type="philosophy"/>
+      <generator-t-a-t-mark-item
+        v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'base'"
+        title="Кандидатский экзамен по спец. дисциплине" type="base"/>
     </q-list>
   </div>
 </template>
