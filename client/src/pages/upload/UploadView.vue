@@ -83,15 +83,15 @@ function getFileType(item: PlanData, fileId) {
 }
 
 function getRules(data, item) {
-  if (data.can_upload == 'f') return true
+  if (data.can_upload == 't') return true
   const doc = baseDocumentsById.value[item.type_id]
   let rule = []
   if (data.admin) rule.push(0)
-  if (data.cperson == mira_id) rule.push(1)
+  if (data.cperson == mira_id.value) rule.push(1)
 
-  _.map(rule, x => {
+  return _.map(rule, x => {
     return doc.can_upload.includes(x)
-  })
+  }).includes(true)
 
 }
 
@@ -214,7 +214,7 @@ function sortDocuments(val) {
                 </div>
                 <div class="flex items-center" style="display: grid; grid-template-columns: 1fr auto">
                   <div v-if="!checkFile(item, i.type_id)">
-                    <file-uploader :title="i.type__name" :file-id="i.id" :plan-id="item.plan_id" :disable="getRules(item, i)"/>
+                    <file-uploader :title="i.type__name" :file-id="i.id" :plan-id="item.plan_id" :disable="!getRules(item, i)"/>
                   </div>
                   <div v-else>
                     <q-field
@@ -239,7 +239,7 @@ function sortDocuments(val) {
                       </template>
                     </q-field>
                   </div>
-                  <q-btn v-show="checkFile(item, i.type_id) && !getRules(item, i) && checkUser(item, i.type_id)" flat dense icon="mdi-delete" color="negative"
+                  <q-btn v-show="getRules(item, i) && checkFile(item, i.type_id) && checkUser(item, i.type_id)" flat dense icon="mdi-delete" color="negative"
                          @click="deleteFile(item, i.type_id)" />
                 </div>
               </div>
