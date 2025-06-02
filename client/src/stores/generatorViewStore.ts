@@ -441,15 +441,15 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       if (kp) checkGuidelines('course', 'Не заполнены методические указания для курсового проекта/работы ')
     }
 
-    const fos = _.uniqBy(disciplineThemes.value, 'formcontrol_verbose')
+    const fos = _(disciplineThemes.value).map(x => x.formcontrol_list).flatten().uniq().value()
 
     _.forEach(fos, (x) => {
-      const r = _.find(fosInfo.value, q => q.type == x.formcontrol_id)
+      const r = _.find(fosInfo.value, q => q.type == x)
       if (!r) {
         data.push({
           url: 'fos',
           title: 'Нет данных по оценочным материалам',
-          text: [`Не заполнена информация о "${x.formcontrol_verbose}"`],
+          text: [`Не заполнена информация о "${r.title}"`],
           level: 'critical',
         })
       } else {
@@ -457,7 +457,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
           data.push({
             url: 'fos',
             title: 'Нет данных по оценочным материалам',
-            text: [`Нет информации о критериях оценивания для "${x.formcontrol_verbose}"`],
+            text: [`Нет информации о критериях оценивания для "${r.title}"`],
             level: 'critical',
           })
         }
@@ -465,7 +465,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
           data.push({
             url: 'fos',
             title: 'Нет данных по оценочным материалам',
-            text: [`Неи информации об описании процедуры для "${x.formcontrol_verbose}"`],
+            text: [`Неи информации об описании процедуры для "${r.title}"`],
             level: 'critical',
           })
         }

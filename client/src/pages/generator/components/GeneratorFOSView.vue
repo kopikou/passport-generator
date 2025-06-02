@@ -36,7 +36,7 @@ watch(disciplineThemes, () => {
         style="border-bottom: none;"
       >
         <div v-for="(n, index) in choicesName">
-          <generator-f-o-s-item :title="formControlByValue[n].name" :type="n" group="fos" :default-opened="index==0"/>
+          <generator-f-o-s-item :title="formControlByValue[n]?.name" :type="n" group="fos" :default-opened="index==0"/>
         </div>
       </q-list>
     </div>

@@ -297,6 +297,7 @@ export interface DisciplineThemesData {
   hours: number,
   semester: number,
   formcontrol_id: number,
+  formcontrol_list: number,
   formcontrol_verbose: string,
   comment: string,
 }
