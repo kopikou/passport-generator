@@ -63,7 +63,7 @@ onBeforeMount(async () => {
           <q-route-tab icon="mdi-upload-box" label="Загрузка файлов программ" to="/upload"
                        v-show="can_upload"
           />
-          <q-route-tab icon="mdi-generator-portable" label="РПД" to="/generator"
+          <q-route-tab icon="mdi-generator-portable" label="РПД / РПП" to="/generator"
                        v-permissions-required="Permissions.can_use_generator"
           />
 <!--          <q-route-tab icon="mdi-generator-mobile" label="РПП" to="/practice_generator"-->

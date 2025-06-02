@@ -479,9 +479,9 @@ class ReportService(object):
         precedence_names = ''
         subsequent_names = ''
         if precedence:
-            precedence_names = ", ".join([f"{other_disciplines[item]}" for item in precedence])
+            precedence_names = ", ".join([f"{other_disciplines[item]}" for item in precedence if item in other_disciplines])
         if subsequent:
-            subsequent_names = ", ".join([f"{other_disciplines[item]}" for item in subsequent])
+            subsequent_names = ", ".join([f"{other_disciplines[item]}" for item in subsequent if item in other_disciplines])
 
         tic_all = {}
         semester_hours = []
