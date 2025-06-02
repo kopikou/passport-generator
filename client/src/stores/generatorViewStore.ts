@@ -449,7 +449,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         data.push({
           url: 'fos',
           title: 'Нет данных по оценочным материалам',
-          text: [`Не заполнена информация о "${r.title}"`],
+          text: [`Не заполнена информация о "${r?.title}"`],
           level: 'critical',
         })
       } else {
@@ -457,7 +457,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
           data.push({
             url: 'fos',
             title: 'Нет данных по оценочным материалам',
-            text: [`Нет информации о критериях оценивания для "${r.title}"`],
+            text: [`Нет информации о критериях оценивания для "${r?.title}"`],
             level: 'critical',
           })
         }
@@ -465,7 +465,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
           data.push({
             url: 'fos',
             title: 'Нет данных по оценочным материалам',
-            text: [`Неи информации об описании процедуры для "${r.title}"`],
+            text: [`Неи информации об описании процедуры для "${r?.title}"`],
             level: 'critical',
           })
         }

@@ -4,7 +4,6 @@ import GeneratorTATMarkItem from "pages/generator/components/TAT/GeneratorTATMar
 import GeneratorTATZachItem from "pages/generator/components/TAT/GeneratorTATZachItem.vue";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
-import {computed} from "vue";
 import _ from "lodash";
 
 
@@ -16,25 +15,25 @@ const {
   rpdData,
 } = storeToRefs(generatorViewStore)
 
-const ekzCheck = computed(() => {
-  return _.some(semestersData.value, {'ekz': true})
-})
+function ekzCheck(item) {
+  return _.get(item, 'ekz', false)
+}
 
-const zachCheck = computed(() => {
-  return _.some(semestersData.value, {'zach': true})
-})
+function zachCheck(item) {
+  return _.get(item, 'zach', false)
+}
 
-const zachoCheck = computed(() => {
-  return _.some(semestersData.value, {'zacho': 1})
-})
+function zachoCheck(item) {
+  return _.get(item, 'zacho', false)
+}
 
-const kpCheck = computed(() => {
-  return _.some(semestersData.value, {'kp': true})
-})
+function kpCheck(item) {
+  return _.get(item, 'kp', false)
+}
 
-const krCheck = computed(() => {
-  return _.some(semestersData.value, {'kr': true})
-})
+function krCheck(item) {
+  return _.get(item, 'kr', false)
+}
 
 function aspGetType(dis) {
   // console.log(dis)
@@ -58,18 +57,21 @@ function aspGetType(dis) {
       bordered
       style="border-bottom: none;"
     >
-      <generator-t-a-t-mark-item v-if="ekzCheck" title="Экзамен" type="ekz"/>
-      <generator-t-a-t-mark-item v-if="zachoCheck" title="Дифференцированный зачет" type="zacho"/>
-      <generator-t-a-t-zach-item v-if="zachCheck" title="Зачет" type="zach"/>
-      <generator-t-a-t-mark-item v-if="kpCheck || krCheck" title="Курсовая работа/проект" type="krkp"/>
-      <generator-t-a-t-mark-item v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'foreign'"
-                                 title="Кандидатский экзамен по иностранному языку" type="foreign"/>
-      <generator-t-a-t-mark-item
-        v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'philosophy'"
-        title="Кандидатский экзамен по истории и философии науки" type="philosophy"/>
-      <generator-t-a-t-mark-item
-        v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'base'"
-        title="Кандидатский экзамен по спец. дисциплине" type="base"/>
+      <div v-for="item in semestersData">
+        <generator-t-a-t-mark-item v-if="ekzCheck(item)" :title="`Семестр ${item.num} | Экзамен`" type="ekz"/>
+        <generator-t-a-t-mark-item v-if="zachoCheck(item)" :title="`Семестр ${item.num} | Дифференцированный зачет`" type="zacho"/>
+        <generator-t-a-t-zach-item v-if="zachCheck(item)" :title="`Семестр ${item.num} | Зачет`" type="zach"/>
+        <generator-t-a-t-mark-item v-if="kpCheck(item) || krCheck(item)" :title="`Семестр ${item.num} | Курсовая работа/проект`" type="krkp"/>
+        <generator-t-a-t-mark-item
+          v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'foreign'"
+          :title="`Семестр ${item.num} | Кандидатский экзамен по иностранному языку`" type="foreign"/>
+        <generator-t-a-t-mark-item
+          v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'philosophy'"
+          :title="`Семестр ${item.num} | Кандидатский экзамен по истории и философии науки`" type="philosophy"/>
+        <generator-t-a-t-mark-item
+          v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'base'"
+          :title="`Семестр ${item.num} | Кандидатский экзамен по спец. дисциплине`" type="base"/>
+      </div>
     </q-list>
   </div>
 </template>
