@@ -37,8 +37,17 @@ class Command(BaseCommand):
                 # if not filtered_semesters:
                 #     pprint(j)
                 #     pprint(i.planlineslink)
-        pprint(res)
+        res_sorted = sorted(res, key=lambda x: x['id'])
+        res_grouped = {key: list(items) for key, items in groupby(res_sorted, key=lambda x: x['id'])}
 
+        for key, items in res_grouped.items():
+            temp = []
+            for i in items:
+                temp.append(i['value'])
+
+            instance = AdditionalInfo.objects.get(id=key)
+            instance.value = temp
+            instance.save()
 
 
 

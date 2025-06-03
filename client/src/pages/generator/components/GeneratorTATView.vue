@@ -58,19 +58,19 @@ function aspGetType(dis) {
       style="border-bottom: none;"
     >
       <div v-for="item in semestersData">
-        <generator-t-a-t-mark-item :num="item.num" v-if="ekzCheck(item)" :title="`Семестр ${item.num} | Экзамен`" type="ekz"/>
-        <generator-t-a-t-mark-item :num="item.num" v-if="zachoCheck(item)" :title="`Семестр ${item.num} | Дифференцированный зачет`" type="zacho"/>
-        <generator-t-a-t-zach-item :num="item.num" v-if="zachCheck(item)" :title="`Семестр ${item.num} | Зачет`" type="zach"/>
-        <generator-t-a-t-mark-item :num="item.num" v-if="kpCheck(item) || krCheck(item)" :title="`Семестр ${item.num} | Курсовая работа/проект`" type="krkp"/>
+        <generator-t-a-t-mark-item :num="item.num" v-if="ekzCheck(item)" :title="`Экзамен`" type="ekz"/>
+        <generator-t-a-t-mark-item :num="item.num" v-if="zachoCheck(item)" :title="`Дифференцированный зачет`" type="zacho"/>
+        <generator-t-a-t-zach-item :num="item.num" v-if="zachCheck(item)" :title="`Зачет`" type="zach"/>
+        <generator-t-a-t-mark-item :num="item.num" v-if="kpCheck(item) || krCheck(item)" :title="`Курсовая работа/проект`" type="krkp"/>
         <generator-t-a-t-mark-item :num="item.num"
           v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'foreign'"
-          :title="`Семестр ${item.num} | Кандидатский экзамен по иностранному языку`" type="foreign"/>
+          :title="`Кандидатский экзамен по иностранному языку`" type="foreign"/>
         <generator-t-a-t-mark-item :num="item.num"
           v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'philosophy'"
-          :title="`Семестр ${item.num} | Кандидатский экзамен по истории и философии науки`" type="philosophy"/>
+          :title="`Кандидатский экзамен по истории и философии науки`" type="philosophy"/>
         <generator-t-a-t-mark-item :num="item.num"
           v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'base'"
-          :title="`Семестр ${item.num} | Кандидатский экзамен по спец. дисциплине`" type="base"/>
+          :title="`Кандидатский экзамен по спец. дисциплине`" type="base"/>
       </div>
     </q-list>
   </div>

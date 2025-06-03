@@ -15,6 +15,7 @@ const {
   tatInfo,
   disabled,
   planlinesData,
+  semesterYearLabel,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -55,6 +56,7 @@ async function saveData() {
       "unsatisfactory": unsatisfactory.value,
       "title": props.title,
       "type": props.type,
+      "num": props.num,
   }
   if (planlinesData.value.viewpract) {
     res = {
@@ -108,7 +110,7 @@ watchEffect(() => {
 
 <template>
   <q-expansion-item
-    :label=props.title
+    :label="`${semesterYearLabel} ${props.num} | ${props.title}`"
   >
     <q-card>
       <q-card-section>
