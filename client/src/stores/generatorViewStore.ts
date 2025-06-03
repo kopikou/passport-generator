@@ -569,6 +569,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         if (zacho) checkTat('zacho', 'Дифференцированный зачет')
         if (ekz) checkTat('ekz', 'Экзамен')
         if (kp) checkTat('krkp', 'Курсовой проекта/работа')
+
+        if (admissionData.value?.cadmkind == 5 && aspGetType(rpdData.value?.planlines?.dis)) checkTat(aspGetType(rpdData.value?.planlines?.dis), 'Кандидатский экзамен')
       }
     }
 
@@ -669,6 +671,18 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     }
   }
 
+  function aspGetType(dis) {
+    // console.log(dis)
+    if (dis == 'Иностранный язык') {
+      return 'foreign'
+    } else if (dis == 'История и философия науки') {
+      return 'philosophy'
+    } else {
+      return 'base'
+    }
+  }
+
+
   onAuthenticated(async () => {
     const loadingHelpers = $q.loading.show({
       group: 'first',
@@ -749,6 +763,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     labHours,
     semesterYearLabel,
     formControlByValue,
+    aspGetType,
   }
 })
 

@@ -35,16 +35,6 @@ function krCheck(item) {
   return _.get(item, 'kr', false)
 }
 
-function aspGetType(dis) {
-  // console.log(dis)
-  if (dis == 'Иностранный язык') {
-    return 'foreign'
-  } else if (dis == 'История и философия науки') {
-    return 'philosophy'
-  } else {
-    return 'base'
-  }
-}
 
 </script>
 
@@ -63,13 +53,13 @@ function aspGetType(dis) {
         <generator-t-a-t-zach-item :num="item.num" v-if="zachCheck(item)" :title="`Зачет`" type="zach"/>
         <generator-t-a-t-mark-item :num="item.num" v-if="kpCheck(item) || krCheck(item)" :title="`Курсовая работа/проект`" type="krkp"/>
         <generator-t-a-t-mark-item :num="item.num"
-          v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'foreign'"
+          v-if="admissionData?.cadmkind == 5 && generatorViewStore.aspGetType(rpdData?.planlines?.dis) == 'foreign'"
           :title="`Кандидатский экзамен по иностранному языку`" type="foreign"/>
         <generator-t-a-t-mark-item :num="item.num"
-          v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'philosophy'"
+          v-if="admissionData?.cadmkind == 5 && generatorViewStore.aspGetType(rpdData?.planlines?.dis) == 'philosophy'"
           :title="`Кандидатский экзамен по истории и философии науки`" type="philosophy"/>
         <generator-t-a-t-mark-item :num="item.num"
-          v-if="admissionData?.cadmkind == 5 && aspGetType(rpdData?.planlines?.dis) == 'base'"
+          v-if="admissionData?.cadmkind == 5 && generatorViewStore.aspGetType(rpdData?.planlines?.dis) == 'base'"
           :title="`Кандидатский экзамен по спец. дисциплине`" type="base"/>
       </div>
     </q-list>
