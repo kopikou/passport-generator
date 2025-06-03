@@ -23,6 +23,9 @@ const props = defineProps({
   },
   type: {
     required: true,
+  },
+  num: {
+    required: true,
   }
 })
 

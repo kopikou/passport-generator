@@ -24,6 +24,9 @@ const props = defineProps({
   type: {
     required: true,
   },
+  num: {
+    required: true,
+  }
 })
 
 const main = ref('')
@@ -87,7 +90,7 @@ async function saveData() {
 }
 
 watchEffect(() => {
-  const data = _.find(tatInfo.value, x => x.type == props.type)
+  const data = _.find(tatInfo.value, x => x.type == props.type && x.num == props.num)
   if (data) {
     about.value = _.get(data, 'about', '')
     great.value = _.get(data, 'great', '')
