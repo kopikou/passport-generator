@@ -342,6 +342,7 @@ class ReportService(object):
             'krkp': 'Типовые оценочные средства для курсовой работы/курсового проектирования по дисциплине',
             'foreign': 'Типовые оценочные средства для кандидатского экзамена по иностранному языку',
             'philosophy': 'Типовые оценочные средства для кандидатского экзамена по истории и философии науки',
+            'base': 'Типовые оценочные средства для кандидатского экзамена по спец. дисциплине',
         }
 
         asp_spec = ''
@@ -765,7 +766,7 @@ class ReportService(object):
             "indicators": indicators,
             "precedence": precedence_names,
             "subsequent": subsequent_names,
-            "sum_zet": int(sum([i['zet'] for i in data['planlines']['semesters']])),
+            "sum_zet": int(sum([i['zet'] or 0 for i in data['planlines']['semesters']])),
             "semesters": semesters,
             "sh": semester_hours,
             "sha": semester_hours_all,
