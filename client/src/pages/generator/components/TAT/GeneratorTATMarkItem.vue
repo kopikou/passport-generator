@@ -15,6 +15,7 @@ const {
   tatInfo,
   disabled,
   planlinesData,
+  semesterYearLabel,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -24,6 +25,9 @@ const props = defineProps({
   type: {
     required: true,
   },
+  num: {
+    required: true,
+  }
 })
 
 const main = ref('')
@@ -52,6 +56,7 @@ async function saveData() {
       "unsatisfactory": unsatisfactory.value,
       "title": props.title,
       "type": props.type,
+      "num": props.num,
   }
   if (planlinesData.value.viewpract) {
     res = {
@@ -87,7 +92,7 @@ async function saveData() {
 }
 
 watchEffect(() => {
-  const data = _.find(tatInfo.value, x => x.type == props.type)
+  const data = _.find(tatInfo.value, x => x.type == props.type && x.num == props.num)
   if (data) {
     about.value = _.get(data, 'about', '')
     great.value = _.get(data, 'great', '')
@@ -105,7 +110,7 @@ watchEffect(() => {
 
 <template>
   <q-expansion-item
-    :label=props.title
+    :label="`${semesterYearLabel} ${props.num} | ${props.title}`"
   >
     <q-card>
       <q-card-section>

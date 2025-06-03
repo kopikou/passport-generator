@@ -447,14 +447,15 @@ class ReportService(object):
 
             if item['type'] == 'tat':
                 q = 0
-                for i in item['value']:
+                for i in sorted(item['value'], key=lambda x: x['num']):
                     q += 1
                     if i['type'] == 'zach':
                         tat.append({
                             'number': q,
                             'type': i['type'],
-                            'title': tat_titles[i['type']],
+                            'title': f"Семестр {i['num']}, {tat_titles[i['type']]}",
                             # 'main': i['main'],
+                            'num': i['num'],
                             'about': i['about'],
                             'example': i['example'],
                             'passed': i['passed'],
@@ -464,8 +465,9 @@ class ReportService(object):
                         tat.append({
                             'number': q,
                             'type': i['type'],
-                            'title': tat_titles[i['type']],
+                            'title': f"Семестр {i['num']}, {tat_titles[i['type']]}",
 #                             'main': i['main'],
+                            'num': i['num'],
                             'about': i['about'],
                             'example': i['example'],
                             'great': i['great'],

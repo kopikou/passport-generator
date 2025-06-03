@@ -126,16 +126,6 @@ watchEffect(() => {
 //   tab.value = `${semestersData.value[0]?.num}`
 // })
 
-function aspGetType(dis) {
-  if (dis == 'Иностранный язык') {
-    return 'foreign'
-  } else if (dis == 'История и философия науки') {
-    return 'philosophy'
-  } else {
-    return 'base'
-  }
-}
-
 </script>
 
 <template>
@@ -242,9 +232,9 @@ function aspGetType(dis) {
                   <span v-if="item.ekz">Экзамен</span>
                   <span v-else-if="item.zach">Зачет</span>
                   <span v-else-if="item.zacho">Зачет с оценкой</span>
-                  <span v-else-if="admissionData?.cadmkind == 5 && aspGetType(rpdData.planlines?.dis) == 'foreign'">Кандидатский экзамен по иностранному языку</span>
-                  <span v-else-if="admissionData?.cadmkind == 5 && aspGetType(rpdData.planlines?.dis) == 'philosophy'">Кандидатский экзамен по истории и философии науки</span>
-                  <span v-else-if="admissionData?.cadmkind == 5 && aspGetType(rpdData.planlines?.dis) == 'base'">Кандидатский экзамен по спец. дисциплине</span>
+                  <span v-else-if="admissionData?.cadmkind == 5 && generatorViewStore.aspGetType(rpdData.planlines?.dis) == 'foreign'">Кандидатский экзамен по иностранному языку</span>
+                  <span v-else-if="admissionData?.cadmkind == 5 && generatorViewStore.aspGetType(rpdData.planlines?.dis) == 'philosophy'">Кандидатский экзамен по истории и философии науки</span>
+                  <span v-else-if="admissionData?.cadmkind == 5 && generatorViewStore.aspGetType(rpdData.planlines?.dis) == 'base'">Кандидатский экзамен по спец. дисциплине</span>
                   <span v-else-if="!item.ekz && !item.zach && !item.zacho">Отсутствует</span>
                 </div>
               </template>
