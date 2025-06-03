@@ -766,7 +766,7 @@ class ReportService(object):
             "indicators": indicators,
             "precedence": precedence_names,
             "subsequent": subsequent_names,
-            "sum_zet": int(sum([i['zet'] for i in data['planlines']['semesters']])),
+            "sum_zet": int(sum([i['zet'] or 0 for i in data['planlines']['semesters']])),
             "semesters": semesters,
             "sh": semester_hours,
             "sha": semester_hours_all,

@@ -631,7 +631,7 @@ class GeneratorViewSet(
                     "planlineslink_id": pk,
                     "name": i['tema'] or '-',
                     "semester": item['semestr'],
-                    "formcontrol_id": form_control_id,
+                    "formcontrol_list": [form_control_id],
                     "comment": i['note'],
                     "num": i['num'] or 1,
                 })
