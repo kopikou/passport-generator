@@ -236,6 +236,8 @@ class AISServices(object):
 
         data = Mira.fetch(q, [int(id)])
 
+        data = [i for i in data if 'научно-исследовательский семинар' not in i['discpl'].lower()]
+
         return data
 
     @staticmethod
