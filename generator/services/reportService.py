@@ -786,20 +786,34 @@ class ReportService(object):
             "logistics": logistics,
             "protocol_number": data['protocol_number'] if data['protocol_number'] else '',
             "meeting": data['meeting'] if data['meeting'] else '',
-            "accept_date": data['accept_date'] if data['accept_date'] else '',
-            "review_date": data['review_date'] if data['review_date'] else '',
+            "accept_date": pendulum.from_format(data['accept_date'], "YYYY-MM-DD").format("DD.MM.YYYY") if data['accept_date'] else '',
+            "review_date": pendulum.from_format(data['review_date'], "YYYY-MM-DD").format("DD.MM.YYYY") if data['review_date'] else '',
             "status": data['status'],
         }
 
-        if data['status'] == 3:
+        if data['status'] == PlanLinesLink.StatusChoices.accepted:
             protocol_date = pendulum.from_format(data['protocol_date'], "YYYY-MM-DD")
-            user_accepted = User.objects.get(id=data['user_accepted_id'])
+            confirm_date = pendulum.from_format(data['confirm_date'], "YYYY-MM-DD") if data['confirm_date'] else ""
+            user_accepted = User.objects.filter(id=data['user_accepted_id']).first()
+            user_confirmed = User.objects.filter(id=data['user_confirmed_id']).first()
+
+            is_only_accepted = user_confirmed is None
+
+            user_confirmed = (user_confirmed.last_name + " " + user_confirmed.first_name + " " + user_confirmed.userprofile.middle_name) if user_confirmed is not None else ""
 
             context.update({
-                "protocol_date": f'{protocol_date.format("DD.MM.YYYY")}',
-                "protocol_year": protocol_date.year,
+                "protocol_date": f'{protocol_date}',
+                "protocol_year": protocol_date.format("YYYY"),
                 "user_accepted": f"{user_accepted.last_name} {user_accepted.first_name} {user_accepted.userprofile.middle_name}",
+                "user_confirmed": user_confirmed,
+                "confirm_date": f'{confirm_date.format("DD.MM.YYYY") if confirm_date else ""}',
+                "user_accepted_is_confirmed": user_confirmed != "" and user_confirmed == f"{user_accepted.last_name} {user_accepted.first_name} {user_accepted.userprofile.middle_name}",
+                "is_only_accepted": is_only_accepted,
             })
+
+            if context["user_accepted_is_confirmed"]:
+                context["confirm_date"] = max(context["accept_date"], context["confirm_date"])
+
 
         doc.render(context)
 
