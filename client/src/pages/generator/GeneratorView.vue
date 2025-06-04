@@ -125,7 +125,7 @@ watch(() => props.id,
           target="_blank"
         />
         <q-btn
-          label="Скопировать"
+          label="Скопировать из"
           color="white"
           text-color="black"
           icon="mdi-content-copy"

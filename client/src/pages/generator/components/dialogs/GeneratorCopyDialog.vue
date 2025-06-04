@@ -80,14 +80,14 @@ async function copyNewProgram(id: number) {
     <q-card class="q-dialog-plugin" style="width: 700px;">
       <q-card-section>
         <div class="text-h6">
-          Копирование данных РПД
+          Копирование данных из другого РПД
         </div>
       </q-card-section>
       <q-separator />
 
         <div class="bg-primary rounded-borders">
           <div class="text-subtitle1 text-white q-px-md q-py-sm">
-            Все данные об индикаторах и содержании тем дисциплины будут перезаписаны (в том числе часы)
+            Все данные об индикаторах и содержании тем дисциплины в текущей программе будут перезаписаны
           </div>
         </div>
 
@@ -101,7 +101,7 @@ async function copyNewProgram(id: number) {
           narrow-indicator
         >
           <q-tab name="old" label="Из старого генератора" />
-          <q-tab name="new" label="Новые" />
+          <q-tab name="new" label="Из новых программ" />
         </q-tabs>
 
          <q-tab-panels v-model="typeTab" animated>
@@ -119,7 +119,7 @@ async function copyNewProgram(id: number) {
               </template>
 
               <template #append>
-                <q-btn flat icon="mdi-clipboard-outline" color="black" @click="copyOldProgram(plan.id)"/>
+                <q-btn label="скопировать" flat icon="mdi-clipboard-outline" color="black" @click="copyOldProgram(plan.id)"/>
               </template>
             </q-field>
           </q-tab-panel>
@@ -138,7 +138,7 @@ async function copyNewProgram(id: number) {
               </template>
 
               <template #append>
-                <q-btn flat icon="mdi-clipboard-outline" color="black" @click="copyNewProgram(plan.id)"/>
+                <q-btn label="скопировать" flat icon="mdi-clipboard-outline" color="black" @click="copyNewProgram(plan.id)"/>
               </template>
             </q-field>
           </q-tab-panel>
