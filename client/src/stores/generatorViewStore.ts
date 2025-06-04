@@ -163,7 +163,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     res = _.some(semestersData.value, x => {
       return x.ekz || x.zach || x.zacho || x.kp || x.kr
     })
-    if (admissionData.value?.cadmkind == 5) {
+
+    if (admissionData.value?.cadmkind == 5 && !res) {
       res = true
     }
 
@@ -673,12 +674,17 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   function aspGetType(dis) {
     // console.log(dis)
-    if (dis == 'Иностранный язык') {
-      return 'foreign'
-    } else if (dis == 'История и философия науки') {
-      return 'philosophy'
-    } else {
-      return 'base'
+    const res = _.some(semestersData.value, x => {
+      return x.ekz || x.zach || x.zacho || x.kp || x.kr
+    })
+    if (!res) {
+      if (dis == 'Иностранный язык') {
+        return 'foreign'
+      } else if (dis == 'История и философия науки') {
+        return 'philosophy'
+      } else {
+        return 'base'
+      }
     }
   }
 
