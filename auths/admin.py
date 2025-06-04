@@ -18,7 +18,7 @@ class UserProfileAdmin(admin.ModelAdmin):
             }
 
     form = Form
-    search_fields = ['user__last_name', 'user__first_name']
+    search_fields = ['user__last_name', 'user__first_name', 'user__userprofile__middle_name', 'user__userprofile__mira_id']
     change_list_template = "loginas/change_list.html"
     list_display = ["user", "get_user__last_name", "get_user__first_name", "buttons", "mira_id", "is_student", "is_teacher", "bitrix_user_id"]
     list_filter = ["is_student", "is_teacher"]

@@ -45,16 +45,30 @@ const menuItems = computed(() => {
   let items = [];
   items.push(...[
       // title (название), url (ссылка), allow (cadmkind, отображать)
-      {title: 'Титульный лист', url: 'main', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
-      {title: 'Компетенции', url: 'competences', allow: [1, 2, 3, 4], rpd: true, rpp: true},
-      {title: 'Индикаторы', url: 'indicators', allow: [1, 2, 3, 4], rpd: true, rpp: true},
-      {title: 'Результаты освоения программы', url: 'competences', allow: [5], rpd: true, rpp: true},
-      {title: 'Результаты освоения дисциплины ', url: 'indicators', allow: [5], rpd: true, rpp: true},
-      {title: 'Место дисциплины в структуре ООП', url: 'discipline-place', allow: [1, 2, 3, 4], rpd: true, rpp: false},
-      {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
-      {title: 'Содержание практики', url: 'practice-content', allow: [1, 2, 3, 4, 5], rpd: false, rpp: true},
-      {title: 'Форма отчетности', url: 'practice-report', allow: [1, 2, 3, 4, 5], rpd: false, rpp: true},
-      {title: 'Содержание тем дисциплины', url: 'discipline-theme', allow: [1, 2, 3, 4, 5], rpd: true, rpp: false},
+      {title: 'Титульный лист', url: 'main', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true, nis: true},
+      {title: 'Компетенции', url: 'competences', allow: [1, 2, 3, 4], rpd: true, rpp: true, nis: true},
+      {title: 'Индикаторы', url: 'indicators', allow: [1, 2, 3, 4], rpd: true, rpp: true, nis: true},
+      {title: 'Результаты освоения программы', url: 'competences', allow: [5], rpd: true, rpp: true, nis: true},
+      {title: 'Результаты освоения дисциплины ', url: 'indicators', allow: [5], rpd: true, rpp: true, nis: true},
+      {
+        title: 'Место дисциплины в структуре ООП',
+        url: 'discipline-place',
+        allow: [1, 2, 3, 4],
+        rpd: true,
+        rpp: false,
+        nis: false
+      },
+      {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true, nis: true},
+      {title: 'Содержание практики', url: 'practice-content', allow: [1, 2, 3, 4, 5], rpd: false, rpp: true, nis: true},
+      {title: 'Форма отчетности', url: 'practice-report', allow: [1, 2, 3, 4, 5], rpd: false, rpp: true, nis: true},
+      {
+        title: 'Содержание тем дисциплины',
+        url: 'discipline-theme',
+        allow: [1, 2, 3, 4, 5],
+        rpd: true,
+        rpp: false,
+        nis: true
+      },
     ]
   );
 
@@ -63,18 +77,26 @@ const menuItems = computed(() => {
       title: 'Содержание лекционных занятий',
       url: 'discipline-lectures',
       'right': true,
-      allow: [1, 2, 3, 4, 5], rpd: true, rpp: false
+      allow: [1, 2, 3, 4, 5], rpd: true, rpp: false, nis: true
     })
   }
   if (labHours.value) {
-    items.push({title: 'Содержание лабораторных работ', url: 'discipline-lab', 'right': true, allow: [1, 2, 3, 4, 5], rpd: true, rpp: false})
+    items.push({
+      title: 'Содержание лабораторных работ',
+      url: 'discipline-lab',
+      'right': true,
+      allow: [1, 2, 3, 4, 5],
+      rpd: true,
+      rpp: false,
+      nis: true
+    })
   }
   if (prHours.value) {
     items.push({
       title: 'Содержание практических занятий',
       url: 'discipline-practice',
       'right': true,
-      allow: [1, 2, 3, 4, 5], rpd: true, rpp: false
+      allow: [1, 2, 3, 4, 5], rpd: true, rpp: false, nis: true
     })
   }
   if (srsHours.value) {
@@ -82,36 +104,67 @@ const menuItems = computed(() => {
       title: 'Содержание самостоятельных работ',
       url: 'discipline-independent',
       'right': true,
-      allow: [1, 2, 3, 4, 5], rpd: true, rpp: false
+      allow: [1, 2, 3, 4, 5], rpd: true, rpp: false, nis: true
     })
   }
 
 
   items.push(...[
-    {title: 'Перечень учебно-методического обеспечения', url: 'guidelines', allow: [1, 2, 3, 4, 5], rpd: true, rpp: false},
+    {
+      title: 'Перечень учебно-методического обеспечения',
+      url: 'guidelines',
+      allow: [1, 2, 3, 4, 5],
+      rpd: true,
+      rpp: false,
+      nis: false
+    },
     {
       title: 'Оценочные материалы по дисциплине для контроля текущей успеваемости',
       url: 'fos',
-      allow: [1, 2, 3, 4, 5], rpd: true, rpp: false
+      allow: [1, 2, 3, 4, 5], rpd: true, rpp: false, nis: true
     },
   ])
 
   if (hasTat.value) {
-    items.push({title: 'Типовые оценочные средства промежуточной аттестации', url: 'tat', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true});
+    items.push({
+      title: 'Типовые оценочные средства промежуточной аттестации',
+      url: 'tat',
+      allow: [1, 2, 3, 4, 5],
+      rpd: true,
+      rpp: true,
+      nis: true
+    });
   }
 
   items.push(...[
-    {title: 'Литература', url: 'library', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
-    {title: 'Другие ресурсы', url: 'resources', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
-    {title: 'Перечень используемых информационных технологий', url: 'soft', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
-    {title: 'Материально-техническое обеспечение', url: 'logistics', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true},
+    {title: 'Литература', url: 'library', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true, nis: true},
+    {title: 'Другие ресурсы', url: 'resources', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true, nis: true},
+    {
+      title: 'Перечень используемых информационных технологий',
+      url: 'soft',
+      allow: [1, 2, 3, 4, 5],
+      rpd: true,
+      rpp: true,
+      nis: true
+    },
+    {
+      title: 'Материально-техническое обеспечение',
+      url: 'logistics',
+      allow: [1, 2, 3, 4, 5],
+      rpd: true,
+      rpp: true,
+      nis: true
+    },
   ]);
 
   return items;
 });
 
 const filterMenuItems = computed(() => {
-   if (planlinesData.value.viewpract) {
+
+  if (planlinesData.value?.viewpract == 8 && admissionData?.value.cadmkind == 3) {
+    return _(menuItems.value).filter(x => x.allow.includes(admissionData.value.cadmkind)).filter(x => x.nis).value()
+  } else if (planlinesData.value?.viewpract) {
     return _(menuItems.value).filter(x => x.allow.includes(admissionData.value.cadmkind)).filter(x => x.rpp).value()
   } else {
     return _(menuItems.value).filter(x => x.allow.includes(admissionData.value?.cadmkind)).filter(x => x.rpd).value()
@@ -123,11 +176,12 @@ const criticalErrors = computed(() => {
 })
 
 function getUrl(url) {
-  if (planlinesData.value.viewpract) {
-    return `/practice_generator/${props.id}/${url}`
-  } else {
-    return `/generator/${props.id}/${url}`
-  }
+  // if (planlinesData.value.viewpract) {
+  //   return `/practice_generator/${props.id}/${url}`
+  // } else {
+  //   return `/generator/${props.id}/${url}`
+  // }
+  return `/generator/${props.id}/${url}`
 }
 
 async function sendToReview() {
