@@ -208,6 +208,7 @@ class PlanLinesLinkSerializer(serializers.Serializer):
     user_confirmed_id = serializers.IntegerField(required=False)
     user_type = serializers.IntegerField(required=False)
     meeting = serializers.CharField(required=False)
+    can_be_copied_by_anyone = serializers.BooleanField(required=False)
 
     review_date = serializers.DateField(required=False)
     accept_date = serializers.DateField(required=False)
@@ -245,6 +246,7 @@ class PlanLinesLinkSerializer(serializers.Serializer):
             'discipline_themes',
             'discipline_work_hour',
             'additional_info',
+            'can_be_copied_by_anyone',
         ]
 
 

@@ -20,6 +20,7 @@ const generatorViewStore = useGeneratorViewStore();
 const {
   oldPlans,
   newPlans,
+  commonPlans,
   activeRpdId,
 } = storeToRefs(generatorViewStore)
 
@@ -102,6 +103,7 @@ async function copyNewProgram(id: number) {
         >
           <q-tab name="old" label="Из старого генератора" />
           <q-tab name="new" label="Из новых программ" />
+          <q-tab name="common" label="Из общих" />
         </q-tabs>
 
          <q-tab-panels v-model="typeTab" animated>
@@ -127,6 +129,25 @@ async function copyNewProgram(id: number) {
           <q-tab-panel name="new">
             <q-field
               v-for="plan in newPlans.filter(x => x.id != activeRpdId)"
+              outlined
+              stack-label
+              :label="plan.species"
+            >
+              <template #control>
+                <div>
+                  {{ plan.abbrprofile }}-{{ String(plan.startyear).slice(-2) }}
+                </div>
+              </template>
+
+              <template #append>
+                <q-btn label="скопировать" flat icon="mdi-clipboard-outline" color="black" @click="copyNewProgram(plan.id)"/>
+              </template>
+            </q-field>
+          </q-tab-panel>
+
+           <q-tab-panel name="common">
+            <q-field
+              v-for="plan in commonPlans.filter(x => x.id != activeRpdId)"
               outlined
               stack-label
               :label="plan.species"

@@ -125,6 +125,7 @@ watch(() => props.id,
           target="_blank"
         />
         <q-btn
+          v-if="!disabled"
           label="Скопировать из"
           color="white"
           text-color="black"

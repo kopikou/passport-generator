@@ -544,6 +544,17 @@ class GeneratorViewSet(
 
         return Response({"success": True})
 
+
+
+    @action(methods=['POST'], url_path="toggle-can-be-copied-by-anyone", detail=True, permission_classes=[CanEditRPDProgram])
+    def toggle_can_be_copied_by_anyone(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.can_be_copied_by_anyone = not instance.can_be_copied_by_anyone
+
+        instance.save()
+
+        return Response({"success": True})
+
     @action(methods=['POST'], url_path="send-rpd-on-refile", detail=True, permission_classes=[CanAcceptRPDProgram | CanConfirmRPDProgram])
     def send_rpd_on_refile(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -704,8 +715,9 @@ class GeneratorViewSet(
         pk = self.kwargs['pk']
         from_pk = int(self.request.data['from_pk'])
 
+        anyone_can_copy = PlanLinesLink.objects.filter(can_be_copied_by_anyone=True, id=from_pk).exists()
         programs = GeneratorService.get_program_list(self.request.user.userprofile.mira_id)
-        if from_pk not in [i['id'] for i in programs if 'person' in i['type']]:
+        if not anyone_can_copy and from_pk not in [i['id'] for i in programs if 'person' in i['type']]:
             raise APIException("Вы можете копировать только со своих програм")
 
         GeneratorService.copy_rpd_program(from_pk, pk)

@@ -80,6 +80,7 @@ class GeneratorService(object):
                     "status_verbose": res.status_verbose,
                     "kafcode": res.planlines.caf,
                     "user_confirmed": res.user_confirmed_id,
+                    "can_be_copied_by_anyone": res.can_be_copied_by_anyone,
                     "user_confirmed_name": res.user_confirmed.username if res.user_confirmed else None,
                     "user_accepted": res.user_accepted_id,
                     "user_accepted_name": res.user_accepted.username if res.user_accepted else None,
@@ -110,12 +111,6 @@ class GeneratorService(object):
                                      and 'rop' in item['type'] and not item['user_confirmed']
                 if require_my_accept or require_my_confirm:
                     item['status_verbose'] = "Требует моего согласования/утверждения"
-                # item['require_my_accept'] = require_my_accept
-                # item['require_my_confirm'] = require_my_confirm
-            # elif require_my_accept:
-            #     item['status_verbose'] = "Требует согласования"
-            # elif require_my_confirm:
-            #     item['status_verbose'] = "Требует утверждения"
 
         cache.set(cache_key, res, 60)
 
@@ -258,6 +253,11 @@ class GeneratorService(object):
         if user_mira_id:
             programs = cls.get_program_list(user_mira_id)
 
+        common_links = PlanLinesLink\
+            .objects\
+            .filter(can_be_copied_by_anyone=True, planlines__dis=serializer.data['planlines']['dis'])\
+            .select_related("planlines", "planlines__plan")
+
         result = {
             "admission": admission_info[0],
             "other_discipline": [i for i in other_discipline],
@@ -270,6 +270,12 @@ class GeneratorService(object):
                 'startyear': i['yr'],
                 'id': i['id'],
             } for i in programs if 'person' in i['type']],
+            "common": [{
+                'abbrprofile': i.planlines.plan.abbrprofile,
+                'species': i.planlines.dis,
+                'startyear': i.planlines.plan.startyear,
+                'id': i.id,
+            } for i in common_links],
             **serializer.data,
         }
         return result
@@ -285,7 +291,7 @@ class GeneratorService(object):
         to_line_link = PlanLinesLink.objects.filter(id=to_planlineslink_id).first()
 
         from_indicators = {
-            (i.indicator.indicator or "").replace(" ", ""): i
+            (i.indicator.indicator or "").replace(" ", "").replace(".",""): i
             for i in DisciplineIndicators.objects.filter(planlineid=from_line_link.planlines_id).select_related("indicator")
         }
 
@@ -293,7 +299,7 @@ class GeneratorService(object):
         indicators = LinesIndicators.objects.filter(planlineid=to_line_link.planlines_id)
 
         for ind in indicators:
-            indicator: DisciplineIndicators = from_indicators.get((ind.indicator or "").replace(" ", ""))
+            indicator: DisciplineIndicators = from_indicators.get((ind.indicator or "").replace(" ", "").replace(".",""))
             if indicator:
                 indicator.id = None
                 indicator.planlineid_id = to_line_link.planlines_id

@@ -42,6 +42,8 @@ class PlanLinesLink(TimestampsModel):
     accept_date = models.DateField(null=True, blank=True)
     confirm_date = models.DateField(null=True, blank=True)
 
+    can_be_copied_by_anyone = models.BooleanField("Каждый ли может скопировать программу", default=False)
+
     @property
     def status_verbose(self):
         return PlanLinesLink.StatusChoices.labels[self.status]

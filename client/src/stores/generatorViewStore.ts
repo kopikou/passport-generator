@@ -45,6 +45,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return _.orderBy(rpdData.value.new || [], x => [-x.startyear, x.species, x.abbrprofile].join("-"))
   })
 
+  const commonPlans = computed(() => {
+    return _.orderBy(rpdData.value.common || [], x => [-x.startyear, x.species, x.abbrprofile].join("-"))
+  })
+
   const status = computed(() => {
     return rpdData.value?.status || -1
   })
@@ -723,6 +727,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     cafData,
     oldPlans,
     newPlans,
+    commonPlans,
     formControl,
     independentTypes,
     otherDiscipline,
