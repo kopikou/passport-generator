@@ -45,10 +45,10 @@ const kpCheck = computed(() => {
       bordered
       style="border-bottom: none;"
     >
-         <GuidelinesExpansionItem  v-show="labCheck" label="Лабораторные работы" type="laboratory" :default-opened="true" group="info"/>
-        <GuidelinesExpansionItem v-show="prCheck" label="Практические занятия" type="practice" :default-opened="true" group="info"/>
-        <GuidelinesExpansionItem v-show="srsCheck" label="Самостоятельные занятия" type="independent" :default-opened="true" group="info"/>
-        <GuidelinesExpansionItem v-show="krCheck || kpCheck" label="Курсовой проект/работа" type="course" :default-opened="true" group="info"/>
+         <GuidelinesExpansionItem  v-if="labCheck" label="Лабораторные работы" type="laboratory" :default-opened="true" group="info"/>
+        <GuidelinesExpansionItem v-if="prCheck" label="Практические занятия" type="practice" :default-opened="true" group="info"/>
+        <GuidelinesExpansionItem v-if="srsCheck" label="Самостоятельные занятия" type="independent" :default-opened="true" group="info"/>
+        <GuidelinesExpansionItem v-if="krCheck || kpCheck" label="Курсовой проект/работа" type="course" :default-opened="true" group="info"/>
     </q-list>
   </div>
 </template>
