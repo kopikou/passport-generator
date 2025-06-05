@@ -123,6 +123,10 @@ function openManageDialog(id, item) {
   })
 }
 
+function toggleCanByCopiedByAnyone(id, item) {
+
+}
+
 async function getProgramData() {
   listData.value = []
   let r = await api.get("/api/generator/get-program-list/")

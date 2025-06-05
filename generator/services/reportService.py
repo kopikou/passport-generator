@@ -257,7 +257,7 @@ class ReportService(object):
             "fac_name": data['admission']['cfac__name'],
             "podrazdelene": podrazdelene,
             "view_pract": discipline[0],
-            "discipline": discipline[1],
+            "discipline": data['planlines']['dis'],
             "kvalif": data['admission']['kvalif_name'],
             "spec_name": data['admission']['spec_name'],
             "kind": data['admission']['cadmkind__name_prof'],

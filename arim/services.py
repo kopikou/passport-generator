@@ -352,7 +352,7 @@ class AISServices(object):
             left join uchplan_lines l2 on l2.planid = p2.id
 			left join uchplan_discpl d on d.id = l.disid
 			left join uchplan_discpl d2 on d2.id = l2.disid
-            where l.id = %s and p2.fordel = 'f' and l2.fordel = 'f' and l2.id <> %s and d.name = d2.name
+            where l.id = %s /*and p2.fordel = 'f' and l2.fordel = 'f' */ and l2.id <> %s and d.name = d2.name
         """
 
         data = Mira.fetch(query, [id, id])
