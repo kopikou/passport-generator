@@ -70,6 +70,7 @@ class GeneratorService(object):
                             "person": item['mira_id'],
                             "status": PlanLinesLink.StatusChoices.appointed,
                             "planlines_id": line.id,
+                            "can_be_copied_by_anyone": False,
                         }
                     )
 
