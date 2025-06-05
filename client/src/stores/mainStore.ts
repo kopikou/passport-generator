@@ -18,6 +18,7 @@ const useMainStore = defineStore("MainStore", () => {
   const csrf = ref('');
   const permissions = ref<Permissions[]>([]);
 
+  const rop = ref(false)
   const can_upload = ref(false)
 
   const router = useRouter();
@@ -40,6 +41,7 @@ const useMainStore = defineStore("MainStore", () => {
     VISIT_TOKEN_TIMEOUT.value = r.data.VISIT_TOKEN_TIMEOUT
     csrf.value = r.data.csrf
     can_upload.value = r.data.can_upload
+    rop.value = r.data.rop
 
 
     api.defaults.headers.common['X-CSRFToken'] = r.data.csrf
@@ -68,6 +70,7 @@ const useMainStore = defineStore("MainStore", () => {
     VISIT_TOKEN_TIMEOUT,
     csrf,
     can_upload,
+    rop,
     permissions,
     checkLogin,
   }

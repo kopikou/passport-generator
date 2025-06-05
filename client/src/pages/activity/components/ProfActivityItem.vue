@@ -137,7 +137,7 @@ watch(currentItem, () => {
 </script>
 
 <template>
-  <span class="admissionInfo" style="font-size: 1.5rem">{{admissionDataById[currentItem].species}}</span>
+  <span class="admissionInfo" style="font-size: 1.5rem">{{admissionDataById[currentItem]?.species}}</span>
   <q-select-filterable
     filled
     outlined

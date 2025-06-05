@@ -16,6 +16,7 @@ const {
   firstName,
   permissions,
   can_upload,
+  rop,
   FORCE_SCRIPT_NAME,
 } = storeToRefs(mainStore)
 
@@ -61,7 +62,7 @@ onBeforeMount(async () => {
         </q-toolbar-title>
         <q-tabs inline-label dense shrink stretch v-if="isAuthenticated">
           <q-route-tab icon="mdi-account-hard-hat" label="Проф. деятельность" to="/activity"
-          ></q-route-tab>
+                       v-show="rop"          ></q-route-tab>
           <q-route-tab icon="mdi-upload-box" label="Загрузка файлов программ" to="/upload"
                        v-show="can_upload"
           />
