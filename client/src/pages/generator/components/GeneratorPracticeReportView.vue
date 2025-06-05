@@ -14,6 +14,8 @@ const generatorViewStore = useGeneratorViewStore();
 const {
   activeRpdId,
   additionalInfo,
+  admissionData,
+  planlinesData,
 } = storeToRefs(generatorViewStore)
 
 
@@ -59,13 +61,21 @@ watchEffect(() => {
       <div class="q-gutter-y-md q-mt-sm">
         <div>
           <div class="text-subtitle1">По результатам прохождения практики обучающийся должен предоставить</div>
-          <ul>
+          <ul v-if="admissionData?.cadmkind != 3 && planlinesData.viewpract != 8">
             <li>Дневник прохождения практики</li>
             <li>Отчет о прохождении практики</li>
             <li>Характеристика с места прохождения практики</li>
           </ul>
+          <ul>
+            <div class="text-subtitle1 text-secondary">Примерный список отчетных документов</div>
+            <li>Список проанализированных научных публикаций</li>
+            <li>План научной работы</li>
+            <li>Научную статью, подготовленную к публикации в рецензируемом научном издании, проверенную научным руководителем</li>
+            <li>Результаты взаимной оценки научных статей магистрантами</li>
+            <li>Презентацию результатов научной работы</li>
+          </ul>
           <q-input type="textarea" v-model="documents"
-                   label="Дополнительные документы подтверждающие прохождение практики" filled stack-label
+                   label="Документы подтверждающие прохождение практики" filled stack-label
                    hint="Каждый новый документ пишите с новой строчки" @update:modelValue="saveData" :debounce="500"/>
           <div class="text-subtitle1">Требования к содержанию и оформлению отчета о прохождении практики, учитывая
             специфику направления подготовки

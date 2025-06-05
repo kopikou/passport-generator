@@ -563,6 +563,7 @@ class ReportService(object):
             "logistics": logistics,
             "tat": tat,
             "srsw": srs_work_res,
+            "prw": pr_work_grouped,
             "dg": discipline_grouped,
             "wk": wk_data,
             "fos": fos,
