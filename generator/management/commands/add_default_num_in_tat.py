@@ -50,6 +50,6 @@ class Command(BaseCommand):
             instance.value = temp
             instance.save()
 
-
+        print(len(res))
 
 

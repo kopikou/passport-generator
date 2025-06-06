@@ -228,6 +228,9 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   }[]>([]);
 
   function rpdErrors() {
+    if (!rpdData.value.admission)
+      return
+
     const admkind = rpdData.value.admission.cadmkind
     const data: {
       url: string,
@@ -707,6 +710,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   watch(rpdData, () => {
     checkErrors()
+  }, {
+    immediate: true
   })
 
   watch(activeRpdId, async () => {
