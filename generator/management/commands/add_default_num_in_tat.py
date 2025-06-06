@@ -19,20 +19,21 @@ class Command(BaseCommand):
         res = []
         for i in data:
             for j in i.value:
-                semester = semesters_by_planlineid.get(i.planlineslink.planlines_id, {})
-                if j['type'] != 'krkp':
-                    filtered_semesters = list(filter(lambda x: x.get(j['type'], False), semester))
-                else:
-                    filtered_semesters = list(filter(lambda x: x.get('kp', False) or x.get('kr', False), semester))
+                if not 'num' in j:
+                    semester = semesters_by_planlineid.get(i.planlineslink.planlines_id, {})
+                    if j['type'] != 'krkp':
+                        filtered_semesters = list(filter(lambda x: x.get(j['type'], False), semester))
+                    else:
+                        filtered_semesters = list(filter(lambda x: x.get('kp', False) or x.get('kr', False), semester))
 
-                for q in filtered_semesters:
-                    res.append({
-                        "value": {
-                            **j,
-                            "num": q['num'],
-                        },
-                        "id": i.id,
-                    })
+                    for q in filtered_semesters:
+                        res.append({
+                            "value": {
+                                **j,
+                                "num": q['num'],
+                            },
+                            "id": i.id,
+                        })
 
                 # if not filtered_semesters:
                 #     pprint(j)
@@ -48,7 +49,6 @@ class Command(BaseCommand):
             instance = AdditionalInfo.objects.get(id=key)
             instance.value = temp
             instance.save()
-
 
 
 

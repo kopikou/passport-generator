@@ -211,6 +211,16 @@ const routes: RouteRecordRaw[] = [
             component: GeneratorDisciplineIndependentView,
           },
           {
+            path: "practice-content",
+            name: "PracticeGeneratorContent",
+            component: GeneratorPracticeContent,
+          },
+          {
+            path: "practice-report",
+            name: "PracticeGeneratorReport",
+            component: GeneratorPracticeReportView,
+          },
+          {
             path: "library",
             name: "GeneratorLibraryView",
             component: GeneratorLibraryView,

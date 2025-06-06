@@ -24,22 +24,29 @@ const {
 const tab = ref<string>('')
 const methods = ref<string>('')
 const way = ref([])
+const form = ref([])
 
 const wayOptions = [
   'Стационарная',
   'Выездная',
 ]
 
+const formOptions = [
+  'Дискретная',
+  'Рассредоточенная',
+]
+
 async function savePracticeWay() {
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     type: "practiceWay",
     value: {
-      "practiceWay": way.value
+      "practiceWay": way.value,
+      "practiceForm": form.value,
     }
   })
   if (r.status == 200) {
     $q.notify({
-      message: "Данные <span class='text-bold'>о способе проведения практики</span> сохранены!",
+      message: "Данные <span class='text-bold'>о способе/форме проведения практики</span> сохранены!",
       color: "secondary",
       position: "bottom",
       html: true,
@@ -59,7 +66,7 @@ async function savePracticeWay() {
   } else {
 
     $q.notify({
-      message: "Данные <span class='text-bold'>о способе проведения практики</span> не сохранены!",
+      message: "Данные <span class='text-bold'>о способе/форме проведения практики</span> не сохранены!",
       color: "negative",
       position: "bottom",
       html: true,
@@ -117,6 +124,7 @@ watch(semestersData, () => {
 watchEffect(() => {
   if (planlinesData.value.viewpract) {
     way.value = _.filter(additionalInfo.value, (x) => x.type == 'practiceWay')[0]?.value['practiceWay']
+    form.value = _.filter(additionalInfo.value, (x) => x.type == 'practiceWay')[0]?.value['practiceForm']
   } else {
     methods.value = interactiveMethods.value[0]?.value['interactiveMethods']
   }
@@ -130,159 +138,163 @@ watchEffect(() => {
 
 <template>
   <div class="q-px-md">
-      <span class="text-h6">Структура дисциплины</span>
-      <p>Количество академических часов, выделенных на дисциплину "{{ rpdData.planlines?.dis }}". Данные автоматически
-        получены их учебного
-        плана.</p>
-      <q-separator class="q-mt-md q-mb-md"/>
-      <q-tabs
-        v-model="tab"
-        align="left"
-        class="q-mb-md"
-        active-bg-color="teal-1"
-      >
-        <q-tab class="text-teal" v-for="item in semestersData" :name="`${item.num}`"
-               :label="`${generatorViewStore.semesterYearLabel} ${item.num}`"/>
-      </q-tabs>
+    <span class="text-h6">Структура дисциплины</span>
+    <p>Количество академических часов, выделенных на дисциплину "{{ rpdData.planlines?.dis }}". Данные автоматически
+      получены их учебного
+      плана.</p>
+    <q-separator class="q-mt-md q-mb-md"/>
+    <q-tabs
+      v-model="tab"
+      align="left"
+      class="q-mb-md"
+      active-bg-color="teal-1"
+    >
+      <q-tab class="text-teal" v-for="item in semestersData" :name="`${item.num}`"
+             :label="`${generatorViewStore.semesterYearLabel} ${item.num}`"/>
+    </q-tabs>
 
-      <q-tab-panels
-        v-model="tab"
-        animated
-        transition-prev="scale"
-        transition-next="scale"
-      >
-        <q-tab-panel v-for="item in semestersData" :name="`${item.num}`">
-          <div class="structure-form q-gutter-md">
-            <div class="text-subtitle1">Лекции</div>
-            <q-field outlined dense>
-              <template v-slot:control>
-                <div class="self-center full-width no-outline text-center">
-                  <span v-if="item.lekc">{{ item.lekc }}</span>
-                  <span v-else>Отсутствует</span>
-                </div>
-              </template>
-            </q-field>
+    <q-tab-panels
+      v-model="tab"
+      animated
+      transition-prev="scale"
+      transition-next="scale"
+    >
+      <q-tab-panel v-for="item in semestersData" :name="`${item.num}`">
+        <div class="structure-form q-gutter-md">
+          <div class="text-subtitle1">Лекции</div>
+          <q-field outlined dense>
+            <template v-slot:control>
+              <div class="self-center full-width no-outline text-center">
+                <span v-if="item.lekc">{{ item.lekc }}</span>
+                <span v-else>Отсутствует</span>
+              </div>
+            </template>
+          </q-field>
 
-            <div class="text-subtitle1">Лабораторные</div>
-            <q-field outlined dense>
-              <template v-slot:control>
-                <div class="self-center full-width no-outline text-center">
-                  <span v-if="item.lab">{{ item.lab }}</span>
-                  <span v-else>Отсутствует</span>
-                </div>
-              </template>
-            </q-field>
+          <div class="text-subtitle1">Лабораторные</div>
+          <q-field outlined dense>
+            <template v-slot:control>
+              <div class="self-center full-width no-outline text-center">
+                <span v-if="item.lab">{{ item.lab }}</span>
+                <span v-else>Отсутствует</span>
+              </div>
+            </template>
+          </q-field>
 
-            <div class="text-subtitle1">Практики/Семинары</div>
-            <q-field outlined dense>
-              <template v-slot:control>
-                <div class="self-center full-width no-outline text-center">
-                  <span v-if="item.pr">{{ item.pr }}</span>
-                  <span v-else>Отсутствует</span>
-                </div>
-              </template>
-            </q-field>
+          <div class="text-subtitle1">Практики/Семинары</div>
+          <q-field outlined dense>
+            <template v-slot:control>
+              <div class="self-center full-width no-outline text-center">
+                <span v-if="item.pr">{{ item.pr }}</span>
+                <span v-else>Отсутствует</span>
+              </div>
+            </template>
+          </q-field>
 
-            <div class="text-subtitle1">Самостоятельные работы <span class="text-grey-6">(в том числе курсовое проектирование)</span>
-            </div>
-            <q-field outlined dense>
-              <template v-slot:control>
-                <div class="self-center full-width no-outline text-center">
-                  <span v-if="item.srs">{{ item.srs }}</span>
-                  <span v-else>Отсутствует</span>
-                </div>
-              </template>
-            </q-field>
-
-            <div class="text-subtitle1" v-if="item.eios">Электронная информационная образовательная среда
-            </div>
-            <q-field outlined dense v-if="item.eios">
-              <template v-slot:control>
-                <div class="self-center full-width no-outline text-center">
-                  <span v-if="item.eios">{{ item.eios }}</span>
-                  <span v-else>Отсутствует</span>
-                </div>
-              </template>
-            </q-field>
-
-            <div class="text-subtitle1">Трудоемкость промежуточной аттестации</div>
-            <q-field outlined dense>
-              <template v-slot:control>
-                <div class="self-center full-width no-outline text-center">
-                  <span v-if="item.ekzhour">{{ item.ekzhour }}</span>
-                  <span v-else>Отсутствует</span>
-                </div>
-              </template>
-            </q-field>
-
-            <div class="text-subtitle1">ЗЕТ</div>
-            <q-field outlined dense>
-              <template v-slot:control>
-                <div class="self-center full-width no-outline text-center">
-                  <span v-if="item.zet">{{ item.zet }}</span>
-                  <span v-else>Отсутствует</span>
-                </div>
-              </template>
-            </q-field>
-
-            <div class="text-subtitle1">Вид промежуточной аттестации</div>
-            <q-field outlined dense>
-              <template v-slot:control>
-                <div class="self-center full-width no-outline text-center">
-                  <span v-if="item.ekz">Экзамен</span>
-                  <span v-else-if="item.zach">Зачет</span>
-                  <span v-else-if="item.zacho">Зачет с оценкой</span>
-                  <span v-else-if="admissionData?.cadmkind == 5 && generatorViewStore.aspGetType(rpdData.planlines?.dis) == 'foreign'">Кандидатский экзамен по иностранному языку</span>
-                  <span v-else-if="admissionData?.cadmkind == 5 && generatorViewStore.aspGetType(rpdData.planlines?.dis) == 'philosophy'">Кандидатский экзамен по истории и философии науки</span>
-                  <span v-else-if="admissionData?.cadmkind == 5 && generatorViewStore.aspGetType(rpdData.planlines?.dis) == 'base'">Кандидатский экзамен по спец. дисциплине</span>
-                  <span v-else-if="!item.ekz && !item.zach && !item.zacho">Отсутствует</span>
-                </div>
-              </template>
-            </q-field>
-
-            <div class="text-subtitle1">Курсовой проект/курсовая работа</div>
-            <q-field outlined dense>
-              <template v-slot:control>
-                <div class="self-center full-width no-outline text-center">
-                  <span v-if="item.kr">Курсовая работа</span>
-                  <span v-else-if="item.kp">Курсовой проект</span>
-                  <span v-else-if="item.kp && item.kr">Курсовой проект и курсовая работа</span>
-                  <span v-else>Отсутствует</span>
-                </div>
-              </template>
-            </q-field>
+          <div class="text-subtitle1">Самостоятельные работы <span class="text-grey-6">(в том числе курсовое проектирование)</span>
           </div>
-        </q-tab-panel>
-      </q-tab-panels>
-      <div class="q-gutter-md" v-if="!planlinesData.viewpract">
-        <div class="text-h6">
-          Интерактивные методы обучения можно посмотреть по <a target="_blank"
-                                                               href="https://edu.itmo.ru/ru/edutech_iteractiv/">ссылке</a>
-          или этой <a target="_blank" href="https://sberuniversity.ru/edutech-club/lab/glossary/937/">ссылке</a>
+          <q-field outlined dense>
+            <template v-slot:control>
+              <div class="self-center full-width no-outline text-center">
+                <span v-if="item.srs">{{ item.srs }}</span>
+                <span v-else>Отсутствует</span>
+              </div>
+            </template>
+          </q-field>
+
+          <div class="text-subtitle1" v-if="item.eios">Электронная информационная образовательная среда
+          </div>
+          <q-field outlined dense v-if="item.eios">
+            <template v-slot:control>
+              <div class="self-center full-width no-outline text-center">
+                <span v-if="item.eios">{{ item.eios }}</span>
+                <span v-else>Отсутствует</span>
+              </div>
+            </template>
+          </q-field>
+
+          <div class="text-subtitle1">Трудоемкость промежуточной аттестации</div>
+          <q-field outlined dense>
+            <template v-slot:control>
+              <div class="self-center full-width no-outline text-center">
+                <span v-if="item.ekzhour">{{ item.ekzhour }}</span>
+                <span v-else>Отсутствует</span>
+              </div>
+            </template>
+          </q-field>
+
+          <div class="text-subtitle1">ЗЕТ</div>
+          <q-field outlined dense>
+            <template v-slot:control>
+              <div class="self-center full-width no-outline text-center">
+                <span v-if="item.zet">{{ item.zet }}</span>
+                <span v-else>Отсутствует</span>
+              </div>
+            </template>
+          </q-field>
+
+          <div class="text-subtitle1">Вид промежуточной аттестации</div>
+          <q-field outlined dense>
+            <template v-slot:control>
+              <div class="self-center full-width no-outline text-center">
+                <span v-if="item.ekz">Экзамен</span>
+                <span v-else-if="item.zach">Зачет</span>
+                <span v-else-if="item.zacho">Зачет с оценкой</span>
+                <span
+                  v-else-if="admissionData?.cadmkind == 5 && generatorViewStore.aspGetType(rpdData.planlines?.dis) == 'foreign'">Кандидатский экзамен по иностранному языку</span>
+                <span
+                  v-else-if="admissionData?.cadmkind == 5 && generatorViewStore.aspGetType(rpdData.planlines?.dis) == 'philosophy'">Кандидатский экзамен по истории и философии науки</span>
+                <span
+                  v-else-if="admissionData?.cadmkind == 5 && generatorViewStore.aspGetType(rpdData.planlines?.dis) == 'base'">Кандидатский экзамен по спец. дисциплине</span>
+                <span v-else-if="!item.ekz && !item.zach && !item.zacho">Отсутствует</span>
+              </div>
+            </template>
+          </q-field>
+
+          <div class="text-subtitle1">Курсовой проект/курсовая работа</div>
+          <q-field outlined dense>
+            <template v-slot:control>
+              <div class="self-center full-width no-outline text-center">
+                <span v-if="item.kr">Курсовая работа</span>
+                <span v-else-if="item.kp">Курсовой проект</span>
+                <span v-else-if="item.kp && item.kr">Курсовой проект и курсовая работа</span>
+                <span v-else>Отсутствует</span>
+              </div>
+            </template>
+          </q-field>
         </div>
-        <q-input
-          label="Интерактивные методы обучения"
-          filled
-          stack-label
-          v-model="methods"
-          clearable
-          :readonly="disabled"
-          @update:modelValue="saveMethods"
-          debounce="1000"
-        />
-        <!--        <q-btn-->
-        <!--          label="Сохранить"-->
-        <!--          color="primary"-->
-        <!--          @click="saveMethods"-->
-        <!--          v-show="!disabled"-->
-        <!--        />-->
+      </q-tab-panel>
+    </q-tab-panels>
+    <div class="q-gutter-md" v-if="!planlinesData.viewpract">
+      <div class="text-h6">
+        Интерактивные методы обучения можно посмотреть по <a target="_blank"
+                                                             href="https://edu.itmo.ru/ru/edutech_iteractiv/">ссылке</a>
+        или этой <a target="_blank" href="https://sberuniversity.ru/edutech-club/lab/glossary/937/">ссылке</a>
       </div>
-      <div v-else>
-        <div class="text-h6">
-          Способ проведения практики
-        </div>
+      <q-input
+        label="Интерактивные методы обучения"
+        filled
+        stack-label
+        v-model="methods"
+        clearable
+        :readonly="disabled"
+        @update:modelValue="saveMethods"
+        debounce="1000"
+      />
+      <!--        <q-btn-->
+      <!--          label="Сохранить"-->
+      <!--          color="primary"-->
+      <!--          @click="saveMethods"-->
+      <!--          v-show="!disabled"-->
+      <!--        />-->
+    </div>
+    <div v-else>
+      <div class="text-h6">
+        Способ и форма проведения практики
+      </div>
+      <div class="q-gutter-y-md">
         <q-select
-          label="Способы проведения практики"
+          label="Способ проведения практики"
           filled
           stack-label
           :options="wayOptions"
@@ -294,7 +306,21 @@ watchEffect(() => {
           @update:modelValue="savePracticeWay"
           debounce="1000"
         />
+        <q-select
+          label="Форма проведения практики"
+          filled
+          stack-label
+          :options="formOptions"
+          v-model="form"
+          clearable
+          multiple
+          use-chips
+          :readonly="disabled"
+          @update:modelValue="savePracticeWay"
+          debounce="1000"
+        />
       </div>
+    </div>
   </div>
 </template>
 
