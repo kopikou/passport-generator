@@ -191,7 +191,7 @@ class ReportService(object):
 
             if item['type'] == 'practiceReport':
                 practice_report_req = item['value']['requirements']
-                practice_report = item['value']['documents'].split('\n')
+                practice_report = [i.strip() for i in item['value']['documents'].split('\n') if i.strip()]
 
             if item['type'] == 'resources':
                 resources = item['value']
