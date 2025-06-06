@@ -166,7 +166,7 @@ class ReportService(object):
         for item in data['additional_info']:
             if item['type'] == 'practiceWay':
                 practice_way = item['value']['practiceWay']
-                practice_form = item['value']['practiceForm']
+                practice_form = item['value'].get('practiceForm')
 
             if item['type'] == 'fos':
                 q = 0
