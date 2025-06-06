@@ -7,7 +7,7 @@ from time import sleep
 import pendulum
 from constance import config
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.http import HttpResponse
 from django.utils.encoding import escape_uri_path
 from rest_framework import status
@@ -24,7 +24,7 @@ from arim_library.services import LibraryServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
     PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
-    ScientificDataDefault, DisciplineIndicators
+    ScientificDataDefault, DisciplineIndicators, DefaultsResources, AdditionalInfo
 from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanConfirmRPDProgram, CanAcceptRPDProgram, CanEditScientificProgram
 from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
@@ -404,61 +404,66 @@ class GeneratorViewSet(
 
     @action(methods=['GET'], url_path="get-rpd-report", detail=True)
     def get_rpd_report(self, request, *args, **kwargs):
+        instance: PlanLinesLink = self.get_object()
 
-        instance = self.get_object()
-        pk = self.kwargs['pk']
+        updated_at_max = PlanLinesLink.objects.values("updated_at").union(
+            DisciplineIndicators.objects.values("updated_at"),
+            DisciplineThemes.objects.values("updated_at"),
+            DisciplineWorkHours.objects.values("updated_at"),
+            DefaultsResources.objects.values("updated_at"),
+            AdditionalInfo.objects.values("updated_at"),
+        ).aggregate(update_max=Max("updated_at"))
 
-        rpd_data = GeneratorService.get_rpd_data(pk, self.request.user.userprofile.mira_id)
+        if instance.file_updated_at < updated_at_max:
+            pk = self.kwargs['pk']
+            rpd_data = GeneratorService.get_rpd_data(pk, self.request.user.userprofile.mira_id)
 
-        # filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(
-        #     ',', ' ')
-        filename = f"РПД_{instance.planlines.dis}_{rpd_data['admission']['abbr']}-{rpd_data['admission']['yr']}.pdf".replace(
-            ',', ' ')
-        path = f'templates/outputs/'
+            # filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(
+            #     ',', ' ')
+            filename = f"РПД_{instance.planlines.dis}_{rpd_data['admission']['abbr']}-{rpd_data['admission']['yr']}.pdf".replace(
+                ',', ' ')
+            path = f'templates/outputs/'
 
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-        response['Content-Disposition'] = f"attachment; filename={escape_uri_path(filename)}"
+            response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            response['Content-Disposition'] = f"attachment; filename={escape_uri_path(filename)}"
 
-        if not os.path.exists(path):
-            os.makedirs(path)
+            if not os.path.exists(path):
+                os.makedirs(path)
 
-        path_doc_file = f"{os.path.abspath(path)}/{pk}.docx"
-        path_pdf_file = f"{os.path.abspath(path)}/{pk}.pdf"
+            path_doc_file = f"{os.path.abspath(path)}/{pk}.docx"
+            path_pdf_file = f"{os.path.abspath(path)}/{pk}.pdf"
 
-        if rpd_data['planlines']['viewpract']:
-            tpl = ReportService.get_practice_report(rpd_data)
-        else:
-            tpl = ReportService.get_rpd_report(rpd_data)
-        # tpl.save(response)
+            if rpd_data['planlines']['viewpract']:
+                tpl = ReportService.get_practice_report(rpd_data)
+            else:
+                tpl = ReportService.get_rpd_report(rpd_data)
+            # tpl.save(response)
 
-        tpl.save(path_doc_file)
+            tpl.save(path_doc_file)
 
-        if platform.system() == 'Linux':
-            run([
-                'libreoffice', '--headless', '--invisible', '--convert-to',
-                'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
-            ])
+            if platform.system() == 'Linux':
+                run([
+                    'libreoffice', '--headless', '--invisible', '--convert-to',
+                    'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
+                ])
+            elif platform.system() == 'Windows':
+                from win32com.client import Dispatch
 
-        elif platform.system() == 'Windows':
-            from win32com.client import Dispatch
+                word = Dispatch('Word.Application')
+                doc = word.Documents.Open(path_doc_file)
+                doc.SaveAs(path_pdf_file, FileFormat=17)
+                word.Quit()
 
-            word = Dispatch('Word.Application')
-            doc = word.Documents.Open(path_doc_file)
-            doc.SaveAs(path_pdf_file, FileFormat=17)
-            word.Quit()
-        else:
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            with open(path_pdf_file, 'rb') as file:
+                response.write(file.read())
 
-        with open(path_pdf_file, 'rb') as file:
-            response.write(file.read())
+            if os.path.exists(path_doc_file):
+                os.remove(path_doc_file)
 
-        if os.path.exists(path_doc_file):
-            os.remove(path_doc_file)
+            if os.path.exists(path_pdf_file):
+                os.remove(path_pdf_file)
 
-        if os.path.exists(path_pdf_file):
-            os.remove(path_pdf_file)
-
-        return response
+        # return response
 
     @action(methods=['GET'], url_path="get-rpd-annotation", detail=True)
     def get_rpd_annotation(self, request, *args, **kwargs):

@@ -44,6 +44,9 @@ class PlanLinesLink(TimestampsModel):
 
     can_be_copied_by_anyone = models.BooleanField("Каждый ли может скопировать программу", default=False)
 
+    file = models.FileField(upload_to="rpd_generator/%Y-%m-%d/", verbose_name="Файл программы", null=True)
+    file_updated_at = models.DateTimeField(null=True, blank=True)
+
     @property
     def status_verbose(self):
         return PlanLinesLink.StatusChoices.labels[self.status]

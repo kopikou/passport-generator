@@ -294,6 +294,8 @@ class ReportService(object):
     @staticmethod
     def get_rpd_report(data):
 
+
+
         path = f'{BASE_DIR}{Path("/templates/docxRPD/rpd.docx")}'
 
         if data['admission']['cadmkind'] == 5:
