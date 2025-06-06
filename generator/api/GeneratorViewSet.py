@@ -409,12 +409,11 @@ class GeneratorViewSet(
     def get_rpd_report(self, request, *args, **kwargs):
         instance: PlanLinesLink = self.get_object()
 
-        updated_at_max = PlanLinesLink.objects.annotate(t_updated_at=F('updated_at')).values("t_updated_at").union(
-            DisciplineIndicators.objects.values("updated_at"),
-            DisciplineThemes.objects.values("updated_at"),
-            DisciplineWorkHours.objects.values("updated_at"),
-            DefaultsResources.objects.values("updated_at"),
-            AdditionalInfo.objects.values("updated_at"),
+        updated_at_max = PlanLinesLink.objects.filter(pk=instance.pk).annotate(t_updated_at=F('accept_date')).values("t_updated_at").union(
+            DisciplineIndicators.objects.filter(planlineid_id=instance.planlines_id).values("updated_at"),
+            DisciplineThemes.objects.filter(planlineslink_id=instance.pk).values("updated_at"),
+            DisciplineWorkHours.objects.filter(planlineslink_id=instance.pk).values("updated_at"),
+            AdditionalInfo.objects.filter(planlineslink_id=instance.pk).values("updated_at"),
         ).aggregate(updated_at=Max(F("t_updated_at")))
 
         if not instance.file or instance.file_updated_at  or instance.file_updated_at < updated_at_max['updated_at']:

@@ -5,7 +5,7 @@ from django.db.models.enums import TextChoices, IntegerChoices
 
 from auths.models import UserProfile
 from rpd.models import LinesData, LinesIndicators
-from app.utils import TimestampsModel
+from app.utils import TimestampsModel, OverwriteStorage
 
 
 # Create your models here.
@@ -45,6 +45,7 @@ class PlanLinesLink(TimestampsModel):
     can_be_copied_by_anyone = models.BooleanField("Каждый ли может скопировать программу", default=False)
 
     file = models.FileField(upload_to="rpd_generator/", verbose_name="Файл программы", null=True)
+    last_accepted_file = models.FileField(upload_to="rpd_generator/", verbose_name="Файл программы", null=True)
     file_updated_at = models.DateTimeField(null=True, blank=True)
 
     @property
