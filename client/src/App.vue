@@ -87,6 +87,10 @@ onBeforeMount(async () => {
               <q-item clickable :href="`${FORCE_SCRIPT_NAME}/api/accounts/logout/`">
                 <q-item-section>Выйти</q-item-section>
               </q-item>
+              <q-separator></q-separator>
+              <q-item clickable href="mailto:ais_support@ex.istu.edu">
+                <q-item-section>Написать в техподдержку</q-item-section>
+              </q-item>
             </q-list>
           </q-btn-dropdown>
         </q-tabs>

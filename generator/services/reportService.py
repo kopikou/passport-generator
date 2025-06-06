@@ -1,10 +1,14 @@
+import datetime
 import os
+import platform
 import re
 from itertools import groupby
 from pathlib import Path
-
+from subprocess import run
 import pendulum
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import UploadedFile
+from django.utils.encoding import escape_uri_path
 from docxtpl import DocxTemplate
 
 from app.settings import BASE_DIR
@@ -62,6 +66,58 @@ def get_work_hours(data, type):
 
 
 class ReportService(object):
+
+    @classmethod
+    def generate_rpd_report(cls, instance):
+        from generator.services.generator_service import GeneratorService
+        pk = instance.id
+        rpd_data = GeneratorService.get_rpd_data(pk)
+
+        # filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(
+        #     ',', ' ')
+        filename = f"РПД_{instance.planlines.dis}_{rpd_data['admission']['abbr']}-{rpd_data['admission']['yr']}.pdf".replace(
+            ',', ' ')
+        path = f'templates/outputs/'
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        path_doc_file = f"{os.path.abspath(path)}/{pk}.docx"
+        path_pdf_file = f"{os.path.abspath(path)}/{pk}.pdf"
+
+        if rpd_data['planlines']['viewpract']:
+            tpl = ReportService.get_practice_report(rpd_data)
+        else:
+            tpl = ReportService.get_rpd_report(rpd_data)
+        # tpl.save(response)
+
+        tpl.save(path_doc_file)
+
+        if platform.system() == 'Linux':
+            run([
+                'libreoffice', '--headless', '--invisible', '--convert-to',
+                'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
+            ])
+        elif platform.system() == 'Windows':
+            from win32com.client import Dispatch
+
+            word = Dispatch('Word.Application')
+            doc = word.Documents.Open(path_doc_file)
+            doc.SaveAs(path_pdf_file, FileFormat=17)
+            word.Quit()
+
+        with open(path_pdf_file, 'rb') as file:
+            uploaded_file = UploadedFile(file, f"{pk}.pdf")
+
+            if instance.file:
+                instance.file.delete(False)
+
+            uploaded_file.seek(0)
+            instance.file = uploaded_file
+            instance.file_updated_at = datetime.datetime.now()
+            instance.save()
+        return instance
+
 
     @staticmethod
     def get_rpd_annotation(data):

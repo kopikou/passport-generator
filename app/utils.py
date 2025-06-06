@@ -1,3 +1,4 @@
+from django.core.files.storage import FileSystemStorage
 from django.db import models, connections
 from django.conf import settings
 from django.core.cache import cache
@@ -164,3 +165,12 @@ class DBRepository(object):
     def cursor(self):
         connection = self.engine.raw_connection()
         return connection.cursor()
+
+
+class OverwriteStorage(FileSystemStorage):
+
+    def get_available_name(self, name, max_length=None):
+        # if self.exists(name):
+        #     os.remove(os.path.join(SOME_PATH, name))
+        return name
+
