@@ -48,15 +48,14 @@ async function saveData() {
   if (generatorViewStore.abortGetDataController)
     generatorViewStore.abortGetDataController.abort()
 
-
   let res = {
-      "great": great.value,
-      "good": good.value,
-      "satisfactorily": satisfactorily.value,
-      "unsatisfactory": unsatisfactory.value,
-      "title": props.title,
-      "type": props.type,
-      "num": props.num,
+    "great": great.value,
+    "good": good.value,
+    "satisfactorily": satisfactorily.value,
+    "unsatisfactory": unsatisfactory.value,
+    "title": props.title,
+    "type": props.type,
+    "num": props.num,
   }
   if (planlinesData.value.viewpract) {
     res = {
@@ -73,7 +72,8 @@ async function saveData() {
     }
   }
 
-  const data = [...((tatInfo.value || []).filter((x: any) => x.type != props.type)), res]
+  const data = [...((tatInfo.value || []).filter((x: any) => !(x.type == props.type && x.num == props.num))), res]
+  tatInfo.value = data;
 
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'tat',
@@ -127,25 +127,26 @@ watchEffect(() => {
           <!--          />-->
           <div class="q-gutter-y-md" v-if="!planlinesData.viewpract">
             <q-input
-            label="Описание процедуры"
-            type="textarea"
-            filled
-            stack-label
-            v-model="about"
-            :readonly="disabled"
-            debounce="1000"
-            @update:modelValue="saveData"
-          />
-          <q-input
-            label="Пример задания"
-            type="textarea"
-            filled
-            stack-label
-            v-model="example"
-            :readonly="disabled"
-            debounce="1000"
-            @update:modelValue="saveData"
-          /></div>
+              label="Описание процедуры"
+              type="textarea"
+              filled
+              stack-label
+              v-model="about"
+              :readonly="disabled"
+              debounce="1000"
+              @update:modelValue="saveData"
+            />
+            <q-input
+              label="Пример задания"
+              type="textarea"
+              filled
+              stack-label
+              v-model="example"
+              :readonly="disabled"
+              debounce="1000"
+              @update:modelValue="saveData"
+            />
+          </div>
           <div class="q-gutter-y-md" v-else>
             <q-input
               label="Типовые оценочные средства"
