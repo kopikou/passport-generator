@@ -7,6 +7,7 @@ from time import sleep
 
 import pendulum
 from constance import config
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile, UploadedFile
 from django.db.models import Q, Max, F
@@ -416,10 +417,12 @@ class GeneratorViewSet(
             AdditionalInfo.objects.filter(planlineslink_id=instance.pk).values("updated_at"),
         ).aggregate(updated_at=Max(F("t_updated_at")))
 
-        if not instance.file or not instance.file_updated_at or not updated_at_max['updated_at'] or instance.file_updated_at < updated_at_max['updated_at']:
+        updated_at = (updated_at_max['updated_at'] or instance.file_updated_at)
+
+        if not instance.file or not instance.file_updated_at or (instance.file_updated_at < updated_at):
             instance = ReportService.generate_rpd_report(instance)
 
-        return redirect(instance.file.url)
+        return redirect((settings.FORCE_SCRIPT_NAME or "") + instance.file.url)
 
     @action(methods=['GET'], url_path="get-rpd-annotation", detail=True)
     def get_rpd_annotation(self, request, *args, **kwargs):
