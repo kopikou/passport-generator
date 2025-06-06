@@ -23,6 +23,9 @@ const props = defineProps({
   },
   type: {
     required: true,
+  },
+  num: {
+    required: true,
   }
 })
 
@@ -38,11 +41,12 @@ async function saveData() {
   if (generatorViewStore.abortGetDataController)
     generatorViewStore.abortGetDataController.abort()
 
-  fosInfo.value = [...((fosInfo.value || []).filter((x: any) => x.type != props.type)), {
+  fosInfo.value = [...((fosInfo.value || []).filter((x: any) => !(x.type == props.type && x.num == props.num))), {
     "about": about.value,
     "criteria": criteria.value,
     "title": props.title,
     "type": props.type,
+    "num": props.num,
   }];
 
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
@@ -91,10 +95,10 @@ async function saveData() {
 }
 
 watchEffect(() => {
-  const key = _.findKey(fosInfo.value, x => x.type == props.type)
+  const key = _.findKey(fosInfo.value, x => x.type == props.type && x.num == props.num)
   if (key) {
-    about.value = _.get(_.find(fosInfo.value, x => x.type == props.type), 'about', '')
-    criteria.value = _.get(_.find(fosInfo.value, x => x.type == props.type), 'criteria', '')
+    about.value = _.get(_.find(fosInfo.value, x => x.type == props.type && x.num == props.num), 'about', '')
+    criteria.value = _.get(_.find(fosInfo.value, x => x.type == props.type && x.num == props.num), 'criteria', '')
   }
 })
 

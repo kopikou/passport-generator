@@ -13,14 +13,37 @@ const {
   activeRpdId,
   disciplineThemes,
   formControlByValue,
+  semesterYearLabel,
 } = storeToRefs(generatorViewStore)
 
-const choicesName = ref([])
-
+// const choicesName = ref([])
+const choicesName = computed(() => {
+  return _(disciplineThemes.value)
+    .groupBy(x => x.semester)
+    .toPairs()
+    .map(pair => [pair[0], _(pair[1]).map(x => x.formcontrol_list).flatten().uniq().value()])
+    .fromPairs()
+    .value()
+})
 
 watch(disciplineThemes, () => {
-  const formcontrols = _(disciplineThemes.value).map(x => x.formcontrol_list).flatten().uniq().value()
-  choicesName.value = formcontrols
+  // const data =
+  //
+
+  // const data = _(disciplineThemes.value).groupBy(x => x.semester).value()
+  // console.log(data)
+  // const res = {}
+  // _.forEach(data, (x, key) => {
+  //     _.set(res, key,
+  //       _(x).map(y => y.formcontrol_list).flatten().uniq().value()
+  //     )
+  //   })
+  //
+  // console.log(res)
+  //
+  //   // _(disciplineThemes.value).groupBy(x => x.semester).toPairs(x => _(x).map(y => y.formcontrol_list).flatten().uniq().value()).value()
+  // const formcontrols = _(disciplineThemes.value).map(x => x.formcontrol_list).flatten().uniq().value()
+  // choicesName.value = formcontrols
 }, {immediate: true})
 
 </script>
@@ -30,13 +53,16 @@ watch(disciplineThemes, () => {
     <span class="text-h6">Оценочные материалы по дисциплине</span>
     <p></p>
     <q-separator class="q-mt-md q-mb-md"/>
-    <div v-if="choicesName.length > 0">
+    <div v-if="_.size(choicesName) > 0">
       <q-list
         bordered
         style="border-bottom: none;"
       >
-        <div v-for="(n, index) in choicesName">
-          <generator-f-o-s-item :title="formControlByValue[n]?.name" :type="n" group="fos" :default-opened="index==0"/>
+        <div v-for="(items, semestr) in choicesName">
+          <div v-for="(item, index) in items">
+            <generator-f-o-s-item :num="semestr" :title="`${semesterYearLabel} ${semestr} | ${formControlByValue[item]?.name}`" :type="item"
+                                  group="fos" :default-opened="index==0"/>
+          </div>
         </div>
       </q-list>
     </div>
