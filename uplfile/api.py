@@ -18,6 +18,7 @@ from generator.permissions import CanEditRPDProgram, CanUploadFiles, CanViewFile
 from rpd.models import PlanData, PlanDocuments, BaseDocuments
 from uplfile.models import UploadFiles
 from uplfile.serializer import UploadFilesSerializer
+from uplfile.service import UploadFileService
 
 
 class UploadFileViewSet(
@@ -42,44 +43,11 @@ class UploadFileViewSet(
 
         mira_id = self.request.user.userprofile.mira_id
 
-        data = AISServices.get_admission_list_by_person(mira_id)
+        res = UploadFileService.get_admission_data(mira_id)
 
-        abbrprofile_list = list(set([i['abbrprofile'] for i in data]))
-        startyear_list = list(set([i['startyear'] for i in data]))
+        return Response(res)
 
-        filtered_data = PlanData.objects\
-            .filter(abbrprofile__in=abbrprofile_list, startyear__in=startyear_list, file__status=4)\
-            .prefetch_related(
-            Prefetch("plan_documents", queryset=PlanDocuments.objects.select_related("new_type").all()),
-            Prefetch("uplfile", queryset=UploadFiles.objects.all())
-        ).select_related("file")
-        filtered_data_sorted = {f"{i.abbrprofile}_{i.startyear}": i for i in filtered_data}
-
-        result = []
-        for item in data:
-            res = filtered_data_sorted.get(f"{item['abbrprofile']}_{item['startyear']}")
-            if res:
-                result.append({
-                    **item,
-                    "plan_documents": [{
-                        "id": i.id,
-                        "name": i.name,
-                        "type_id": i.new_type.id,
-                        "type__name": i.new_type.name
-                    } for i in res.plan_documents.all()],
-                    "documents_files": [{
-                        "user_id": i.user_id,
-                        "title": i.title,
-                        "url": i.file.url,
-                        "type_id": i.type_id,
-                        "id": i.id,
-                    } for i in res.uplfile.all()],
-                    "plan_id": res.id,
-                    "plan_name": res.file.title,
-                })
-        return Response(result)
-
-    @action(methods=['POST'], url_path="save-file", detail=True)
+    @action(methods=['POST'], url_path="save-file", detail=True, permission_classes=[CanUploadFiles | UserProfileHasPermission(Permissions.can_upload_files)])
     def save_file(self, request, *args, **kwargs):
         data = {}
         for filename, file in request.FILES.items():
@@ -99,6 +67,7 @@ class UploadFileViewSet(
         data_serializer.save()
 
         return Response(data_serializer.data)
+
 
     @action(methods=['GET'], url_path="get-base-documents", detail=False)
     def get_base_documents(self, request, *args, **kwargs):

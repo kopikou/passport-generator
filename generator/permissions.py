@@ -1,13 +1,19 @@
+import pendulum
+from django.db.models import Q
 from rest_framework.permissions import BasePermission, IsAuthenticated
 
+from arim.services import AISServices
 from generator.models import PlanLinesLink
 from generator.services.generator_service import GeneratorService
+from uplfile.service import UploadFileService
 
 
 class CanEditRPDProgram(IsAuthenticated):
     message = 'У вас нет прав для редактирования этого РПД'
+
     def has_permission(self, request, view):
         programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
+        practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
 
         can_edit = PlanLinesLink.objects.filter(id=pk, status__in=[
@@ -17,7 +23,22 @@ class CanEditRPDProgram(IsAuthenticated):
             PlanLinesLink.StatusChoices.accepted,
         ])
 
-        return int(pk) in [i['id'] for i in programms if 'person' in i['type']] and can_edit.exists()
+        program = int(pk) in [i['id'] for i in programms if 'person' in i['type']] and can_edit.exists()
+        practice = int(pk) in [i['id'] for i in practices]
+
+        return program or practice
+
+
+class CanEditScientificProgram(IsAuthenticated):
+    message = 'У вас нет прав для редактирования этого ПНД'
+
+    def has_permission(self, request, view):
+        pk = view.kwargs['pk']
+
+        year = request.query_params.get('year', pendulum.now().year)
+        plans = GeneratorService.get_asp_list(year, request.user).get('items', [])
+
+        return int(pk) in [i['id'] for i in plans]
 
 
 class CanViewRPDProgram(IsAuthenticated):
@@ -25,24 +46,35 @@ class CanViewRPDProgram(IsAuthenticated):
 
     def has_permission(self, request, view):
         programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
+        practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
-        return int(pk) in [i['id'] for i in programms]
+        program = int(pk) in [i['id'] for i in programms]
+        practice = int(pk) in [i['id'] for i in practices]
+        return program or practice
+
 
 class CanAcceptRPDProgram(IsAuthenticated):
     message = 'У вас нет прав для утверждения этого РПД'
+
     def has_permission(self, request, view):
         programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
+        practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
 
-        can_accept = PlanLinesLink.objects.filter(id=pk, status__in=[
-            PlanLinesLink.StatusChoices.on_review,
-        ])
+        can_accept = PlanLinesLink.objects.filter(
+            Q(status__in=[PlanLinesLink.StatusChoices.on_review], planlines__viewpract__isnull=True)
+            | (~Q(status__in=[PlanLinesLink.StatusChoices.accepted]) & Q(planlines__viewpract__isnull=False))
+            , id=pk)
 
-        return int(pk) in [i['id'] for i in programms if 'zav' in i['type']] and can_accept.exists()
+        program = int(pk) in [i['id'] for i in programms if 'zav' in i['type']] and can_accept.exists()
+        practice = int(pk) in [i['id'] for i in practices]
+
+        return program or practice
 
 
 class CanConfirmRPDProgram(IsAuthenticated):
     message = 'У вас нет прав для согласования этого РПД'
+
     def has_permission(self, request, view):
         programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
@@ -55,32 +87,20 @@ class CanConfirmRPDProgram(IsAuthenticated):
 
 
 class CanViewFileList(IsAuthenticated):
-    message = 'У вас нет прав для просмотра файлов'
+    # message = 'У вас нет прав для просмотра файлов'
+    message = 'Нет файлов для просмотра'
 
     def has_permission(self, request, view):
-        programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
-        programms_types = []
+        programms = UploadFileService.get_admission_data(request.user.userprofile.mira_id)
 
-        for i in programms:
-            for j in i['type']:
-                if j not in programms_types:
-                    programms_types.append(j)
-
-        res = False
-
-        for i in ['zav', 'fac', 'rop']:
-            if i in programms_types:
-                res = True
-                return res
-
-        return res
+        return len(programms) > 0
 
 
 class CanUploadFiles(IsAuthenticated):
     message = 'У вас нет прав для отправки файлов'
 
     def has_permission(self, request, view):
-        programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
+        programms = UploadFileService.get_admission_data(request.user.userprofile.mira_id)
         programms_types = []
 
         for i in programms:
@@ -88,11 +108,5 @@ class CanUploadFiles(IsAuthenticated):
                 if j not in programms_types:
                     programms_types.append(j)
 
-        res = False
+        return int(pk) in [i['plan_id'] for i in programms if i['cperson'] == request.user.userprofile.mira_id]
 
-        for i in ['zav', 'fac', 'rop']:
-            if i in programms_types:
-                res = True
-                return res
-
-        return res

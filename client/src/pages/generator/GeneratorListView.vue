@@ -125,6 +125,10 @@ function openManageDialog(id, item) {
   })
 }
 
+function toggleCanByCopiedByAnyone(id, item) {
+
+}
+
 async function getProgramData() {
   listData.value = []
   let r = await api.get("/api/generator/get-program-list/")
@@ -168,8 +172,7 @@ onBeforeMount(async () => {
   <layout-h-c-f>
     <template #header>
       <div class="q-px-sm q-pb-sm">
-        <div class="text-center text-h6 q-mb-md">Список рабочих программ дисциплин ИРНИТУ</div>
-        <div class="flex justify-between q-mb-sm q-px-sm"
+        <div class="flex justify-between q-my-sm q-px-sm"
              style="display: grid; grid-template-columns: 1fr 220px auto; gap: 8px">
           <q-input outlined label="Поиск по аббревиатуре, дисциплине, разработчику программы" v-model="textFilter"/>
           <!--        <q-input outlined label="Дисциплина" v-model="discplFilter"/>-->

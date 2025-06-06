@@ -100,7 +100,8 @@ class DisciplineThemeSerializer(serializers.Serializer):
     planlineslink_id = serializers.IntegerField()
     name = serializers.CharField()
     semester = serializers.IntegerField()
-    formcontrol_id = serializers.IntegerField()
+    formcontrol_id = serializers.IntegerField(required=False)
+    formcontrol_list = serializers.ListField(child=serializers.IntegerField())
     formcontrol_verbose = serializers.CharField(read_only=True)
     comment = serializers.CharField(allow_blank=True, allow_null=False)
     num = serializers.IntegerField()
@@ -112,7 +113,8 @@ class DisciplineThemeSerializer(serializers.Serializer):
             'planlineslink_id',
             'name',
             'semester',
-            'formcontrol_id',
+            'formcontrol',
+            'formcontrol_list',
             'formcontrol_verbose',
             'comment',
             'num',
@@ -203,11 +205,14 @@ class PlanLinesLinkSerializer(serializers.Serializer):
     protocol_number = serializers.CharField(required=False)
     protocol_date = serializers.DateField(required=False)
     user_accepted_id = serializers.IntegerField(required=False)
+    user_confirmed_id = serializers.IntegerField(required=False)
     user_type = serializers.IntegerField(required=False)
     meeting = serializers.CharField(required=False)
+    can_be_copied_by_anyone = serializers.BooleanField(required=False)
 
     review_date = serializers.DateField(required=False)
     accept_date = serializers.DateField(required=False)
+    confirm_date = serializers.DateField(required=False)
 
     discipline_themes = DisciplineThemeSerializer(many=True)
     discipline_work_hour = DisciplineWorkHoursSerializer(many=True)
@@ -229,15 +234,19 @@ class PlanLinesLinkSerializer(serializers.Serializer):
             'review_date',
             'accept_date',
 
+            'confirm_date',
+
             'protocol_number',
             'protocol_date',
             'user_accepted_id',
+            'user_confirmed_id',
             'user_type',
             'meeting',
 
             'discipline_themes',
             'discipline_work_hour',
             'additional_info',
+            'can_be_copied_by_anyone',
         ]
 
 

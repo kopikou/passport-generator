@@ -9,6 +9,7 @@ const {
   rpdData,
   indicatorsData,
   admissionData,
+  planlinesData,
 } = storeToRefs(generatorViewStore)
 
 const cols = ref([
@@ -30,9 +31,18 @@ watch(indicatorsData, () =>{
 
 <template>
   <div class="q-px-md">
-      <span v-if="admissionData.cadmkind != 5" class="text-h6">Компетенции по дисциплине</span>
-      <span v-else class="text-h6">Результаты освоения программы</span>
-      <p v-if="admissionData.cadmkind != 5">В результате освоения дисциплины "{{ rpdData.planlines?.dis }}" у обучающихся должны быть сформированы компетенции. Данные
+      <div v-if="!planlinesData.viewpract">
+        <span v-if="admissionData?.cadmkind != 5" class="text-h6">Компетенции по дисциплине</span>
+        <span v-else class="text-h6">Результаты освоения программы</span>
+      </div>
+      <div v-else>
+        <span class="text-h6 q-pl-lg" v-if="admissionData?.cadmkind != 5">Компетенции по практике</span>
+        <span class="text-h6 q-pl-lg" v-else>Результаты освоения практики</span>
+      </div>
+      <p v-if="admissionData?.cadmkind != 5">В результате освоения
+        <span v-if="planlinesData.viewpract">практики</span>
+        <span v-else>дисциплины</span>
+        "{{ rpdData.planlines?.dis }}" у обучающихся должны быть сформированы компетенции. Данные
         автоматически получены из учебного плана.</p>
       <q-separator class="q-mt-md q-mb-md"/>
       <div class="q-pb-md">

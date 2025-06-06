@@ -240,6 +240,12 @@ export interface GeneratorData {
     startyear: number;
     id: number;
     species: string;
+  }[]
+  common: {
+    abbrprofile: string;
+    startyear: number;
+    id: number;
+    species: string;
   }[];
   protocol_number: null;
   protocol_date: null;
@@ -248,6 +254,7 @@ export interface GeneratorData {
   meeting: null;
   review_date: null;
   accept_date: null;
+  can_be_copied_by_anyone: boolean;
   additional_info: any[]; // Можно уточнить тип, если известна структура
 }
 
@@ -297,6 +304,7 @@ export interface DisciplineThemesData {
   hours: number,
   semester: number,
   formcontrol_id: number,
+  formcontrol_list: number,
   formcontrol_verbose: string,
   comment: string,
 }

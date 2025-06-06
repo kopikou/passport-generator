@@ -9,7 +9,7 @@ import requests
 from django.conf import settings
 from urllib.parse import unquote
 
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 from django.db.models import Q
 from lxml import etree
 import re
@@ -139,7 +139,7 @@ class PLXParser:
         self.XMLNS = ""
         self.path = ""
 
-        if isinstance(filePath, InMemoryUploadedFile):
+        if isinstance(filePath, InMemoryUploadedFile) or isinstance(filePath, TemporaryUploadedFile):
             with NamedTemporaryFile(delete=False) as f:
                 f.write(filePath.read())
                 f.close()
@@ -394,35 +394,36 @@ class PLXParser:
         lines_data = {}
 
         for child in self.root.findall(self.path + 'ПланыСтроки'):
-            temp_dict = {}
-            temp_dict['plan_id'] = plan_id
-            temp_dict['synchronize'] = True
+            if child.attrib.get('Дисциплина'):
+                temp_dict = {}
+                temp_dict['plan_id'] = plan_id
+                temp_dict['synchronize'] = True
 
-            temp_dict['dis'] = child.attrib.get('Дисциплина')
-            temp_dict['newdisid'] = child.attrib.get('ДисциплинаКод')
-            temp_dict['mustbesdudied'] = int(child.attrib.get('ПодлежитИзучениюЧасов')) if child.attrib.get('ПодлежитИзучениюЧасов') else None
-            temp_dict['hoursinzet'] = int(child.attrib.get('ЧасовВЗЕТ')) if child.attrib.get('ЧасовВЗЕТ') else None
-            temp_dict['caf'] = int(child.attrib.get('КодКафедры')) if child.attrib.get('КодКафедры') else None
-            temp_dict['nocalccontrol'] = True if child.attrib.get('НеСчитатьКонтроль') == 'true' else False
-            temp_dict['type'] = int(child.attrib.get('ТипОбъекта')) if child.attrib.get('ТипОбъекта') else None
-            temp_dict['viewpract'] = int(child.attrib.get('ВидПрактики')) if child.attrib.get('ВидПрактики') else None
-            temp_dict['viewobject'] = int(child.attrib.get('ВидОбъекта')) if child.attrib.get('ВидОбъекта') else None
-            temp_dict['parent_id'] = abs(int(child.attrib.get('КодРодителя'))) if child.attrib.get('КодРодителя') else None
-            temp_dict['old_parent_id'] = abs(int(child.attrib.get('КодРодителя'))) if child.attrib.get('КодРодителя') else None
+                temp_dict['dis'] = child.attrib.get('Дисциплина')
+                temp_dict['newdisid'] = child.attrib.get('ДисциплинаКод')
+                temp_dict['mustbesdudied'] = int(child.attrib.get('ПодлежитИзучениюЧасов')) if child.attrib.get('ПодлежитИзучениюЧасов') else None
+                temp_dict['hoursinzet'] = int(child.attrib.get('ЧасовВЗЕТ')) if child.attrib.get('ЧасовВЗЕТ') else None
+                temp_dict['caf'] = int(child.attrib.get('КодКафедры')) if child.attrib.get('КодКафедры') else None
+                temp_dict['nocalccontrol'] = True if child.attrib.get('НеСчитатьКонтроль') == 'true' else False
+                temp_dict['type'] = int(child.attrib.get('ТипОбъекта')) if child.attrib.get('ТипОбъекта') else None
+                temp_dict['viewpract'] = int(child.attrib.get('ВидПрактики')) if child.attrib.get('ВидПрактики') else None
+                temp_dict['viewobject'] = int(child.attrib.get('ВидОбъекта')) if child.attrib.get('ВидОбъекта') else None
+                temp_dict['parent_id'] = abs(int(child.attrib.get('КодРодителя'))) if child.attrib.get('КодРодителя') else None
+                temp_dict['old_parent_id'] = abs(int(child.attrib.get('КодРодителя'))) if child.attrib.get('КодРодителя') else None
 
-            lines_code = int(child.attrib.get('Код'))
+                lines_code = int(child.attrib.get('Код'))
 
-            tmp = []
-            for deep in self.root.findall(self.path + 'ПланыКомпетенцииДисциплины'):
-                indicators_code = abs(int(deep.attrib.get('КодКомпетенции')))
+                tmp = []
+                for deep in self.root.findall(self.path + 'ПланыКомпетенцииДисциплины'):
+                    indicators_code = abs(int(deep.attrib.get('КодКомпетенции')))
 
-                if lines_code == int(deep.attrib.get('КодСтроки')) and indicators_code in indicators:
-                    tmp.append(indicators[indicators_code]['index'])
+                    if lines_code == int(deep.attrib.get('КодСтроки')) and indicators_code in indicators:
+                        tmp.append(indicators[indicators_code]['index'])
 
-            temp_dict['kompetences'] = ','.join(tmp)
+                temp_dict['kompetences'] = ','.join(tmp)
 
-            lines_data[abs(lines_code)] = {}
-            lines_data[abs(lines_code)].update(temp_dict)
+                lines_data[abs(lines_code)] = {}
+                lines_data[abs(lines_code)].update(temp_dict)
 
         return lines_data
 
@@ -463,8 +464,10 @@ class PLXParser:
                 LinesData.objects.filter(id=items['id']).update(parent_id=data.get(items['old_parent_id'])['id'])
 
         ids_to_delete = [i.id for i in lines.values() if i.id not in added_items]
-        if ids_to_delete:
-            LinesData.objects.filter(id__in=ids_to_delete).delete()
+
+        if data:
+            if ids_to_delete:
+                LinesData.objects.filter(id__in=ids_to_delete).delete()
 
         return data
 
@@ -529,8 +532,10 @@ class PLXParser:
             ids_to_keep.append(obj.data['id'])
 
         ids_to_delete = [i.id for i in semester.values() if i.id not in ids_to_keep]
-        if ids_to_delete:
-            SemesterData.objects.filter(id__in=ids_to_delete).delete()
+
+        if data:
+            if ids_to_delete:
+                SemesterData.objects.filter(id__in=ids_to_delete).delete()
 
         return result
 
@@ -607,9 +612,10 @@ class PLXParser:
             result.append(obj.data)
             ids_to_keep.append(obj.data['id'])
 
-        ids_to_delete = [i.id for i in indicators.values() if i.id not in ids_to_keep]
-        if ids_to_delete:
-            LinesIndicators.objects.filter(id__in=ids_to_delete).delete()
+        if data:
+            ids_to_delete = [i.id for i in indicators.values() if i.id not in ids_to_keep]
+            if ids_to_delete:
+                LinesIndicators.objects.filter(id__in=ids_to_delete).delete()
 
         return result
 

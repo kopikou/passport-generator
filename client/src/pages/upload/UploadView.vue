@@ -29,6 +29,7 @@ const {
 
 const {
   userId,
+  mira_id,
 } = storeToRefs(mainStore)
 
 
@@ -67,10 +68,10 @@ const studyprogFilter = ref<string[]>([])
 
 function getFileUrl(item: PlanData, typeId: number) {
   let file = item.documents_files.find(x => x.type_id == typeId);
-  console.log(item.documents_files);
-  if (file) {
+  if (file.url)
     window.open(`${FORCE_SCRIPT_NAME.value}` + file.url, "_blank")
-  }
+  else if (file.file)
+    window.open(`${FORCE_SCRIPT_NAME.value}` + file.file, "_blank")
 }
 
 function getFileId(item: PlanData, fileId) {
@@ -83,15 +84,16 @@ function getFileType(item: PlanData, fileId) {
 }
 
 function getRules(data, item) {
-  if (data.can_upload == 'f') return true
-  let rule
-  if (data.admin) {
-    rule = 0
-  } else {
-    rule = 1
-  }
+  if (data.can_upload == 't') return true
   const doc = baseDocumentsById.value[item.type_id]
-  return doc.can_upload.includes(rule)
+  let rule = []
+  if (data.admin) rule.push(0)
+  if (data.cperson == mira_id.value) rule.push(1)
+
+  return _.map(rule, x => {
+    return doc.can_upload.includes(x)
+  }).includes(true)
+
 }
 
 async function deleteFile(item: PlanData, typeId: number) {
@@ -153,7 +155,7 @@ function viewProgram(planId) {
 <template>
   <layout-h-c-f>
     <template #header>
-      <div class="text-center text-h6 q-mb-md">Список образовательных программ ИРНИТУ</div>
+      <div class="text-center text-h6 q-mb-md"></div>
       <div class="q-pa-md" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px">
         <q-input v-model="textFilter" label="Направление"></q-input>
 <!--        <q-select-->
@@ -225,7 +227,7 @@ function viewProgram(planId) {
                 </div>
                 <div class="flex items-center" style="display: grid; grid-template-columns: 1fr auto">
                   <div v-if="!checkFile(item, i.type_id)">
-                    <file-uploader :title="i.type__name" :file-id="i.id" :plan-id="item.plan_id" :disable="getRules(item, i)"/>
+                    <file-uploader :title="i.type__name" :file-id="i.id" :plan-id="item.plan_id" :disable="!getRules(item, i)"/>
                   </div>
                   <div v-else>
                     <q-field
@@ -250,7 +252,7 @@ function viewProgram(planId) {
                       </template>
                     </q-field>
                   </div>
-                  <q-btn v-show="checkFile(item, i.type_id) && !getRules(item, i) && checkUser(item, i.type_id)" flat dense icon="mdi-delete" color="negative"
+                  <q-btn v-show="getRules(item, i) && checkFile(item, i.type_id) && checkUser(item, i.type_id)" flat dense icon="mdi-delete" color="negative"
                          @click="deleteFile(item, i.type_id)" />
                 </div>
               </div>

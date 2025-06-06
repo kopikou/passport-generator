@@ -18,7 +18,7 @@ class AISServices(object):
 
         data = Catadmission.objects.filter(
             id=pk,
-        ).select_related("ckaf", "cfac").values(
+        ).values(
             'id',
             'yr',
             'abbr',
@@ -49,7 +49,6 @@ class AISServices(object):
     @staticmethod
     @cache_function(timeout=60 * 1)
     def get_kaf_codes():
-
 
         data = UchPlanKaf.objects.extra(
             select={
@@ -88,23 +87,23 @@ class AISServices(object):
         query = Q(fordel='f', startyear__gte=left_time)
         if adm_user:
             admin = True
-            if adm_user.isadmin == 'f':
-                query |= Q(cperson=id)
-            elif adm_user.isspo == 't':
-                query |= Q(ckaf__in=[1988587, 1988517, 1988516])
-
+            if adm_user.isspo == 't':
+                query &= Q(ckaf__in=[1988587, 1988517, 1988516])
             if adm_user.cfac_id:
                 uchplans = [i.cuchplan for i in
-                            Catadmission.objects.filter(cfac_id=adm_user.cfac_id, active='t', yr__gte=left_time,
+                            Catadmission.objects.filter(cfac=adm_user.cfac_id, active='t', yr__gte=left_time,
                                                         cuchplan__isnull=False)]
-                query |= Q(id__in=[i.id for i in uchplans])
+                query &= Q(id__in=[i.id for i in uchplans])
         else:
             query &= Q(cperson=id)
+
         if cfac:
-            uchplans = [i.cuchplan for i in Catadmission.objects.filter(cfac__in=[j.id for j in cfac], active='t', yr__gte=left_time, cuchplan__isnull=False)]
+            uchplans = [i.cuchplan for i in
+                        Catadmission.objects.filter(cfac__in=[j.id for j in cfac], active='t', yr__gte=left_time,
+                                                    cuchplan__isnull=False)]
             query |= Q(id__in=[i.id for i in uchplans])
         if ckaf:
-            query |= Q(ckaf__in=[i.id for i in ckaf])
+            query |= Q(ckaf__in=[i.id for i in ckaf], fordel='f', startyear__gte=left_time)
 
         data = [i for i in UchPlanPlan.objects.filter(query).values()]
 
@@ -194,7 +193,7 @@ class AISServices(object):
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
-            where u.cperson = @id and p.fordel = 'f' and u.fordel = 'f' and u.type != 3 and p.startyear = @year
+            where u.cperson = @id and p.fordel = 'f' and u.fordel = 'f' --and u.type != 3 and p.startyear = @year
 
             UNION ALL
 
@@ -203,7 +202,7 @@ class AISServices(object):
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
             LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where u.ckaf in (SELECT id FROM dbo.catkaf WHERE czav = @id AND isreal = 't') and p.fordel = 'f' and u.fordel = 'f' and  u.type != 3 and p.startyear = @year
+            where u.ckaf in (SELECT id FROM dbo.catkaf WHERE czav = @id AND isreal = 't') and p.fordel = 'f' and u.fordel = 'f'-- and  u.type != 3 and p.startyear = @year
 
             UNION ALL
 
@@ -212,7 +211,7 @@ class AISServices(object):
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
             LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where a.cfac in (SELECT id FROM dbo.catfaculty WHERE cdean = @id AND realfac = 't') and p.fordel = 'f' and u.fordel = 'f' and  u.type != 3 and p.startyear = @year
+            where a.cfac in (SELECT id FROM dbo.catfaculty WHERE cdean = @id AND realfac = 't') and p.fordel = 'f' and u.fordel = 'f'-- and  u.type != 3 and p.startyear = @year
 
             UNION ALL
 
@@ -224,7 +223,7 @@ class AISServices(object):
             where p.cperson = @id
             --a.cspec in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id) OR a.cprofili in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id)
             --OR a.cdirection in (SELECT id FROM dbo.[cl$direction] WHERE cperson = @id)
-            AND p.fordel = 'f' and u.fordel = 'f' and  u.type != 3 and p.startyear = @year
+            AND p.fordel = 'f' and u.fordel = 'f' --and  u.type != 3 and p.startyear = @year
 
 			UNION ALL
 
@@ -370,7 +369,7 @@ class AISServices(object):
             left join uchplan_lines l2 on l2.planid = p2.id
 			left join uchplan_discpl d on d.id = l.disid
 			left join uchplan_discpl d2 on d2.id = l2.disid
-            where l.id = %s and p2.fordel = 'f' and l2.fordel = 'f' and l2.id <> %s and d.name = d2.name
+            where l.id = %s /*and p2.fordel = 'f' and l2.fordel = 'f' */ and l2.id <> %s and d.name = d2.name
         """
 
         data = Mira.fetch(query, [id, id])

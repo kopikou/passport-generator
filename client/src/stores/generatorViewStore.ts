@@ -45,6 +45,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return _.orderBy(rpdData.value.new || [], x => [-x.startyear, x.species, x.abbrprofile].join("-"))
   })
 
+  const commonPlans = computed(() => {
+    return _.orderBy(rpdData.value.common || [], x => [-x.startyear, x.species, x.abbrprofile].join("-"))
+  })
+
   const status = computed(() => {
     return rpdData.value?.status || -1
   })
@@ -163,7 +167,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     res = _.some(semestersData.value, x => {
       return x.ekz || x.zach || x.zacho || x.kp || x.kr
     })
-    if (admissionData.value?.cadmkind == 5 && ['Иностранный язык', 'История и философия науки'].includes(rpdData.value?.planlines?.dis)) {
+
+    if (admissionData.value?.cadmkind == 5 && !res) {
       res = true
     }
 
@@ -182,6 +187,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     let r = await api.get("/api/arim/kafs/")
     cafData.value = r.data
   }
+
+  const formControlByValue = computed(() => {
+    return _.keyBy(formControl.value, 'id')
+  })
 
   async function getFormControlData() {
     let r = await api.get('/api/generator/get-form-control-data/')
@@ -218,7 +227,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     level: string,
   }[]>([]);
 
-  async function checkErrors() {
+  function rpdErrors() {
+    if (!rpdData.value.admission)
+      return
+
     const admkind = rpdData.value.admission.cadmkind
     const data: {
       url: string,
@@ -437,15 +449,15 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       if (kp) checkGuidelines('course', 'Не заполнены методические указания для курсового проекта/работы ')
     }
 
-    const fos = _.uniqBy(disciplineThemes.value, 'formcontrol_verbose')
+    const fos = _(disciplineThemes.value).map(x => x.formcontrol_list).flatten().uniq().value()
 
     _.forEach(fos, (x) => {
-      const r = _.find(fosInfo.value, q => q.type == x.formcontrol_id)
+      const r = _.find(fosInfo.value, q => q.type == x)
       if (!r) {
         data.push({
           url: 'fos',
           title: 'Нет данных по оценочным материалам',
-          text: [`Не заполнена информация о "${x.formcontrol_verbose}"`],
+          text: [`Не заполнена информация о "${r?.title}"`],
           level: 'critical',
         })
       } else {
@@ -453,7 +465,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
           data.push({
             url: 'fos',
             title: 'Нет данных по оценочным материалам',
-            text: [`Нет информации о критериях оценивания для "${x.formcontrol_verbose}"`],
+            text: [`Нет информации о критериях оценивания для "${r?.title}"`],
             level: 'critical',
           })
         }
@@ -461,7 +473,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
           data.push({
             url: 'fos',
             title: 'Нет данных по оценочным материалам',
-            text: [`Неи информации об описании процедуры для "${x.formcontrol_verbose}"`],
+            text: [`Неи информации об описании процедуры для "${r?.title}"`],
             level: 'critical',
           })
         }
@@ -565,6 +577,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         if (zacho) checkTat('zacho', 'Дифференцированный зачет')
         if (ekz) checkTat('ekz', 'Экзамен')
         if (kp) checkTat('krkp', 'Курсовой проекта/работа')
+
+        if (admissionData.value?.cadmkind == 5 && aspGetType(rpdData.value?.planlines?.dis)) checkTat(aspGetType(rpdData.value?.planlines?.dis), 'Кандидатский экзамен')
       }
     }
 
@@ -652,6 +666,36 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     errors.value = data
   }
 
+  function rppErrors() {
+    const data = []
+    errors.value = data
+  }
+
+  async function checkErrors() {
+    if (planlinesData.value.viewpract) {
+      rppErrors()
+    } else {
+      rpdErrors()
+    }
+  }
+
+  function aspGetType(dis) {
+    // console.log(dis)
+    const res = _.some(semestersData.value, x => {
+      return x.ekz || x.zach || x.zacho || x.kp || x.kr
+    })
+    if (!res) {
+      if (dis == 'Иностранный язык') {
+        return 'foreign'
+      } else if (dis == 'История и философия науки') {
+        return 'philosophy'
+      } else {
+        return 'base'
+      }
+    }
+  }
+
+
   onAuthenticated(async () => {
     const loadingHelpers = $q.loading.show({
       group: 'first',
@@ -666,6 +710,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   watch(rpdData, () => {
     checkErrors()
+  }, {
+    immediate: true
   })
 
   watch(activeRpdId, async () => {
@@ -686,6 +732,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     cafData,
     oldPlans,
     newPlans,
+    commonPlans,
     formControl,
     independentTypes,
     otherDiscipline,
@@ -731,6 +778,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     prHours,
     labHours,
     semesterYearLabel,
+    formControlByValue,
+    aspGetType,
   }
 })
 

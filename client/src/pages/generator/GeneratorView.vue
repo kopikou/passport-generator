@@ -10,6 +10,7 @@ import GeneratorLeftMenu from "pages/generator/components/GeneratorLeftMenu.vue"
 import GeneratorCopyDialog from "pages/generator/components/dialogs/GeneratorCopyDialog.vue";
 import useMainStore from "stores/mainStore";
 import {api} from "boot/axios";
+import GeneratorAcceptDialog from "pages/generator/components/dialogs/GeneratorAcceptDialog.vue";
 
 const generatorViewStore = useGeneratorViewStore();
 
@@ -30,6 +31,7 @@ const {
   criticalErrors,
   disabled,
   statusVerbose,
+  planlinesData,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -60,16 +62,32 @@ async function sendToReview() {
   $q.loading.hide()
 }
 
+async function sendToApprove() {
+
+  $q.dialog({
+    component: GeneratorAcceptDialog
+  }).onOk(async (res) => {
+    let r = await api.post(`/api/generator/${activeRpdId.value}/accept-rpd/`, {
+      "date": res.date,
+      "number": res.number,
+      "meeting": res.meeting,
+    })
+    rpdData.value.status = r.data.status
+    await generatorViewStore.getData()
+  })
+}
+
+
 async function onEditClick() {
   $q.dialog({
     message: "Подтвердите, что хотите скорректировать план. После корректировки РПД, вам необходимо будет снова переутвердить РПД",
     cancel: true,
   }).onOk(async () => {
-      $q.loading.show()
-      let r = await api.get(`/api/generator/${activeRpdId.value}/send-rpd-on-edit/`)
-      rpdData.value.status = r.data.status
-      rpdData.value.status_verbose = r.data.status_verbose
-      $q.loading.hide()
+    $q.loading.show()
+    let r = await api.get(`/api/generator/${activeRpdId.value}/send-rpd-on-edit/`)
+    rpdData.value.status = r.data.status
+    rpdData.value.status_verbose = r.data.status_verbose
+    $q.loading.hide()
   })
 }
 
@@ -100,13 +118,15 @@ watch(() => props.id,
       <div style="justify-content: flex-end; display: flex; gap: 8px">
         <q-btn
           color="purple-5"
-          label="Просмотр РПД"
+          label="Выгрузить в PDF"
+          no-caps
           icon="mdi-file-pdf-box"
           :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.id}/get-rpd-report/`"
           target="_blank"
         />
         <q-btn
-          label="Скопировать"
+          v-if="!disabled"
+          label="Скопировать из"
           color="white"
           text-color="black"
           icon="mdi-content-copy"
@@ -114,7 +134,7 @@ watch(() => props.id,
         />
         <q-btn v-if="!disabled"
                color="secondary"
-               @click="sendToReview"
+               @click="sendToReview()"
                label="Отправить на согласование"
                :disabled="criticalErrors.length != 0"
         />
@@ -125,7 +145,8 @@ watch(() => props.id,
               disable
               :label="statusVerbose"
             />
-            <q-btn color="teal-2" text-color="black" v-if="statusVerbose == 'Утвержден'" icon="mdi-pencil" @click="onEditClick">
+            <q-btn color="teal-2" text-color="black" v-if="statusVerbose == 'Утвержден'" icon="mdi-pencil"
+                   @click="onEditClick">
             </q-btn>
           </q-btn-group>
         </template>
@@ -143,6 +164,7 @@ watch(() => props.id,
       <router-view/>
     </div>
   </div>
+
 </template>
 
 <style scoped lang="scss">
