@@ -68,15 +68,11 @@ def get_work_hours(data, type):
 class ReportService(object):
 
     @classmethod
-    def generate_rpd_report(cls, instance):
+    def generate_rpd_report(cls, instance: PlanLinesLink):
         from generator.services.generator_service import GeneratorService
         pk = instance.id
         rpd_data = GeneratorService.get_rpd_data(pk)
 
-        # filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(
-        #     ',', ' ')
-        filename = f"РПД_{instance.planlines.dis}_{rpd_data['admission']['abbr']}-{rpd_data['admission']['yr']}.pdf".replace(
-            ',', ' ')
         path = f'templates/outputs/'
 
         if not os.path.exists(path):
@@ -107,7 +103,10 @@ class ReportService(object):
             word.Quit()
 
         with open(path_pdf_file, 'rb') as file:
-            uploaded_file = UploadedFile(file, f"{pk}.pdf")
+            name = f"{rpd_data['admission']['abbr']}_{rpd_data['admission']['yr']}_{rpd_data['planlines']['dis']}_{pk}"
+            if instance.status == PlanLinesLink.StatusChoices.accepted:
+                name = f"{name}_accepted"
+            uploaded_file = UploadedFile(file, f"{name}.pdf")
 
             if instance.file:
                 instance.file.delete(False)
@@ -1144,7 +1143,7 @@ class ReportService(object):
             user_confirmed = (user_confirmed.last_name + " " + user_confirmed.first_name + " " + user_confirmed.userprofile.middle_name) if user_confirmed is not None else ""
 
             context.update({
-                "protocol_date": f'{protocol_date}',
+                "protocol_date": protocol_date.format("DD MMMM YYYY"),
                 "protocol_year": protocol_date.format("YYYY"),
                 "user_accepted": f"{user_accepted.last_name} {user_accepted.first_name} {user_accepted.userprofile.middle_name}",
                 "user_confirmed": user_confirmed,
