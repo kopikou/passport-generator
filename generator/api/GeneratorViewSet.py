@@ -416,7 +416,7 @@ class GeneratorViewSet(
             AdditionalInfo.objects.filter(planlineslink_id=instance.pk).values("updated_at"),
         ).aggregate(updated_at=Max(F("t_updated_at")))
 
-        if not instance.file or instance.file_updated_at  or instance.file_updated_at < updated_at_max['updated_at']:
+        if not instance.file or not instance.file_updated_at or instance.file_updated_at < updated_at_max['updated_at']:
             instance = ReportService.generate_rpd_report(instance)
 
         return redirect(instance.file.url)
