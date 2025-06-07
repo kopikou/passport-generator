@@ -61,7 +61,7 @@ async function saveDiscplineGoal() {
     $q.notify({
       message: "Данные <span class='text-bold'>о цели освоения дисциплины</span> сохранены!",
       color: "secondary",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
     let key = _.findKey(additionalInfo.value, (x) => x.id == v.data.id)
@@ -70,7 +70,7 @@ async function saveDiscplineGoal() {
     $q.notify({
       message: "Данные <span class='text-bold'>о цели освоения дисциплины</span> не сохранены!",
       color: "negative",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
   })

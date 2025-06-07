@@ -86,7 +86,7 @@ async function saveData() {
     $q.notify({
       message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> сохранены!",
       color: "secondary",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
     await generatorViewStore.getData()
@@ -95,7 +95,7 @@ async function saveData() {
     $q.notify({
       message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> не сохранены!",
       color: "negative",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
   }

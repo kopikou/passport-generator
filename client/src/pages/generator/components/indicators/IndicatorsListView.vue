@@ -46,7 +46,7 @@ async function saveData() {
     $q.notify({
       message: "Данные <span class='text-bold'>о компетенциях</span> сохранены!",
       color: "secondary",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
     props.data.discipline_indicator[0] = r.data
@@ -55,7 +55,7 @@ async function saveData() {
     $q.notify({
       message: "Данные <span class='text-bold'>о компетенциях</span> не сохранены!",
       color: "negative",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
   }

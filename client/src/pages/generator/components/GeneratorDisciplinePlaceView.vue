@@ -44,7 +44,7 @@ async function savePrecSubDiscipline() {
     $q.notify({
       message: "Данные <span class='text-bold'>о месте дисциплины в структуре ООП</span> сохранены!",
       color: "secondary",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
 
@@ -70,7 +70,7 @@ async function savePrecSubDiscipline() {
     $q.notify({
       message: "Данные <span class='text-bold'>о месте дисциплины в структуре ООП</span> не сохранены!",
       color: "negative",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
 

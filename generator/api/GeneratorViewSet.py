@@ -29,7 +29,8 @@ from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
     PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
     ScientificDataDefault, DisciplineIndicators, DefaultsResources, AdditionalInfo
-from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanConfirmRPDProgram, CanAcceptRPDProgram, CanEditScientificProgram
+from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanConfirmRPDProgram, CanAcceptRPDProgram, \
+    CanEditScientificProgram, CanUploadRPDProgramFile
 from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
@@ -410,6 +411,10 @@ class GeneratorViewSet(
     def get_rpd_report(self, request, *args, **kwargs):
         instance: PlanLinesLink = self.get_object()
 
+        # для файлов загруженных вручную
+        if instance.uploaded_directly and instance.status == PlanLinesLink.StatusChoices.accepted:
+            return redirect((settings.FORCE_SCRIPT_NAME or "") + instance.last_accepted_file.url)
+
         updated_at_max = PlanLinesLink.objects.filter(pk=instance.pk).annotate(t_updated_at=F('accept_date')).values("t_updated_at").union(
             DisciplineIndicators.objects.filter(planlineid_id=instance.planlines_id).values("updated_at"),
             DisciplineThemes.objects.filter(planlineslink_id=instance.pk).values("updated_at"),
@@ -530,6 +535,7 @@ class GeneratorViewSet(
 
         PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], user_id=self.request.user.id,
                                              planlineslink_id=instance.id)
+
 
         return Response({"success": True})
 
@@ -685,5 +691,23 @@ class GeneratorViewSet(
             raise APIException("Вы можете копировать только со своих програм")
 
         GeneratorService.copy_rpd_program(from_pk, pk)
+
+        return Response(data={"success": True}, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], url_path="upload-rpd-program", detail=True, permission_classes=[CanUploadRPDProgramFile])
+    def upload_rpd_program(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        instance: PlanLinesLink = self.get_object()
+        instance.last_accepted_file = self.request.FILES['file']
+        instance.file = instance.last_accepted_file
+        instance.file_updated_at = datetime.datetime.now()
+        instance.status = PlanLinesLink.StatusChoices.accepted
+        instance.user_accepted = self.request.user
+        instance.user_confirmed = self.request.user
+        instance.confirm_date = pendulum.now()
+        instance.accept_date = pendulum.now()
+        instance.uploaded_directly = True
+
+        instance.save()
 
         return Response(data={"success": True}, status=status.HTTP_200_OK)

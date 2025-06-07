@@ -13,7 +13,7 @@ class CanEditRPDProgram(IsAuthenticated):
 
     def has_permission(self, request, view):
         programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
-        practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
+        # practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
 
         can_edit = PlanLinesLink.objects.filter(id=pk, status__in=[
@@ -24,9 +24,9 @@ class CanEditRPDProgram(IsAuthenticated):
         ])
 
         program = int(pk) in [i['id'] for i in programms if 'person' in i['type']] and can_edit.exists()
-        practice = int(pk) in [i['id'] for i in practices]
+        # practice = int(pk) in [i['id'] for i in practices]
 
-        return program or practice
+        return program# or practice
 
 
 class CanEditScientificProgram(IsAuthenticated):
@@ -46,11 +46,11 @@ class CanViewRPDProgram(IsAuthenticated):
 
     def has_permission(self, request, view):
         programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
-        practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
+        # practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
         program = int(pk) in [i['id'] for i in programms]
-        practice = int(pk) in [i['id'] for i in practices]
-        return program or practice
+        # practice = int(pk) in [i['id'] for i in practices]
+        return program # or practice
 
 
 class CanAcceptRPDProgram(IsAuthenticated):
@@ -84,6 +84,16 @@ class CanConfirmRPDProgram(IsAuthenticated):
         ])
 
         return int(pk) in [i['id'] for i in programms if 'rop' in i['type']] and can_accept.exists()
+
+
+class CanUploadRPDProgramFile(IsAuthenticated):
+    message = 'У вас нет прав для загрузки файла этого РПД напрямую '
+
+    def has_permission(self, request, view):
+        programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
+        pk = view.kwargs['pk']
+
+        return int(pk) in [i['id'] for i in programms if 'person' in i['type'] and i['can_upload_file_directly']]
 
 
 class CanViewFileList(IsAuthenticated):

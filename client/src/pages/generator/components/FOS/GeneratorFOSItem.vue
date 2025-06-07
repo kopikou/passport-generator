@@ -54,7 +54,7 @@ async function saveData() {
   $q.notify({
     message: "Данные <span class='text-bold'>о фонде оценочных средств дисциплине</span> сохранены!",
     color: "secondary",
-    position: "bottom",
+    position: "bottom-right",
     html: true,
   })
   await generatorViewStore.getData()

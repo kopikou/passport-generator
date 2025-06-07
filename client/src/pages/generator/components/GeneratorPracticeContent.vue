@@ -143,7 +143,7 @@ async function saveContent() {
   $q.notify({
     message: "Данные <span class='text-bold'>о содержании практики</span> сохранены!",
     color: "secondary",
-    position: "bottom",
+    position: "bottom-right",
     html: true,
   })
   await generatorViewStore.getData();

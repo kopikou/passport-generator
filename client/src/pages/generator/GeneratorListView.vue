@@ -23,10 +23,13 @@ import _ from "lodash";
 import useMainStore from "stores/mainStore";
 import GeneratorManageDialog from "pages/generator/components/dialogs/GeneratorManageDialog.vue";
 import LayoutHCF from "components/LayoutHCF.vue";
+import FileUploader from "pages/upload/components/FileUploader.vue";
+import GeneratorListViewItem from "pages/generator/components/GeneratorListViewItem.vue";
 
 const $q = useQuasar()
 const router = useRouter()
 const listData = ref<GeneratorListData[]>([])
+const uploadRpdFile = ref();
 
 const typeFilterLabel = {
   rop: 'Руководитель ОП',
@@ -86,7 +89,7 @@ const filteredListData = computed(() => {
   return _(listData.value)
     .filter(x => {
       return (myFilter.value == 0 || x.type.includes('person'))
-        && ((txtFilter == '' || x.person.toLowerCase().includes(txtFilter))
+        && ((txtFilter == '' || (x.person || '').toLowerCase().includes(txtFilter))
           || (txtFilter == '' || x.abbr.toLowerCase().includes(txtFilter))
           || (txtFilter == '' || x.discode.toLowerCase().includes(txtFilter))
           || (txtFilter == '' || x.discpl.toLowerCase().includes(txtFilter)))
@@ -111,44 +114,32 @@ const filteredListData = computed(() => {
 })
 
 
-function openManageDialog(id, item) {
-  $q.dialog({
-    component: GeneratorManageDialog,
-    componentProps: {
-      id: id,
-      data: item,
-    }
-  }).onOk(() => {
-    getProgramData()
-  })
-}
 
 function toggleCanByCopiedByAnyone(id, item) {
 
 }
 
 async function getProgramData() {
-  listData.value = []
+  const loadingHelpers = $q.loading.show({
+    group: 'first',
+    message: 'Обновление списка дисциплин',
+  })
+
   let r = await api.get("/api/generator/get-program-list/")
   listData.value = r.data
+
+  loadingHelpers()
 }
 
-const cafDataById = computed(() => {
-  return _.keyBy(cafData.value, 'value')
-})
 
-function getEditRules(type) {
-  const rules = ['person']
-  return type.some(q => rules.includes(q))
-}
-
-function getViewRules(type) {
-  const rules = ['rop', 'fac', 'zav']
-  return type.some(q => rules.includes(q))
-}
 
 function getRowColor(number) {
   return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
+}
+
+
+async function onFileDirectlyUploaded() {
+  await getProgramData();
 }
 
 watch([discplFilter, groupFilter, myFilter, textFilter], () => {
@@ -159,9 +150,7 @@ watch([discplFilter, groupFilter, myFilter, textFilter], () => {
 })
 
 onBeforeMount(async () => {
-  $q.loading.show({message: "Загрузка дисциплин"})
   await getProgramData()
-  $q.loading.hide()
 })
 
 </script>
@@ -236,19 +225,7 @@ onBeforeMount(async () => {
                     </div>
                     <div :class="{[`status-${item.status}`]: true}" class="rpd-row rpd-row__body text-center" v-for="(item, key) in value.items">
                       <!--                       @click="router.push(`/generator/${item.id}/main`)"-->
-                      <div>{{ item.discode }}</div>
-                      <div>{{ item.discpl }}</div>
-                      <div>{{ item.person }}</div>
-                      <div>{{ cafDataById[item.kafcode]?.label }}</div>
-                      <div>{{ item.user_confirmed_name }}</div>
-                      <div>{{ item.user_accepted_name }}</div>
-                      <div>{{ item.status_verbose }}</div>
-                      <div>
-                        <q-btn v-if="getEditRules(item.type)" dense flat color="primary" icon="mdi-pencil"
-                               label="заполнить" @click="router.push(`/generator/${item.id}/main`)"/>
-                        <q-btn v-if="getViewRules(item.type)" dense flat color="secondary" icon="mdi-briefcase-eye"
-                               label="просмотр" @click="openManageDialog(item.id, item)"/>
-                      </div>
+                      <generator-list-view-item :item="item" @data-updated="getProgramData" />
                     </div>
                   </div>
                 </q-card-section>
@@ -272,7 +249,7 @@ onBeforeMount(async () => {
   grid-template-columns: auto repeat(5, 1fr) auto auto;
 }
 
-.rpd-row {
+:deep(.rpd-row) {
   display: contents;
 
   &.status-0 > div { // "Назначен"

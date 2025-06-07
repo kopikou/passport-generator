@@ -48,7 +48,7 @@ async function savePracticeWay() {
     $q.notify({
       message: "Данные <span class='text-bold'>о способе/форме проведения практики</span> сохранены!",
       color: "secondary",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
     await generatorViewStore.getData();
@@ -68,7 +68,7 @@ async function savePracticeWay() {
     $q.notify({
       message: "Данные <span class='text-bold'>о способе/форме проведения практики</span> не сохранены!",
       color: "negative",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
   }
