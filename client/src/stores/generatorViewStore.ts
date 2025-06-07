@@ -449,10 +449,15 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       if (kp) checkGuidelines('course', 'Не заполнены методические указания для курсового проекта/работы ')
     }
 
-    const fos = _(disciplineThemes.value).map(x => x.formcontrol_list).flatten().uniq().value()
+    const fos = _(disciplineThemes.value)
+    .groupBy(x => x.semester)
+    .toPairs()
+    .map(pair => [pair[0], _(pair[1]).map(x => x.formcontrol_list).flatten().uniq().value()])
+    .fromPairs()
+    .value()
 
-    _.forEach(fos, (x) => {
-      const r = _.find(fosInfo.value, q => q.type == x)
+    _.forEach(fos, (x, num) => {
+      const r = _.find(fosInfo.value, q => q.type == x && q.num == num)
       if (!r) {
         data.push({
           url: 'fos',

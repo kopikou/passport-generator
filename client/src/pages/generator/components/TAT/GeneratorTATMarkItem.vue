@@ -135,6 +135,7 @@ watchEffect(() => {
               :readonly="disabled"
               debounce="1000"
               @update:modelValue="saveData"
+              hint="Вопросы к билету рекомендуется писать в поле описание процедуры"
             />
             <q-input
               label="Пример задания"
