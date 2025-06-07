@@ -206,8 +206,8 @@ class AISServices(object):
                 , p.abbrprofile as abbr
                 , p.startyear as yr
                 , p.cadmission as id_admission
-                , p.ckaf as ckaf
                 , u.cperson AS mira_id
+                , p.ckaf as ckaf
                 , 'zav' AS type -- Заведующий кафедры
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
