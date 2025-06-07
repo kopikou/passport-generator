@@ -48,6 +48,7 @@ class PlanLinesLink(TimestampsModel):
     last_accepted_file = models.FileField(upload_to="rpd_generator/", verbose_name="Файл программы", null=True)
     file_updated_at = models.DateTimeField(null=True, blank=True)
     uploaded_directly = models.BooleanField("Был ли файл загружен напрямую", null=True, default=False)
+    can_upload_file_directly = models.BooleanField("Можно ли файл загрузать напрямую", null=True, default=False)
     #
     # @property
     # def is_spo(self):
