@@ -450,40 +450,45 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     }
 
     const fos = _(disciplineThemes.value)
-    .groupBy(x => x.semester)
-    .toPairs()
-    .map(pair => [pair[0], _(pair[1]).map(x => x.formcontrol_list).flatten().uniq().value()])
-    .fromPairs()
-    .value()
+      .groupBy(x => x.semester)
+      .toPairs()
+      .map(pair => [pair[0], _(pair[1]).map(x => x.formcontrol_list).flatten().uniq().value()])
+      .fromPairs()
+      .value()
 
-    _.forEach(fos, (x, num) => {
-      const r = _.find(fosInfo.value, q => q.type == x && q.num == num)
-      if (!r) {
-        data.push({
-          url: 'fos',
-          title: 'Нет данных по оценочным материалам',
-          text: [`Не заполнена информация о "${r?.title}"`],
-          level: 'critical',
-        })
-      } else {
-        if (!_.get(r, 'criteria', null)) {
+
+    for (const num in fos) {
+      _.map(fos[num], x => {
+        const r = _.find(fosInfo.value, q => q.type == x && q.num == num)
+        if (!r) {
           data.push({
             url: 'fos',
             title: 'Нет данных по оценочным материалам',
-            text: [`Нет информации о критериях оценивания для "${r?.title}"`],
+            text: [`Не заполнена информация о "${r?.title}"`],
             level: 'critical',
           })
+        } else {
+          if (!_.get(r, 'criteria', null)) {
+            data.push({
+              url: 'fos',
+              title: 'Нет данных по оценочным материалам',
+              text: [`Нет информации о критериях оценивания для "${r?.title}"`],
+              level: 'critical',
+            })
+          }
+          if (!_.get(r, 'about', null)) {
+            data.push({
+              url: 'fos',
+              title: 'Нет данных по оценочным материалам',
+              text: [`Неи информации об описании процедуры для "${r?.title}"`],
+              level: 'critical',
+            })
+          }
         }
-        if (!_.get(r, 'about', null)) {
-          data.push({
-            url: 'fos',
-            title: 'Нет данных по оценочным материалам',
-            text: [`Неи информации об описании процедуры для "${r?.title}"`],
-            level: 'critical',
-          })
-        }
-      }
-    })
+      })
+
+    }
+
 
     function checkTat(type: string, errorText: string) {
       const r = _.find(tatInfo.value, x => x.type == type)
