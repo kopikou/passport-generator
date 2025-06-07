@@ -147,13 +147,17 @@ export interface GeneratorListData {
   yr: number,
   id_admission: number,
   mira_id: number,
-  type: Array,
+  type: Array<number>,
   person: string,
   id: number,
   status: number,
   status_verbose: string,
   kafcode: number,
   discode: string,
+  can_upload_file_directly: boolean
+  last_accepted_file_url: string | null
+  user_confirmed_name: string
+  user_accepted_name: string
 }
 
 export interface GeneratorPlanLineData {

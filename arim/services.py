@@ -182,9 +182,17 @@ class AISServices(object):
             t.id_admission,
             t.mira_id,
             cp.name AS person,
+            t.ckaf as ckaf,
             t.type AS type
             FROM (
-            SELECT d.name as discpl,d.id as id_discpl, u.id as planlin, p.abbrprofile as abbr, p.startyear as yr, p.cadmission as id_admission,  u.cperson AS mira_id, 'person' AS type  -- Преподаватель
+            SELECT d.name as discpl,d.id as id_discpl
+                , u.id as planlin
+                , p.abbrprofile as abbr
+                , p.startyear as yr
+                , p.cadmission as id_admission
+                ,  u.cperson AS mira_id
+                , p.ckaf as ckaf
+                , 'person' AS type  -- Преподаватель
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
@@ -192,7 +200,15 @@ class AISServices(object):
 
             UNION ALL
 
-            select d.name as discpl,d.id as id_discpl, u.id as planlin, p.abbrprofile as abbr, p.startyear as yr, p.cadmission as id_admission, u.cperson AS mira_id, 'zav' AS type -- Заведующий кафедры
+            select d.name as discpl
+                ,d.id as id_discpl
+                , u.id as planlin
+                , p.abbrprofile as abbr
+                , p.startyear as yr
+                , p.cadmission as id_admission
+                , u.cperson AS mira_id
+                , p.ckaf as ckaf
+                , 'zav' AS type -- Заведующий кафедры
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
@@ -201,7 +217,15 @@ class AISServices(object):
 
             UNION ALL
 
-            select d.name as discpl,d.id as id_discpl, u.id as planlin, p.abbrprofile as abbr, p.startyear as yr, p.cadmission as id_admission,  u.cperson AS mira_id, 'fac' AS type -- Заведующий факультета
+            select d.name as discpl
+                ,d.id as id_discpl
+                , u.id as planlin
+                , p.abbrprofile as abbr
+                , p.startyear as yr
+                , p.cadmission as id_admission
+                ,  u.cperson AS mira_id
+                , p.ckaf as ckaf
+                , 'fac' AS type -- Заведующий факультета
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
@@ -210,7 +234,15 @@ class AISServices(object):
 
             UNION ALL
 
-            SELECT DISTINCT d.name as discpl,d.id as id_discpl, u.id as planlin, p.abbrprofile as abbr, p.startyear as yr, p.cadmission as id_admission,  u.cperson AS mira_id, 'rop' AS type  -- Руководитель программы
+            SELECT DISTINCT d.name as discpl
+                ,d.id as id_discpl
+                , u.id as planlin
+                , p.abbrprofile as abbr
+                , p.startyear as yr
+                , p.cadmission as id_admission
+                ,  u.cperson AS mira_id
+                , p.ckaf as ckaf
+                , 'rop' AS type  -- Руководитель программы
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)

@@ -24,27 +24,38 @@ const props = defineProps({
   },
   planId: {
     required: true,
+  },
+  url: {
+    type: String
   }
 })
 const $q = useQuasar()
 const file = ref()
+
+const emit = defineEmits(['file-uploaded'])
 
 function fileFilter(files) {
   return files.filter(file => file.type === 'application/pdf')
 }
 
 watch(file, async () => {
-  $q.loading.show()
+  const loadingHelpers = $q.loading.show({
+    group: 'third',
+    message: 'Загружаю документ',
+  })
   const formData = new FormData()
   formData.append('file', file.value)
   formData.append('type', 'document')
   formData.append('fileId', props.fileId)
-  let r = await api.post(`/api/upload/${props.planId}/save-file/`, formData)
+
+  let r = await api.post(props.url ? props.url : `/api/upload/${props.planId}/save-file/`, formData)
+
+  emit('file-uploaded')
 
   let admKey = _.findKey(admissionData.value, (x) => x.plan_id == props.planId)
   admissionData.value[admKey].documents_files.push(r.data)
 
-  $q.loading.hide()
+  loadingHelpers()
 })
 
 </script>

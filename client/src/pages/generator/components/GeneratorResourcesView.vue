@@ -40,7 +40,7 @@ async function saveData() {
   $q.notify({
     message: "Данные <span class='text-bold'>об используемых ресурсах</span> сохранены!",
     color: "secondary",
-    position: "bottom",
+    position: "bottom-right",
     html: true,
   })
   generatorViewStore.checkErrors()
