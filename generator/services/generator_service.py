@@ -81,7 +81,7 @@ class GeneratorService(object):
                     "status_verbose": res.status_verbose,
                     "kafcode": res.planlines.caf,
                     "is_spo": item['ckaf'] in (1988516, 1988517),
-                    "can_upload_file_directly": item.can_upload_file_directly,
+                    "can_upload_file_directly": res.can_upload_file_directly,
                     "last_accepted_file_url": (settings.FORCE_SCRIPT_NAME or "") + res.last_accepted_file.url if res.last_accepted_file else None,
                     "user_confirmed": res.user_confirmed_id,
                     "can_be_copied_by_anyone": res.can_be_copied_by_anyone,
