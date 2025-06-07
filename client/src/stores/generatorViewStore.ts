@@ -460,11 +460,12 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     for (const num in fos) {
       _.map(fos[num], x => {
         const r = _.find(fosInfo.value, q => q.type == x && q.num == num)
+        const formcontrolName = r?.title || `${semesterYearLabel.value} ${num} | ${formControlByValue.value[x]?.name}`
         if (!r) {
           data.push({
             url: 'fos',
             title: 'Нет данных по оценочным материалам',
-            text: [`Не заполнена информация о "${r?.title}"`],
+            text: [`Не заполнена информация о "${formcontrolName}"`],
             level: 'critical',
           })
         } else {
@@ -472,7 +473,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
             data.push({
               url: 'fos',
               title: 'Нет данных по оценочным материалам',
-              text: [`Нет информации о критериях оценивания для "${r?.title}"`],
+              text: [`Нет информации о критериях оценивания для "${formcontrolName}"`],
               level: 'critical',
             })
           }
@@ -480,7 +481,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
             data.push({
               url: 'fos',
               title: 'Нет данных по оценочным материалам',
-              text: [`Неи информации об описании процедуры для "${r?.title}"`],
+              text: [`Неи информации об описании процедуры для "${formcontrolName}"`],
               level: 'critical',
             })
           }
