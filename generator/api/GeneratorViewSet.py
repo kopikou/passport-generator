@@ -568,6 +568,9 @@ class GeneratorViewSet(
         kind_srs_by_id = {i['id']: i['name'] for i in kind_srs}
 
         cattitle = RPDGenSerivce.get_rpd_line(old_pk)
+
+        if not cattitle:
+            raise APIException("Нет данных для копирования")
         cattitle_id = cattitle[0]['id']
 
         DisciplineThemes.objects.filter(planlineslink_id=pk).delete()
