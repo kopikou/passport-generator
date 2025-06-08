@@ -104,6 +104,7 @@ async function onFileUploaded() {
       <q-file :label="'Загрузить программу'" outlined bottom-slots v-model="uploadRpdFile"
               :filter="fileFilter"
               accept="*.pdf, application/pdf"
+              style="width: 300px"
               @update:model-value="onFileUploaded"
               max-files="1">
 
