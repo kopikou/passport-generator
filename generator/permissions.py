@@ -112,7 +112,7 @@ class CanViewFileList(IsAuthenticated):
     # message = 'У вас нет прав для просмотра файлов'
     message = 'Нет файлов для просмотра'
 
-    def has_permission(self, request, view)
+    def has_permission(self, request, view):
         if not self.has_permission(request, view):
             return False
         programms = UploadFileService.get_admission_data(request.user.userprofile.mira_id)
