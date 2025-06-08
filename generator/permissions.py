@@ -12,7 +12,7 @@ class CanEditRPDProgram(IsAuthenticated):
     message = 'У вас нет прав для редактирования этого РПД'
 
     def has_permission(self, request, view):
-        if not self.has_permission(request, view):
+        if not super().has_permission(request, view):
             return False
         programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
         # practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
@@ -35,7 +35,7 @@ class CanEditScientificProgram(IsAuthenticated):
     message = 'У вас нет прав для редактирования этого ПНД'
 
     def has_permission(self, request, view):
-        if not self.has_permission(request, view):
+        if not super().has_permission(request, view):
             return False
         pk = view.kwargs['pk']
 
@@ -49,7 +49,7 @@ class CanViewRPDProgram(IsAuthenticated):
     message = 'У вас нет прав для просмотра этого РПД'
 
     def has_permission(self, request, view):
-        if not self.has_permission(request, view):
+        if not super().has_permission(request, view):
             return False
         programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
         # practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
@@ -63,7 +63,7 @@ class CanAcceptRPDProgram(IsAuthenticated):
     message = 'У вас нет прав для утверждения этого РПД'
 
     def has_permission(self, request, view):
-        if not self.has_permission(request, view):
+        if not super().has_permission(request, view):
             return False
         programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
         practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
@@ -84,7 +84,7 @@ class CanConfirmRPDProgram(IsAuthenticated):
     message = 'У вас нет прав для согласования этого РПД'
 
     def has_permission(self, request, view):
-        if not self.has_permission(request, view):
+        if not super().has_permission(request, view):
             return False
         programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
@@ -100,7 +100,7 @@ class CanUploadRPDProgramFile(IsAuthenticated):
     message = 'У вас нет прав для загрузки файла этого РПД напрямую '
 
     def has_permission(self, request, view):
-        if not self.has_permission(request, view):
+        if not super().has_permission(request, view):
             return False
         programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
@@ -113,7 +113,7 @@ class CanViewFileList(IsAuthenticated):
     message = 'Нет файлов для просмотра'
 
     def has_permission(self, request, view):
-        if not self.has_permission(request, view):
+        if not super().has_permission(request, view):
             return False
         programms = UploadFileService.get_admission_data(request.user.userprofile.mira_id)
 
@@ -124,7 +124,7 @@ class CanUploadFiles(IsAuthenticated):
     message = 'У вас нет прав для отправки файлов'
 
     def has_permission(self, request, view):
-        if not self.has_permission(request, view):
+        if not super().has_permission(request, view):
             return False
         programms = UploadFileService.get_admission_data(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
