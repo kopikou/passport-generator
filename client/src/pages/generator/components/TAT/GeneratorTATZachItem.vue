@@ -103,15 +103,15 @@ async function saveData() {
 }
 
 watchEffect(() => {
-  const key = _.findKey(tatInfo.value, x => x.type == props.type && x.num == props.num)
-  if (key) {
-    about.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'about', '')
-    passed.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'passed', '')
-    unpassed.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'unpassed', '')
-    example.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'example', '')
-    tat.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'tat', '')
-    form.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'form', '')
-    formabout.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'formabout', '')
+  const data = _.find(tatInfo.value, x => x.type == props.type && x.num == props.num)
+  if (data) {
+    about.value = _.get(data, 'about', '')
+    passed.value = _.get(data, 'passed', '')
+    unpassed.value = _.get(data, 'unpassed', '')
+    example.value = _.get(data, 'example', '')
+    tat.value = _.get(data, 'tat', '')
+    form.value = _.get(data, 'form', '')
+    formabout.value = _.get(data, 'formabout', '')
   }
 })
 
