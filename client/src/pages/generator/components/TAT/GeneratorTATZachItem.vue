@@ -76,7 +76,7 @@ async function saveData() {
   if (generatorViewStore.abortGetDataController)
     generatorViewStore.abortGetDataController.abort()
 
-  const data = [...((tatInfo.value || []).filter((x: any) => x.type != props.type)), res]
+  const data = [...((tatInfo.value || []).filter((x: any) => !(x.type == props.type && x.num == props.num))), res]
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'tat',
     "value": data,
