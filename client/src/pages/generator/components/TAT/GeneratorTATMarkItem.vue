@@ -110,11 +110,12 @@ watchEffect(() => {
 
 <template>
   <q-expansion-item
+    group="tat-item"
     :label="`${semesterYearLabel} ${props.num} | ${props.title}`"
   >
     <q-card>
       <q-card-section>
-        <div class="q-gutter-md">
+        <div class="q-gutter-md" style="display: grid; grid-template-columns: 3fr 2fr">
           <!--          <q-input-->
           <!--            label="Основная информация"-->
           <!--            type="textarea"-->
@@ -125,7 +126,7 @@ watchEffect(() => {
           <!--            debounce="1000"-->
           <!--            @update:modelValue="saveData"-->
           <!--          />-->
-          <div class="q-gutter-y-md" v-if="!planlinesData.viewpract">
+          <div v-if="!planlinesData.viewpract">
             <q-input
               label="Описание процедуры"
               type="textarea"
@@ -135,6 +136,7 @@ watchEffect(() => {
               :readonly="disabled"
               debounce="1000"
               @update:modelValue="saveData"
+              class="q-mb-md"
               hint="Вопросы к билету рекомендуется писать в поле описание процедуры"
             />
             <q-input
@@ -148,7 +150,7 @@ watchEffect(() => {
               @update:modelValue="saveData"
             />
           </div>
-          <div class="q-gutter-y-md" v-else>
+          <div v-else>
             <q-input
               label="Типовые оценочные средства"
               type="text"
@@ -177,16 +179,19 @@ watchEffect(() => {
               @update:modelValue="saveData"
             />
           </div>
-          <p class="text-subtitle1">Критерии оценивания</p>
+
+          <div>
+<!--          <div class="text-subtitle1">Критерии оценивания</div>-->
           <q-list bordered>
             <q-expansion-item
+              group="tat-item-mark"
               label="Отлично"
             >
               <q-input
                 class="q-pa-sm"
-                label="Отлично"
                 type="textarea"
                 filled
+                label="укажите критерий оценивания для получения оценки"
                 stack-label
                 v-model="great"
                 :readonly="disabled"
@@ -194,12 +199,12 @@ watchEffect(() => {
                 @update:modelValue="saveData"
               />
             </q-expansion-item>
-            <q-expansion-item label="Хорошо">
+            <q-expansion-item group="tat-item-mark" label="Хорошо">
               <q-input
                 class="q-pa-sm"
-                label="Хорошо"
                 type="textarea"
                 filled
+                 label="укажите критерий оценивания для получения оценки"
                 stack-label
                 v-model="good"
                 :readonly="disabled"
@@ -207,24 +212,24 @@ watchEffect(() => {
                 @update:modelValue="saveData"
               />
             </q-expansion-item>
-            <q-expansion-item label="Удовлетворительно">
+            <q-expansion-item group="tat-item-mark" label="Удовлетворительно">
               <q-input
                 class="q-pa-sm"
-                label="Удовлетворительно"
                 type="textarea"
                 filled
+                label="укажите критерий оценивания для получения оценки"
                 stack-label
                 v-model="satisfactorily"
                 debounce="1000"
                 @update:modelValue="saveData"
               />
             </q-expansion-item>
-            <q-expansion-item label="Неудовлетворительно">
+            <q-expansion-item group="tat-item-mark" label="Неудовлетворительно">
               <q-input
                 class="q-pa-sm"
-                label="Неудовлетворительно"
                 type="textarea"
                 filled
+                label="укажите критерий оценивания для получения оценки"
                 stack-label
                 v-model="unsatisfactory"
                 :readonly="disabled"
@@ -233,6 +238,7 @@ watchEffect(() => {
               />
             </q-expansion-item>
           </q-list>
+            </div>
           <!--          <q-btn-->
           <!--            label="Сохранить"-->
           <!--            color="primary"-->

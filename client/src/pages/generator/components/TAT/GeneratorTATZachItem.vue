@@ -119,11 +119,12 @@ watchEffect(() => {
 
 <template>
   <q-expansion-item
+    group="tat-item"
     :label="`${semesterYearLabel} ${props.num} | ${props.title}`"
   >
     <q-card>
       <q-card-section>
-        <div class="q-gutter-md">
+        <div class="q-gutter-md" style="display: grid; grid-template-columns: 3fr 2fr">
           <!--          <q-input-->
           <!--            label="Основная информация"-->
           <!--            type="textarea"-->
@@ -134,7 +135,7 @@ watchEffect(() => {
           <!--            debounce="1000"-->
           <!--            @update:modelValue="saveData"-->
           <!--          />-->
-          <div class="q-gutter-y-md" v-if="!planlinesData.viewpract">
+          <div v-if="!planlinesData.viewpract">
             <q-input
               label="Описание процедуры"
               type="textarea"
@@ -158,7 +159,7 @@ watchEffect(() => {
               hint="Если Вам не нужен пример задания, оставьте поле пустым"
             />
           </div>
-          <div class="q-gutter-y-md" v-else>
+          <div v-else>
             <q-input
               label="Типовые оценочные средства"
               type="text"
@@ -187,14 +188,15 @@ watchEffect(() => {
               @update:modelValue="saveData"
             />
           </div>
-          <p class="text-subtitle1">Критерии оценивания</p>
+          <div>
           <q-list bordered>
             <q-expansion-item
+               group="tat-item-mark"
               label="Зачтено"
             >
               <q-input
                 class="q-pa-sm"
-                label="Зачтено"
+                label="укажите критерий оценивания для получения оценки"
                 type="textarea"
                 filled
                 stack-label
@@ -206,11 +208,12 @@ watchEffect(() => {
             </q-expansion-item>
 
             <q-expansion-item
+               group="tat-item-mark"
               label="Не зачтено"
             >
               <q-input
                 class="q-pa-sm"
-                label="Не зачтено"
+                label="укажите критерий оценивания для получения оценки"
                 type="textarea"
                 filled
                 stack-label
@@ -228,6 +231,7 @@ watchEffect(() => {
           <!--            @click="saveData"-->
           <!--            v-show="!disabled"-->
           <!--          />-->
+            </div>
         </div>
       </q-card-section>
     </q-card>
