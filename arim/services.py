@@ -175,6 +175,7 @@ class AISServices(object):
             SELECT
             DISTINCT
             t.discpl,
+			t.newdisid,
             t.id_discpl,
             t.planlin,
             t.abbr,
@@ -187,6 +188,7 @@ class AISServices(object):
             FROM (
             SELECT d.name as discpl,d.id as id_discpl
                 , u.id as planlin
+				, u.newdisid
                 , p.abbrprofile as abbr
                 , p.startyear as yr
                 , p.cadmission as id_admission
@@ -203,6 +205,7 @@ class AISServices(object):
             select d.name as discpl
                 ,d.id as id_discpl
                 , u.id as planlin
+				, u.newdisid
                 , p.abbrprofile as abbr
                 , p.startyear as yr
                 , p.cadmission as id_admission
@@ -220,6 +223,7 @@ class AISServices(object):
             select d.name as discpl
                 ,d.id as id_discpl
                 , u.id as planlin
+				, u.newdisid
                 , p.abbrprofile as abbr
                 , p.startyear as yr
                 , p.cadmission as id_admission
@@ -237,6 +241,7 @@ class AISServices(object):
             SELECT DISTINCT d.name as discpl
                 ,d.id as id_discpl
                 , u.id as planlin
+				, u.newdisid
                 , p.abbrprofile as abbr
                 , p.startyear as yr
                 , p.cadmission as id_admission
