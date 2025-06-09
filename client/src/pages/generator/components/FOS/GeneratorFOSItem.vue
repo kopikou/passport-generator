@@ -34,7 +34,7 @@ const about = ref('')
 const criteria = ref('')
 
 const themes = computed(() => {
-  return _.filter(disciplineThemes.value, x => x.formcontrol_list.includes(props.type))
+  return _(disciplineThemes.value).filter(x => (x.semester == props.num &&x.formcontrol_list.includes(props.type))).sortBy(x => [x.semestr, x.num]).value()
 })
 
 async function saveData() {
@@ -112,7 +112,7 @@ watchEffect(() => {
         {{ props.title }}
         <div>
           <q-chip
-            v-for="theme in _.sortBy(themes, x => [x.semester, x.num])"
+            v-for="theme in themes"
             :label="`${theme.semester}-${theme.num}. ${theme.name}`"
             style="max-width: 400px"
           >
