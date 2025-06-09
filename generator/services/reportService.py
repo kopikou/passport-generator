@@ -849,9 +849,6 @@ class ReportService(object):
                     item['pr'] or 0,
                 ]),
                 "contact_hours": sum([
-                    item['lekc'] or 0,
-                    item['lab'] or 0,
-                    item['pr'] or 0,
                     item['eios'] or 0,
                 ]),
                 "lekc_hours": item['lekc'] or 0,
@@ -868,13 +865,14 @@ class ReportService(object):
                                   groupby(semester_hours_sorted, key=lambda x: x['num'])}
 
         semester_hours_all = {
-            "lekc_hours_all": sum([i['lekc'] for i in data['planlines']['semesters'] if i['lekc'] is not None]),
-            "lab_hours_all": sum([i['lab'] for i in data['planlines']['semesters'] if i['lab'] is not None]),
-            "pr_hours_all": sum([i['pr'] for i in data['planlines']['semesters'] if i['pr'] is not None]),
-            "srs_hours_all": sum([i['srs'] for i in data['planlines']['semesters'] if i['srs'] is not None]),
-            "ekz_hours_all": sum([i['ekzhour'] for i in data['planlines']['semesters'] if i['ekzhour'] is not None]),
-            "eios_hours_all": sum([i['eios'] for i in data['planlines']['semesters'] if i['eios'] is not None]),
+            "lekc_hours_all": sum([i['lekc'] or 0 for i in data['planlines']['semesters']]),
+            "lab_hours_all": sum([i['lab'] or 0 for i in data['planlines']['semesters']]),
+            "pr_hours_all": sum([i['pr'] or 0 for i in data['planlines']['semesters']]),
+            "srs_hours_all": sum([i['srs'] or 0 for i in data['planlines']['semesters']]),
+            "ekz_hours_all": sum([i['ekzhour'] or 0 for i in data['planlines']['semesters']]),
+            "eios_hours_all": sum([i['eios'] or 0 for i in data['planlines']['semesters']]),
         }
+
         semester_hours_all.update({
             "aud_hours_all": sum([
                 semester_hours_all['lekc_hours_all'] or 0,
@@ -882,9 +880,9 @@ class ReportService(object):
                 semester_hours_all['pr_hours_all'] or 0,
             ]),
         })
+
         semester_hours_all.update({
             "contact_hours_all": sum([
-                semester_hours_all['aud_hours_all'] or 0,
                 semester_hours_all['eios_hours_all'] or 0,
             ]),
         })
