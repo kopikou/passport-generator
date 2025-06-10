@@ -13,6 +13,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUpload
 from django.db.models import Q, Max, F
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.template.defaultfilters import last
 from django.utils.encoding import escape_uri_path
 from rest_framework import status
 from rest_framework.decorators import action
@@ -23,6 +24,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from app.utils import UserProfileHasPermission
+from arim.models import UchPlanPlan, Catadmission
 from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
@@ -36,8 +38,9 @@ from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
 from generator.services import ReportService
 from generator.services.generator_service import GeneratorService
-from rpd.models import PlanData, LinesIndicators
+from rpd.models import PlanData, LinesIndicators, PlanDocuments
 from rpd.services import RPDGenSerivce
+from uplfile.models import UploadFiles
 
 
 class GeneratorViewSet(
@@ -53,8 +56,8 @@ class GeneratorViewSet(
         result = GeneratorService.get_rpd_data(pk, self.request.user.userprofile.mira_id)
         return Response(result)
 
-
-    @action(methods=['POST'], url_path='save-asp-program-data', detail=True, permission_classes=[CanEditScientificProgram])
+    @action(methods=['POST'], url_path='save-asp-program-data', detail=True,
+            permission_classes=[CanEditScientificProgram])
     def save_asp_program_data(self, request, *args, **kwargs):
 
         data = self.request.data
@@ -68,7 +71,8 @@ class GeneratorViewSet(
 
         return Response(serializer.data)
 
-    @action(methods=['GET'], url_path='copy-asp-program-data', detail=True, permission_classes=[CanEditScientificProgram])
+    @action(methods=['GET'], url_path='copy-asp-program-data', detail=True,
+            permission_classes=[CanEditScientificProgram])
     def copy_asp_program_data(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -132,7 +136,8 @@ class GeneratorViewSet(
 
         return Response(data=res)
 
-    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True, permission_classes=[CanEditScientificProgram])
+    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True,
+            permission_classes=[CanEditScientificProgram])
     def get_asp_program_detail(self, request, *args, **kwargs):
 
         pk = int(self.kwargs['pk'])
@@ -207,7 +212,6 @@ class GeneratorViewSet(
 
     @action(methods=['GET'], url_path="get-program-list", detail=False, permission_classes=[IsAuthenticated])
     def get_program_list(self, request, *args, **kwargs):
-
         res = GeneratorService.get_program_list(self.request.user.userprofile.mira_id)
 
         return Response(
@@ -231,7 +235,8 @@ class GeneratorViewSet(
 
         return Response(data=data)
 
-    @action(methods=['POST'], url_path="save-scientific-data", detail=True, permission_classes=[CanEditScientificProgram])
+    @action(methods=['POST'], url_path="save-scientific-data", detail=True,
+            permission_classes=[CanEditScientificProgram])
     def save_scientific_data(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -251,7 +256,8 @@ class GeneratorViewSet(
 
         return Response(data=serializer.data)
 
-    @action(methods=['DELETE'], url_path="del-scientific-work", detail=True, permission_classes=[CanEditScientificProgram])
+    @action(methods=['DELETE'], url_path="del-scientific-work", detail=True,
+            permission_classes=[CanEditScientificProgram])
     def del_scientific_work(self, request, *args, **kwargs):
 
         ScientificData.objects.get(id=self.kwargs['pk']).delete()
@@ -388,7 +394,8 @@ class GeneratorViewSet(
 
         return Response(serializer_data.data)
 
-    @action(methods=['GET'], url_path="delete-discipline-work-hour", detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['GET'], url_path="delete-discipline-work-hour", detail=True,
+            permission_classes=[CanEditRPDProgram])
     def delete_discipline_work_hour(self, request, *args, **kwargs):
         pk = self.request.query_params.get('id')
 
@@ -415,7 +422,8 @@ class GeneratorViewSet(
         if instance.uploaded_directly and instance.status == PlanLinesLink.StatusChoices.accepted:
             return redirect((settings.FORCE_SCRIPT_NAME or "") + instance.last_accepted_file.url)
 
-        updated_at_max = PlanLinesLink.objects.filter(pk=instance.pk).annotate(t_updated_at=F('accept_date')).values("t_updated_at").union(
+        updated_at_max = PlanLinesLink.objects.filter(pk=instance.pk).annotate(t_updated_at=F('accept_date')).values(
+            "t_updated_at").union(
             DisciplineIndicators.objects.filter(planlineid_id=instance.planlines_id).values("updated_at"),
             DisciplineThemes.objects.filter(planlineslink_id=instance.pk).values("updated_at"),
             DisciplineWorkHours.objects.filter(planlineslink_id=instance.pk).values("updated_at"),
@@ -461,7 +469,6 @@ class GeneratorViewSet(
 
         return Response(data={'status_verbose': PlanLinesLink.StatusChoices.is_filled.label,
                               'status': PlanLinesLink.StatusChoices.is_filled})
-
 
     @action(methods=['GET'], url_path="send-rpd-on-review", detail=True, permission_classes=[CanEditRPDProgram])
     def send_rpd_on_review(self, request, *args, **kwargs):
@@ -513,9 +520,8 @@ class GeneratorViewSet(
 
         return Response({"success": True})
 
-
-
-    @action(methods=['POST'], url_path="toggle-can-be-copied-by-anyone", detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['POST'], url_path="toggle-can-be-copied-by-anyone", detail=True,
+            permission_classes=[CanEditRPDProgram])
     def toggle_can_be_copied_by_anyone(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.can_be_copied_by_anyone = not instance.can_be_copied_by_anyone
@@ -524,7 +530,8 @@ class GeneratorViewSet(
 
         return Response({"success": True})
 
-    @action(methods=['POST'], url_path="send-rpd-on-refile", detail=True, permission_classes=[CanAcceptRPDProgram | CanConfirmRPDProgram])
+    @action(methods=['POST'], url_path="send-rpd-on-refile", detail=True,
+            permission_classes=[CanAcceptRPDProgram | CanConfirmRPDProgram])
     def send_rpd_on_refile(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.on_refile
@@ -535,7 +542,6 @@ class GeneratorViewSet(
 
         PlanLinesLinkComments.objects.create(comment=self.request.data['comment'], user_id=self.request.user.id,
                                              planlineslink_id=instance.id)
-
 
         return Response({"success": True})
 
@@ -586,7 +592,6 @@ class GeneratorViewSet(
             indicator_id = instance_indicators_by_index.get(indicator[0]['index'])
 
             if indicator_id:
-
                 dis_indicator_serializer = DisciplineIndicatorsAddSerializer(data={
                     "indicator_id": indicator_id,
                     "planlineid_id": instance['planlines']['id'],
@@ -598,7 +603,6 @@ class GeneratorViewSet(
                 })
                 dis_indicator_serializer.is_valid(raise_exception=True)
                 dis_indicator_serializer.save()
-
 
         d2s = RPDGenSerivce.get_displ2semestr(cattitle_id)
 
@@ -714,3 +718,66 @@ class GeneratorViewSet(
         instance.save()
 
         return Response(data={"success": True}, status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], url_path="get-admissions-for-site-info", detail=False, permission_classes=[])
+    def get_admissions_for_site_info(self, request, *args, **kwargs):
+        data = []
+
+        for plan in PlanData.objects.all():
+            admission_info = Catadmission.objects.filter(
+                cuchplan_id=plan.mira_id
+            ).values(
+                'cfob_id',
+                'cfob__name',
+                'cadmkind_id',
+                'cadmkind__name_ak',
+            ).first()
+
+            if not admission_info:
+                continue
+
+            rpds = list(PlanLinesLink.objects.filter(
+                planlines__plan_id=plan.id,
+                last_accepted_file__isnull=False
+            ).exclude(last_accepted_file=''))
+            files = UploadFiles.objects.filter(rpd=plan.id)
+
+            data.append({
+                "species": plan.species,
+                "cfob": admission_info['cfob_id'],
+                "cfob__name": admission_info['cfob__name'],
+                "level": admission_info['cadmkind_id'],
+                "level__name": admission_info['cadmkind__name_ak'],
+                "napr_t": plan.napr_t,
+                "id": plan.mira_id,
+                "year": plan.startyear,
+                "documents": [
+                    {
+                        "title": d.name,
+                        "type": d.new_type_id,
+                    } for d in PlanDocuments.objects.filter(
+                        plan_id=plan.id
+                    )
+                ],
+                "rpds": [
+                    {
+                        'url': settings.SITE_URL + i.last_accepted_file.url,
+                        'name': i.planlines.dis,
+                        'id': i.id,
+                    } for i in rpds if i.planlines.viewpract is None
+                ],
+                "practices": [
+                    {
+                        'url': settings.SITE_URL + i.last_accepted_file.url,
+                        'name': i.planlines.dis,
+                        'id': i.id,
+                    } for i in rpds if i.planlines.viewpract is not None
+                ]
+            })
+
+        # plan.studylevel
+        # plan.studylevel
+
+        return Response(
+            data=data,
+        )

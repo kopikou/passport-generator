@@ -75,6 +75,7 @@ class CLAdmKind(models.Model):
 
     name = models.CharField(max_length=50)
     name_prof = models.CharField(max_length=50)
+    name_ak = models.CharField(max_length=50)
 
 
 class CatDepartment(models.Model):

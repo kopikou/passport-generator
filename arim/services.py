@@ -339,6 +339,19 @@ class AISServices(object):
 
         return data
 
+#     @staticmethod
+#     def get_admissions_info(mira_id):
+#         data = Mira.fetch(f"""
+# SELECT ca.id, ck.name AS level, ck.id AS level_id, cf.name AS fob, cf.id AS fob_id, ca.yr
+# FROM dbo.uchplan_plan up
+# LEFT JOIN dbo.catadmission ca ON ca.cuchplan = up.id
+# LEFT JOIN dbo.[cl$admkind] ck ON ck.id = ca.cadmkind
+# LEFT JOIN dbo.[cl$fob] cf ON cf.id = ca.cfob
+# WHERE up.id = %s
+#         """, [mira_id])
+#
+#         return data[0] if data else None
+
     @staticmethod
     def search_software(val):
 
