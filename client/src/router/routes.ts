@@ -33,6 +33,8 @@ import PracticeGeneratorListView from "pages/generator/PracticeGeneratorListView
 import GeneratorPracticeContent from "pages/generator/components/GeneratorPracticeContent.vue";
 import GeneratorPracticeReportView from "pages/generator/components/GeneratorPracticeReportView.vue";
 import GeneratorMainView from "pages/generator/components/GeneratorMainView.vue";
+import ProfActivityView from "pages/activity/ProfActivityView.vue";
+import ProfActivityItem from "pages/activity/components/ProfActivityItem.vue";
 
 
 const routes: RouteRecordRaw[] = [
@@ -312,7 +314,18 @@ const routes: RouteRecordRaw[] = [
       },
     ]
   },
-
+  {
+    path: "/activity",
+    name: "ProfActivityView",
+    component: ProfActivityView,
+    children: [{
+      path: ':id',
+      name: 'ProfActivityItem',
+      component: ProfActivityItem,
+      props: true,
+    },
+    ],
+  },
   // Always leave this as last one,
   // but you can also remove it
   {

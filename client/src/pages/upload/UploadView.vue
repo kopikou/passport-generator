@@ -193,7 +193,7 @@ function sortDocuments(val) {
     <template #content>
       <q-list bordered>
         <q-expansion-item
-          v-for="item in admissionList"
+          v-for="item in admissionData"
           expand-separator
           :caption="item.plan_name"
           :label="`${item.abbrprofile} ${item.startyear}`"

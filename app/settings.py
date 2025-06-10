@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'rpgen',
     'generator',
     'uplfile',
+    'prof_activity',
     'auths',
     'arim',
     'arim_library',
@@ -134,7 +135,7 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "static"
 
 STATICFILES_DIRS = [
-    BASE_DIR / "client" / "dist" / "spa",
+    BASE_DIR / "client",
 ]
 
 DATABASE_ROUTERS = ["app.router.MainRouter", "app.router.RpdRouter", "app.router.LibraryRouter"]
