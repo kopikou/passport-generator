@@ -7,6 +7,7 @@ const mainStore = useMainStore();
 
 const {
   cafData,
+  cafDataById,
 } = storeToRefs(generatorViewStore)
 
 const {
@@ -115,7 +116,9 @@ const filteredListData = computed(() => {
     .value()
 })
 
-
+function clearFilter() {
+  textFilter.value = ''
+}
 
 function toggleCanByCopiedByAnyone(id, item) {
 
@@ -132,7 +135,6 @@ async function getProgramData() {
 
   loadingHelpers()
 }
-
 
 
 function getRowColor(number) {
@@ -163,7 +165,8 @@ onBeforeMount(async () => {
       <div class="q-px-sm q-pb-sm">
         <div class="flex justify-between q-my-sm q-px-sm"
              style="display: grid; grid-template-columns: 1fr 220px auto; gap: 8px">
-          <q-input outlined label="Поиск по аббревиатуре, дисциплине, разработчику программы" v-model="textFilter" clearable/>
+          <q-input outlined label="Поиск по аббревиатуре, дисциплине, разработчику программы" v-model="textFilter"
+                   clearable @clear="clearFilter"/>
           <!--        <q-input outlined label="Дисциплина" v-model="discplFilter"/>-->
           <q-select v-model="statusFilter"
                     label="Статус"
@@ -231,24 +234,8 @@ onBeforeMount(async () => {
                           <div>Статус</div>
                           <div>Управление</div>
                         </div>
-                        <div :class="{[`status-${item.status}`]: true}" class="rpd-row rpd-row__body text-center"
-                             v-for="(item, key) in item.items">
-                          <!--                       @click="router.push(`/generator/${item.id}/main`)"-->
-                          <div>{{ item.discode }}</div>
-                          <div>{{ item.discpl }}</div>
-                          <div>{{ item.person }}</div>
-                          <div>{{ cafDataById[item.kafcode]?.label }}</div>
-                          <div>{{ item.user_confirmed_name }}</div>
-                          <div>{{ item.user_accepted_name }}</div>
-                          <div>{{ item.status_verbose }}</div>
-                          <div>
-                            <q-btn v-if="getEditRules(item.type)" dense flat color="primary" icon="mdi-pencil"
-                                   label="заполнить" @click="router.push(`/generator/${item.id}/main`)"/>
-                            <q-btn v-if="getViewRules(item.type)" dense flat color="secondary" icon="mdi-briefcase-eye"
-                                   label="просмотр" @click="openManageDialog(item.id, item)"/>
-                            <q-btn v-if="item.type.includes('view')" dense flat color="black" icon="mdi-download"
-                                   target="_blank" :href="`/api/generator/${item.id}/get-rpd-report/`"/>
-                          </div>
+                        <div v-for="i in item.items" :class="{[`status-${i.status}`]: true}" class="rpd-row rpd-row__body text-center">
+                          <generator-list-view-item :item="i" @data-updated="getProgramData"/>
                         </div>
                       </div>
                     </q-card-section>

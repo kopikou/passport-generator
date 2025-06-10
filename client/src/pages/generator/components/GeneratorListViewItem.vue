@@ -128,9 +128,9 @@ async function onFileUploaded() {
     <template v-else>
       <q-btn v-if="canEdit" dense flat color="primary" icon="mdi-pencil"
              label="заполнить" @click="router.push(`/generator/${item.id}/main`)"/>
+      <q-btn v-if="canView" dense flat color="secondary" icon="mdi-briefcase-eye"
+             label="просмотр" @click="openManageDialog"/>
     </template>
-    <q-btn v-if="canView" dense flat color="secondary" icon="mdi-briefcase-eye"
-           label="просмотр" @click="openManageDialog"/>
   </div>
 </template>
 
