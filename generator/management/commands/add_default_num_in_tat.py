@@ -21,7 +21,9 @@ class Command(BaseCommand):
             for j in i.value:
                 if not 'num' in j:
                     semester = semesters_by_planlineid.get(i.planlineslink.planlines_id, {})
-                    if j['type'] != 'krkp':
+                    if j['type'] in ('philosophy', 'foreign'):
+                        filtered_semesters = semester
+                    elif j['type'] != 'krkp':
                         filtered_semesters = list(filter(lambda x: x.get(j['type'], False), semester))
                     else:
                         filtered_semesters = list(filter(lambda x: x.get('kp', False) or x.get('kr', False), semester))
