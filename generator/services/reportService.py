@@ -722,6 +722,14 @@ class ReportService(object):
         precedence = []
         subsequent = []
         interactive_methods = None
+
+        has_labs = sum(i['lab'] for i in data['planlines']['semesters'] if i['lab']) > 0
+        has_pr = sum(i['pr'] for i in data['planlines']['semesters'] if i['pr']) > 0
+        has_lekc = sum(i['lekc'] for i in data['planlines']['semesters'] if i['lekc']) > 0
+        has_kp = sum(i['kp_hour'] for i in data['planlines']['semesters'] if i['kp_hour']) > 0
+        has_kr = sum(i['kr_hour'] for i in data['planlines']['semesters'] if i['kr_hour']) > 0
+        has_kp_kr = has_kp or has_kr
+
         for item in data['additional_info']:
             if item['type'] == 'interactiveMethods':
                 interactive_methods = item['value']['interactiveMethods']
@@ -733,6 +741,13 @@ class ReportService(object):
             if item['type'] == 'guidelines':
                 q = 0
                 for k, i in item['value'][0].items():
+                    if k == 'course' and not has_kp_kr:
+                        continue
+                    if k == 'practice' and not has_pr:
+                        continue
+                    if k == 'laboratory' and not has_labs:
+                        continue
+
                     q += 1
                     guidelines.append({
                         'number': q,
