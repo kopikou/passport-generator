@@ -723,6 +723,8 @@ class ReportService(object):
         subsequent = []
         interactive_methods = None
 
+        sems = [i['num'] for i in data['planlines']['semesters']]
+
         has_labs = sum(i['lab'] for i in data['planlines']['semesters'] if i['lab']) > 0
         has_pr = sum(i['pr'] for i in data['planlines']['semesters'] if i['pr']) > 0
         has_lekc = sum(i['lekc'] for i in data['planlines']['semesters'] if i['lekc']) > 0
@@ -761,9 +763,13 @@ class ReportService(object):
 
                 fos_choiced = set(flatten([i['formcontrol_list'] for i in data['discipline_themes']]))
                 for i in item['value']:
+                    if i['num'] not in sems:
+                        continue
+
                     if i['type'] in fos_choiced:
                         q += 1
                         fos.append({
+                            'num': i['num'],
                             'number': q,
                             'type': i['type'],
                             'title': i['title'],
@@ -812,6 +818,8 @@ class ReportService(object):
             if item['type'] == 'tat':
                 q = 0
                 for i in sorted(item['value'], key=lambda x: x['num']):
+                    if i['num'] not in sems:
+                        continue
                     q += 1
                     if i['type'] == 'zach':
                         tat.append({
@@ -1141,8 +1149,8 @@ class ReportService(object):
             "srsw": srs_work_res,
             "interactive_methods": interactive_methods,
             "guidelines": guidelines,
-            "fos": fos,
-            "tat": tat,
+            "fos": sorted(fos, key=lambda x: x['num']),
+            "tat": sorted(tat, key=lambda x: x['num']),
             'additional_library': additional_library,
             'main_library': main_library,
             "resources": resources,

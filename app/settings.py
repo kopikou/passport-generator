@@ -191,6 +191,7 @@ CONSTANCE_CONFIG = {
 
 CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 SITE_URL = "https://app.istu.edu/oop"
+DONT_SAVE_RPD_FILES = False
 
 pendulum.set_locale("ru")
 

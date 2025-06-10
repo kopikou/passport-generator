@@ -432,7 +432,7 @@ class GeneratorViewSet(
 
         updated_at = (updated_at_max['updated_at'] or instance.file_updated_at)
 
-        if not instance.file or not instance.file_updated_at or (instance.file_updated_at < updated_at):
+        if settings.DONT_SAVE_RPD_FILES or (not instance.file or not instance.file_updated_at or (instance.file_updated_at < updated_at)):
             instance = ReportService.generate_rpd_report(instance)
 
         return redirect((settings.FORCE_SCRIPT_NAME or "") + instance.file.url)
