@@ -135,7 +135,7 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "static"
 
 STATICFILES_DIRS = [
-    BASE_DIR / "client",
+    BASE_DIR / "client" / "dist" / "spa",
 ]
 
 DATABASE_ROUTERS = ["app.router.MainRouter", "app.router.RpdRouter", "app.router.LibraryRouter"]
