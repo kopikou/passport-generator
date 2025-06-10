@@ -182,15 +182,12 @@ onBeforeMount(async () => {
       </div>
     </template>
     <template #content>
-      <div class="q-pa-md">
+      <div style="height: 100%; overflow-y: auto">
         <div v-if="_.size(filteredListData) > 0" style="overflow: auto" class="full-height">
-          <q-virtual-scroll
-            :items="_.map(filteredListData)"
-            style="height: 100%"
-            v-slot="{ item, index}"
-            :items-size="10"
-          >
+          <q-list bordered separator>
             <q-item
+              class="q-pa-none"
+              v-for="(item, index) in filteredListData"
               :key="index"
               dense
             >
@@ -243,76 +240,9 @@ onBeforeMount(async () => {
                 </q-expansion-item>
               </q-item-section>
             </q-item>
-          </q-virtual-scroll>
-
-          <!--          <q-list-->
-          <!--            bordered-->
-          <!--            separator-->
-          <!--          >-->
-          <!--            <q-expansion-item-->
-          <!--              v-for="(value, key) in filteredListData"-->
-          <!--              :label="key"-->
-          <!--              group="programs"-->
-          <!--            >-->
-          <!--              <template #header>-->
-          <!--                <div class="q-item__section column q-item__section&#45;&#45;main justify-center">-->
-          <!--                  <div class="q-item__label">-->
-          <!--                    <div style="display: flex; gap: 8px; justify-content: space-between">-->
-          <!--                      <div style="display: flex; gap: 8px;">-->
-          <!--                        <div style="width: 70px">{{ key }}</div>-->
-
-          <!--                        <q-badge v-for="type in value.types">-->
-          <!--                          {{ typeFilterLabel[type] }}-->
-          <!--                        </q-badge>-->
-          <!--                      </div>-->
-
-          <!--                      <div style="display: flex; gap: 8px;">-->
-          <!--                        <q-badge :text-color="STATUSES[status].textColor" :color="STATUSES[status].color" v-for="(status_items, status) in value.statuses">-->
-          <!--                          {{ status }}: {{ status_items.length }}-->
-          <!--                        </q-badge>-->
-          <!--                      </div>-->
-          <!--                    </div>-->
-          <!--                  </div>-->
-
-          <!--                </div>-->
-          <!--              </template>-->
-          <!--              <q-card>-->
-          <!--                <q-card-section>-->
-          <!--                  <div class="rpd-container">-->
-          <!--                    <div class="rpd-row rpd-row__header text-weight-bold text-center">-->
-          <!--                      <div>Код</div>-->
-          <!--                      <div>Дисциплина</div>-->
-          <!--                      <div>Составитель</div>-->
-          <!--                      <div>Кафедра</div>-->
-          <!--                      <div>Согласован</div>-->
-          <!--                      <div>Утвержден</div>-->
-          <!--                      <div>Статус</div>-->
-          <!--                      <div>Управление</div>-->
-          <!--                    </div>-->
-          <!--                    <div :class="{[`status-${item.status}`]: true}" class="rpd-row rpd-row__body text-center" v-for="(item, key) in value.items">-->
-          <!--                      &lt;!&ndash;                       @click="router.push(`/generator/${item.id}/main`)"&ndash;&gt;-->
-          <!--                      <div>{{ item.discode }}</div>-->
-          <!--                      <div>{{ item.discpl }}</div>-->
-          <!--                      <div>{{ item.person }}</div>-->
-          <!--                      <div>{{ cafDataById[item.kafcode]?.label }}</div>-->
-          <!--                      <div>{{ item.user_confirmed_name }}</div>-->
-          <!--                      <div>{{ item.user_accepted_name }}</div>-->
-          <!--                      <div>{{ item.status_verbose }}</div>-->
-          <!--                      <div>-->
-          <!--                        <q-btn v-if="getEditRules(item.type)" dense flat color="primary" icon="mdi-pencil"-->
-          <!--                               label="заполнить" @click="router.push(`/generator/${item.id}/main`)"/>-->
-          <!--                        <q-btn v-if="getViewRules(item.type)" dense flat color="secondary" icon="mdi-briefcase-eye"-->
-          <!--                               label="просмотр" @click="openManageDialog(item.id, item)"/>-->
-          <!--                        <q-btn v-if="item.type.includes('view')" dense flat color="black" icon="mdi-download" target="_blank" :href="`/api/generator/${item.id}/get-rpd-report/`" />-->
-          <!--                      </div>-->
-          <!--                    </div>-->
-          <!--                  </div>-->
-          <!--                </q-card-section>-->
-          <!--              </q-card>-->
-          <!--            </q-expansion-item>-->
-          <!--          </q-list>-->
+          </q-list>
         </div>
-        <div v-else class="text-h6">
+        <div v-else class="text-h6 q-pa-md">
           <span v-if="_.size(listData) > 0">Не найдены дисциплины с текущими фильтрами</span>
           <span v-else>Дисциплины не назначены</span>
         </div>
