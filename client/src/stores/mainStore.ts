@@ -49,7 +49,7 @@ const useMainStore = defineStore("MainStore", () => {
       baseTag.href = FORCE_SCRIPT_NAME.value;
 
     if (!isAuthenticated.value) {
-      document.location.href = `https://int.istu.edu/oauth/authorize/?client_id=${BITRIX_CLIENT_ID.value}`;
+      document.location.href = `https://int.istu.edu/oauth/authorize/?client_id=${BITRIX_CLIENT_ID.value}&state=next:${encodeURIComponent(window.location.href.toString())}`;
     }
   }
 

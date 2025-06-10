@@ -1,4 +1,7 @@
-<script setup lang="ts">
+if (error.response.code == 403
+<script setup lang="ts"> {
+
+}
 import useMainStore from "stores/mainStore";
 import {storeToRefs} from "pinia";
 import {api} from "boot/axios";
@@ -24,7 +27,16 @@ const $q = useQuasar()
 
 api.interceptors.response.use((response) => response, (error) => {
   $q.loading.hide()
-  if (error.code != "ERR_CANCELED") {
+  console.log(error.response.status)
+   if (error.response.status == 403) {
+    $q.notify({
+      color: 'negative',
+      message: 'Произошел разлогин, перезагрузите страницу',
+      icon: 'mdi-alert-box',
+      position: 'center',
+    })
+    throw error
+  } else if (error.code != "ERR_CANCELED") {
     $q.notify({
       color: 'negative',
       message: error.response?.data?.detail || 'Ошибка получения данных, перезагрузите страницу',
@@ -66,9 +78,9 @@ onBeforeMount(async () => {
           <q-route-tab icon="mdi-generator-portable" label="РПД / РПП" to="/generator"
                        v-permissions-required="Permissions.can_use_generator"
           />
-<!--          <q-route-tab icon="mdi-generator-mobile" label="РПП" to="/practice_generator"-->
-<!--                       v-permissions-required="Permissions.can_use_generator"-->
-<!--          />-->
+          <!--          <q-route-tab icon="mdi-generator-mobile" label="РПП" to="/practice_generator"-->
+          <!--                       v-permissions-required="Permissions.can_use_generator"-->
+          <!--          />-->
           <q-route-tab icon="mdi-account-school" label="План научной деятельности аспирантуры"
                        to="/scientific-plan"
                        v-permissions-required="Permissions.can_use_generator"
@@ -100,7 +112,7 @@ onBeforeMount(async () => {
     <q-page-container class="container">
       <q-page style="overflow: hidden">
         <router-view v-slot="{ Component }">
-            <component :is="Component" />
+          <component :is="Component"/>
         </router-view>
       </q-page>
     </q-page-container>
