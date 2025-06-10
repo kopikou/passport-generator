@@ -356,7 +356,7 @@ onBeforeMount(async () => {
 
   > div {
     padding: 0.5rem;
-    border: $border;
+    border:  $border;
     border-right: none;
     border-bottom: none;
 
