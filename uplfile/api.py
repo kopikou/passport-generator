@@ -13,6 +13,7 @@ from rest_framework.viewsets import GenericViewSet
 from app.utils import UserProfileHasPermission
 from arim.services import AISServices
 from auths.models import Permissions
+from generator.models import PlanLinesLink
 from generator.permissions import CanEditRPDProgram, CanUploadFiles, CanViewFileList
 from rpd.models import PlanData, PlanDocuments, BaseDocuments
 from uplfile.models import UploadFiles
@@ -74,3 +75,22 @@ class UploadFileViewSet(
         res = BaseDocuments.objects.all().values()
 
         return Response([i for i in res], status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], url_path="get-programs", detail=True)
+    def get_programs(self, request, *args, **kwargs):
+
+        pk = self.kwargs.get('pk')
+
+        data = PlanLinesLink.objects.filter(planlines__plan_id=pk).select_related('planlines')
+        res = []
+
+        for i in data:
+            res.append({
+                'id': i.id,
+                'status': i.status,
+                'status_verbose': i.status_verbose,
+                'dis': i.planlines.dis,
+                'type': i.planlines.type,
+            })
+
+        return Response(data=res, status=status.HTTP_200_OK)

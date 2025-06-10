@@ -75,7 +75,7 @@ onBeforeMount(async () => {
         <q-tabs inline-label dense shrink stretch v-if="isAuthenticated">
           <q-route-tab icon="mdi-account-hard-hat" label="Проф. деятельность" to="/activity"
                        v-show="rop"          ></q-route-tab>
-          <q-route-tab icon="mdi-upload-box" label="Загрузка файлов программ" to="/upload"
+          <q-route-tab icon="mdi-upload-box" label="Файлы программ" to="/upload"
                        v-show="can_upload"
           />
           <q-route-tab icon="mdi-generator-portable" label="РПД / РПП" to="/generator"

@@ -10,6 +10,7 @@ import {computed, ref} from "vue";
 import useMainStore from "stores/mainStore";
 import LayoutHCF from "components/LayoutHCF.vue";
 import {PlanData} from "src/types";
+import ProgramListDialog from "pages/upload/components/ProgramListDialog.vue";
 
 const $q = useQuasar()
 
@@ -140,6 +141,15 @@ function sortDocuments(val) {
   return _.sortBy(val, x => _.get(baseDocumentsById.value, x.type_id, [])?.can_upload)
 }
 
+function viewProgram(planId) {
+  $q.dialog({
+    component: ProgramListDialog,
+    componentProps: {
+      id: planId,
+    }
+  })
+}
+
 </script>
 
 <template>
@@ -200,6 +210,9 @@ function sortDocuments(val) {
         >
           <q-card>
             <q-card-section class="card-body">
+<!--              <div class="q-gutter-x-md">-->
+<!--                <q-btn label="Список РПД/РПП" color="primary" @click="viewProgram(item.plan_id)" />-->
+<!--              </div>-->
               <div class="card-header text-center">
                 <div>
                   Наименование
