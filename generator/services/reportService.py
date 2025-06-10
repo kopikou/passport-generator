@@ -239,17 +239,23 @@ class ReportService(object):
             if item['type'] == 'fos':
                 q = 0
 
-                fos_choiced = set(flatten([i['formcontrol_list'] for i in data['discipline_themes']]))
+                # fos_choiced = set(flatten([i['formcontrol_list'] for i in data['discipline_themes']]))
+
+                fos_sorted = sorted(data['discipline_themes'], key=lambda x: x['semester'])
+                fos_grouped = {key: set(flatten([q['formcontrol_list'] for q in list(i)])) for key, i in groupby(fos_sorted, key=lambda x: x['semester'])}
+
                 for i in item['value']:
-                    if i['type'] in fos_choiced:
-                        q += 1
-                        fos.append({
-                            'number': q,
-                            'type': i['type'],
-                            'title': i['title'],
-                            'about': i['about'] if 'about' in i else '',
-                            'criteria': i['criteria'] if 'criteria' in i else '',
-                        })
+                    if i['num'] in fos_grouped:
+                        if i['type'] in fos_grouped[i['num']]:
+                            q += 1
+                            fos.append({
+                                'num': i['num'],
+                                'number': q,
+                                'type': i['type'],
+                                'title': i['title'],
+                                'about': i['about'] if 'about' in i else '',
+                                'criteria': i['criteria'] if 'criteria' in i else '',
+                            })
 
             if item['type'] == 'practiceContent':
                 practice_content = item['value']
@@ -761,21 +767,23 @@ class ReportService(object):
             if item['type'] == 'fos':
                 q = 0
 
-                fos_choiced = set(flatten([i['formcontrol_list'] for i in data['discipline_themes']]))
-                for i in item['value']:
-                    if i['num'] not in sems:
-                        continue
+                # fos_choiced = set(flatten([i['formcontrol_list'] for i in data['discipline_themes']]))
 
-                    if i['type'] in fos_choiced:
-                        q += 1
-                        fos.append({
-                            'num': i['num'],
-                            'number': q,
-                            'type': i['type'],
-                            'title': i['title'],
-                            'about': i['about'] if 'about' in i else '',
-                            'criteria': i['criteria'] if 'criteria' in i else '',
-                        })
+                fos_sorted = sorted(data['discipline_themes'], key=lambda x: x['semester'])
+                fos_grouped = {key: set(flatten([q['formcontrol_list'] for q in list(i)])) for key, i in groupby(fos_sorted, key=lambda x: x['semester'])}
+
+                for i in item['value']:
+                    if i['num'] in fos_grouped:
+                        if i['type'] in fos_grouped[i['num']]:
+                            q += 1
+                            fos.append({
+                                'num': i['num'],
+                                'number': q,
+                                'type': i['type'],
+                                'title': i['title'],
+                                'about': i['about'] if 'about' in i else '',
+                                'criteria': i['criteria'] if 'criteria' in i else '',
+                            })
 
             if item['type'] == 'resources':
                 resources = item['value']

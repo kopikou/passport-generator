@@ -163,7 +163,7 @@ onBeforeMount(async () => {
       <div class="q-px-sm q-pb-sm">
         <div class="flex justify-between q-my-sm q-px-sm"
              style="display: grid; grid-template-columns: 1fr 220px auto; gap: 8px">
-          <q-input outlined label="Поиск по аббревиатуре, дисциплине, разработчику программы" v-model="textFilter"/>
+          <q-input outlined label="Поиск по аббревиатуре, дисциплине, разработчику программы" v-model="textFilter" clearable/>
           <!--        <q-input outlined label="Дисциплина" v-model="discplFilter"/>-->
           <q-select v-model="statusFilter"
                     label="Статус"
