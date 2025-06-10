@@ -191,7 +191,8 @@ class AISServices(object):
             t.ckaf as ckaf,
             t.type AS type
             FROM (
-            SELECT d.name as discpl,d.id as id_discpl
+            SELECT d.name as discpl
+                ,d.id as id_discpl
                 , u.id as planlin
 				, u.newdisid
                 , p.abbrprofile as abbr
@@ -264,7 +265,16 @@ class AISServices(object):
 
 			UNION ALL
 
-			SELECT DISTINCT d.name as discpl,d.id as id_discpl, u.id as planlin, p.abbrprofile as abbr, p.startyear as yr, p.cadmission as id_admission,  u.cperson AS mira_id, 'view' AS type  -- Руководитель программы
+			SELECT DISTINCT d.name as discpl
+			,d.id as id_discpl
+			, u.id as planlin
+			, u.newdisid
+			, p.abbrprofile as abbr
+			, p.startyear as yr
+			, p.cadmission as id_admission
+			,  u.cperson AS mira_id
+			, p.ckaf as ckaf
+			, 'view' AS type  -- Руководитель программы
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
