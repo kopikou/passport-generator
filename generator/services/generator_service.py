@@ -260,7 +260,7 @@ class GeneratorService(object):
 
         common_links = PlanLinesLink\
             .objects\
-            .filter(can_be_copied_by_anyone=True, planlines__dis=serializer.data['planlines']['dis'])\
+            .filter(can_be_copied_by_anyone=True)\
             .select_related("planlines", "planlines__plan")
 
         result = {
