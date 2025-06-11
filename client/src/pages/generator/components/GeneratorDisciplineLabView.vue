@@ -110,31 +110,6 @@ async function saveData(data) {
   return r.data
 }
 
-async function fieldUp(num, sem) {
-  let newKey = _.findKey(labDisciplineWorkHour.value, (x) => x.num == num - 1 && x.semester == sem)
-  let oldKey = _.findKey(labDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
-
-  _.set(labDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
-  _.set(labDisciplineWorkHour.value, `[${newKey}].num`, num)
-
-  await Promise.all([
-    saveData(_.get(labDisciplineWorkHour.value, `[${oldKey}]`)),
-    saveData(_.get(labDisciplineWorkHour.value, `[${newKey}]`))
-  ])
-}
-
-async function fieldDown(num, sem) {
-  let newKey = _.findKey(labDisciplineWorkHour.value, (x) => x.num == num + 1 && x.semester == sem)
-  let oldKey = _.findKey(labDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
-
-  _.set(labDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
-  _.set(labDisciplineWorkHour.value, `[${newKey}].num`, num)
-  await Promise.all([
-    saveData(_.get(labDisciplineWorkHour.value, `[${oldKey}]`)),
-    saveData(_.get(labDisciplineWorkHour.value, `[${newKey}]`))
-  ])
-}
-
 </script>
 
 <template>
@@ -154,8 +129,6 @@ async function fieldDown(num, sem) {
       <generator-discipline-work-hour-container
         :data="filteredData"
         v-model:sem="tab"
-        @field-down="fieldDown"
-        @field-up="fieldUp"
         @delete="deleteLab"
         @edit="updateLab"
       />

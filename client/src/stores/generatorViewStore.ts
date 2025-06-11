@@ -134,9 +134,14 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return rpdData.value.additional_info || []
   })
 
-  const disciplineWorkHour = computed<DisciplineWorkHour[]>(() => {
-    return rpdData.value.discipline_work_hour || []
-  })
+  const disciplineWorkHour = computed<DisciplineWorkHour[]>({
+      get() {
+          return rpdData.value.discipline_work_hour || []
+      },
+      set(value) {
+          rpdData.value.discipline_work_hour = value;
+      }
+  });
 
   const lecturesDisciplineWorkHour = computed<DisciplineWorkHour[]>(() => {
     return _.filter(rpdData.value.discipline_work_hour, (x) => x.type == 0) || []

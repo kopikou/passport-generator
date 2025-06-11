@@ -36,7 +36,7 @@ from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanConfi
 from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer, \
-    OrderSerializer
+    ThemesOrderSerializer, WorkHoursOrderSerializer
 from generator.services import ReportService
 from generator.services.generator_service import GeneratorService
 from rpd.models import PlanData, LinesIndicators, PlanDocuments
@@ -557,7 +557,7 @@ class GeneratorViewSet(
 
     @action(methods=['POST'], url_path="set-themes-order", detail=True, permission_classes=[CanEditRPDProgram])
     def set_themes_order(self, request, *args, **kwargs):
-        serializer = OrderSerializer(data=self.request.data)
+        serializer = ThemesOrderSerializer(data=self.request.data)
         serializer.is_valid()
 
         whens = []
@@ -571,6 +571,25 @@ class GeneratorViewSet(
             )
 
         return Response()
+
+
+    @action(methods=['POST'], url_path="set-work-hours-order", detail=True, permission_classes=[CanEditRPDProgram])
+    def set_work_order(self, request, *args, **kwargs):
+        serializer = WorkHoursOrderSerializer(data=self.request.data)
+        serializer.is_valid()
+
+        whens = []
+        ids = serializer.validated_data['order']
+        for index, _id in enumerate(ids, start=1):
+            whens.append(When(id=_id, then=Value(index)),)
+
+        if whens:
+            DisciplineWorkHours.objects.filter(planlineslink_id=self.kwargs['pk'], id__in=ids).update(
+                num=Case(*whens)
+            )
+
+        return Response()
+
 
     @action(methods=['GET'], url_path="copy-old-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
     def get_old_rpd(self, request, *args, **kwargs):

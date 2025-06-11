@@ -105,30 +105,6 @@ const filteredData = computed(() => {
   return _.orderBy(practiceDisciplineWorkHour.value, ['semester', 'num'])
 })
 
-async function fieldUp(num, sem) {
-  let newKey = _.findKey(practiceDisciplineWorkHour.value, (x) => x.num == num - 1 && x.semester == sem)
-  let oldKey = _.findKey(practiceDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
-
-  _.set(practiceDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
-  _.set(practiceDisciplineWorkHour.value, `[${newKey}].num`, num)
-  await Promise.all([
-    saveData(_.get(practiceDisciplineWorkHour.value, `[${oldKey}]`)),
-    saveData(_.get(practiceDisciplineWorkHour.value, `[${newKey}]`))
-  ])
-}
-
-async function fieldDown(num, sem) {
-  let newKey = _.findKey(practiceDisciplineWorkHour.value, (x) => x.num == num + 1 && x.semester == sem)
-  let oldKey = _.findKey(practiceDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
-
-  _.set(practiceDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
-  _.set(practiceDisciplineWorkHour.value, `[${newKey}].num`, num)
-  await Promise.all([
-    saveData(_.get(practiceDisciplineWorkHour.value, `[${oldKey}]`)),
-    saveData(_.get(practiceDisciplineWorkHour.value, `[${newKey}]`))
-  ])
-}
-
 async function saveData(data) {
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-work-hour/`, data)
   return r.data
@@ -154,8 +130,6 @@ async function saveData(data) {
       <generator-discipline-work-hour-container
         :data="filteredData"
         v-model:sem="tab"
-        @field-down="fieldDown"
-        @field-up="fieldUp"
         @delete="deletePractice"
         @edit="updatePractice"
       />
