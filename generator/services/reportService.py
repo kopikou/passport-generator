@@ -99,7 +99,6 @@ class ReportService(object):
                     'libreoffice', '--headless', '--invisible', '--convert-to',
                     'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
                 ])
-                sleep(1)
             elif platform.system() == 'Windows':
                 from win32com.client import Dispatch
 
@@ -107,6 +106,11 @@ class ReportService(object):
                 doc = word.Documents.Open(path_doc_file)
                 doc.SaveAs(path_pdf_file, FileFormat=17)
                 word.Quit()
+
+            for i in range(10):
+                if os.path.exists(path_pdf_file):
+                    break
+                sleep(1)
 
             with open(path_pdf_file, 'rb') as file:
                 name = f"{rpd_data['admission']['abbr']}_{rpd_data['admission']['yr']}_{rpd_data['planlines']['dis']}_{pk}"
