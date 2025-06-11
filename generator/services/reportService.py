@@ -1156,7 +1156,7 @@ class ReportService(object):
             "interactive_methods": interactive_methods,
             "guidelines": guidelines,
             "fos": [{**i, "number": index} for index, i in enumerate(sorted(fos, key=lambda x: int(x['num'])), start=1)],
-            "tat": [{**i, "number": index} for index, i in enumerate(sorted(fos, key=lambda x: int(x['num'])), start=1)],
+            "tat": [{**i, "number": index} for index, i in enumerate(sorted(tat, key=lambda x: int(x['num'])), start=1)],
             'additional_library': additional_library,
             'main_library': main_library,
             "resources": resources,
