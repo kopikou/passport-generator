@@ -9,5 +9,7 @@ from generator.services.generator_service import GeneratorService
 class Command(BaseCommand):
     def handle(self, *args, **options):
         links = PlanLinesLink.objects.filter(status=PlanLinesLink.StatusChoices.accepted)
-        for l in tqdm(links):
+        pbar = tqdm(links)
+        for l in pbar:
+            pbar.set_description(f"Link {l.id}")
             ReportService.generate_rpd_report(l)
