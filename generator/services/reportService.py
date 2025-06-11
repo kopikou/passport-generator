@@ -227,6 +227,8 @@ class ReportService(object):
 
         discipline = data['planlines']['dis'].split(': ')
 
+        sems = [i['num'] for i in data['planlines']['semesters']]
+
         additional_library = []
         main_library = []
         tat = []
@@ -316,15 +318,17 @@ class ReportService(object):
             if item['type'] == 'tat':
                 q = 0
                 for i in item['value']:
+                    if i['num'] not in sems:
+                        continue
                     q += 1
                     if i['type'] == 'zach':
                         tat.append({
                             'number': q,
                             'type': i['type'],
                             'title': i['title'].lower(),
-                            'form': i['form'],
-                            'formabout': i['formabout'],
-                            "tat": i['tat'],
+                            'form': i.get('form', ''),
+                            'formabout': i.get('formabout', ''),
+                            "tat": i.get('tat', ''),
                             'passed': i['passed'],
                             'unpassed': i['unpassed'],
                         })
@@ -333,9 +337,9 @@ class ReportService(object):
                             'number': q,
                             'type': i['type'],
                             'title': i['title'].lower(),
-                            'form': i['form'],
-                            'formabout': i['formabout'],
-                            "tat": i['tat'],
+                            'form': i.get('form', ''),
+                            'formabout': i.get('formabout', ''),
+                            "tat": i.get('tat', ''),
                             'great': i['great'],
                             'good': i['good'],
                             'satisfactorily': i['satisfactorily'],
