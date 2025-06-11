@@ -107,31 +107,35 @@ class ReportService(object):
                 doc.SaveAs(path_pdf_file, FileFormat=17)
                 word.Quit()
 
+            success = False
             for i in range(10):
-                if os.path.exists(path_pdf_file):
+                try:
+                    with open(path_pdf_file, 'rb') as file:
+                        name = f"{rpd_data['admission']['abbr']}_{rpd_data['admission']['yr']}_{rpd_data['planlines']['dis']}_{pk}"
+                        if instance.status == PlanLinesLink.StatusChoices.accepted:
+                            name = f"{name}_accepted"
+
+                        uploaded_file = UploadedFile(file, f"{name}.pdf")
+                        uploaded_file.seek(0)
+
+                        if instance.file \
+                                and (not instance.last_accepted_file or instance.file.name != instance.last_accepted_file.name):
+                            instance.file.delete()
+
+                        instance.file = uploaded_file
+                        instance.file_updated_at = datetime.datetime.now()
+
+                        if  instance.status == PlanLinesLink.StatusChoices.accepted:
+                            if instance.last_accepted_file:
+                                instance.last_accepted_file.delete()
+                            instance.last_accepted_file = instance.file
+                        instance.save(update_fields=['file', 'last_accepted_file', 'file_updated_at'])
+                        success = True
+                except FileNotFoundError:
+                    sleep(1)
+
+                if success:
                     break
-                sleep(1)
-
-            with open(path_pdf_file, 'rb') as file:
-                name = f"{rpd_data['admission']['abbr']}_{rpd_data['admission']['yr']}_{rpd_data['planlines']['dis']}_{pk}"
-                if instance.status == PlanLinesLink.StatusChoices.accepted:
-                    name = f"{name}_accepted"
-
-                uploaded_file = UploadedFile(file, f"{name}.pdf")
-                uploaded_file.seek(0)
-
-                if instance.file \
-                        and (not instance.last_accepted_file or instance.file.name != instance.last_accepted_file.name):
-                    instance.file.delete()
-
-                instance.file = uploaded_file
-                instance.file_updated_at = datetime.datetime.now()
-
-                if  instance.status == PlanLinesLink.StatusChoices.accepted:
-                    if instance.last_accepted_file:
-                        instance.last_accepted_file.delete()
-                    instance.last_accepted_file = instance.file
-                instance.save(update_fields=['file', 'last_accepted_file', 'file_updated_at'])
 
         return instance
 
