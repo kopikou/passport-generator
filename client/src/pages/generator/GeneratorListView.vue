@@ -86,9 +86,9 @@ const myFilter = ref(LocalStorage.getItem('surp_myfilter') || 0)
 const textFilter = ref<String>(LocalStorage.getItem('surp_rpdfilter') || '')
 
 const filteredListData = computed(() => {
-  let txtFilter = textFilter.value.trim().toLowerCase();
 
-  return _(listData.value)
+  let txtFilter = textFilter.value.trim().toLowerCase();
+  let data = _(listData.value)
     .filter(x => {
       return (myFilter.value == 0 || x.type.includes('person'))
         && ((txtFilter == '' || (x.person || '').toLowerCase().includes(txtFilter))
@@ -114,26 +114,25 @@ const filteredListData = computed(() => {
     })
     .fromPairs()
     .value()
+
+  return data
 })
 
 function clearFilter() {
   textFilter.value = ''
 }
 
-function toggleCanByCopiedByAnyone(id, item) {
-
-}
 
 async function getProgramData() {
-  const loadingHelpers = $q.loading.show({
-    group: 'first',
+  const loadProgram = $q.loading.show({
+    group: 'programs',
     message: 'Обновление списка дисциплин',
   })
 
   let r = await api.get("/api/generator/get-program-list/")
   listData.value = r.data
 
-  loadingHelpers()
+  loadProgram()
 }
 
 
@@ -231,7 +230,8 @@ onBeforeMount(async () => {
                           <div>Статус</div>
                           <div>Управление</div>
                         </div>
-                        <div v-for="i in item.items" :class="{[`status-${i.status}`]: true}" class="rpd-row rpd-row__body text-center">
+                        <div v-for="i in item.items" :class="{[`status-${i.status}`]: true}"
+                             class="rpd-row rpd-row__body text-center">
                           <generator-list-view-item :item="i" @data-updated="getProgramData"/>
                         </div>
                       </div>
@@ -286,7 +286,7 @@ onBeforeMount(async () => {
 
   > div {
     padding: 0.5rem;
-    border:  $border;
+    border: $border;
     border-right: none;
     border-bottom: none;
 

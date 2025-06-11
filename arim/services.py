@@ -274,7 +274,7 @@ class AISServices(object):
 			, p.cadmission as id_admission
 			,  u.cperson AS mira_id
 			, p.ckaf as ckaf
-			, 'view' AS type  -- Руководитель программы
+			, 'view' AS type -- Админский просмотр
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)

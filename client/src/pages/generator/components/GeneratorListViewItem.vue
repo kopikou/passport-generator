@@ -8,6 +8,7 @@ import {storeToRefs} from "pinia";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {useRouter} from "vue-router";
 import {api} from "boot/axios";
+import useMainStore from "stores/mainStore";
 
 const props = defineProps({
   item: {
@@ -20,6 +21,11 @@ const generatorViewStore = useGeneratorViewStore();
 const {
   cafData,
 } = storeToRefs(generatorViewStore)
+
+const mainStore = useMainStore();
+const {
+  FORCE_SCRIPT_NAME,
+} = storeToRefs(mainStore);
 
 const emit = defineEmits(['data-updated'])
 
@@ -34,6 +40,11 @@ const canEdit = computed(() => {
 
 const canView = computed(() => {
   const rules = ['rop', 'fac', 'zav']
+  return props.item.type.some(q => rules.includes(q))
+})
+
+const adminView = computed(() => {
+  const rules = ['view']
   return props.item.type.some(q => rules.includes(q))
 })
 
@@ -130,6 +141,10 @@ async function onFileUploaded() {
              label="заполнить" @click="router.push(`/generator/${item.id}/main`)"/>
       <q-btn v-if="canView" dense flat color="secondary" icon="mdi-briefcase-eye"
              label="просмотр" @click="openManageDialog"/>
+      <q-btn v-if="adminView" dense flat color="black" icon="mdi-download"
+             :href="`${FORCE_SCRIPT_NAME}/api/generator/${item.id}/get-rpd-report/`"
+             target="_blank"
+      />
     </template>
   </div>
 </template>
