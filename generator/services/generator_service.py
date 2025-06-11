@@ -109,7 +109,8 @@ class GeneratorService(object):
 
         lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
         for item in res:
-            item['only_zav_required'] = item['discpl'] in lst
+            item['only_zav_required'] = item['discpl'] in lst \
+                                        or item['kafcode'] in (208,) # кафедра физры
             if item['status'] == PlanLinesLink.StatusChoices.on_review:
                 require_my_accept = 'zav' in item['type'] and not item['user_accepted']
                 require_my_confirm = not item['only_zav_required'] \
