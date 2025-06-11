@@ -317,3 +317,7 @@ class ScientificDataSerializer(serializers.Serializer):
         )
 
         return data
+
+
+class OrderSerializer(serializers.Serializer):
+    order = serializers.ListField()

@@ -89,16 +89,20 @@ const filteredData = computed(() => {
   return _.orderBy(disciplineThemes.value, (x) => x.num, 'asc')
 })
 
-async function fieldUp(num, sem) {
-  let newKey = _.findKey(disciplineThemes.value, (x) => x.num == num - 1 && x.semester == sem)
-  let oldKey = _.findKey(disciplineThemes.value, (x) => x.num == num && x.semester == sem)
+async function fieldUp(item) {
+  let dontChange =  disciplineThemes.value.filter(x => x.semester != item.semester);
 
-  _.set(disciplineThemes.value, `[${oldKey}].num`, num - 1)
-  _.set(disciplineThemes.value, `[${newKey}].num`, num)
-  await Promise.all([
-    saveThemeData(_.get(disciplineThemes.value, `[${oldKey}]`)),
-    saveThemeData(_.get(disciplineThemes.value, `[${newKey}]`))
-  ])
+  let currentSemester = disciplineThemes.value.filter(x => x.semester == item.semester);
+  let newData = currentSemester.filter(x => x.num < item.num - 1 && x != item).concat(
+    [item],
+    currentSemester.filter(x => x.num >= item.num - 1 && x != item),
+  ).map((x, index) => ({...x, num: index + 1}))
+
+  disciplineThemes.value = dontChange.concat(newData);
+
+  await api.post(`/api/generator/${activeRpdId.value}/set-themes-order/`, {
+    order: newData.map(x => x.id)
+  })
 }
 
 async function fieldDown(num, sem) {
@@ -202,7 +206,7 @@ watchEffect(() => {
                 />
                 <q-btn v-if="item.num != 1"
                        icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
-                       @click="fieldUp(item.num, item.semester)"
+                       @click="fieldUp(item)"
                 />
                 <q-btn v-if="item.num != maxNumberInSemester"
                        icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"

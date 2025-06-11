@@ -10,7 +10,7 @@ from constance import config
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile, UploadedFile
-from django.db.models import Q, Max, F
+from django.db.models import Q, Max, F, When, Value, Case
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.defaultfilters import last
@@ -35,7 +35,8 @@ from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanConfi
     CanEditScientificProgram, CanUploadRPDProgramFile
 from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
-    DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
+    DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer, \
+    OrderSerializer
 from generator.services import ReportService
 from generator.services.generator_service import GeneratorService
 from rpd.models import PlanData, LinesIndicators, PlanDocuments
@@ -552,6 +553,23 @@ class GeneratorViewSet(
         data = PlanLinesLinkComments.objects.filter(planlineslink_id=instance.id).order_by('-created_at').values()
 
         return Response([i for i in data])
+
+    @action(methods=['POST'], url_path="set-themes-order", detail=True, permission_classes=[CanEditRPDProgram])
+    def set_themes_order(self, request, *args, **kwargs):
+        serializer = OrderSerializer(data=self.request.data)
+        serializer.is_valid()
+
+        whens = []
+        ids = serializer.validated_data['order']
+        for index, _id in enumerate(ids, start=1):
+            whens.append(When(id=_id, then=Value(index)),)
+
+        if whens:
+            DisciplineThemes.objects.filter(planlineslink_id=self.kwargs['pk'], id__in=ids).update(
+                num=Case(*whens)
+            )
+
+        return Response()
 
     @action(methods=['GET'], url_path="copy-old-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
     def get_old_rpd(self, request, *args, **kwargs):

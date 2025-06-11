@@ -85,9 +85,14 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return rpdData.value.other_discipline || []
   })
 
-  const disciplineThemes = computed<DisciplineThemesData[]>(() => {
-    return rpdData.value.discipline_themes || []
-  })
+  const disciplineThemes = computed<DisciplineThemesData[]>({
+      get() {
+          return rpdData.value.discipline_themes || []
+      },
+      set(value) {
+          rpdData.value.discipline_themes = value;
+      }
+  });
 
   const disciplineThemesById = computed<DisciplineThemesData[]>(() => {
     return _.keyBy(disciplineThemes.value, x => x.id)
