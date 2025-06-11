@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.cache import cache
 
 from app.utils import cache_function
+from arim.models import CatPerson
 from arim.services import AISServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, DefaultsResources, PlanLinesLinkComments, DisciplineThemes, \
@@ -225,8 +226,8 @@ class GeneratorService(object):
 
     @classmethod
     def get_rpd_data(cls, plan_lines_link_id, user_mira_id=None):
-        instance = (PlanLinesLink.objects.filter(id=plan_lines_link_id)
-                    .select_related("planlines", "planlines__plan")
+        instance: PlanLinesLink = (PlanLinesLink.objects.filter(id=plan_lines_link_id)
+                    .select_related("planlines", "planlines__plan", "user_accepted__userprofile", "user_confirmed__userprofile")
                     .prefetch_related("planlines__semesters", "planlines__indicators",
                                       "planlines__indicators__discipline_indicator", "discipline_themes",
                                       "discipline_work_hour").first())
@@ -234,6 +235,14 @@ class GeneratorService(object):
         if instance.status == PlanLinesLink.StatusChoices.appointed:
             instance.status = PlanLinesLink.StatusChoices.is_filled
             instance.save()
+
+        users = CatPerson.objects.in_bulk(
+            [
+                instance.person,
+                instance.user_accepted.userprofile.mira_id if instance.user_accepted else None,
+                instance.user_confirmed.userprofile.mira_id if instance.user_confirmed else None
+            ]
+        )
 
         serializer = PlanLinesLinkSerializer(instance)
 
@@ -269,6 +278,11 @@ class GeneratorService(object):
             "other_discipline": [i for i in other_discipline],
             "resources": [i for i in resources],
             "comment": comment,
+            "users": {
+                "accepted": getattr(users.get(instance.user_accepted.userprofile.mira_id if instance.user_accepted else None), 'name', None),
+                "developer": getattr(users.get(instance.person if instance.person else None), 'name', None),
+                "confirmed": getattr(users.get(instance.user_confirmed.userprofile.mira_id if instance.user_confirmed else None), 'name', None),
+            },
             "old": [i for i in old_rpd],
             "new": [{
                 'abbrprofile': i['abbr'],

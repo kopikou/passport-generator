@@ -7,7 +7,7 @@ from django.db.models import Q
 
 from app.utils import cache_function, Mira
 from arim.models import UistLicense, OborudData, BoolChoice, UchPlanKaf, Catadmission, CatFaculty, CatKaf, RpdUsers, \
-    UchPlanPlan
+    UchPlanPlan, CatPerson
 
 
 class AISServices(object):

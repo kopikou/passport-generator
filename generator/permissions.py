@@ -51,6 +51,10 @@ class CanViewRPDProgram(IsAuthenticated):
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
             return False
+
+        if request.user.is_superuser:
+            return True
+
         programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
         # practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']

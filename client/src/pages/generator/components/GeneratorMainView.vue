@@ -143,6 +143,12 @@ watch(additionalInfo, () => {
       <q-toggle v-model="can_be_copied_by_anyone">Разрешить копировать дисциплину любому преподавателю (т.е. любой преподаватель сможет скопировать себе в РПД данные, которые вы внесли, при условии совпадения названия дисциплины)</q-toggle>
     </div>
     <q-separator class="q-mt-md q-mb-md"/>
+    <div v-if="rpdData.users">
+      <div v-if="rpdData.users.developer"><b>Разработал:</b> {{rpdData.users.developer}}</div>
+      <div v-if="rpdData.users.confirmed"><b>Согласовал:</b> {{rpdData.users.confirmed}}</div>
+      <div v-if="rpdData.users.accepted"><b>Утвердил:</b> {{rpdData.users.accepted}}</div>
+    </div>
+    <q-separator class="q-mt-md q-mb-md"/>
     <div class="q-pb-md">
       <div v-if="!planlinesData.viewpract">
         <span class="text-subtitle1">Наименование дисциплины</span>

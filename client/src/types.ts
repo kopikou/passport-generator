@@ -178,6 +178,7 @@ export interface GeneratorPlanLineData {
   semesters: PlanSemestrData[],
   indicators: PlanIndicatorData[],
   plan: PlanData[],
+
 }
 
 export interface AdmissionInfo {
@@ -251,6 +252,11 @@ export interface GeneratorData {
     id: number;
     species: string;
   }[];
+  users: {
+    accepted: string | null
+    developer: string | null
+    confirmed: string | null
+  }
   protocol_number: null;
   protocol_date: null;
   user_accepted_id: null;
