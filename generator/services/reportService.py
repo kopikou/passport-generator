@@ -1061,7 +1061,7 @@ class ReportService(object):
                     "name": item['name'],
                     "tic": ', '.join([formcontrol_by_id[i] for i in item['formcontrol_list']]),
                     "num": item['num'],
-                    "lekc": item['num'],
+                    "lekc": ', '.join([str(i['number']) for i in item['lekc']]),
                     "lekc_hours": sum([i['hours'] for i in item['lekc']]) if sum(
                         [i['hours'] for i in item['lekc']]) != 0 else '',
                     "lab": ', '.join([str(i['number']) for i in item['lab']]),
