@@ -223,7 +223,7 @@ class ReportService(object):
         if data['admission']['ckaf_id'] == 105:
             podrazdelene = data['admission']['cfac__name'].strip()
         else:
-            podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
+            podrazdelene = (data['admission']['ckaf__ccatdep__nameshort'] or "").strip()
 
         discipline = data['planlines']['dis'].split(': ')
 
