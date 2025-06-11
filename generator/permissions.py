@@ -127,12 +127,7 @@ class CanUploadFiles(IsAuthenticated):
         if not super().has_permission(request, view):
             return False
         programms = UploadFileService.get_admission_data(request.user.userprofile.mira_id)
-        programms_types = []
+        pk = view.kwargs['pk']
 
-        for i in programms:
-            for j in i['type']:
-                if j not in programms_types:
-                    programms_types.append(j)
-
-        return int(pk) in [i['plan_id'] for i in programms if i['cperson'] == request.user.userprofile.mira_id]
+        return int(pk) in [i['plan_id'] for i in programms]
 
