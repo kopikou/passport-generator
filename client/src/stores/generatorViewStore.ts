@@ -709,7 +709,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   onAuthenticated(async () => {
     const loadingHelpers = $q.loading.show({
-      group: 'first',
+      group: 'helpers',
       message: 'Загрузка справочников',
     })
 
