@@ -10,7 +10,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         links = PlanLinesLink.objects.filter(
             status=PlanLinesLink.StatusChoices.accepted,
-            uploaded_directly=False
+            uploaded_directly=False,
+            last_accepted_file__isnull=True
         )
         pbar = tqdm(links)
         for l in pbar:
