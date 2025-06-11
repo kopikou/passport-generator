@@ -99,6 +99,7 @@ class ReportService(object):
                     'libreoffice', '--headless', '--invisible', '--convert-to',
                     'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
                 ])
+                sleep(1)
             elif platform.system() == 'Windows':
                 from win32com.client import Dispatch
 

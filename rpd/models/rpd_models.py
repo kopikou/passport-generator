@@ -70,6 +70,14 @@ class PlanData(TimestampsModel):
     faculty = models.TextField(null=True, blank=True)
     mira_id = models.IntegerField(null=True, blank=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['studylevel']),
+            models.Index(fields=['startyear']),
+            models.Index(fields=['studylevel', 'startyear']),
+        ]
+
+
 class Disciplines(TimestampsModel):
     name = models.TextField()
 

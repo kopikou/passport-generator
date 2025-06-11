@@ -325,3 +325,8 @@ class ThemesOrderSerializer(serializers.Serializer):
 
 class WorkHoursOrderSerializer(serializers.Serializer):
     order = serializers.ListField(child=serializers.IntegerField())
+
+
+class GetAdmissionsForSiteInfoSerializer(serializers.Serializer):
+    year = serializers.IntegerField(required=False)
+    level = serializers.IntegerField(required=False)

@@ -15,7 +15,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.defaultfilters import last
 from django.utils.encoding import escape_uri_path
-from rest_framework import status
+from rest_framework import status, serializers
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException
 from rest_framework.mixins import RetrieveModelMixin
@@ -36,10 +36,10 @@ from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanConfi
 from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer, \
-    ThemesOrderSerializer, WorkHoursOrderSerializer
+    ThemesOrderSerializer, WorkHoursOrderSerializer, GetAdmissionsForSiteInfoSerializer
 from generator.services import ReportService
 from generator.services.generator_service import GeneratorService
-from rpd.models import PlanData, LinesIndicators, PlanDocuments
+from rpd.models import PlanData, LinesIndicators, PlanDocuments, DocumentsTypes
 from rpd.services import RPDGenSerivce
 from uplfile.models import UploadFiles
 
@@ -757,14 +757,39 @@ class GeneratorViewSet(
 
         return Response(data={"success": True}, status=status.HTTP_200_OK)
 
-    @action(methods=['GET'], url_path="get-admissions-for-site-info", detail=False, permission_classes=[])
+    @action(methods=['GET'], url_path="get-document-types", detail=False, permission_classes=[])
+    def get_document_types(self, request, *args, **kwargs):
+        doc_types = DocumentsTypes.objects.values("id", "name").all()
+
+        return Response(doc_types)
+
+    @action(methods=['GET'], url_path="get-admissions-for-site-info", detail=False, permission_classes=[], serializer_class=GetAdmissionsForSiteInfoSerializer)
     def get_admissions_for_site_info(self, request, *args, **kwargs):
         data = []
 
-        for plan in PlanData.objects.all():
+        serializer = GetAdmissionsForSiteInfoSerializer(data=self.request.query_params)
+        serializer.is_valid()
+
+        query = PlanData.objects.all()
+        if 'startyear' in serializer.validated_data:
+            query = query.filter(startyear=serializer.validated_data['startyear'])
+
+        if 'level' in serializer.validated_data:
+            studylevel = {
+                1: 'ВПО-Специалисты', #	специалисты
+                2: 'ВПО-Бакалавры', #	бакалавры
+                3: 'ВПО-Магистры', #	магистры
+                4: 'СПО-Базовый уровень (на базе 11 кл)', #	СПО
+                5: 'Аспирантура', #	аспирантура
+            }.get(serializer.validated_data['level'])
+            if studylevel:
+                query = query.filter(studylevel=studylevel)
+
+        for plan in query:
             admission_info = Catadmission.objects.filter(
                 cuchplan_id=plan.mira_id
             ).values(
+                'id',
                 'cfob_id',
                 'cfob__name',
                 'cadmkind_id',
@@ -796,13 +821,13 @@ class GeneratorViewSet(
                 "level__name": admission_info['cadmkind__name_ak'],
                 "napr": plan.napr_t,
                 "species": admission_info['cprofili__name'] or admission_info['cspec__name'],
-                "id": plan.mira_id,
+                "plan_id": plan.mira_id,
+                "cadmission_id": admission_info['id'],
                 "year": plan.startyear,
                 "documents": [
                     {
                         "title": d.name,
-                        "new_type": d.new_type_id,
-                        "type": d.type,
+                        "type": d.new_type_id,
                         "url": settings.SITE_URL + files_by_type.get(d.new_type_id).file.url
                     } for d in documents if d.new_type_id in files_by_type
                 ],
