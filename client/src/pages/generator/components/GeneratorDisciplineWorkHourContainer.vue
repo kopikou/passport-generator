@@ -4,6 +4,7 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
 import _ from "lodash";
 import {computed} from "vue";
+import {api} from "boot/axios";
 
 const generatorViewStore = useGeneratorViewStore();
 
@@ -15,6 +16,7 @@ const {
   disciplineThemes,
   disabled,
   activeRpdId,
+  disciplineWorkHour,
 } = storeToRefs(generatorViewStore)
 
 const sem = defineModel('sem')
@@ -35,7 +37,38 @@ const maxNumberInSemester = computed(() => {
   return _.max(_.map(data, (x) => x.num))
 })
 
-const emit = defineEmits(['delete', 'edit', 'fieldUp', 'fieldDown'])
+async function fieldUp(item) {
+  let dontChange = disciplineWorkHour.value.filter(x => !(x.semester == item.semester && x.type == item.type));
+
+  let currentData = disciplineWorkHour.value.filter(x => x.semester == item.semester && x.type == item.type);
+  let newData = currentData.filter(x => x.num < item.num - 1 && x != item).concat(
+    [item],
+    currentData.filter(x => x.num >= item.num - 1 && x != item),
+  ).map((x, index) => ({...x, num: index + 1}))
+
+  disciplineWorkHour.value = dontChange.concat(newData);
+  await api.post(`/api/generator/${activeRpdId.value}/set-work-hours-order/`, {
+    order: newData.map(x => x.id)
+  })
+}
+
+async function fieldDown(item) {
+  let dontChange = disciplineWorkHour.value.filter(x => !(x.semester == item.semester && x.type == item.type));
+
+  let currentData = disciplineWorkHour.value.filter(x => x.semester == item.semester && x.type == item.type);
+  let newData = currentData.filter(x => x.num <= item.num + 1 && x != item).concat(
+    [item],
+    currentData.filter(x => x.num > item.num + 1 && x != item),
+  ).map((x, index) => ({...x, num: index + 1}))
+
+  disciplineWorkHour.value = dontChange.concat(newData);
+
+  await api.post(`/api/generator/${activeRpdId.value}/set-work-hours-order/`, {
+    order: newData.map(x => x.id)
+  })
+}
+
+const emit = defineEmits(['delete', 'edit'])
 </script>
 
 <template>
@@ -73,7 +106,7 @@ const emit = defineEmits(['delete', 'edit', 'fieldUp', 'fieldDown'])
           <div>
             {{ lectures.num }}
           </div>
-          <div >
+          <div>
             {{ lectures.name }}
           </div>
           <div>
@@ -95,11 +128,11 @@ const emit = defineEmits(['delete', 'edit', 'fieldUp', 'fieldDown'])
             />
             <q-btn v-if="lectures.num != 1"
                    icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
-                   @click="emit('fieldUp', lectures.num, lectures.semester)"
+                   @click="fieldUp(lectures)"
             />
             <q-btn v-if="lectures.num != maxNumberInSemester"
                    icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
-                   @click="emit('fieldDown', lectures.num, lectures.semester)"
+                   @click="fieldDown(lectures)"
             />
           </div>
         </div>

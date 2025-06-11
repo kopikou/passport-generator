@@ -319,5 +319,9 @@ class ScientificDataSerializer(serializers.Serializer):
         return data
 
 
-class OrderSerializer(serializers.Serializer):
-    order = serializers.ListField()
+class ThemesOrderSerializer(serializers.Serializer):
+    order = serializers.ListField(child=serializers.IntegerField())
+
+
+class WorkHoursOrderSerializer(serializers.Serializer):
+    order = serializers.ListField(child=serializers.IntegerField())

@@ -107,30 +107,6 @@ async function saveWorkHour(data) {
   return r.data
 }
 
-async function fieldUp(num, sem) {
-  let newKey = _.findKey(lecturesDisciplineWorkHour.value, (x) => x.num == num - 1 && x.semester == sem)
-  let oldKey = _.findKey(lecturesDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
-
-  _.set(lecturesDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
-  _.set(lecturesDisciplineWorkHour.value, `[${newKey}].num`, num)
-  await Promise.all([
-    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${oldKey}]`)),
-    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
-  ])
-}
-
-async function fieldDown(num, sem) {
-  let newKey = _.findKey(lecturesDisciplineWorkHour.value, (x) => x.num == num + 1 && x.semester == sem)
-  let oldKey = _.findKey(lecturesDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
-
-  _.set(lecturesDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
-  _.set(lecturesDisciplineWorkHour.value, `[${newKey}].num`, num)
-  await Promise.all([
-    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${oldKey}]`)),
-    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
-  ])
-}
-
 watchEffect(() => {
   tab.value = semestersData.value[0]?.num
 })
@@ -155,8 +131,6 @@ watchEffect(() => {
       <generator-discipline-work-hour-container
         :data="filteredData"
         v-model:sem="tab"
-        @field-down="fieldDown"
-        @field-up="fieldUp"
         @delete="deleteLectures"
         @edit="updateLectures"
       />
