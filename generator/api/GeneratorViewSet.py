@@ -433,7 +433,8 @@ class GeneratorViewSet(
 
         updated_at = (updated_at_max['updated_at'] or instance.file_updated_at)
 
-        if settings.DONT_SAVE_RPD_FILES or (not instance.file or not instance.file_updated_at or (instance.file_updated_at < updated_at)):
+        if settings.DONT_SAVE_RPD_FILES or (
+                not instance.file or not instance.file_updated_at or (instance.file_updated_at < updated_at)):
             instance = ReportService.generate_rpd_report(instance)
 
         return redirect((settings.FORCE_SCRIPT_NAME or "") + instance.file.url)
@@ -562,7 +563,7 @@ class GeneratorViewSet(
         whens = []
         ids = serializer.validated_data['order']
         for index, _id in enumerate(ids, start=1):
-            whens.append(When(id=_id, then=Value(index)),)
+            whens.append(When(id=_id, then=Value(index)), )
 
         if whens:
             DisciplineThemes.objects.filter(planlineslink_id=self.kwargs['pk'], id__in=ids).update(
@@ -749,6 +750,10 @@ class GeneratorViewSet(
                 'cfob__name',
                 'cadmkind_id',
                 'cadmkind__name_ak',
+                'spec_name',
+                'cspec__name',
+                'cprofili__name',
+                'direct_name',
             ).first()
 
             if not admission_info:
@@ -758,24 +763,29 @@ class GeneratorViewSet(
                 planlines__plan_id=plan.id,
                 last_accepted_file__isnull=False
             ).exclude(last_accepted_file=''))
+
             files = UploadFiles.objects.filter(rpd=plan.id)
+            files_by_type = {i.type_id: i for i in files}
+            documents = PlanDocuments.objects.filter(plan_id=plan.id)
+
 
             data.append({
-                "species": plan.species,
+                # "species": plan.species,
                 "cfob": admission_info['cfob_id'],
                 "cfob__name": admission_info['cfob__name'],
                 "level": admission_info['cadmkind_id'],
                 "level__name": admission_info['cadmkind__name_ak'],
-                "napr_t": plan.napr_t,
+                "napr": plan.napr_t,
+                "species": admission_info['cprofili__name'] or admission_info['cspec__name'],
                 "id": plan.mira_id,
                 "year": plan.startyear,
                 "documents": [
                     {
                         "title": d.name,
-                        "type": d.new_type_id,
-                    } for d in PlanDocuments.objects.filter(
-                        plan_id=plan.id
-                    )
+                        "new_type": d.new_type_id,
+                        "type": d.type,
+                        "url": settings.SITE_URL + files_by_type.get(d.new_type_id).file.url
+                    } for d in documents if d.new_type_id in files_by_type
                 ],
                 "rpds": [
                     {
