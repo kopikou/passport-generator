@@ -132,7 +132,7 @@ class ReportService(object):
                         instance.save(update_fields=['file', 'last_accepted_file', 'file_updated_at'])
                         success = True
                 except FileNotFoundError:
-                    sleep(1)
+                    sleep(0.5)
 
                 if success:
                     break
