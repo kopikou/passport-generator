@@ -82,60 +82,65 @@ class ReportService(object):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        with TemporaryDirectory() as dr:
-            path_doc_file = os.path.join(dr, f"{pk}.docx")
-            path_pdf_file = os.path.join(dr, f"{pk}.pdf")
+        dr = TemporaryDirectory()
+        path_doc_file = os.path.join(dr.name, f"{pk}.docx")
+        path_pdf_file = os.path.join(dr.name, f"{pk}.pdf")
 
-            if rpd_data['planlines']['viewpract']:
-                tpl = ReportService.get_practice_report(rpd_data)
-            else:
-                tpl = ReportService.get_rpd_report(rpd_data)
-            # tpl.save(response)
+        if rpd_data['planlines']['viewpract']:
+            tpl = ReportService.get_practice_report(rpd_data)
+        else:
+            tpl = ReportService.get_rpd_report(rpd_data)
+        # tpl.save(response)
 
-            tpl.save(path_doc_file)
+        tpl.save(path_doc_file)
 
-            if platform.system() == 'Linux':
-                run([
-                    'libreoffice', '--headless', '--invisible', '--convert-to',
-                    'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
-                ])
-            elif platform.system() == 'Windows':
-                from win32com.client import Dispatch
+        if platform.system() == 'Linux':
+            run([
+                'libreoffice', '--headless', '--invisible', '--convert-to',
+                'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
+            ])
+        elif platform.system() == 'Windows':
+            from win32com.client import Dispatch
 
-                word = Dispatch('Word.Application')
-                doc = word.Documents.Open(path_doc_file)
-                doc.SaveAs(path_pdf_file, FileFormat=17)
-                word.Quit()
+            word = Dispatch('Word.Application')
+            doc = word.Documents.Open(path_doc_file)
+            doc.SaveAs(path_pdf_file, FileFormat=17)
+            word.Quit()
 
-            success = False
-            for i in range(10):
-                try:
-                    with open(path_pdf_file, 'rb') as file:
-                        name = f"{rpd_data['admission']['abbr']}_{rpd_data['admission']['yr']}_{rpd_data['planlines']['dis']}_{pk}"
-                        if instance.status == PlanLinesLink.StatusChoices.accepted:
-                            name = f"{name}_accepted"
+        success = False
+        for i in range(10):
+            try:
+                with open(path_pdf_file, 'rb') as file:
+                    name = f"{rpd_data['admission']['abbr']}_{rpd_data['admission']['yr']}_{rpd_data['planlines']['dis']}_{pk}"
+                    if instance.status == PlanLinesLink.StatusChoices.accepted:
+                        name = f"{name}_accepted"
 
-                        uploaded_file = UploadedFile(file, f"{name}.pdf")
-                        uploaded_file.seek(0)
+                    uploaded_file = UploadedFile(file, f"{name}.pdf")
+                    uploaded_file.seek(0)
 
-                        if instance.file \
-                                and (not instance.last_accepted_file or instance.file.name != instance.last_accepted_file.name):
-                            instance.file.delete()
+                    if instance.file \
+                            and (not instance.last_accepted_file or instance.file.name != instance.last_accepted_file.name):
+                        instance.file.delete()
 
-                        instance.file = uploaded_file
-                        instance.file_updated_at = datetime.datetime.now()
+                    instance.file = uploaded_file
+                    instance.file_updated_at = datetime.datetime.now()
 
-                        if  instance.status == PlanLinesLink.StatusChoices.accepted:
-                            if instance.last_accepted_file:
-                                instance.last_accepted_file.delete()
-                            instance.last_accepted_file = instance.file
-                        instance.save(update_fields=['file', 'last_accepted_file', 'file_updated_at'])
-                        success = True
-                except FileNotFoundError:
-                    sleep(0.5)
+                    if  instance.status == PlanLinesLink.StatusChoices.accepted:
+                        if instance.last_accepted_file:
+                            instance.last_accepted_file.delete()
+                        instance.last_accepted_file = instance.file
+                    instance.save(update_fields=['file', 'last_accepted_file', 'file_updated_at'])
+                    success = True
+            except FileNotFoundError:
+                sleep(0.5)
 
-                if success:
-                    break
+            if success:
+                break
+
+        try:
+            dr.cleanup()
+        except NotADirectoryError:
+            pass
 
         return instance
 
@@ -742,6 +747,7 @@ class ReportService(object):
         interactive_methods = None
 
         sems = [i['num'] for i in data['planlines']['semesters']]
+        sems_info = {i['num']: i for i in data['planlines']['semesters']}
 
         has_labs = sum(i['lab'] for i in data['planlines']['semesters'] if i['lab']) > 0
         has_pr = sum(i['pr'] for i in data['planlines']['semesters'] if i['pr']) > 0
@@ -836,7 +842,7 @@ class ReportService(object):
 
             if item['type'] == 'tat':
                 q = 0
-                for i in sorted(item['value'], key=lambda x: x['num']):
+                for i in sorted([k for k in item['value'] if k.get('num')], key=lambda x: x['num']):
                     if i['num'] not in sems:
                         continue
                     q += 1
