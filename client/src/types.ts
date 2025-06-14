@@ -206,6 +206,7 @@ export interface AdmissionInfo {
 export interface OtherDiscipline {
   disid: number,
   dis: string;
+  semesters: number[],
 }
 
 export interface GeneratorData {

@@ -28,7 +28,6 @@ const $q = useQuasar()
 
 api.interceptors.response.use((response) => response, (error) => {
   $q.loading.hide()
-  console.log(error.response.status)
    if (error.response.status == 403) {
     $q.notify({
       color: 'negative',

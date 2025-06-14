@@ -11,7 +11,7 @@ from auths.models import Permissions
 from generator.models import PlanLinesLink, DefaultsResources, PlanLinesLinkComments, DisciplineThemes, \
     DisciplineWorkHours, AdditionalInfo, DisciplineIndicators, ScientificPlanData
 from generator.serializer import PlanLinesLinkSerializer
-from rpd.models import LinesData, LinesIndicators
+from rpd.models import LinesData, LinesIndicators, SemesterData
 
 
 class GeneratorService(object):
@@ -248,8 +248,18 @@ class GeneratorService(object):
 
         admission_info = AISServices.get_admissionn_info(serializer.data['cadmission'])
 
-        other_discipline = LinesData.objects.filter(plan_id=serializer.data['planlines']['plan_id'],
-                                                    synchronize=True).values("disid", "dis")
+        other_discipline = list(LinesData.objects.filter(plan_id=serializer.data['planlines']['plan_id'],
+                                                    synchronize=True).values("disid", "dis", "id"))
+
+
+        # инфа по семестрам в которых идут дисциплины
+        other_discipline_semesters = SemesterData.objects\
+            .filter(planlineid__in=[i['id'] for i in other_discipline])\
+            .values("planlineid_id", "num").order_by("planlineid_id", "num")
+        other_discipline_semesters = {
+            key: list([i['num'] for i in items])
+            for key, items in groupby(other_discipline_semesters, key=lambda x: x['planlineid_id'])
+        }
 
         resources = DefaultsResources.objects.all().values("id", "name", "type", "url")
 
@@ -275,7 +285,9 @@ class GeneratorService(object):
 
         result = {
             "admission": admission_info[0],
-            "other_discipline": [i for i in other_discipline],
+            "other_discipline": [
+                {**i, "semesters": other_discipline_semesters.get(i['id'], [])} for i in other_discipline
+            ],
             "resources": [i for i in resources],
             "comment": comment,
             "users": {

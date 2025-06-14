@@ -17,16 +17,20 @@ const {
   disciplinePlace,
   additionalInfo,
   disabled,
+  semesterYearLabel,
 } = storeToRefs(generatorViewStore)
 
 const precedence = ref([])
 const subsequent = ref([])
 
 const filteredOthderDiscipline = computed(() => {
-  const data = _.orderBy(otherDiscipline.value, x => x.dis)
+  const data = _(otherDiscipline.value).map(x => ({
+    ...x, dis: `${x.dis} / ${x.semesters.join(", ")} ${semesterYearLabel.value}`
+  })).orderBy(x => [x.semesters[0], x.dis]).value()
   data.push({disid: 0, dis: 'Нет'})
   return data
 })
+
 
 async function savePrecSubDiscipline() {
   if (generatorViewStore.abortGetDataController)

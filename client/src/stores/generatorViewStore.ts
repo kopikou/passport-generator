@@ -81,6 +81,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return rpdData.value.planlines?.semesters || []
   })
 
+  const semestersDataNum = computed(() => {
+    return semestersData.value.map(i => i.num)
+  })
+
   const otherDiscipline = computed<OtherDiscipline[]>(() => {
     return rpdData.value.other_discipline || []
   })
@@ -339,7 +343,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
             data.push({
               url: 'discipline-lectures',
               title: 'Неверное кол-во часов в лекционных занятиях',
-              text: [`Количество часов в лекционных занятий не сходиться в семестре № ${x}`],
+              text: [`Количество часов в лекционных занятий не сходится в семестре № ${x}`],
               level: 'critical',
             })
           }
@@ -364,7 +368,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
             data.push({
               url: 'discipline-lab',
               title: 'Неверное кол-во часов в лабораторных работах',
-              text: [`Количество часов в лабораторных работах не сходиться в семестре № ${x}`],
+              text: [`Количество часов в лабораторных работах не сходится в семестре № ${x}`],
               level: 'critical',
             })
           }
@@ -389,7 +393,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
             data.push({
               url: 'discipline-practice',
               title: 'Неверное кол-во часов в практических занятиях',
-              text: [`Количество часов в практических часов не сходиться в семестре № ${x}`],
+              text: [`Количество часов в практических часов не сходится в семестре № ${x}`],
               level: 'critical',
             })
           }
@@ -414,7 +418,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
             data.push({
               url: 'discipline-independent',
               title: 'Неверное кол-во часов в самостоятельных работах',
-              text: [`Количество часов в самостоятельных работах не сходиться в семестре № ${x}`],
+              text: [`Количество часов в самостоятельных работах не сходится в семестре № ${x}`],
               level: 'critical',
             })
           }
