@@ -102,8 +102,8 @@ onBeforeMount(async () => {
                 <q-item-section>Выйти</q-item-section>
               </q-item>
               <q-separator></q-separator>
-              <q-item clickable href="mailto:ais_support@ex.istu.edu">
-                <q-item-section>Написать в техподдержку</q-item-section>
+              <q-item >
+                <q-item-section>Написать в техподдержку <br><a href="mailto:ais_support@ex.istu.edu">ais_support@ex.istu.edu</a></q-item-section>
               </q-item>
             </q-list>
           </q-btn-dropdown>
