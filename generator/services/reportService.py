@@ -846,6 +846,18 @@ class ReportService(object):
                 for i in sorted([k for k in item['value'] if k.get('num')], key=lambda x: x['num']):
                     if i['num'] not in sems:
                         continue
+
+                    sem_info = sems_info[i['num']]
+
+                    if i['type'] == 'ekz' and not sem_info['ekz']:
+                        continue
+                    if i['type'] == 'zacho' and not sem_info['zacho']:
+                        continue
+                    if i['type'] == 'zach' and not sem_info['zach']:
+                        continue
+                    if i['type'] == 'krkp' and not (sem_info['kp'] or sem_info['kr']):
+                        continue
+
                     q += 1
                     if i['type'] == 'zach':
                         tat.append({
