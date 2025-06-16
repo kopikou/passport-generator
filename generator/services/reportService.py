@@ -619,7 +619,11 @@ class ReportService(object):
                     [i['srs_hours'] for i in tmp if i['srs_hours'] != '']) != 0 else '',
             })
 
+        protocol_date = pendulum.from_format(data['protocol_date'], "YYYY-MM-DD")
+
         contex = {
+            "protocol_date": protocol_date.format("DD MMMM YYYY"),
+            "protocol_year": protocol_date.format("YYYY"),
             "now": pendulum.now().start_of("day"),
             "current_year": pendulum.now().year,
             "kaf_name": data['admission']['ckaf__name'],
