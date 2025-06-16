@@ -624,6 +624,7 @@ class ReportService(object):
         contex = {
             "protocol_date": protocol_date.format("DD MMMM YYYY"),
             "protocol_year": protocol_date.format("YYYY"),
+            "person_name": CatPerson.objects.get(id=data['person']).name,
             "now": pendulum.now().start_of("day"),
             "current_year": pendulum.now().year,
             "kaf_name": data['admission']['ckaf__name'],
