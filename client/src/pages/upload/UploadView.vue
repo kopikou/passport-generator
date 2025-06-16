@@ -203,7 +203,7 @@ function viewProgram(planId) {
     <template #content>
       <q-list bordered>
         <q-expansion-item
-          v-for="item in admissionData"
+          v-for="item in admissionList"
           expand-separator
           :caption="item.plan_name"
           :label="`${item.abbrprofile} ${item.startyear}`"
