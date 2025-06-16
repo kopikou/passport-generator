@@ -361,6 +361,10 @@ class GeneratorViewSet(
     def save_discipline_indicator(self, request, *args, **kwargs):
         data = self.request.data
 
+        instance: PlanLinesLink = self.get_object()
+        instance.person = self.request.user.userprofile.mira_id
+        instance.save()
+
         serializer_data = DisciplineIndicatorsAddSerializer(data=data)
         serializer_data.is_valid(raise_exception=True)
         serializer_data.save()
@@ -370,6 +374,10 @@ class GeneratorViewSet(
     @action(methods=['POST'], url_path="save-discipline-themes", detail=True, permission_classes=[CanEditRPDProgram])
     def save_discipline_themes(self, request, *args, **kwargs):
         data = self.request.data
+
+        instance: PlanLinesLink = self.get_object()
+        instance.person = self.request.user.userprofile.mira_id
+        instance.save()
 
         serializer_data = DisciplineThemeSerializer(data=data)
         serializer_data.is_valid(raise_exception=True)
@@ -389,6 +397,10 @@ class GeneratorViewSet(
     def save_discipline_work(self, request, *args, **kwargs):
         data = self.request.data
 
+        instance: PlanLinesLink = self.get_object()
+        instance.person = self.request.user.userprofile.mira_id
+        instance.save()
+
         serializer_data = DisciplineWorkHoursSerializer(data=data)
         serializer_data.is_valid(raise_exception=True)
         serializer_data.save()
@@ -407,6 +419,9 @@ class GeneratorViewSet(
     @action(methods=['POST'], url_path="save-additional-info", detail=True, permission_classes=[CanEditRPDProgram])
     def save_additional_info(self, request, *args, **kwargs):
         data = self.request.data
+        instance: PlanLinesLink = self.get_object()
+        instance.person = self.request.user.userprofile.mira_id
+        instance.save()
 
         serializer_data = AdditionalInfoSerializer(
             data={"planlineslink_id": self.kwargs['pk'], "type": data['type'], "value": data['value']})
