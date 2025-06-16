@@ -755,7 +755,7 @@ class ReportService(object):
         has_kp = sum(i['kp_hour'] for i in data['planlines']['semesters'] if i['kp_hour']) > 0
         has_kr = sum(i['kr_hour'] for i in data['planlines']['semesters'] if i['kr_hour']) > 0
         has_kp_kr = has_kp or has_kr
-        sem_or_year = 'Семестр' if '' else 'Учебный год'
+        sem_or_year = 'Учебный год' if  data['admission']['cfob__name'] == 'заочная' else  'Семестр'
 
         for item in data['additional_info']:
             if item['type'] == 'interactiveMethods':
