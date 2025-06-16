@@ -247,6 +247,8 @@ class ReportService(object):
         practice_content = []
         practice_report = []
         practice_report_req = ''
+        sem_or_year = 'Учебный год' if data['admission']['cfob__name'] == 'заочная' else 'Семестр'
+
         for item in data['additional_info']:
             if item['type'] == 'practiceWay':
                 practice_way = item['value']['practiceWay']
@@ -330,7 +332,7 @@ class ReportService(object):
                         tat.append({
                             'number': q,
                             'type': i['type'],
-                            'title': i['title'].lower(),
+                            'title': f"{sem_or_year} {i['num']}, {i['title'].lower()}",
                             'form': i.get('form', ''),
                             'formabout': i.get('formabout', ''),
                             "tat": i.get('tat', ''),
@@ -341,7 +343,7 @@ class ReportService(object):
                         tat.append({
                             'number': q,
                             'type': i['type'],
-                            'title': i['title'].lower(),
+                            'title': f"{sem_or_year} {i['num']}, {i['title'].lower()}",
                             'form': i.get('form', ''),
                             'formabout': i.get('formabout', ''),
                             "tat": i.get('tat', ''),

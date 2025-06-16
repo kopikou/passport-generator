@@ -28,7 +28,7 @@ const $q = useQuasar()
 
 api.interceptors.response.use((response) => response, (error) => {
   $q.loading.hide()
-   if (error.response.status == 403) {
+   if (error.response?.status == 403) {
     $q.notify({
       color: 'negative',
       message: 'Произошел разлогин, перезагрузите страницу',
