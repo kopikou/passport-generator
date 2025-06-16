@@ -755,6 +755,7 @@ class ReportService(object):
         has_kp = sum(i['kp_hour'] for i in data['planlines']['semesters'] if i['kp_hour']) > 0
         has_kr = sum(i['kr_hour'] for i in data['planlines']['semesters'] if i['kr_hour']) > 0
         has_kp_kr = has_kp or has_kr
+        sem_or_year = 'Семестр' if '' else 'Учебный год'
 
         for item in data['additional_info']:
             if item['type'] == 'interactiveMethods':
@@ -850,7 +851,7 @@ class ReportService(object):
                         tat.append({
                             'number': q,
                             'type': i['type'],
-                            'title': f"Семестр {i['num']}, {tat_titles[i['type']]}",
+                            'title': f"{sem_or_year} {i['num']}, {tat_titles[i['type']]}",
                             # 'main': i['main'],
                             'num': i['num'],
                             'about': i['about'],
@@ -862,7 +863,7 @@ class ReportService(object):
                         tat.append({
                             'number': q,
                             'type': i['type'],
-                            'title': f"Семестр {i['num']}, {tat_titles[i['type']]}",
+                            'title': f"{sem_or_year} {i['num']}, {tat_titles[i['type']]}",
 #                             'main': i['main'],
                             'num': i['num'],
                             'about': i['about'],
@@ -1155,6 +1156,7 @@ class ReportService(object):
             "asp_spec": asp_spec,
             "asp_napr": asp_napr,
             "asp_code": asp_code,
+            "sem_or_year": sem_or_year,
             "fob": data['admission']['cfob__name'],
             "year_post": data['admission']['yr'],
             "person": data['person'],
