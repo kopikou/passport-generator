@@ -633,7 +633,8 @@ class ReportService(object):
             protocol_date_str = ""
             protocol_year_str = ""
 
-        contex = {
+
+        context = {
             "protocol_date": protocol_date_str,
             "protocol_year": protocol_year_str,
             "person_name": CatPerson.objects.get(id=data['person']).name,
@@ -679,7 +680,23 @@ class ReportService(object):
             "fos": fos,
         }
 
-        doc.render(contex)
+        if data['status'] == PlanLinesLink.StatusChoices.accepted:
+            user_accepted = User.objects.filter(id=data['user_accepted_id']).first()
+            user_confirmed = User.objects.filter(id=data['user_confirmed_id']).first()
+
+            is_only_accepted = user_confirmed is None
+
+            user_confirmed = (
+                        user_confirmed.last_name + " " + user_confirmed.first_name + " " + user_confirmed.userprofile.middle_name) if user_confirmed is not None else ""
+
+            context.update({
+                "user_accepted": f"{user_accepted.last_name} {user_accepted.first_name} {user_accepted.userprofile.middle_name}",
+                "user_confirmed": user_confirmed,
+                "user_accepted_is_confirmed": user_confirmed != "" and user_confirmed == f"{user_accepted.last_name} {user_accepted.first_name} {user_accepted.userprofile.middle_name}",
+                "is_only_accepted": is_only_accepted,
+            })
+
+        doc.render(context)
 
         return doc
 
