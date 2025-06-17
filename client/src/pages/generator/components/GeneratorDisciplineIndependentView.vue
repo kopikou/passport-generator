@@ -17,6 +17,7 @@ const generatorViewStore = useGeneratorViewStore();
 
 const {
   semestersData,
+  semestersDataNum,
   independentDisciplineWorkHour,
   rpdData,
   disciplineThemes,
@@ -26,13 +27,21 @@ const {
 
 const tab = ref(0)
 
+
 const allPercent = computed(() => {
-  let hoursList = _.map(semestersData.value, (x) => x.srs)
+  let hoursList = _(semestersData.value)
+    .filter(x => semestersDataNum.value.includes(x.num))
+    .map((x) => x.srs)
+    .value()
   return _.sum(hoursList) || 0
 })
 
+
 const allPercentValue = computed(() => {
-  let value = _.map(independentDisciplineWorkHour.value, (x) => x.hours)
+  let value = _(independentDisciplineWorkHour.value)
+    .filter(x => semestersDataNum.value.includes(x.semester))
+    .map((x) => x.hours)
+    .value()
   return _.sum(value) || 0
 })
 

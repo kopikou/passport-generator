@@ -45,24 +45,24 @@ const menuItems = computed(() => {
   let items = [];
   items.push(...[
       // title (название), url (ссылка), allow (cadmkind, отображать)
-      {title: 'Титульный лист', url: 'main', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true, nis: true},
-      {title: 'Компетенции', url: 'competences', allow: [1, 2, 3, 4], rpd: true, rpp: true, nis: true},
-      {title: 'Индикаторы', url: 'indicators', allow: [1, 2, 3, 4], rpd: true, rpp: true, nis: true},
+      {title: '1) Титульный лист', url: 'main', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true, nis: true},
+      {title: '1.1) Компетенции', url: 'competences', allow: [1, 2, 3, 4], rpd: true, rpp: true, nis: true},
+      {title: '1.2) Индикаторы', url: 'indicators', allow: [1, 2, 3, 4], rpd: true, rpp: true, nis: true},
       {title: 'Результаты освоения программы', url: 'competences', allow: [5], rpd: true, rpp: true, nis: true},
       {title: 'Результаты освоения дисциплины ', url: 'indicators', allow: [5], rpd: true, rpp: true, nis: true},
       {
-        title: 'Место дисциплины в структуре ООП',
+        title: '2) Место дисциплины в структуре ООП',
         url: 'discipline-place',
         allow: [1, 2, 3, 4],
         rpd: true,
         rpp: false,
         nis: false
       },
-      {title: 'Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true, nis: true},
+      {title: '4.1) Структура дисциплины', url: 'structure', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true, nis: true},
       {title: 'Содержание практики', url: 'practice-content', allow: [1, 2, 3, 4, 5], rpd: false, rpp: true, nis: true},
       {title: 'Форма отчетности', url: 'practice-report', allow: [1, 2, 3, 4, 5], rpd: false, rpp: true, nis: true},
       {
-        title: 'Содержание тем дисциплины',
+        title: '4.2) Содержание тем дисциплины',
         url: 'discipline-theme',
         allow: [1, 2, 3, 4, 5],
         rpd: true,
@@ -111,7 +111,7 @@ const menuItems = computed(() => {
 
   items.push(...[
     {
-      title: 'Перечень учебно-методического обеспечения',
+      title: '5) Перечень учебно-методического обеспечения',
       url: 'guidelines',
       allow: [1, 2, 3, 4, 5],
       rpd: true,
@@ -119,7 +119,7 @@ const menuItems = computed(() => {
       nis: false
     },
     {
-      title: 'Оценочные материалы по дисциплине для контроля текущей успеваемости',
+      title: '6.1) Оценочные материалы по дисциплине для контроля текущей успеваемости',
       url: 'fos',
       allow: [1, 2, 3, 4, 5], rpd: true, rpp: false, nis: true
     },
@@ -127,7 +127,7 @@ const menuItems = computed(() => {
 
   if (hasTat.value) {
     items.push({
-      title: 'Типовые оценочные средства промежуточной аттестации',
+      title: '6.2) Типовые оценочные средства промежуточной аттестации',
       url: 'tat',
       allow: [1, 2, 3, 4, 5],
       rpd: true,
@@ -137,10 +137,10 @@ const menuItems = computed(() => {
   }
 
   items.push(...[
-    {title: 'Литература', url: 'library', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true, nis: true},
-    {title: 'Другие ресурсы', url: 'resources', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true, nis: true},
+    {title: '7,8) Литература', url: 'library', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true, nis: true},
+    {title: '9,10) Другие ресурсы', url: 'resources', allow: [1, 2, 3, 4, 5], rpd: true, rpp: true, nis: true},
     {
-      title: 'Перечень используемых информационных технологий',
+      title: '11) Перечень используемых информационных технологий',
       url: 'soft',
       allow: [1, 2, 3, 4, 5],
       rpd: true,
@@ -148,7 +148,7 @@ const menuItems = computed(() => {
       nis: true
     },
     {
-      title: 'Материально-техническое обеспечение',
+      title: '12) Материально-техническое обеспечение',
       url: 'logistics',
       allow: [1, 2, 3, 4, 5],
       rpd: true,

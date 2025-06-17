@@ -806,6 +806,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     semesterYearLabel,
     formControlByValue,
     aspGetType,
+    semestersDataNum,
   }
 })
 

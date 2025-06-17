@@ -22,18 +22,28 @@ const {
   practiceDisciplineWorkHour,
   rpdData,
   disciplineThemes,
+  semestersDataNum,
   disabled,
   activeRpdId,
 } = storeToRefs(generatorViewStore)
 const tab = ref(0)
 
+
 const allPercent = computed(() => {
-  let hoursList = _.map(semestersData.value, (x) => x.pr)
+  let hoursList = _(semestersData.value)
+    .filter(x => semestersDataNum.value.includes(x.num))
+    .map((x) => x.pr)
+    .value()
   return _.sum(hoursList) || 0
 })
 
+
+
 const allPercentValue = computed(() => {
-  let value = _.map(practiceDisciplineWorkHour.value, (x) => x.hours)
+  let value = _(practiceDisciplineWorkHour.value)
+    .filter(x => semestersDataNum.value.includes(x.semester))
+    .map((x) => x.hours)
+    .value()
   return _.sum(value) || 0
 })
 

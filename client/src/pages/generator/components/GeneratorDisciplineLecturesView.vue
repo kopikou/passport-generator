@@ -18,6 +18,7 @@ const generatorViewStore = useGeneratorViewStore();
 const {
   rpdData,
   semestersData,
+  semestersDataNum,
   lecturesDisciplineWorkHour,
   disciplineThemes,
   disabled,
@@ -27,12 +28,18 @@ const {
 const tab = ref(-1)
 
 const allPercent = computed(() => {
-  let hoursList = _.map(semestersData.value, (x) => x.lekc)
+  let hoursList = _(semestersData.value)
+    .filter(x => semestersDataNum.value.includes(x.num))
+    .map((x) => x.lekc)
+    .value()
   return _.sum(hoursList) || 0
 })
 
 const allPercentValue = computed(() => {
-  let value = _.map(lecturesDisciplineWorkHour.value, (x) => x.hours)
+  let value = _(lecturesDisciplineWorkHour.value)
+    .filter(x => semestersDataNum.value.includes(x.semester))
+    .map((x) => x.hours)
+    .value()
   return _.sum(value) || 0
 })
 
@@ -114,7 +121,6 @@ watchEffect(() => {
 </script>
 
 <template>
-
   <generator-discipline-work-view-base
     :disabled="disabled"
     :all-percent="allPercent"

@@ -19,6 +19,7 @@ const {
   semestersData,
   labDisciplineWorkHour,
   disciplineThemes,
+  semestersDataNum,
   rpdData,
   disabled,
   activeRpdId,
@@ -27,15 +28,29 @@ const {
 const $q = useQuasar()
 const tab = ref(0)
 
+
+
 const allPercent = computed(() => {
-  let hoursList = _.map(semestersData.value, (x) => x.lab)
+  let hoursList = _(semestersData.value)
+    .filter(x => semestersDataNum.value.includes(x.num))
+    .map((x) => x.lab)
+    .value()
   return _.sum(hoursList) || 0
 })
 
 const allPercentValue = computed(() => {
-  let value = _.map(labDisciplineWorkHour.value, (x) => x.hours)
+  let value = _(labDisciplineWorkHour.value)
+    .filter(x => semestersDataNum.value.includes(x.semester))
+    .map((x) => x.hours)
+    .value()
   return _.sum(value) || 0
 })
+
+
+// const allPercentValue = computed(() => {
+//   let value = _.map(labDisciplineWorkHour.value, (x) => x.hours)
+//   return _.sum(value) || 0
+// })
 
 const allSemesterPercent = computed(() => {
   let hoursList = _.map(_.filter(semestersData.value, (x) => x.num == tab.value), (x) => x.lab)
