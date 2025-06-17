@@ -619,11 +619,17 @@ class ReportService(object):
                     [i['srs_hours'] for i in tmp if i['srs_hours'] != '']) != 0 else '',
             })
 
-        protocol_date = pendulum.from_format(data['protocol_date'], "YYYY-MM-DD")
+        if data['protocol_date'] is not None:
+            protocol_date = pendulum.from_format(data['protocol_date'], "YYYY-MM-DD")
+            protocol_date_str = protocol_date.format("DD MMMM YYYY")
+            protocol_year_str = protocol_date.format("YYYY")
+        else:
+            protocol_date_str = ""
+            protocol_year_str = ""
 
         contex = {
-            "protocol_date": protocol_date.format("DD MMMM YYYY"),
-            "protocol_year": protocol_date.format("YYYY"),
+            "protocol_date": protocol_date_str,
+            "protocol_year": protocol_year_str,
             "person_name": CatPerson.objects.get(id=data['person']).name,
             "now": pendulum.now().start_of("day"),
             "current_year": pendulum.now().year,
