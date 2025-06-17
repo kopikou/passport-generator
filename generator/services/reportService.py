@@ -874,7 +874,7 @@ class ReportService(object):
                             # 'main': i['main'],
                             'num': i['num'],
                             'about': i['about'],
-                            'example': i['example'],
+                            'example': (i['example'] or "").strip(),
                             'passed': i['passed'],
                             'unpassed': i['unpassed'],
                         })
@@ -886,7 +886,7 @@ class ReportService(object):
 #                             'main': i['main'],
                             'num': i['num'],
                             'about': i['about'],
-                            'example': i['example'],
+                            'example': (i['example'] or "").strip(),
                             'great': i['great'],
                             'good': i['good'],
                             'satisfactorily': i['satisfactorily'],
