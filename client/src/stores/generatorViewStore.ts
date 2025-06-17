@@ -78,7 +78,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
   const semestersData = computed<PlanSemestrData[]>(() => {
-    return rpdData.value.planlines?.semesters || []
+    const data = rpdData.value.planlines?.semesters
+    return _.orderBy(data, x => x.num)
   })
 
   const semestersDataNum = computed(() => {
