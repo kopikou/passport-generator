@@ -225,10 +225,16 @@ class ReportService(object):
                 'methods': item['discipline_indicator'][0]['methods'] if item['discipline_indicator'] else '',
             })
 
-        if data['admission']['ckaf_id'] == 105:
-            podrazdelene = data['admission']['cfac__name'].strip()
+        ckafs = AISServices.get_kaf_codes()
+        ckafs_by_id = {i['value']: i['label'] for i in ckafs}
+
+        if data['planlines']['caf']:
+            podrazdelene = ckafs_by_id.get(data['planlines']['caf'], '')
         else:
-            podrazdelene = (data['admission']['ckaf__ccatdep__nameshort'] or "").strip()
+            if data['admission']['ckaf_id'] == 105:
+                podrazdelene = data['admission']['cfac__name'].strip()
+            else:
+                podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
 
         discipline = data['planlines']['dis'].split(': ')
 
