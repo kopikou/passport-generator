@@ -28,7 +28,9 @@ class Command(BaseCommand):
 
             transfer_plan_data = {}
             for plan in plan_data:
-                cadmission = Catadmission.objects.get(abbr=plan['abbrprofile'], yr=plan['startyear'])
+                cadmission = Catadmission.objects.filter(abbr=plan['abbrprofile'], yr=plan['startyear']).first()
+                if not cadmission:
+                    continue
 
                 transfer_plan_data = {
                     "species": plan['species'],
