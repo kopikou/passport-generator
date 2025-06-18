@@ -270,15 +270,16 @@ class ReportService(object):
 
                 for i in item['value']:
                     if i['type'] in fos_grouped.get(int(i['num']), []):
-                        q += 1
-                        fos.append({
-                            'num': i['num'],
-                            'number': q,
-                            'type': i['type'],
-                            'title': i['title'],
-                            'about': i['about'] if 'about' in i else '',
-                            'criteria': i['criteria'] if 'criteria' in i else '',
-                        })
+                        if i['title'].find(sem_or_year.lower(), 0, 15) != -1:
+                            q += 1
+                            fos.append({
+                                'num': i['num'],
+                                'number': q,
+                                'type': i['type'],
+                                'title': i['title'],
+                                'about': i['about'] if 'about' in i else '',
+                                'criteria': i['criteria'] if 'criteria' in i else '',
+                            })
 
             if item['type'] == 'practiceContent':
                 practice_content = item['value']
@@ -829,15 +830,16 @@ class ReportService(object):
 
                 for i in item['value']:
                     if i['type'] in fos_grouped.get(int(i['num']), []):
-                        q += 1
-                        fos.append({
-                            'num': i['num'],
-                            'number': q,
-                            'type': i['type'],
-                            'title': i['title'],
-                            'about': i['about'] if 'about' in i else '',
-                            'criteria': i['criteria'] if 'criteria' in i else '',
-                        })
+                        if i['title'].find(sem_or_year.lower(), 0, 15) != -1:
+                            q += 1
+                            fos.append({
+                                'num': i['num'],
+                                'number': q,
+                                'type': i['type'],
+                                'title': i['title'],
+                                'about': i['about'] if 'about' in i else '',
+                                'criteria': i['criteria'] if 'criteria' in i else '',
+                            })
 
             if item['type'] == 'resources':
                 resources = item['value']
@@ -1188,6 +1190,7 @@ class ReportService(object):
                 podrazdelene = data['admission']['cfac__name'].strip()
             else:
                 podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
+
         context = {
             "now": pendulum.now().start_of("day"),
             "current_year": pendulum.now().year,
