@@ -1,11 +1,12 @@
 from pprint import pprint
 
 from django.core.management import BaseCommand
-from django.db.models import Q
+from django.db.models import Q, Case, When, Value
 
 from arim.models import UchPlanPlan, UchPlanLines, UchPlanDiscpl, UchPlanKaf, UchPlanSemestr, BoolChoice, Catadmission, \
     UchPlanFiles
 from arim.services import AISServices
+from generator.models import PlanLinesLink
 from rpd.models import RPDFile, LinesData, PlanData, SemesterData, PlanDocuments
 
 
@@ -19,6 +20,12 @@ class Command(BaseCommand):
 
         kaf_codes = UchPlanKaf.objects.all()
         kaf_codes = {i['ckaf2rpgen']: i for i in kaf_codes.values()}
+
+        uchplan_to_keep = []
+        uchplan_files_to_keep = []
+        uchplan_semester_to_keep = []
+        uchplan_displ_to_keep = []
+        uchplan_lines_to_keep = []
 
         for i in data:
             plan_data = PlanData.objects.filter(file_id=i.id).values()
@@ -57,6 +64,8 @@ class Command(BaseCommand):
                     defaults=transfer_plan_data,
                 )
 
+                uchplan_to_keep.append(uchplan.id)
+
                 PlanData.objects.filter(id=plan['id']).update(mira_id=uchplan.id)
 
                 Catadmission.objects.filter(id=cadmission.id).update(cuchplan_id=uchplan.id)
@@ -76,6 +85,8 @@ class Command(BaseCommand):
                     defaults=transfer_file_data,
                 )
 
+                uchplan_files_to_keep.append(files.id)
+
             query = Q()
             for line in line_data:
                 query |= Q(name=line['dis'])
@@ -92,6 +103,8 @@ class Command(BaseCommand):
                     disid = disid.id
                 else:
                     disid = discpl_names.get(line['dis'])['id']
+
+                uchplan_displ_to_keep.append(disid)
 
                 transfer_line_data = {
                     "planid_id": uchplan.id,
@@ -110,12 +123,14 @@ class Command(BaseCommand):
                     "viewobject": line['viewobject'],
                 }
 
-                lines, created = UchPlanLines.objects.update_or_create(
+                line, created = UchPlanLines.objects.update_or_create(
                     planid_id=uchplan.id,
                     disid_id=transfer_line_data['disid_id'],
                     newdisid=transfer_line_data['newdisid'],
                     defaults=transfer_line_data,
                 )
+
+                uchplan_lines_to_keep.append(line.id)
 
                 # print(transfer_line_data)
 
@@ -123,7 +138,7 @@ class Command(BaseCommand):
                     if semestr['planlineid_id'] == line['id']:
 
                         transfer_semester_data = {
-                            "planlineid_id": lines.id,
+                            "planlineid_id": line.id,
                             "num": semestr['num'],
                             "lekc": semestr['lekc'],
                             "lab": semestr['lab'],
@@ -141,10 +156,23 @@ class Command(BaseCommand):
                             "eios": semestr['eios'],
                         }
 
-                        semesters, created = UchPlanSemestr.objects.update_or_create(
-                            planlineid_id=lines.id,
+                        semester, created = UchPlanSemestr.objects.update_or_create(
+                            planlineid_id=line.id,
                             num=transfer_semester_data['num'],
                             defaults=transfer_semester_data,
                         )
+
+                        uchplan_semester_to_keep.append(semester.id)
+
+
+            UchPlanLines.objects.filter(planid=uchplan.id).update(
+                fordel=Case(When(id__in=uchplan_lines_to_keep, then=Value(BoolChoice.f)), default=BoolChoice.t)
+            )
+
+            lines = UchPlanLines.objects.filter(planid=uchplan.id)
+            for line in lines:
+                PlanLinesLink.objects.filter(mira_id=line.id).update(
+                    is_deleted=True if line.fordel == BoolChoice.t else False
+                )
 
             RPDFile.objects.filter(id=i.id).update(status=RPDFile.StatusChoice.finished)

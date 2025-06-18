@@ -76,6 +76,9 @@ class GeneratorService(object):
                         }
                     )
 
+                if res.is_deleted:
+                    continue
+
                 result.append({
                     **item,
                     "id": res.id,
