@@ -252,7 +252,7 @@ function viewProgram(planId) {
                       </template>
                     </q-field>
                   </div>
-                  <q-btn v-show="getRules(item, i) && checkFile(item, i.type_id) && checkUser(item, i.type_id)" flat dense icon="mdi-delete" color="negative"
+                  <q-btn v-show="getRules(item, i) && checkFile(item, i.type_id)" flat dense icon="mdi-delete" color="negative"
                          @click="deleteFile(item, i.type_id)" />
                 </div>
               </div>

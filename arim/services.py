@@ -111,7 +111,7 @@ class AISServices(object):
             data[i] = {
                 **data[i],
                 "admin": admin,
-                "can_upload": adm_user.can_upload if adm_user else 't'
+                "can_upload": adm_user.can_upload if adm_user else 'f'
             }
 
         return data
