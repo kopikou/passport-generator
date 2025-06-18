@@ -162,7 +162,8 @@ RPGEN_CONNECTION_STRING = ""
 
 
 CONSTANCE_CONFIG = {
-    'RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED': ("""Безопасность жизнедеятельности
+    'RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED': ("""
+Безопасность жизнедеятельности
 Инженерная и компьютерная графика
 Иностранный язык
 Информационные технологии
