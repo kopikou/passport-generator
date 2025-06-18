@@ -433,7 +433,7 @@ class PLXParser:
 
         query = Q()
         for i in data.values():
-            query |= Q(plan_id=i['plan_id'], dis=i['dis'], newdisid=i['newdisid'])
+            query |= Q(plan_id=i['plan_id'], dis=i['dis'].strip(), newdisid=i['newdisid'].strip())
 
         lines = LinesData.objects.filter(query)
         lines = {f"{i.plan_id}_{i.dis}_{i.newdisid}": i for i in lines}
@@ -450,7 +450,9 @@ class PLXParser:
             else:
                 item['disid_id'] = disciplines.get(item['dis'])
 
-            key = f"{item['plan_id']}_{item['dis']}_{item['newdisid']}"
+            key = f"{item['plan_id']}_{item['dis'].strip()}_{item['newdisid'].strip()}"
+            if not lines.get(key):
+                print(key)
             obj = LinesDataSerializer(instance=lines.get(key), data=item)
             obj.is_valid(raise_exception=True)
             obj.save()
@@ -463,7 +465,7 @@ class PLXParser:
             if items['parent_id']:
                 LinesData.objects.filter(id=items['id']).update(parent_id=data.get(items['old_parent_id'])['id'])
 
-        ids_to_delete = [i.id for i in lines.values() if i.id not in added_items]
+        ids_to_delete = [i.id for i in LinesData.objects.filter(plan__file_id=self.file_id) if i.id not in added_items]
 
         if data:
             if ids_to_delete:

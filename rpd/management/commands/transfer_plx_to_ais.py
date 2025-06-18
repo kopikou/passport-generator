@@ -123,14 +123,14 @@ class Command(BaseCommand):
                     "viewobject": line['viewobject'],
                 }
 
-                line, created = UchPlanLines.objects.update_or_create(
+                lines, created = UchPlanLines.objects.update_or_create(
                     planid_id=uchplan.id,
                     disid_id=transfer_line_data['disid_id'],
                     newdisid=transfer_line_data['newdisid'],
                     defaults=transfer_line_data,
                 )
 
-                uchplan_lines_to_keep.append(line.id)
+                uchplan_lines_to_keep.append(lines.id)
 
                 # print(transfer_line_data)
 
@@ -138,7 +138,7 @@ class Command(BaseCommand):
                     if semestr['planlineid_id'] == line['id']:
 
                         transfer_semester_data = {
-                            "planlineid_id": line.id,
+                            "planlineid_id": lines.id,
                             "num": semestr['num'],
                             "lekc": semestr['lekc'],
                             "lab": semestr['lab'],
@@ -156,17 +156,17 @@ class Command(BaseCommand):
                             "eios": semestr['eios'],
                         }
 
-                        semester, created = UchPlanSemestr.objects.update_or_create(
-                            planlineid_id=line.id,
+                        semesters, created = UchPlanSemestr.objects.update_or_create(
+                            planlineid_id=lines.id,
                             num=transfer_semester_data['num'],
                             defaults=transfer_semester_data,
                         )
 
-                        uchplan_semester_to_keep.append(semester.id)
+                        uchplan_semester_to_keep.append(semesters.id)
 
 
             UchPlanLines.objects.filter(planid=uchplan.id).update(
-                fordel=Case(When(id__in=uchplan_lines_to_keep, then=Value(BoolChoice.f)), default=BoolChoice.t)
+                fordel=Case(When(id__in=uchplan_lines_to_keep, then=Value(BoolChoice.f)), default=Value(BoolChoice.t))
             )
 
             lines = UchPlanLines.objects.filter(planid=uchplan.id)
