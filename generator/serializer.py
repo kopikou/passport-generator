@@ -154,7 +154,7 @@ class AdditionalInfoSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         with transaction.atomic():
-            AdditionalInfo.objects.update_or_create(
+            AdditionalInfo.objects.filter(
                 planlineslink_id=validated_data['planlineslink_id'],
                 type=validated_data['type']
             ).select_for_update()
