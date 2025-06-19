@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from generator.models import PlanLinesLink, DisciplineIndicators, DisciplineThemes, DisciplineWorkHours, AdditionalInfo, \
@@ -54,11 +55,17 @@ class DisciplineIndicatorsAddSerializer(serializers.Serializer):
         ]
 
     def create(self, validate_data):
-        discipline_indicators, created = DisciplineIndicators.objects.update_or_create(
-            indicator_id=validate_data.get('indicator_id'),
-            planlineid_id=validate_data.get('planlineid_id'),
-            defaults=validate_data,
-        )
+        with transaction.atomic():
+            DisciplineIndicators.objects.filter(
+                indicator_id=validate_data.get('indicator_id'),
+                planlineid_id=validate_data.get('planlineid_id'),
+            ).select_for_update()
+
+            discipline_indicators, created = DisciplineIndicators.objects.update_or_create(
+                indicator_id=validate_data.get('indicator_id'),
+                planlineid_id=validate_data.get('planlineid_id'),
+                defaults=validate_data,
+            )
 
         return discipline_indicators
 
@@ -146,15 +153,21 @@ class AdditionalInfoSerializer(serializers.Serializer):
         ]
 
     def create(self, validated_data):
-        additional_info, created = AdditionalInfo.objects.update_or_create(
-            planlineslink_id=validated_data['planlineslink_id'],
-            type=validated_data['type'],
-            defaults={
-                "type": validated_data['type'],
-                "value": validated_data['value'],
-                "planlineslink_id": validated_data['planlineslink_id'],
-            }
-        )
+        with transaction.atomic():
+            AdditionalInfo.objects.update_or_create(
+                planlineslink_id=validated_data['planlineslink_id'],
+                type=validated_data['type']
+            ).select_for_update()
+
+            additional_info, created = AdditionalInfo.objects.update_or_create(
+                planlineslink_id=validated_data['planlineslink_id'],
+                type=validated_data['type'],
+                defaults={
+                    "type": validated_data['type'],
+                    "value": validated_data['value'],
+                    "planlineslink_id": validated_data['planlineslink_id'],
+                }
+            )
 
         return additional_info
 
