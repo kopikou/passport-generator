@@ -718,15 +718,22 @@ class ReportService(object):
                                groupby(competences_sorted, key=lambda item: item['competence_index'])}
         competence = []
         for sem, item in competences_grouped.items():
+
+            indicator = ''
+            if data['admission']['cadmkind'] != 5:
+                indicator = ", ".join(i['indicator_index'] for i in sorted(item, key=lambda x: x['indicator_index']))
+            else:
+                indicator =  "\n".join(f"{i['indicator_index']} {i['indicator']}" for i in sorted(item, key=lambda x: x['indicator_index'])),
+
             competence.append({
                 "index": sem,
                 "content": item[0]['competence'],
-                "indicators": ", ".join([i['indicator_index'] for i in item]) if data['admission']['cadmkind'] != 5 else "\n".join([f"{i['indicator_index']} {i['indicator']}" for i in item]),
+                "indicators": indicator,
                 "ind_content": ", ".join([i['indicator'] for i in item]),
             })
 
         indicators = []
-        for item in data['planlines']['indicators']:
+        for item in sorted(data['planlines']['indicators'], key=lambda x: x['indicator_index']):
             indicators.append({
                 'index': item['indicator_index'],
                 'content': item['indicator'],
