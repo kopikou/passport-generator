@@ -8,13 +8,21 @@ from generator.services.generator_service import GeneratorService
 from uplfile.service import UploadFileService
 
 
-class CanEditRPDProgram(IsAuthenticated):
+class ProgramListPermissionMixin(object):
+    def get_program_list(self, request, view):
+        programs = GeneratorService.get_program_list(request.user.userprofile.mira_id)
+        setattr(view, 'programs', programs)
+        return programs
+
+
+class CanEditRPDProgram(ProgramListPermissionMixin, IsAuthenticated):
     message = 'У вас нет прав для редактирования этого РПД'
 
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
             return False
-        programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
+
+        programms = self.get_program_list(request, view)
         # practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
 
@@ -31,7 +39,7 @@ class CanEditRPDProgram(IsAuthenticated):
         return program# or practice
 
 
-class CanEditScientificProgram(IsAuthenticated):
+class CanEditScientificProgram(ProgramListPermissionMixin,IsAuthenticated):
     message = 'У вас нет прав для редактирования этого ПНД'
 
     def has_permission(self, request, view):
@@ -45,7 +53,7 @@ class CanEditScientificProgram(IsAuthenticated):
         return int(pk) in [i['id'] for i in plans]
 
 
-class CanViewRPDProgram(IsAuthenticated):
+class CanViewRPDProgram(ProgramListPermissionMixin, IsAuthenticated):
     message = 'У вас нет прав для просмотра этого РПД'
 
     def has_permission(self, request, view):
@@ -55,7 +63,7 @@ class CanViewRPDProgram(IsAuthenticated):
         if request.user.is_superuser:
             return True
 
-        programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
+        programms = self.get_program_list(request, view)
         # practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
         program = int(pk) in [i['id'] for i in programms]
@@ -63,13 +71,13 @@ class CanViewRPDProgram(IsAuthenticated):
         return program # or practice
 
 
-class CanAcceptRPDProgram(IsAuthenticated):
+class CanAcceptRPDProgram(ProgramListPermissionMixin, IsAuthenticated):
     message = 'У вас нет прав для утверждения этого РПД'
 
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
             return False
-        programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
+        programms = self.get_program_list(request, view)
         practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
 
@@ -84,13 +92,13 @@ class CanAcceptRPDProgram(IsAuthenticated):
         return program or practice
 
 
-class CanConfirmRPDProgram(IsAuthenticated):
+class CanConfirmRPDProgram(ProgramListPermissionMixin, IsAuthenticated):
     message = 'У вас нет прав для согласования этого РПД'
 
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
             return False
-        programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
+        programms = self.get_program_list(request, view)
         pk = view.kwargs['pk']
 
         can_accept = PlanLinesLink.objects.filter(id=pk, status__in=[
@@ -100,13 +108,13 @@ class CanConfirmRPDProgram(IsAuthenticated):
         return int(pk) in [i['id'] for i in programms if 'rop' in i['type']] and can_accept.exists()
 
 
-class CanUploadRPDProgramFile(IsAuthenticated):
+class CanUploadRPDProgramFile(ProgramListPermissionMixin, IsAuthenticated):
     message = 'У вас нет прав для загрузки файла этого РПД напрямую '
 
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
             return False
-        programms = GeneratorService.get_program_list(request.user.userprofile.mira_id)
+        programms = self.get_program_list(request, view)
         pk = view.kwargs['pk']
 
         return int(pk) in [i['id'] for i in programms if 'person' in i['type'] and i['can_upload_file_directly']]

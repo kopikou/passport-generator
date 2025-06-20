@@ -82,6 +82,7 @@ class GeneratorService(object):
                 result.append({
                     **item,
                     "id": res.id,
+                    "plx_file": settings.SITE_URL + ((settings.FORCE_SCRIPT_NAME or "") + line.plan.file.file.url) if line.plan.file else '',
                     "status": res.status,
                     "status_verbose": res.status_verbose,
                     "kafcode": res.planlines.caf,
