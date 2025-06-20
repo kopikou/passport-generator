@@ -34,8 +34,15 @@ function addSoftware(data) {
 }
 
 function deleteSoftware(item) {
-  softwareData.value = softwareData.value.filter(x => x != item)
-  saveSoftware()
+  $q.dialog({
+    title: 'Подтвердите',
+    message: `Вы точно хотите удалить "${item.clicense__name}"?`,
+    cancel: "Отмена",
+    ok: "Удалить"
+  }).onOk(() => {
+    softwareData.value = softwareData.value.filter(x => x != item)
+    saveSoftware()
+  })
 }
 
 async function saveSoftware() {
@@ -82,13 +89,19 @@ function addPO() {
     timeout: 3500,
   })
 
-    $q.dialog({
+  $q.dialog({
     component: GeneratorAddSoftwareDialog,
   }).onOk((data) => {
-      addSoftware(data);
-    // softwareData.value = disciplineSoftware.value[0]?.value || []
-    // saveSoftware()
+    addSoftware(data);
   })
+}
+
+function addDefaultPO() {
+  softwareData.value.push({clicense__name: `Системное программное обеспечение`, clicense__type: 'Лицензионное'})
+  softwareData.value.push({clicense__name: `Пакет прикладных офисных программ`, clicense__type: 'Лицензионное'})
+  softwareData.value.push({clicense__name: `Интернет-браузер`, clicense__type: 'Лицензионное'})
+  // oborudData.value.push({name: `Учебная аудитория для проведения лабораторных/практических (семинарских) занятий, групповых и индивидуальных консультаций, текущего контроля и промежуточной аттестации. Оснащение: комплект учебной мебели, рабочее место преподавателя, доска. Мультимедийное оборудование (в том числе переносное): мультимедийный проектор, экран, акустическая система, компьютер с выходом в интернет. Рабочие места обучающихся, оснащенные компьютерами с выходом в интернет.`})
+  saveSoftware()
 }
 
 watch(disciplineSoftware, () => {
@@ -101,60 +114,69 @@ watch(disciplineSoftware, () => {
 
 <template>
   <div class="q-px-md">
-      <span class="text-h6">Перечень лицензионного программного обеспечения для дисциплины</span>
-      <p></p>
-      <q-separator class="q-mt-md q-mb-md"/>
-      <q-btn
-          class="q-mb-md"
-          label="Добавить ПО"
-          color="secondary"
-          @click="addPO"
-          v-show="!disabled"
+    <span class="text-h6">Перечень лицензионного программного обеспечения для дисциплины</span>
+    <p></p>
+    <q-separator class="q-mt-md q-mb-md"/>
+    <q-btn
+      class="q-mb-md"
+      label="Добавить ПО"
+      color="secondary"
+      @click="addPO"
+      v-show="!disabled"
+    />
+    <q-btn
+      class="q-mb-md q-ml-sm"
+      label="Добавить ПО по-умолчанию"
+      color="purple-2"
+      text-color="black"
+      no-caps
+      @click="addDefaultPO"
+      v-show="!disabled"
+    />
+    <div class="row q-gutter-x-md q-mb-md" v-show="!disabled">
+      <q-input
+        label="Введите текст для поиска"
+        stack-label
+        v-model="searchVal"
+        filled
+        class="col"
+        :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
       />
-      <div class="row q-gutter-x-md q-mb-md" v-show="!disabled">
-        <q-input
-          label="Введите текст для поиска"
-          stack-label
-          v-model="searchVal"
-          filled
-          class="col"
-          :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
-        />
-        <q-btn color="secondary" @click="searchSoft" label="Поиск"/>
-      </div>
-      <div class="row">
-        <div class="col-5">
-          <div class="text-h6">Выбранный софт</div>
-          <div v-for="item in softwareData" style="width: 95%">
-            <q-field label="Название" stack-label filled class="q-mb-md">
-              <template #control>
-                <div class="text-subtitle1 self-center full-width no-outline">
-                  <span>{{ item.clicense__name }}</span>
-                  <q-chip v-if="item.clicense__type">{{ item.clicense__type }}</q-chip>
-                  <div class="q-gutter-x-md q-mt-md" v-show="!disabled">
-                    <q-btn color="red" label="Убрать"
-                           @click="deleteSoftware(item)"/>
-                  </div>
-                </div>
-              </template>
-            </q-field>
-          </div>
-        </div>
-        <div class="col-7">
-          <div v-for="item in searchResult">
-            <q-field label="Название" stack-label filled class="q-mb-md">
-              <template #control>
-                <div class="text-subtitle1 self-center full-width no-outline">
-                  <span>{{ item.clicense__name }}</span>
-                </div>
-                <div class="q-gutter-x-md q-mt-md">
-                  <q-btn :disable="checkTaken(item.id)" color="primary" label="Добавить" @click="addSoftware(item)"/>
-                </div>
-              </template>
-            </q-field>
-          </div>
+      <q-btn color="secondary" @click="searchSoft" label="Поиск"/>
+    </div>
+    <div class="row">
+      <div class="col-6">
+        <div class="text-h6">Выбранный софт</div>
+        <div v-for="item in softwareData" style="width: 95%">
+          <q-field label="Название" stack-label filled class="q-mb-md">
+            <template #control>
+              <div class="text-subtitle1 self-center full-width no-outline">
+                <span>{{ item.clicense__name }}</span>
+                <q-chip v-if="item.clicense__type">{{ item.clicense__type }}</q-chip>
+              </div>
+            </template>
+            <template v-slot:append>
+              <q-btn color="red-7" flat round densed icon="mdi-close" @click="deleteSoftware(item)" v-show="!disabled">
+              </q-btn>
+            </template>
+          </q-field>
         </div>
       </div>
+      <div class="col-6">
+        <div v-for="item in searchResult">
+          <q-field label="Название" stack-label filled class="q-mb-md">
+            <template #control>
+              <div class="text-subtitle1 self-center full-width no-outline">
+                <span>{{ item.clicense__name }}</span>
+              </div>
+              <div class="q-gutter-x-md q-mt-md">
+                <q-btn :disable="checkTaken(item.id)" color="primary" label="Добавить" @click="addSoftware(item)"/>
+              </div>
+            </template>
+          </q-field>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 

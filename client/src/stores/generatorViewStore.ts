@@ -655,6 +655,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       })
     }
 
+
     const logistics = _.get(disciplineLogistics.value, '[0].value', [])
     if (logistics.length == 0) {
       data.push({
