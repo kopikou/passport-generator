@@ -34,9 +34,9 @@ const columns = [
   { name: 'discode', align: 'center', label: 'Код', field: 'discode', sortable: true },
   { name: 'discpl', align: 'center', label: 'Дисциплина', field: 'discpl', sortable: true },
   { name: 'person', align: 'center', label: 'Составитель', field: 'person', sortable: true },
-  { name: 'kafcode', align: 'center', label: 'Кафедра', field: 'kafcode', sortable: true },
-  { name: 'user_confirmed_name', align: 'center', label: 'Согласован', field: 'user_confirmed_name', sortable: true },
-  { name: 'user_accepted_name', align: 'center', label: 'Утвержден', field: 'user_accepted_name', sortable: true },
+  { name: 'kaf', align: 'center', label: 'Кафедра', field: 'kafcode', sortable: true },
+  { name: 'rukprog', align: 'center', label: 'Согласован', field: 'rukprog', sortable: true },
+  { name: 'zavkaf', align: 'center', label: 'Утвержден', field: 'zavkaf', sortable: true },
   { name: 'status_verbose', align: 'center', label: 'Статус', field: 'status_verbose', sortable: true },
   { name: 'control', align: 'center', label: 'Управление', field: 'type', sortable: false },
 ];
@@ -173,16 +173,8 @@ onBeforeMount(async () => {
   $q.loading.hide()
 });
 
-const rowStyles = ref([
-  'background: white',
-  'background: #E1F5FEFF',
-  'background: #FFF8E1FF',
-  'background: #E8F5E9FF',
-  'background: #FFEBEEFF'
-])
-
-function rowStyleFn (row) {
-  return rowStyles.value[row.status];
+function rowClassFn (row) {
+  return `rpd-row status-${row.status}`;
 }
 
 </script>
@@ -210,10 +202,10 @@ function rowStyleFn (row) {
     </template>
     <template #content>
       <div v-if="_.size(filteredListData) > 0"
-           style="display: grid; grid-template-columns: 400px 1fr; overflow: hidden;height: 100%"
+           style="display: grid; grid-template-columns: 300px 1fr; overflow: hidden;height: 100%"
       >
         <q-list
-          style="overflow-y:auto; height: 100%"
+          style="overflow-y:auto; height: 100%; box-shadow: 0 0 8px silver; z-index: 100"
           separator
         >
           <q-item
@@ -224,7 +216,9 @@ function rowStyleFn (row) {
             @click="currentData = value"
           >
             <div style="display: grid; grid-template-columns: 100px 1fr">
-              <div style="display: flex; justify-content: center; align-content: center">{{ key }}</div>
+              <div style="display: flex; justify-content: center; align-content: center; font-size: 1.25rem;">
+                {{ key }}
+              </div>
 
               <div style="display: flex; flex-wrap: wrap; gap: 8px">
                 <q-badge v-for="type in value.types">
@@ -262,8 +256,44 @@ function rowStyleFn (row) {
       bordered
       separator="cell"
       :rows-per-page-options="[0]"
-      :table-row-style-fn="rowStyleFn"
+      :table-row-class-fn="rowClassFn"
     >
+      <template #body-cell-kaf="props">
+        <q-td>
+          {{ cafDataById[props.row.kafcode]?.label }}
+        </q-td>
+      </template>
+
+      <template #body-cell-rukprog="props">
+        <q-td>
+          <div :style="{color: props.row.user_confirmed_name === null ? 'grey' : ''}">
+            <q-icon
+              v-if="props.row.user_confirmed_name !== null"
+              name="check"
+              color="green"
+              size="15px"
+            >
+            </q-icon>
+            {{ props.row.rukprog }}
+          </div>
+        </q-td>
+      </template>
+
+      <template #body-cell-zavkaf="props">
+        <q-td>
+          <div :style="{color: props.row.user_accepted_name === null ? 'grey' : ''}">
+            <q-icon
+              v-if="props.row.user_accepted_name !== null"
+              name="check"
+              color="green"
+              size="15px"
+            >
+            </q-icon>
+            {{ props.row.zavkaf }}
+          </div>
+        </q-td>
+      </template>
+
       <template #body-cell-control="props">
         <q-td>
           <q-btn v-if="getEditRules(props.row.type)" dense flat color="primary" icon="mdi-pencil"
@@ -389,44 +419,48 @@ function rowStyleFn (row) {
   grid-template-columns: auto repeat(5, 1fr) auto auto;
 }
 
-.rpd-row {
-  display: contents;
+:deep(.rpd-row) {
+  //display: contents;
 
-  &.status-0 > div { // "Назначен"
+  &.status-0 > td { // "Назначен"
     background: white;
   }
-  &.status-1 > div { // "Заполняется"
+
+  &.status-1 > td { // "Заполняется"
     background: $light-blue-1;
   }
-  &.status-2 > div { // "Отправлен на проверку"
+
+  &.status-2 > td { // "Отправлен на проверку"
     background: $amber-1;
   }
-  &.status-3 > div { // "Утвержден"
+
+  &.status-3 > td { // "Утвержден"
     background: $green-1;
   }
-  &.status-4 > div { // "Требуются правки"
+
+  &.status-4 > td { // "Требуются правки"
     background: $red-1;
   }
 
 
-  $border: solid 1px silver;
-
-  > div {
-    padding: 0.5rem;
-    border: $border;
-    border-right: none;
-    border-bottom: none;
-
-    &:last-child {
-      border-right: $border;
-    }
-  }
-
-  &:last-child {
-    > div {
-      border-bottom: $border;
-    }
-  }
+  //$border: solid 1px silver;
+  //
+  //> div {
+  //  padding: 0.5rem;
+  //  border: $border;
+  //  border-right: none;
+  //  border-bottom: none;
+  //
+  //  &:last-child {
+  //    border-right: $border;
+  //  }
+  //}
+  //
+  //&:last-child {
+  //  > div {
+  //    border-bottom: $border;
+  //  }
+  //}
 
   &.rpd-row__body {
     //&:hover {
