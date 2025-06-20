@@ -82,7 +82,7 @@ class GeneratorService(object):
                 result.append({
                     **item,
                     "id": res.id,
-                    "plx_file": settings.SITE_URL + ((settings.FORCE_SCRIPT_NAME or "") + line.plan.file.file.url) if line.plan.file else '',
+                    "plx_file": settings.SITE_URL + line.plan.file.file.url if line.plan.file else '',
                     "status": res.status,
                     "status_verbose": res.status_verbose,
                     "kafcode": res.planlines.caf,
@@ -312,7 +312,7 @@ class GeneratorService(object):
                 'startyear': i.planlines.plan.startyear,
                 'id': i.id,
             } for i in common_links],
-            "plx_file": settings.SITE_URL + ((settings.FORCE_SCRIPT_NAME or "") + instance.planlines.plan.file.file.url) if instance.planlines.plan.file else '',
+            "plx_file": settings.SITE_URL + instance.planlines.plan.file.file.url if instance.planlines.plan.file else '',
             **serializer.data,
         }
         return result
