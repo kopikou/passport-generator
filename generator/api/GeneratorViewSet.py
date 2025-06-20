@@ -519,6 +519,9 @@ class GeneratorViewSet(
             instance.status = PlanLinesLink.StatusChoices.accepted
         instance.save()
 
+        if instance.status == PlanLinesLink.StatusChoices.accepted:
+            ReportService.generate_rpd_report(instance)
+
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
         GeneratorService.reset_practice_list_cache(self.request.user.userprofile.mira_id)
 
@@ -533,6 +536,9 @@ class GeneratorViewSet(
         if instance.user_confirmed and instance.user_accepted:
             instance.status = PlanLinesLink.StatusChoices.accepted
         instance.save()
+
+        if instance.status == PlanLinesLink.StatusChoices.accepted:
+            ReportService.generate_rpd_report(instance)
 
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
         GeneratorService.reset_practice_list_cache(self.request.user.userprofile.mira_id)
