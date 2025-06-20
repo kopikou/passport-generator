@@ -793,7 +793,7 @@ class GeneratorViewSet(
         serializer = GetAdmissionsForSiteInfoSerializer(data=self.request.query_params)
         serializer.is_valid()
 
-        query = PlanData.objects.all()
+        query = PlanData.objects.filter(is_deleted=False).all()
         if 'startyear' in serializer.validated_data:
             query = query.filter(startyear=serializer.validated_data['startyear'])
 
@@ -807,6 +807,8 @@ class GeneratorViewSet(
             }.get(serializer.validated_data['level'])
             if studylevel:
                 query = query.filter(studylevel=studylevel)
+
+        query = list(query)
 
         for plan in query:
             admission_info = Catadmission.objects.filter(
