@@ -99,7 +99,8 @@ function addMTO() {
 
   $q.dialog({
     component: GeneratorAddLogisticsDialog,
-  }).onOk(() => {
+  }).onOk((data) => {
+    oborudData.value.push(data);
     // oborudData.value = disciplineLogistics.value[0]?.value || []
     saveOborud()
   })

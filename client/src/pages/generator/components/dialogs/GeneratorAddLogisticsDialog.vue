@@ -31,13 +31,12 @@ const name = ref<string>('')
 async function onOKClick() {
   $q.loading.show({message: "Сохранение"})
 
-  disciplineLogistics.value[0]?.value.push({
+
+  $q.loading.hide()
+  onDialogOK({
     id: Math.floor(Math.random() * 100000),
     name: name.value,
   })
-
-  $q.loading.hide()
-  onDialogOK()
 }
 
 </script>
