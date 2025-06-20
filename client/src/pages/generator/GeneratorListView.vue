@@ -106,6 +106,7 @@ const filteredListData = computed(() => {
         item[0],
         {
           abbr: item[0],
+          plx_file: items[0].plx_file,
           items: items,
           types: _(items).map(x => x.type).flatten().uniq().value(),
           statuses: _(items).orderBy(x => STATUSES[x["status_verbose"]].index).groupBy('status_verbose').value(),
@@ -219,7 +220,9 @@ onBeforeMount(async () => {
                   </template>
                   <q-card>
                     <q-card-section>
+                      <a :href="item.plx_file">Скачать *.plx</a>
                       <div class="rpd-container">
+
                         <div class="rpd-row rpd-row__header text-weight-bold text-center">
                           <div>Код</div>
                           <div>Дисциплина</div>

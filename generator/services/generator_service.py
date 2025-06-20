@@ -312,6 +312,7 @@ class GeneratorService(object):
                 'startyear': i.planlines.plan.startyear,
                 'id': i.id,
             } for i in common_links],
+            "plx_file": settings.SITE_URL + ((settings.FORCE_SCRIPT_NAME or "") + instance.planlines.plan.file.file.url) if instance.planlines.plan.file else '',
             **serializer.data,
         }
         return result

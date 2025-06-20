@@ -138,6 +138,9 @@ watch(additionalInfo, () => {
       <span v-else>по дисциплине</span>
       "{{ rpdData.planlines?.dis }}" получены автоматически из учебного плана
     </div>
+    <div>
+      <a target="__blank" :href="rpdData.plx_file">Скачать *.plx</a>
+    </div>
     <q-separator class="q-mt-md q-mb-md"/>
     <div>
       <q-toggle v-model="can_be_copied_by_anyone">Разрешить копировать дисциплину любому преподавателю (т.е. любой преподаватель сможет скопировать себе в РПД данные, которые вы внесли, при условии совпадения названия дисциплины)</q-toggle>
