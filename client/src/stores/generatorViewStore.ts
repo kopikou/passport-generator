@@ -92,7 +92,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   const disciplineThemes = computed<DisciplineThemesData[]>({
       get() {
-          return rpdData.value.discipline_themes || []
+          return _.orderBy(rpdData.value.discipline_themes || [], x => `${x.semester} ${x.name}`)
       },
       set(value) {
           rpdData.value.discipline_themes = value;
