@@ -34,6 +34,7 @@ function addTheme() {
       id: null,
     },
   }).onOk(() => {
+    generatorViewStore.getData();
     generatorViewStore.checkErrors()
   })
 }
@@ -46,11 +47,12 @@ function updateTheme(id) {
       id: id,
     },
   }).onOk(() => {
+    generatorViewStore.getData();
     generatorViewStore.checkErrors()
   })
 }
 
-async function deleteTheme(id) {
+async function deleteTheme(item) {
 
   $q.dialog({
     title: 'Удаление темы',
@@ -69,14 +71,15 @@ async function deleteTheme(id) {
   }).onOk(async () => {
 
     $q.loading.show({message: "Удаление"})
-    let r = await api.get(`/api/generator/${activeRpdId.value}/delete-discipline-themes/`, {params: {id: id}})
+    let r = await api.get(`/api/generator/${activeRpdId.value}/delete-discipline-themes/`, {params: {id: item.id}})
 
-    rpdData.value.discipline_themes.splice(_.findKey(disciplineThemes.value, (x) => x.id == id), 1)
-    rpdData.value.discipline_work_hour = _.filter(disciplineWorkHour.value, x => x.theme_id != id)
+    rpdData.value.discipline_themes = rpdData.value.discipline_themes.filter(x => x.id != item.id)
+    rpdData.value.discipline_work_hour = _.filter(disciplineWorkHour.value, x => x.theme_id != item.id)
+    await prepareOrderBySemester(item.semester)
 
+    generatorViewStore.getData();
     generatorViewStore.checkErrors()
     $q.loading.hide()
-
   })
 
 }
@@ -88,6 +91,12 @@ const maxNumberInSemester = computed(() => {
 const filteredData = computed(() => {
   return _.orderBy(disciplineThemes.value, (x) => x.num, 'asc')
 })
+
+async function prepareOrderBySemester(semester: number) {
+  await api.post(`/api/generator/${activeRpdId.value}/set-themes-order/`, {
+    order: disciplineThemes.value.filter(x => x.semester == semester).map(x => x.id)
+  })
+}
 
 async function fieldUp(item) {
   let dontChange =  disciplineThemes.value.filter(x => x.semester != item.semester);
@@ -203,7 +212,7 @@ watchEffect(() => {
               </div>
               <div>
                 <q-btn
-                  icon="mdi-delete" color="red" flat @click="deleteTheme(item.id)" :disabled="disabled"
+                  icon="mdi-delete" color="red" flat @click="deleteTheme(item)" :disabled="disabled"
                 />
                 <q-btn
                   icon="mdi-pencil-outline" color="green" flat @click="updateTheme(item.id)" :disabled="disabled"
