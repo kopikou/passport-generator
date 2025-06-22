@@ -34,8 +34,8 @@ async function copyOldProgram(id: number) {
     component: GeneratorCopyOptionsDialog
   }).onOk(async (options: CopyOptions) => {
 
-    console.log(options)
-    return
+    // console.log(options)
+    // return
 
      $q.loading.show({
       message: "Копирую"
