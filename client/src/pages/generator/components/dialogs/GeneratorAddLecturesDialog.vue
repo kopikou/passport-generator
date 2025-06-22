@@ -77,11 +77,7 @@ async function onOKClick() {
     num: props.id ? data[props.id].num : maxNum,
   })
 
-  if (!props.id) {
-    rpdData.value.discipline_work_hour.push(r.data)
-  } else {
-    rpdData.value.discipline_work_hour[_.findKey(rpdData.value.discipline_work_hour, (x) => x.id == props.id)] = r.data
-  }
+  await generatorViewStore.getData()
 
   $q.loading.hide()
   onDialogOK()

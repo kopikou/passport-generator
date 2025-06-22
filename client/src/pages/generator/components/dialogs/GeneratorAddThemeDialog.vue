@@ -69,12 +69,12 @@ async function onOKClick() {
     id: props.id,
     num: props.id ? data[props.id].num : maxNum,
   })
-
-  if (!props.id) {
-    rpdData.value.discipline_themes.push(r.data)
-  } else {
-    rpdData.value.discipline_themes[_.findKey(disciplineThemes.value, (x) => x.id == props.id)] = r.data
-  }
+  //
+  // if (!props.id) {
+  //   rpdData.value.discipline_themes.push(r.data)
+  // } else {
+  //   rpdData.value.discipline_themes[_.findKey(disciplineThemes.value, (x) => x.id == props.id)] = r.data
+  // }
 
   $q.loading.hide()
   onDialogOK()
