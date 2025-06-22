@@ -336,3 +336,22 @@ export interface DefaultRecources {
   type: number,
   url: string,
 }
+
+export interface CopyOptions {
+  replace: boolean,
+  indicators: boolean,
+  themes: boolean,
+  lections: boolean,
+  labs: boolean,
+  practices: boolean,
+  srs: boolean,
+  additional_info_resources: boolean,
+  additional_info_interactiveMethods: boolean,
+  additional_info_disciplinePlace: boolean,
+  additional_info_software: boolean,
+  additional_info_logistics: boolean,
+  additional_info_guidelines: boolean,
+  additional_info_library: boolean,
+  additional_info_tat: boolean,
+  additional_info_fos: boolean,
+}

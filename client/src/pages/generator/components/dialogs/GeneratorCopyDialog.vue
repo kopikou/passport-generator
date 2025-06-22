@@ -6,6 +6,9 @@ import {storeToRefs} from "pinia";
 import EmptyIcon from "components/EmptyIcon.vue";
 import {api} from "boot/axios";
 import {computed, ref} from "vue";
+import GeneratorAcceptDialog from "pages/generator/components/dialogs/GeneratorAcceptDialog.vue";
+import GeneratorCopyOptionsDialog from "pages/generator/components/dialogs/GeneratorCopyOptionsDialog.vue";
+import {CopyOptions} from "src/types";
 
 defineEmits([
   ...useDialogPluginComponent.emits
@@ -27,27 +30,35 @@ const {
 const typeTab = ref('old');
 
 async function copyOldProgram(id: number) {
-  $q.loading.show({
-    message: "Копирую"
-  })
-  let r = await api.get(`/api/generator/${activeRpdId.value}/copy-old-rpd-program/`, {params: {old_pk: id}})
+  $q.dialog({
+    component: GeneratorCopyOptionsDialog
+  }).onOk(async (options: CopyOptions) => {
 
-  if (r.status == 200) {
-    $q.notify({
-      message: "УРА копирование удалось :)",
-      position: "top-right",
-      color: "positive",
+    console.log(options)
+    return
+
+     $q.loading.show({
+      message: "Копирую"
     })
-    await generatorViewStore.getData()
-  } else {
-    $q.notify({
-      message: "Ошибка копирования, напишите в поддержку о вашей проблеме :(",
-      position: "top-right",
-      color: "negative",
-    })
-  }
-  $q.loading.hide()
-  onDialogOK()
+    let r = await api.post(`/api/generator/${activeRpdId.value}/copy-old-rpd-program/`, options, {params: {old_pk: id}})
+
+    if (r.status == 200) {
+      $q.notify({
+        message: "УРА копирование удалось :)",
+        position: "top-right",
+        color: "positive",
+      })
+      await generatorViewStore.getData()
+    } else {
+      $q.notify({
+        message: "Ошибка копирования, напишите в поддержку о вашей проблеме :(",
+        position: "top-right",
+        color: "negative",
+      })
+    }
+    $q.loading.hide()
+    onDialogOK()
+  })
 }
 
 async function copyNewProgram(id: number) {
@@ -78,25 +89,31 @@ async function copyNewProgram(id: number) {
 const textFilter = ref("");
 
 const oldPlansFiltered = computed(() => {
-  return oldPlans.value.filter(x => {return !textFilter.value
-  || x.species.toLowerCase().includes(textFilter.value)
-  || x.abbrprofile.toLowerCase().includes(textFilter.value)})
+  return oldPlans.value.filter(x => {
+    return !textFilter.value
+      || x.species.toLowerCase().includes(textFilter.value)
+      || x.abbrprofile.toLowerCase().includes(textFilter.value)
+  })
 })
 const newPlansFiltered = computed(() => {
-  return newPlans.value.filter(x => {return !textFilter.value
-  || x.species.toLowerCase().includes(textFilter.value)
-  || x.abbrprofile.toLowerCase().includes(textFilter.value)})
+  return newPlans.value.filter(x => {
+    return !textFilter.value
+      || x.species.toLowerCase().includes(textFilter.value)
+      || x.abbrprofile.toLowerCase().includes(textFilter.value)
+  })
 })
 const commonPlansFiltered = computed(() => {
-  return commonPlans.value.filter(x => {return !textFilter.value
-  || x.species.toLowerCase().includes(textFilter.value)
-  || x.abbrprofile.toLowerCase().includes(textFilter.value)})
+  return commonPlans.value.filter(x => {
+    return !textFilter.value
+      || x.species.toLowerCase().includes(textFilter.value)
+      || x.abbrprofile.toLowerCase().includes(textFilter.value)
+  })
 })
 
 </script>
 
 <template>
-  <q-dialog ref="dialogRef" @hide="onDialogHide" >
+  <q-dialog ref="dialogRef" @hide="onDialogHide">
     <q-card class="q-dialog-plugin" style="width: 700px;">
       <q-card-section>
         <div class="text-h6">

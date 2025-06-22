@@ -343,3 +343,28 @@ class WorkHoursOrderSerializer(serializers.Serializer):
 class GetAdmissionsForSiteInfoSerializer(serializers.Serializer):
     year = serializers.IntegerField(required=False)
     level = serializers.IntegerField(required=False)
+
+
+class CopyProgramSerializer(serializers.Serializer):
+    replace = serializers.BooleanField(required=False, default=False)
+
+    indicators = serializers.BooleanField(required=False, default=False)
+    themes = serializers.BooleanField(required=False, default=False)
+    lections = serializers.BooleanField(required=False, default=False)
+    labs = serializers.BooleanField(required=False, default=False)
+    practices = serializers.BooleanField(required=False, default=False)
+    srs = serializers.BooleanField(required=False, default=False)
+
+    additional_info_resources= serializers.BooleanField(required=False, default=False)
+    additional_info_interactiveMethods= serializers.BooleanField(required=False, default=False)
+    additional_info_disciplinePlace= serializers.BooleanField(required=False, default=False)
+    additional_info_software= serializers.BooleanField(required=False, default=False)
+    additional_info_logistics= serializers.BooleanField(required=False, default=False)
+    additional_info_guidelines= serializers.BooleanField(required=False, default=False)
+    additional_info_library= serializers.BooleanField(required=False, default=False)
+    additional_info_tat= serializers.BooleanField(required=False, default=False)
+    additional_info_fos= serializers.BooleanField(required=False, default=False)
+
+
+
+

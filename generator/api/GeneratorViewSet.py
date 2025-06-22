@@ -36,7 +36,7 @@ from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanConfi
 from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
     DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer, \
-    ThemesOrderSerializer, WorkHoursOrderSerializer, GetAdmissionsForSiteInfoSerializer
+    ThemesOrderSerializer, WorkHoursOrderSerializer, GetAdmissionsForSiteInfoSerializer, CopyProgramSerializer
 from generator.services import ReportService
 from generator.services.generator_service import GeneratorService
 from rpd.models import PlanData, LinesIndicators, PlanDocuments, DocumentsTypes
@@ -614,9 +614,12 @@ class GeneratorViewSet(
         return Response()
 
 
-    @action(methods=['GET'], url_path="copy-old-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['POST'], url_path="copy-old-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
     def get_old_rpd(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
+
+        serializer = CopyProgramSerializer(self.request.data)
+        serializer.is_valid()
 
         old_pk = int(self.request.query_params['old_pk'])
 
@@ -640,111 +643,139 @@ class GeneratorViewSet(
             raise APIException("Нет данных для копирования")
         cattitle_id = cattitle[0]['id']
 
-        DisciplineThemes.objects.filter(planlineslink_id=pk).delete()
-        DisciplineWorkHours.objects.filter(planlineslink_id=pk).delete()
-        DisciplineIndicators.objects.filter(planlineid_id=instance['planlines']['id']).delete()
+        if serializer.validated_data['indicators']:
+            DisciplineIndicators.objects.filter(planlineid_id=instance['planlines']['id']).delete()
 
-        instance_indicators_by_index = {i['indicator_index']: i['id'] for i in instance['planlines']['indicators']}
-        plan_indikators = RPDGenSerivce.get_mleha_planindikator(cattitle[0]['cplanlines'])
+            instance_indicators_by_index = {i['indicator_index']: i['id'] for i in instance['planlines']['indicators']}
+            plan_indikators = RPDGenSerivce.get_mleha_planindikator(cattitle[0]['cplanlines'])
 
-        for item in plan_indikators:
-            indicator = RPDGenSerivce.get_mleha_indikator(item['indikid'])
+            for item in plan_indikators:
+                indicator = RPDGenSerivce.get_mleha_indikator(item['indikid'])
 
-            indicator_id = instance_indicators_by_index.get(indicator[0]['index'])
+                indicator_id = instance_indicators_by_index.get(indicator[0]['index'])
 
-            if indicator_id:
-                dis_indicator_serializer = DisciplineIndicatorsAddSerializer(data={
-                    "indicator_id": indicator_id,
-                    "planlineid_id": instance['planlines']['id'],
-                    "know": item['znat'],
-                    "able": item['umet'],
-                    "own": item['vladet'],
-                    "criteria": item['kriteriy_oceniv'],
-                    "methods": item['metod_oceniv'],
-                })
-                dis_indicator_serializer.is_valid(raise_exception=True)
-                dis_indicator_serializer.save()
+                if indicator_id:
+                    dis_indicator_serializer = DisciplineIndicatorsAddSerializer(data={
+                        "indicator_id": indicator_id,
+                        "planlineid_id": instance['planlines']['id'],
+                        "know": item['znat'],
+                        "able": item['umet'],
+                        "own": item['vladet'],
+                        "criteria": item['kriteriy_oceniv'],
+                        "methods": item['metod_oceniv'],
+                    })
+                    dis_indicator_serializer.is_valid(raise_exception=True)
+                    dis_indicator_serializer.save()
 
-        d2s = RPDGenSerivce.get_displ2semestr(cattitle_id)
 
-        for item in d2s:
+        has_to_change_themes = any([
+            serializer.validated_data['themes'],
+            serializer.validated_data['lections'],
+            serializer.validated_data['labs'],
+            serializer.validated_data['practices'],
+            serializer.validated_data['srs'],
+        ])
 
-            d2lek = RPDGenSerivce.get_displ2lek(item['id'])
+        if has_to_change_themes:
+            themes_to_keep = DisciplineThemes.objects.filter(planlineslink_id=pk).delete()
+            themes_to_keep = {
+                f"{i.semester}_{i.name}": i
+                for i in themes_to_keep
+            }
 
-            for i in d2lek:
+            if serializer.validated_data['replace']:
+                # DisciplineThemes.objects.filter(planlineslink_id=pk).delete()
+                if serializer.validated_data['lections']:
+                    DisciplineWorkHours.objects.filter(planlineslink_id=pk, type=DisciplineWorkHours.TypeChoices.lectures).delete()
+                if serializer.validated_data['labs']:
+                    DisciplineWorkHours.objects.filter(planlineslink_id=pk, type=DisciplineWorkHours.TypeChoices.laboratory).delete()
+                if serializer.validated_data['practices']:
+                    DisciplineWorkHours.objects.filter(planlineslink_id=pk, type=DisciplineWorkHours.TypeChoices.practice).delete()
+                if serializer.validated_data['srs']:
+                    DisciplineWorkHours.objects.filter(planlineslink_id=pk, type=DisciplineWorkHours.TypeChoices.independent).delete()
 
-                control = current_control_by_id.get(i['ccurrent_control'], 'Отчет')
-                form_control_id = form_control_by_name.get(control, None)
+            d2s = RPDGenSerivce.get_displ2semestr(cattitle_id)
 
-                theme_serializer = DisciplineThemeSerializer(data={
-                    "planlineslink_id": pk,
-                    "name": i['tema'] or '-',
-                    "semester": item['semestr'],
-                    "formcontrol_list": [form_control_id],
-                    "comment": i['note'],
-                    "num": i['num'] or 1,
-                })
-                theme_serializer.is_valid(raise_exception=True)
-                theme_serializer.save()
+            for item in d2s:
 
-                lek_serializer = DisciplineWorkHoursSerializer(data={
-                    "planlineslink_id": pk,
-                    "theme_id": theme_serializer.data['id'],
-                    "type": DisciplineWorkHours.TypeChoices.lectures,
-                    "name": i['tema'] or '-',
-                    "hours": i['hour'] or 0,
-                    "semester": item['semestr'],
-                    "num": i['num'] or 1,
-                })
-                lek_serializer.is_valid(raise_exception=True)
-                lek_serializer.save()
+                d2lek = RPDGenSerivce.get_displ2lek(item['id'])
 
-                d2sam = RPDGenSerivce.get_displ2sam(i['id'])
+                for i in d2lek:
 
-                for sam in d2sam:
-                    independent = kind_srs_by_id.get(sam['ckindsrs'], '-')
+                    control = current_control_by_id.get(i['ccurrent_control'], 'Отчет')
+                    form_control_id = form_control_by_name.get(control, None)
 
-                    sam_serializer = DisciplineWorkHoursSerializer(data={
+                    theme = themes_to_keep.get(f"{item['semestr']}_{i['tema'] or '-',}")
+                    if not theme:
+                        theme_serializer = DisciplineThemeSerializer(data={
+                            "planlineslink_id": pk,
+                            "name": i['tema'] or '-',
+                            "semester": item['semestr'],
+                            "formcontrol_list": [form_control_id],
+                            "comment": i['note'],
+                            "num": i['num'] or 1,
+                        })
+                        theme_serializer.is_valid(raise_exception=True)
+                        theme_serializer.save()
+
+                    lek_serializer = DisciplineWorkHoursSerializer(data={
                         "planlineslink_id": pk,
                         "theme_id": theme_serializer.data['id'],
-                        "type": DisciplineWorkHours.TypeChoices.independent,
-                        "name": independent or '-',
-                        "hours": sam['hour'] or 0,
+                        "type": DisciplineWorkHours.TypeChoices.lectures,
+                        "name": i['tema'] or '-',
+                        "hours": i['hour'] or 0,
                         "semester": item['semestr'],
-                        "num": sam['num'] or 1,
+                        "num": i['num'] or 1,
                     })
-                    sam_serializer.is_valid(raise_exception=True)
-                    sam_serializer.save()
+                    lek_serializer.is_valid(raise_exception=True)
+                    lek_serializer.save()
 
-                d2pract = RPDGenSerivce.get_displ2pract(i['id'])
+                    d2sam = RPDGenSerivce.get_displ2sam(i['id'])
 
-                for pract in d2pract:
-                    pract_serializer = DisciplineWorkHoursSerializer(data={
-                        "planlineslink_id": pk,
-                        "theme_id": theme_serializer.data['id'],
-                        "type": DisciplineWorkHours.TypeChoices.practice,
-                        "name": pract['tema'] or '-',
-                        "hours": pract['hour'] or 0,
-                        "semester": item['semestr'],
-                        "num": pract['num'] or 1,
-                    })
-                    pract_serializer.is_valid(raise_exception=True)
-                    pract_serializer.save()
+                    for sam in d2sam:
+                        independent = kind_srs_by_id.get(sam['ckindsrs'], '-')
 
-                d2lab = RPDGenSerivce.get_displ2lab(i['id'])
+                        sam_serializer = DisciplineWorkHoursSerializer(data={
+                            "planlineslink_id": pk,
+                            "theme_id": theme_serializer.data['id'],
+                            "type": DisciplineWorkHours.TypeChoices.independent,
+                            "name": independent or '-',
+                            "hours": sam['hour'] or 0,
+                            "semester": item['semestr'],
+                            "num": sam['num'] or 1,
+                        })
+                        sam_serializer.is_valid(raise_exception=True)
+                        sam_serializer.save()
 
-                for lab in d2lab:
-                    lab_serializer = DisciplineWorkHoursSerializer(data={
-                        "planlineslink_id": pk,
-                        "theme_id": theme_serializer.data['id'],
-                        "type": DisciplineWorkHours.TypeChoices.laboratory,
-                        "name": lab['tema'] or '-',
-                        "hours": lab['hour'] or 0,
-                        "semester": item['semestr'],
-                        "num": lab['num'] or 1,
-                    })
-                    lab_serializer.is_valid(raise_exception=True)
-                    lab_serializer.save()
+                    d2pract = RPDGenSerivce.get_displ2pract(i['id'])
+
+                    for pract in d2pract:
+                        pract_serializer = DisciplineWorkHoursSerializer(data={
+                            "planlineslink_id": pk,
+                            "theme_id": theme_serializer.data['id'],
+                            "type": DisciplineWorkHours.TypeChoices.practice,
+                            "name": pract['tema'] or '-',
+                            "hours": pract['hour'] or 0,
+                            "semester": item['semestr'],
+                            "num": pract['num'] or 1,
+                        })
+                        pract_serializer.is_valid(raise_exception=True)
+                        pract_serializer.save()
+
+                    d2lab = RPDGenSerivce.get_displ2lab(i['id'])
+
+                    for lab in d2lab:
+                        lab_serializer = DisciplineWorkHoursSerializer(data={
+                            "planlineslink_id": pk,
+                            "theme_id": theme_serializer.data['id'],
+                            "type": DisciplineWorkHours.TypeChoices.laboratory,
+                            "name": lab['tema'] or '-',
+                            "hours": lab['hour'] or 0,
+                            "semester": item['semestr'],
+                            "num": lab['num'] or 1,
+                        })
+                        lab_serializer.is_valid(raise_exception=True)
+                        lab_serializer.save()
 
         return Response(data={"success": True}, status=status.HTTP_200_OK)
 
