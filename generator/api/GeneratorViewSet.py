@@ -930,8 +930,8 @@ class GeneratorViewSet(
             data=data,
         )
 
-    @action(methods=['GET'], url_path="get-rpd-file", detail=False, permission_classes=[])
-    def get_rpd_file(self, request, *args, **kwargs):
+    @action(methods=['GET'], url_path="get-rpd-done-info", detail=False, permission_classes=[])
+    def get_rpd_done_info(self, request, *args, **kwargs):
         data = []
 
         query = PlanData.objects.filter(is_deleted=False).all()
@@ -950,7 +950,7 @@ class GeneratorViewSet(
 
             rpds = list(PlanLinesLink.objects.filter(
                 planlines__plan_id=plan.id,
-                last_accepted_file__isnull=False
+                # last_accepted_file__isnull=False
             ).exclude(last_accepted_file=''))
 
             for rpd in rpds:
@@ -960,7 +960,7 @@ class GeneratorViewSet(
                     'Дисциплина': rpd.planlines.dis,
                     'newdisid': rpd.planlines.newdisid,
                     'Статус': rpd.status_verbose,
-                    'Дата загрузки программы': str(rpd.created_at)
+                    'Дата загрузки программы': str(rpd.review_date)
                 })
 
         df = pd.DataFrame(data)
