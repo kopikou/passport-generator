@@ -960,7 +960,7 @@ class GeneratorViewSet(
                     'Дисциплина': rpd.planlines.dis,
                     'newdisid': rpd.planlines.newdisid,
                     'Статус': rpd.status_verbose,
-                    'Дата загрузки программы': rpd.created_at
+                    'Дата загрузки программы': str(rpd.created_at)
                 })
 
         df = pd.DataFrame(data)
