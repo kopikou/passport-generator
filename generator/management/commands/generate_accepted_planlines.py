@@ -18,7 +18,4 @@ class Command(BaseCommand):
         pbar = tqdm(links)
         for l in pbar:
             pbar.set_description(f"PlanLinesLink: {l.id}")
-            try:
-                ReportService.generate_rpd_report(l)
-            except Exception as e:
-                pbar.set_description(f"PlanLinesLink {l.id} ERROR: {e}")
+            ReportService.generate_rpd_report(l)
