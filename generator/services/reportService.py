@@ -883,7 +883,7 @@ class ReportService(object):
                 for k, i in enumerate(item['value'], start=1):
                     logistics.append({
                         'number': k,
-                        'name': i['name'],
+                        'name': i.get('name', ''),
                     })
 
             if item['type'] == 'tat':
@@ -1005,9 +1005,9 @@ class ReportService(object):
         for e, item in enumerate(data['discipline_work_hour']):
             work_hour.append({
                 "num": item['semester'],
-                "theme": discipline_themes[item['theme_id']]['name'],
+                "theme": discipline_themes[item['theme_id']]['name'] if item['theme_id'] else '',
                 "theme_id": item['theme_id'],
-                "formcontrol": ', '.join([formcontrol_by_id[i] for i in discipline_themes[item['theme_id']]['formcontrol_list']]),
+                "formcontrol": ', '.join([formcontrol_by_id[i] for i in discipline_themes[item['theme_id']]['formcontrol_list']]) if item['theme_id'] else '',
                 "type": item['type'],
                 "content": item['name'],
                 "hours": item['hours'],
