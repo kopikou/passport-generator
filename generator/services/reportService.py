@@ -257,7 +257,7 @@ class ReportService(object):
 
         for item in data['additional_info']:
             if item['type'] == 'practiceWay':
-                practice_way = item['value']['practiceWay']
+                practice_way = item['value'].get('practiceWay', [])
                 practice_form = item['value'].get('practiceForm', [])
 
             if item['type'] == 'fos':
@@ -326,7 +326,7 @@ class ReportService(object):
                 for k, i in enumerate(item['value'], start=1):
                     logistics.append({
                         'number': k,
-                        'name': i['name'],
+                        'name': i.get('name', ''),
                     })
 
             if item['type'] == 'tat':
@@ -372,7 +372,7 @@ class ReportService(object):
                 "kurs": (item['num'] + 1) // 2,
                 "srs_hours": item['srs'] or 0,
                 "weeks": int(item['srs'] / 54) if item['srs'] else 0,
-                "zet": int(item['zet']) or 0,
+                "zet": int(item['zet']) if item['zet'] else 0,
                 "tic": ', '.join(get_tic_name(item)),
             })
 
