@@ -257,6 +257,7 @@ function rowClassFn (row) {
       separator="cell"
       :rows-per-page-options="[0]"
       :table-row-class-fn="rowClassFn"
+      table-header-style="position: sticky; z-index: 1; top: 0; background: #FAA862FF"
     >
       <template #body-cell-kaf="props">
         <q-td>
@@ -303,6 +304,13 @@ function rowClassFn (row) {
         </q-td>
       </template>
     </q-table>
+
+    <span
+      v-if="currentData === null"
+      style="align-content: center; text-align: center; font-size: 20px; font-weight: bold"
+    >
+      Выберите нужный раздел слева
+    </span>
         <!--          <q-list-->
         <!--            separator-->
         <!--            class="col-3"-->
@@ -468,6 +476,12 @@ function rowClassFn (row) {
     //    background: $info !important;
     //  }
     //}
+  }
+
+  &.table-header > th {
+      position: sticky;
+      z-index: 1;
+      top: 0;
   }
 }
 
