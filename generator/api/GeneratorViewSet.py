@@ -5,6 +5,9 @@ from itertools import groupby
 from subprocess import run
 from time import sleep
 
+from app.settings import BASE_DIR
+from pathlib import Path
+
 import pendulum
 from constance import config
 from django.conf import settings
@@ -42,6 +45,12 @@ from generator.services.generator_service import GeneratorService
 from rpd.models import PlanData, LinesIndicators, PlanDocuments, DocumentsTypes
 from rpd.services import RPDGenSerivce
 from uplfile.models import UploadFiles
+
+from django.template.loader import render_to_string
+
+from django.shortcuts import render
+
+import pandas as pd
 
 
 class GeneratorViewSet(
@@ -920,3 +929,45 @@ class GeneratorViewSet(
         return Response(
             data=data,
         )
+
+    @action(methods=['GET'], url_path="get-rpd-file", detail=False, permission_classes=[])
+    def get_rpd_file(self, request, *args, **kwargs):
+        data = []
+
+        query = PlanData.objects.filter(is_deleted=False).all()
+
+        query = list(query)
+
+        for plan in query:
+            admission_info = Catadmission.objects.filter(
+                cuchplan_id=plan.mira_id
+            ).values(
+                'abbr',
+            ).first()
+
+            if not admission_info:
+                continue
+
+            rpds = list(PlanLinesLink.objects.filter(
+                planlines__plan_id=plan.id,
+                last_accepted_file__isnull=False
+            ).exclude(last_accepted_file=''))
+
+            for rpd in rpds:
+                data.append({
+                    'Абревиатура': admission_info['abbr'],
+                    'Группа': plan.startyear,
+                    'Дисциплина': rpd.planlines.dis,
+                    'newdisid': rpd.planlines.newdisid,
+                    'Статус': rpd.status_verbose,
+                    'Дата загрузки программы': rpd.created_at
+                })
+
+        df = pd.DataFrame(data)
+
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = f'attachment; filename=excel_filename.xlsx'
+
+        df.to_excel(response, index=False)
+
+        return response
