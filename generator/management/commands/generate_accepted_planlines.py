@@ -13,9 +13,12 @@ class Command(BaseCommand):
             Q(last_accepted_file__isnull=True) | Q(last_accepted_file__exact=''),
             status=PlanLinesLink.StatusChoices.accepted,
             uploaded_directly=False,
-            is_deleted=True
+            is_deleted=False
         )
         pbar = tqdm(links)
         for l in pbar:
             pbar.set_description(f"PlanLinesLink: {l.id}")
-            ReportService.generate_rpd_report(l)
+            try:
+                ReportService.generate_rpd_report(l)
+            except Exception as e:
+                pbar.set_description(f"PlanLinesLink {l.id} ERROR: {e}")
