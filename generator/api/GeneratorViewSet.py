@@ -966,7 +966,55 @@ class GeneratorViewSet(
         df = pd.DataFrame(data)
 
         response = HttpResponse(content_type='application/vnd.ms-excel')
-        response['Content-Disposition'] = f'attachment; filename=excel_filename.xlsx'
+        response['Content-Disposition'] = f'attachment; filename=rpd_info.xlsx'
+
+        df.to_excel(response, index=False)
+
+        return response
+
+    @action(methods=['GET'], url_path="get-oop-done-info", detail=False, permission_classes=[])
+    def get_oop_done_info(self, request, *args, **kwargs):
+        data = []
+
+        query = PlanData.objects.filter(is_deleted=False).all()
+
+        query = list(query)
+
+        for plan in query:
+            admission_info = Catadmission.objects.filter(
+                cuchplan_id=plan.mira_id
+            ).values(
+                'name',
+            ).first()
+
+            if not admission_info:
+                continue
+
+            files = UploadFiles.objects.filter(rpd=plan.id)
+            files_by_type = {i.type_id: i for i in files}
+            documents = PlanDocuments.objects.filter(plan_id=plan.id)
+
+            upload_docs = [d for d in documents if d.new_type_id in files_by_type]
+            all_upload_docs_titles = [d.name for d in upload_docs]
+
+            data.append({
+                'Группа': admission_info['name'],
+                'Доков надо': len(documents),
+                'Доков сделано': len(upload_docs),
+                'ООП': '+' if 'ООП' in all_upload_docs_titles else '-',
+                'АОП': '+' if 'АОП' in all_upload_docs_titles else '-',
+                'Программа ГИА': '+' if 'Программа ГИА' in all_upload_docs_titles else '-',
+                'ФОС ГИА': '+' if 'ФОС ГИА' in all_upload_docs_titles else '-',
+                'Рабочая программа воспитания': '+' if 'Рабочая программа воспитания' in all_upload_docs_titles else '-',
+                'Схема компетенций': '',
+                'Матрица компетенций':'',
+                'Все документы': all_upload_docs_titles,
+            })
+
+        df = pd.DataFrame(data)
+
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = f'attachment; filename=oop_info.xlsx'
 
         df.to_excel(response, index=False)
 
