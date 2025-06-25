@@ -179,47 +179,47 @@ watch(currentItem, () => {
       </q-td>
     </template>
   </q-table>
-  <q-select-filterable
-    class="q-mt-md"
-    transition-show="jump-up"
-    transition-hide="jump-up"
-    filled
-    outlined
-    use-input
-    input-debounce="500"
-    emit-value
-    map-options
-    v-model="type_activity"
-    :options="types_list"
-    label="Вид профессионнальной деятельности"
-    option-label="title"
-    options-value="id"
-    clearable
-    @update:model-value="addTypeItem"
-  >
-  </q-select-filterable>
+<!--  <q-select-filterable-->
+<!--    class="q-mt-md"-->
+<!--    transition-show="jump-up"-->
+<!--    transition-hide="jump-up"-->
+<!--    filled-->
+<!--    outlined-->
+<!--    use-input-->
+<!--    input-debounce="500"-->
+<!--    emit-value-->
+<!--    map-options-->
+<!--    v-model="type_activity"-->
+<!--    :options="types_list"-->
+<!--    label="Вид профессионнальной деятельности"-->
+<!--    option-label="title"-->
+<!--    options-value="id"-->
+<!--    clearable-->
+<!--    @update:model-value="addTypeItem"-->
+<!--  >-->
+<!--  </q-select-filterable>-->
 
-  <q-table
-    :rows="rowsTypes"
-    :columns="columnsTypes"
-    row-key="id"
-    wrap-cells
-    virtual-scroll
+<!--  <q-table-->
+<!--    :rows="rowsTypes"-->
+<!--    :columns="columnsTypes"-->
+<!--    row-key="id"-->
+<!--    wrap-cells-->
+<!--    virtual-scroll-->
 
-    :rows-per-page-options="[0]"
-    no-data-label="Вид профессиональной деятельности не выбран"
-  >
-    <template v-slot:body-cell-actions="props">
-      <q-td style="text-align: right">
-        <q-btn
-          flat
-          color="negative"
-          icon="delete"
-          @click="removeType(props.row.id)"
-        />
-      </q-td>
-    </template>
-  </q-table>
+<!--    :rows-per-page-options="[0]"-->
+<!--    no-data-label="Вид профессиональной деятельности не выбран"-->
+<!--  >-->
+<!--    <template v-slot:body-cell-actions="props">-->
+<!--      <q-td style="text-align: right">-->
+<!--        <q-btn-->
+<!--          flat-->
+<!--          color="negative"-->
+<!--          icon="delete"-->
+<!--          @click="removeType(props.row.id)"-->
+<!--        />-->
+<!--      </q-td>-->
+<!--    </template>-->
+<!--  </q-table>-->
 </template>
 
 <style scoped lang="scss">
