@@ -87,7 +87,7 @@ function getRules(data, item) {
   if (data.can_upload == 't') return true
   const doc = baseDocumentsById.value[item.type_id]
   let rule = []
-  if (data.admin && data.can_upload) rule.push(1)
+  if (data.admin) rule.push(1)
   if (data.cperson == mira_id.value) rule.push(0)
 
   return _.map(rule, x => {

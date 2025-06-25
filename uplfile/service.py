@@ -15,7 +15,7 @@ class UploadFileService(object):
         startyear_list = list(set([i['startyear'] for i in data]))
 
         filtered_data = PlanData.objects \
-            .filter(abbrprofile__in=abbrprofile_list, startyear__in=startyear_list, file__status=4, is_deleted=False) \
+            .filter(abbrprofile__in=abbrprofile_list, startyear__in=startyear_list, file__status=4) \
             .prefetch_related(
             Prefetch("plan_documents", queryset=PlanDocuments.objects.select_related("new_type").all()),
             Prefetch("uplfile", queryset=UploadFiles.objects.all())
