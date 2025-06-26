@@ -1,3 +1,9 @@
+import os
+import pathlib
+
+from django.core.exceptions import SuspiciousFileOperation
+from django.core.files.storage import FileSystemStorage
+from django.core.files.utils import validate_file_name
 from django.db import models, connections
 from django.conf import settings
 from django.core.cache import cache
@@ -164,3 +170,16 @@ class DBRepository(object):
     def cursor(self):
         connection = self.engine.raw_connection()
         return connection.cursor()
+
+
+class OverwriteStorage(FileSystemStorage):
+    def get_available_name(self, name, max_length=None):
+        name = str(name).replace("\\", "/")
+        dir_name, file_name = os.path.split(name)
+        if ".." in pathlib.PurePath(dir_name).parts:
+            raise SuspiciousFileOperation(
+                "Detected path traversal attempt in '%s'" % dir_name
+            )
+        validate_file_name(file_name)
+
+        return name

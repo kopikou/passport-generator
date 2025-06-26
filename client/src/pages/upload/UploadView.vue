@@ -10,6 +10,7 @@ import {computed, ref} from "vue";
 import useMainStore from "stores/mainStore";
 import LayoutHCF from "components/LayoutHCF.vue";
 import {PlanData} from "src/types";
+import ProgramListDialog from "pages/upload/components/ProgramListDialog.vue";
 
 const $q = useQuasar()
 
@@ -86,8 +87,8 @@ function getRules(data, item) {
   if (data.can_upload == 't') return true
   const doc = baseDocumentsById.value[item.type_id]
   let rule = []
-  if (data.admin) rule.push(0)
-  if (data.cperson == mira_id.value) rule.push(1)
+  if (data.admin) rule.push(1)
+  if (data.cperson == mira_id.value) rule.push(0)
 
   return _.map(rule, x => {
     return doc.can_upload.includes(x)
@@ -138,6 +139,15 @@ function checkUser(item: PlanData, typeId: number) {
 
 function sortDocuments(val) {
   return _.sortBy(val, x => _.get(baseDocumentsById.value, x.type_id, [])?.can_upload)
+}
+
+function viewProgram(planId) {
+  $q.dialog({
+    component: ProgramListDialog,
+    componentProps: {
+      id: planId,
+    }
+  })
 }
 
 </script>
@@ -200,6 +210,9 @@ function sortDocuments(val) {
         >
           <q-card>
             <q-card-section class="card-body">
+<!--              <div class="q-gutter-x-md">-->
+<!--                <q-btn label="Список РПД/РПП" color="primary" @click="viewProgram(item.plan_id)" />-->
+<!--              </div>-->
               <div class="card-header text-center">
                 <div>
                   Наименование
@@ -239,7 +252,7 @@ function sortDocuments(val) {
                       </template>
                     </q-field>
                   </div>
-                  <q-btn v-show="getRules(item, i) && checkFile(item, i.type_id) && checkUser(item, i.type_id)" flat dense icon="mdi-delete" color="negative"
+                  <q-btn v-show="getRules(item, i) && checkFile(item, i.type_id)" flat dense icon="mdi-delete" color="negative"
                          @click="deleteFile(item, i.type_id)" />
                 </div>
               </div>

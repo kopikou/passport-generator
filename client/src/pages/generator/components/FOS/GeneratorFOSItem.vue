@@ -23,6 +23,9 @@ const props = defineProps({
   },
   type: {
     required: true,
+  },
+  num: {
+    required: true,
   }
 })
 
@@ -31,18 +34,19 @@ const about = ref('')
 const criteria = ref('')
 
 const themes = computed(() => {
-  return _.filter(disciplineThemes.value, x => x.formcontrol_list.includes(props.type))
+  return _(disciplineThemes.value).filter(x => (x.semester == props.num &&x.formcontrol_list.includes(props.type))).sortBy(x => [x.semestr, x.num]).value()
 })
 
 async function saveData() {
   if (generatorViewStore.abortGetDataController)
     generatorViewStore.abortGetDataController.abort()
 
-  fosInfo.value = [...((fosInfo.value || []).filter((x: any) => x.type != props.type)), {
+  fosInfo.value = [...((fosInfo.value || []).filter((x: any) => !(x.type == props.type && x.num == props.num))), {
     "about": about.value,
     "criteria": criteria.value,
     "title": props.title,
     "type": props.type,
+    "num": props.num,
   }];
 
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
@@ -54,7 +58,7 @@ async function saveData() {
   $q.notify({
     message: "Данные <span class='text-bold'>о фонде оценочных средств дисциплине</span> сохранены!",
     color: "secondary",
-    position: "bottom",
+    position: "bottom-right",
     html: true,
   })
   await generatorViewStore.getData()
@@ -91,10 +95,10 @@ async function saveData() {
 }
 
 watchEffect(() => {
-  const key = _.findKey(fosInfo.value, x => x.type == props.type)
+  const key = _.findKey(fosInfo.value, x => x.type == props.type && x.num == props.num)
   if (key) {
-    about.value = _.get(_.find(fosInfo.value, x => x.type == props.type), 'about', '')
-    criteria.value = _.get(_.find(fosInfo.value, x => x.type == props.type), 'criteria', '')
+    about.value = _.get(_.find(fosInfo.value, x => x.type == props.type && x.num == props.num), 'about', '')
+    criteria.value = _.get(_.find(fosInfo.value, x => x.type == props.type && x.num == props.num), 'criteria', '')
   }
 })
 
@@ -108,7 +112,7 @@ watchEffect(() => {
         {{ props.title }}
         <div>
           <q-chip
-            v-for="theme in _.sortBy(themes, x => [x.semester, x.num])"
+            v-for="theme in themes"
             :label="`${theme.semester}-${theme.num}. ${theme.name}`"
             style="max-width: 400px"
           >

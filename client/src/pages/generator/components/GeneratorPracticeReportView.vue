@@ -14,6 +14,8 @@ const generatorViewStore = useGeneratorViewStore();
 const {
   activeRpdId,
   additionalInfo,
+  admissionData,
+  planlinesData,
 } = storeToRefs(generatorViewStore)
 
 
@@ -32,7 +34,7 @@ async function saveData() {
   $q.notify({
     message: "Данные <span class='text-bold'>о содержании практики</span> сохранены!",
     color: "secondary",
-    position: "bottom",
+    position: "bottom-right",
     html: true,
   })
 
@@ -60,13 +62,22 @@ watchEffect(() => {
         <div>
           <div class="text-subtitle1">По результатам прохождения практики обучающийся должен предоставить</div>
           <ul>
+            <div class="text-subtitle1 text-secondary">Документы по умолчанию список отчетных документов</div>
             <li>Дневник прохождения практики</li>
             <li>Отчет о прохождении практики</li>
             <li>Характеристика с места прохождения практики</li>
+            <div v-if="admissionData?.cadmkind == 3 && planlinesData?.viewpract == 8">
+              <div class="text-subtitle1 text-secondary">Пример документов для НИС</div>
+              <li>Список проанализированных научных публикаций</li>
+              <li>План научной работы</li>
+              <li>Научную статью, подготовленную к публикации в рецензируемом научном издании, проверенную научным руководителем</li>
+              <li>Результаты взаимной оценки научных статей магистрантами</li>
+              <li>Презентацию результатов научной работы</li>
+            </div>
           </ul>
           <q-input type="textarea" v-model="documents"
-                   label="Дополнительные документы подтверждающие прохождение практики" filled stack-label
-                   hint="Каждый новый документ пишите с новой строчки" @update:modelValue="saveData" :debounce="500"/>
+                   label="Документы подтверждающие прохождение практики" filled stack-label
+                   hint="Каждый новый документ пишите с новой строчки, можно оставить пустым" @update:modelValue="saveData" :debounce="500"/>
           <div class="text-subtitle1">Требования к содержанию и оформлению отчета о прохождении практики, учитывая
             специфику направления подготовки
           </div>

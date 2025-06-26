@@ -3,11 +3,17 @@
 import {useDialogPluginComponent, useQuasar} from "quasar";
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
-import {computed, ref, onBeforeMount} from "vue";
+import {computed, ref, onBeforeMount, watch} from "vue";
 import _, {random} from "lodash";
 import {api} from "boot/axios";
 
 const generatorViewStore = useGeneratorViewStore();
+
+const props = defineProps({
+  mto: {
+    required: false,
+  }
+})
 
 const {
   disciplineLogistics,
@@ -21,23 +27,25 @@ const $q = useQuasar()
 const {dialogRef, onDialogHide, onDialogOK, onDialogCancel} = useDialogPluginComponent()
 
 const correct = computed(() => {
-  if (name.value == '') return true
-
-  return false
+  return  name.value == ''
 })
 
 const name = ref<string>('')
 
+watch(() => props.mto, () => {
+  console.log(props.mto)
+  if (props.mto)
+    name.value = props.mto.name
+}, {
+  immediate: true
+})
+
 async function onOKClick() {
   $q.loading.show({message: "Сохранение"})
 
-  disciplineLogistics.value[0]?.value.push({
-    id: Math.floor(Math.random() * 100000),
-    name: name.value,
-  })
-
   $q.loading.hide()
-  onDialogOK()
+  props.mto.name = name.value
+  onDialogOK(props.mto)
 }
 
 </script>
@@ -52,7 +60,7 @@ async function onOKClick() {
               v-model="name"
               stack-label
               filled
-              type="text"
+              type="textarea"
           />
         </div>
       </div>

@@ -45,6 +45,10 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return _.orderBy(rpdData.value.new || [], x => [-x.startyear, x.species, x.abbrprofile].join("-"))
   })
 
+  const commonPlans = computed(() => {
+    return _.orderBy(rpdData.value.common || [], x => [-x.startyear, x.species, x.abbrprofile].join("-"))
+  })
+
   const status = computed(() => {
     return rpdData.value?.status || -1
   })
@@ -74,16 +78,26 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   })
 
   const semestersData = computed<PlanSemestrData[]>(() => {
-    return rpdData.value.planlines?.semesters || []
+    const data = rpdData.value.planlines?.semesters
+    return _.orderBy(data, x => x.num)
+  })
+
+  const semestersDataNum = computed(() => {
+    return semestersData.value.map(i => i.num)
   })
 
   const otherDiscipline = computed<OtherDiscipline[]>(() => {
     return rpdData.value.other_discipline || []
   })
 
-  const disciplineThemes = computed<DisciplineThemesData[]>(() => {
-    return rpdData.value.discipline_themes || []
-  })
+  const disciplineThemes = computed<DisciplineThemesData[]>({
+      get() {
+          return _.orderBy(rpdData.value.discipline_themes || [], x => `${x.semester} ${x.name}`)
+      },
+      set(value) {
+          rpdData.value.discipline_themes = value;
+      }
+  });
 
   const disciplineThemesById = computed<DisciplineThemesData[]>(() => {
     return _.keyBy(disciplineThemes.value, x => x.id)
@@ -125,9 +139,14 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     return rpdData.value.additional_info || []
   })
 
-  const disciplineWorkHour = computed<DisciplineWorkHour[]>(() => {
-    return rpdData.value.discipline_work_hour || []
-  })
+  const disciplineWorkHour = computed<DisciplineWorkHour[]>({
+      get() {
+          return rpdData.value.discipline_work_hour || []
+      },
+      set(value) {
+          rpdData.value.discipline_work_hour = value;
+      }
+  });
 
   const lecturesDisciplineWorkHour = computed<DisciplineWorkHour[]>(() => {
     return _.filter(rpdData.value.discipline_work_hour, (x) => x.type == 0) || []
@@ -163,7 +182,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     res = _.some(semestersData.value, x => {
       return x.ekz || x.zach || x.zacho || x.kp || x.kr
     })
-    if (admissionData.value?.cadmkind == 5) {
+
+    if (admissionData.value?.cadmkind == 5 && !res) {
       res = true
     }
 
@@ -223,6 +243,9 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
   }[]>([]);
 
   function rpdErrors() {
+    if (!rpdData.value.admission)
+      return
+
     const admkind = rpdData.value.admission.cadmkind
     const data: {
       url: string,
@@ -321,7 +344,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
             data.push({
               url: 'discipline-lectures',
               title: 'Неверное кол-во часов в лекционных занятиях',
-              text: [`Количество часов в лекционных занятий не сходиться в семестре № ${x}`],
+              text: [`Количество часов в лекционных занятий не сходится в семестре № ${x}`],
               level: 'critical',
             })
           }
@@ -346,7 +369,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
             data.push({
               url: 'discipline-lab',
               title: 'Неверное кол-во часов в лабораторных работах',
-              text: [`Количество часов в лабораторных работах не сходиться в семестре № ${x}`],
+              text: [`Количество часов в лабораторных работах не сходится в семестре № ${x}`],
               level: 'critical',
             })
           }
@@ -371,7 +394,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
             data.push({
               url: 'discipline-practice',
               title: 'Неверное кол-во часов в практических занятиях',
-              text: [`Количество часов в практических часов не сходиться в семестре № ${x}`],
+              text: [`Количество часов в практических часов не сходится в семестре № ${x}`],
               level: 'critical',
             })
           }
@@ -396,7 +419,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
             data.push({
               url: 'discipline-independent',
               title: 'Неверное кол-во часов в самостоятельных работах',
-              text: [`Количество часов в самостоятельных работах не сходиться в семестре № ${x}`],
+              text: [`Количество часов в самостоятельных работах не сходится в семестре № ${x}`],
               level: 'critical',
             })
           }
@@ -441,36 +464,47 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
       if (kp) checkGuidelines('course', 'Не заполнены методические указания для курсового проекта/работы ')
     }
 
-    const fos = _(disciplineThemes.value).map(x => x.formcontrol_list).flatten().uniq().value()
+    const fos = _(disciplineThemes.value)
+      .groupBy(x => x.semester)
+      .toPairs()
+      .map(pair => [pair[0], _(pair[1]).map(x => x.formcontrol_list).flatten().uniq().value()])
+      .fromPairs()
+      .value()
 
-    _.forEach(fos, (x) => {
-      const r = _.find(fosInfo.value, q => q.type == x)
-      if (!r) {
-        data.push({
-          url: 'fos',
-          title: 'Нет данных по оценочным материалам',
-          text: [`Не заполнена информация о "${r?.title}"`],
-          level: 'critical',
-        })
-      } else {
-        if (!_.get(r, 'criteria', null)) {
+
+    for (const num in fos) {
+      _.map(fos[num], x => {
+        const r = _.find(fosInfo.value, q => q.type == x && q.num == num)
+        const formcontrolName = r?.title || `${semesterYearLabel.value} ${num} | ${formControlByValue.value[x]?.name}`
+        if (!r) {
           data.push({
             url: 'fos',
             title: 'Нет данных по оценочным материалам',
-            text: [`Нет информации о критериях оценивания для "${r?.title}"`],
+            text: [`Не заполнена информация о "${formcontrolName}"`],
             level: 'critical',
           })
+        } else {
+          if (!_.get(r, 'criteria', null)) {
+            data.push({
+              url: 'fos',
+              title: 'Нет данных по оценочным материалам',
+              text: [`Нет информации о критериях оценивания для "${formcontrolName}"`],
+              level: 'critical',
+            })
+          }
+          if (!_.get(r, 'about', null)) {
+            data.push({
+              url: 'fos',
+              title: 'Нет данных по оценочным материалам',
+              text: [`Неи информации об описании процедуры для "${formcontrolName}"`],
+              level: 'critical',
+            })
+          }
         }
-        if (!_.get(r, 'about', null)) {
-          data.push({
-            url: 'fos',
-            title: 'Нет данных по оценочным материалам',
-            text: [`Неи информации об описании процедуры для "${r?.title}"`],
-            level: 'critical',
-          })
-        }
-      }
-    })
+      })
+
+    }
+
 
     function checkTat(type: string, errorText: string) {
       const r = _.find(tatInfo.value, x => x.type == type)
@@ -569,6 +603,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         if (zacho) checkTat('zacho', 'Дифференцированный зачет')
         if (ekz) checkTat('ekz', 'Экзамен')
         if (kp) checkTat('krkp', 'Курсовой проекта/работа')
+
+        if (admissionData.value?.cadmkind == 5 && aspGetType(rpdData.value?.planlines?.dis)) checkTat(aspGetType(rpdData.value?.planlines?.dis), 'Кандидатский экзамен')
       }
     }
 
@@ -618,6 +654,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
         level: 'warning',
       })
     }
+
 
     const logistics = _.get(disciplineLogistics.value, '[0].value', [])
     if (logistics.length == 0) {
@@ -669,9 +706,26 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     }
   }
 
+  function aspGetType(dis) {
+    // console.log(dis)
+    const res = _.some(semestersData.value, x => {
+      return x.ekz || x.zach || x.zacho || x.kp || x.kr
+    })
+    if (!res) {
+      if (dis == 'Иностранный язык') {
+        return 'foreign'
+      } else if (dis == 'История и философия науки') {
+        return 'philosophy'
+      } else {
+        return 'base'
+      }
+    }
+  }
+
+
   onAuthenticated(async () => {
     const loadingHelpers = $q.loading.show({
-      group: 'first',
+      group: 'helpers',
       message: 'Загрузка справочников',
     })
 
@@ -683,6 +737,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
 
   watch(rpdData, () => {
     checkErrors()
+  }, {
+    immediate: true
   })
 
   watch(activeRpdId, async () => {
@@ -703,6 +759,7 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     cafData,
     oldPlans,
     newPlans,
+    commonPlans,
     formControl,
     independentTypes,
     otherDiscipline,
@@ -749,6 +806,8 @@ const useGeneratorViewStore = defineStore('GeneratorViewStore', () => {
     labHours,
     semesterYearLabel,
     formControlByValue,
+    aspGetType,
+    semestersDataNum,
   }
 })
 

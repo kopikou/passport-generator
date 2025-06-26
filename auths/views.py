@@ -1,3 +1,5 @@
+from urllib.parse import unquote
+
 from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login as auth_login, logout as auth_logout
@@ -55,6 +57,14 @@ class BitrixAuthView(APIView):
     def get(self, request, *args, **kwargs):
         serializer = self.InnerSerializer(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
+
+        state_type, state_data = None, None
+        if 'state' in self.request.query_params:
+            try:
+                state = unquote(self.request.query_params['state'])
+                state_type, state_data = state.split(":", 1)
+            except:
+                pass
 
         HTTP_REFERER = request.META.get('HTTP_REFERER') or "/"
 
@@ -117,5 +127,8 @@ class BitrixAuthView(APIView):
 
         user.userprofile.save()
         auth_login(self.request, user)
+
+        if state_type == 'next':
+            return redirect(state_data)
 
         return redirect(settings.FORCE_SCRIPT_NAME or "/")

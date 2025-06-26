@@ -39,6 +39,7 @@ class Catadmission(models.Model):
     kvalif_name = models.CharField(max_length=100)
     cadmkind = models.ForeignKey("CLAdmKind", null=True,  on_delete=models.CASCADE, db_column="cadmkind")
     cfob = models.ForeignKey("CLFob", null=True, on_delete=models.CASCADE, db_column="cfob")
+    name = models.CharField(max_length=10)
 
 
 class CLFob(models.Model):
@@ -75,6 +76,7 @@ class CLAdmKind(models.Model):
 
     name = models.CharField(max_length=50)
     name_prof = models.CharField(max_length=50)
+    name_ak = models.CharField(max_length=50)
 
 
 class CatDepartment(models.Model):

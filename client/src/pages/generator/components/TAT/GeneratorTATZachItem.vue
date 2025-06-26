@@ -15,6 +15,7 @@ const {
   tatInfo,
   disabled,
   planlinesData,
+  semesterYearLabel,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -22,6 +23,9 @@ const props = defineProps({
     required: true,
   },
   type: {
+    required: true,
+  },
+  num: {
     required: true,
   }
 })
@@ -46,7 +50,9 @@ async function saveData() {
       "unpassed": unpassed.value,
       "title": props.title,
       "type": props.type,
+      "num": props.num,
   }
+
   if (planlinesData.value.viewpract) {
     res = {
       ...res,
@@ -70,7 +76,7 @@ async function saveData() {
   if (generatorViewStore.abortGetDataController)
     generatorViewStore.abortGetDataController.abort()
 
-  const data = [...((tatInfo.value || []).filter((x: any) => x.type != props.type)), res]
+  const data = [...((tatInfo.value || []).filter((x: any) => !(x.type == props.type && x.num == props.num))), res]
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'tat',
     "value": data,
@@ -80,7 +86,7 @@ async function saveData() {
     $q.notify({
       message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> сохранены!",
       color: "secondary",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
     await generatorViewStore.getData()
@@ -89,7 +95,7 @@ async function saveData() {
     $q.notify({
       message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> не сохранены!",
       color: "negative",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
   }
@@ -97,15 +103,15 @@ async function saveData() {
 }
 
 watchEffect(() => {
-  const key = _.findKey(tatInfo.value, x => x.type == props.type)
-  if (key) {
-    about.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'about', '')
-    passed.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'passed', '')
-    unpassed.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'unpassed', '')
-    example.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'example', '')
-    tat.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'tat', '')
-    form.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'form', '')
-    formabout.value = _.get(_.find(tatInfo.value, x => x.type == props.type), 'formabout', '')
+  const data = _.find(tatInfo.value, x => x.type == props.type && x.num == props.num)
+  if (data) {
+    about.value = _.get(data, 'about', '')
+    passed.value = _.get(data, 'passed', '')
+    unpassed.value = _.get(data, 'unpassed', '')
+    example.value = _.get(data, 'example', '')
+    tat.value = _.get(data, 'tat', '')
+    form.value = _.get(data, 'form', '')
+    formabout.value = _.get(data, 'formabout', '')
   }
 })
 
@@ -113,11 +119,12 @@ watchEffect(() => {
 
 <template>
   <q-expansion-item
-    :label=props.title
+    group="tat-item"
+    :label="`${semesterYearLabel} ${props.num} | ${props.title}`"
   >
     <q-card>
       <q-card-section>
-        <div class="q-gutter-md">
+        <div class="q-gutter-md" style="display: grid; grid-template-columns: 3fr 2fr">
           <!--          <q-input-->
           <!--            label="Основная информация"-->
           <!--            type="textarea"-->
@@ -128,7 +135,7 @@ watchEffect(() => {
           <!--            debounce="1000"-->
           <!--            @update:modelValue="saveData"-->
           <!--          />-->
-          <div class="q-gutter-y-md" v-if="!planlinesData.viewpract">
+          <div v-if="!planlinesData.viewpract">
             <q-input
               label="Описание процедуры"
               type="textarea"
@@ -138,6 +145,7 @@ watchEffect(() => {
               :readonly="disabled"
               debounce="1000"
               @update:modelValue="saveData"
+              hint="Вопросы к билету рекомендуется писать в поле описание процедуры"
             />
             <q-input
               label="Пример задания"
@@ -151,7 +159,7 @@ watchEffect(() => {
               hint="Если Вам не нужен пример задания, оставьте поле пустым"
             />
           </div>
-          <div class="q-gutter-y-md" v-else>
+          <div v-else>
             <q-input
               label="Типовые оценочные средства"
               type="text"
@@ -180,14 +188,15 @@ watchEffect(() => {
               @update:modelValue="saveData"
             />
           </div>
-          <p class="text-subtitle1">Критерии оценивания</p>
+          <div>
           <q-list bordered>
             <q-expansion-item
+               group="tat-item-mark"
               label="Зачтено"
             >
               <q-input
                 class="q-pa-sm"
-                label="Зачтено"
+                label="укажите критерий оценивания для получения оценки"
                 type="textarea"
                 filled
                 stack-label
@@ -199,11 +208,12 @@ watchEffect(() => {
             </q-expansion-item>
 
             <q-expansion-item
+               group="tat-item-mark"
               label="Не зачтено"
             >
               <q-input
                 class="q-pa-sm"
-                label="Не зачтено"
+                label="укажите критерий оценивания для получения оценки"
                 type="textarea"
                 filled
                 stack-label
@@ -221,6 +231,7 @@ watchEffect(() => {
           <!--            @click="saveData"-->
           <!--            v-show="!disabled"-->
           <!--          />-->
+            </div>
         </div>
       </q-card-section>
     </q-card>

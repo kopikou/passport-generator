@@ -2,7 +2,7 @@
 
 import useGeneratorViewStore from "stores/generatorViewStore";
 import {storeToRefs} from "pinia";
-import {computed, watch} from "vue";
+import {computed, onBeforeMount, watch} from "vue";
 import _ from "lodash";
 import {useQuasar} from "quasar";
 import {useRouter} from "vue-router";
@@ -98,6 +98,10 @@ watch(() => props.id,
   },
   {immediate: true})
 
+onBeforeMount(() => {
+  generatorViewStore.getData();
+})
+
 </script>
 
 <template>
@@ -125,7 +129,8 @@ watch(() => props.id,
           target="_blank"
         />
         <q-btn
-          label="Скопировать"
+          v-if="!disabled"
+          label="Скопировать из"
           color="white"
           text-color="black"
           icon="mdi-content-copy"

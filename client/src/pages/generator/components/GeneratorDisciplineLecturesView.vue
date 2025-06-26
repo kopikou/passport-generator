@@ -18,6 +18,7 @@ const generatorViewStore = useGeneratorViewStore();
 const {
   rpdData,
   semestersData,
+  semestersDataNum,
   lecturesDisciplineWorkHour,
   disciplineThemes,
   disabled,
@@ -27,12 +28,18 @@ const {
 const tab = ref(-1)
 
 const allPercent = computed(() => {
-  let hoursList = _.map(semestersData.value, (x) => x.lekc)
+  let hoursList = _(semestersData.value)
+    .filter(x => semestersDataNum.value.includes(x.num))
+    .map((x) => x.lekc)
+    .value()
   return _.sum(hoursList) || 0
 })
 
 const allPercentValue = computed(() => {
-  let value = _.map(lecturesDisciplineWorkHour.value, (x) => x.hours)
+  let value = _(lecturesDisciplineWorkHour.value)
+    .filter(x => semestersDataNum.value.includes(x.semester))
+    .map((x) => x.hours)
+    .value()
   return _.sum(value) || 0
 })
 
@@ -107,30 +114,6 @@ async function saveWorkHour(data) {
   return r.data
 }
 
-async function fieldUp(num, sem) {
-  let newKey = _.findKey(lecturesDisciplineWorkHour.value, (x) => x.num == num - 1 && x.semester == sem)
-  let oldKey = _.findKey(lecturesDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
-
-  _.set(lecturesDisciplineWorkHour.value, `[${oldKey}].num`, num - 1)
-  _.set(lecturesDisciplineWorkHour.value, `[${newKey}].num`, num)
-  await Promise.all([
-    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${oldKey}]`)),
-    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
-  ])
-}
-
-async function fieldDown(num, sem) {
-  let newKey = _.findKey(lecturesDisciplineWorkHour.value, (x) => x.num == num + 1 && x.semester == sem)
-  let oldKey = _.findKey(lecturesDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
-
-  _.set(lecturesDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
-  _.set(lecturesDisciplineWorkHour.value, `[${newKey}].num`, num)
-  await Promise.all([
-    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${oldKey}]`)),
-    saveWorkHour(_.get(lecturesDisciplineWorkHour.value, `[${newKey}]`))
-  ])
-}
-
 watchEffect(() => {
   tab.value = semestersData.value[0]?.num
 })
@@ -138,7 +121,6 @@ watchEffect(() => {
 </script>
 
 <template>
-
   <generator-discipline-work-view-base
     :disabled="disabled"
     :all-percent="allPercent"
@@ -155,8 +137,6 @@ watchEffect(() => {
       <generator-discipline-work-hour-container
         :data="filteredData"
         v-model:sem="tab"
-        @field-down="fieldDown"
-        @field-up="fieldUp"
         @delete="deleteLectures"
         @edit="updateLectures"
       />

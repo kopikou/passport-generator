@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from pathlib import Path
 
+import pendulum
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
     'rpgen',
     'generator',
     'uplfile',
+    'prof_activity',
     'auths',
     'arim',
     'arim_library',
@@ -159,7 +162,8 @@ RPGEN_CONNECTION_STRING = ""
 
 
 CONSTANCE_CONFIG = {
-    'RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED': ("""Безопасность жизнедеятельности
+    'RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED': ("""
+Безопасность жизнедеятельности
 Инженерная и компьютерная графика
 Иностранный язык
 Информационные технологии
@@ -187,6 +191,10 @@ CONSTANCE_CONFIG = {
 }
 
 CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
+SITE_URL = "https://app.istu.edu/oop"
+DONT_SAVE_RPD_FILES = False
+
+pendulum.set_locale("ru")
 
 from .local import *
 

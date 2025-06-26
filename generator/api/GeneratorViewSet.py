@@ -1,16 +1,24 @@
+import datetime
 import os
 import platform
 from itertools import groupby
 from subprocess import run
 from time import sleep
 
+from app.settings import BASE_DIR
+from pathlib import Path
+
 import pendulum
 from constance import config
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
+from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile, UploadedFile
+from django.db.models import Q, Max, F, When, Value, Case
 from django.http import HttpResponse
+from django.shortcuts import redirect
+from django.template.defaultfilters import last
 from django.utils.encoding import escape_uri_path
-from rest_framework import status
+from rest_framework import status, serializers
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException
 from rest_framework.mixins import RetrieveModelMixin
@@ -19,20 +27,32 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from app.utils import UserProfileHasPermission
+from arim.models import UchPlanPlan, Catadmission
 from arim.services import AISServices
 from arim_library.services import LibraryServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, FormControl, IndependentTypes, DisciplineThemes, DisciplineWorkHours, \
     PlanLinesLinkComments, ScientificPlanData, ScientificWorkType, ScientificData, \
-    ScientificDataDefault, DisciplineIndicators
-from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanConfirmRPDProgram, CanAcceptRPDProgram, CanEditScientificProgram
+    ScientificDataDefault, DisciplineIndicators, DefaultsResources, AdditionalInfo
+from generator.permissions import CanEditRPDProgram, CanViewRPDProgram, CanConfirmRPDProgram, CanAcceptRPDProgram, \
+    CanEditScientificProgram, CanUploadRPDProgramFile
 from generator.serializer import PlanLinesLinkSerializer, \
     DisciplineIndicatorsAddSerializer, DisciplineThemeSerializer, \
-    DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer
+    DisciplineWorkHoursSerializer, AdditionalInfoSerializer, ScientificPlanSerializer, ScientificDataSerializer, \
+    ThemesOrderSerializer, WorkHoursOrderSerializer, GetAdmissionsForSiteInfoSerializer, CopyProgramSerializer
 from generator.services import ReportService
 from generator.services.generator_service import GeneratorService
-from rpd.models import PlanData, LinesIndicators
+from rpd.models import PlanData, LinesIndicators, PlanDocuments, DocumentsTypes
 from rpd.services import RPDGenSerivce
+from uplfile.models import UploadFiles
+
+from django.template.loader import render_to_string
+
+from django.shortcuts import render
+
+import pandas as pd
+
+from datetime import datetime
 
 
 class GeneratorViewSet(
@@ -48,8 +68,8 @@ class GeneratorViewSet(
         result = GeneratorService.get_rpd_data(pk, self.request.user.userprofile.mira_id)
         return Response(result)
 
-
-    @action(methods=['POST'], url_path='save-asp-program-data', detail=True, permission_classes=[CanEditScientificProgram])
+    @action(methods=['POST'], url_path='save-asp-program-data', detail=True,
+            permission_classes=[CanEditScientificProgram])
     def save_asp_program_data(self, request, *args, **kwargs):
 
         data = self.request.data
@@ -63,7 +83,8 @@ class GeneratorViewSet(
 
         return Response(serializer.data)
 
-    @action(methods=['GET'], url_path='copy-asp-program-data', detail=True, permission_classes=[CanEditScientificProgram])
+    @action(methods=['GET'], url_path='copy-asp-program-data', detail=True,
+            permission_classes=[CanEditScientificProgram])
     def copy_asp_program_data(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -127,7 +148,8 @@ class GeneratorViewSet(
 
         return Response(data=res)
 
-    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True, permission_classes=[CanEditScientificProgram])
+    @action(methods=['GET'], url_path="get-asp-program-detail", detail=True,
+            permission_classes=[CanEditScientificProgram])
     def get_asp_program_detail(self, request, *args, **kwargs):
 
         pk = int(self.kwargs['pk'])
@@ -202,8 +224,7 @@ class GeneratorViewSet(
 
     @action(methods=['GET'], url_path="get-program-list", detail=False, permission_classes=[IsAuthenticated])
     def get_program_list(self, request, *args, **kwargs):
-
-        res = GeneratorService.get_program_list(self.request.user.userprofile.mira_id)
+        res = GeneratorService.get_program_list(self.request.user.userprofile.mira_id, 2025)
 
         return Response(
             data=res,
@@ -226,7 +247,8 @@ class GeneratorViewSet(
 
         return Response(data=data)
 
-    @action(methods=['POST'], url_path="save-scientific-data", detail=True, permission_classes=[CanEditScientificProgram])
+    @action(methods=['POST'], url_path="save-scientific-data", detail=True,
+            permission_classes=[CanEditScientificProgram])
     def save_scientific_data(self, request, *args, **kwargs):
 
         pk = self.kwargs['pk']
@@ -246,7 +268,8 @@ class GeneratorViewSet(
 
         return Response(data=serializer.data)
 
-    @action(methods=['DELETE'], url_path="del-scientific-work", detail=True, permission_classes=[CanEditScientificProgram])
+    @action(methods=['DELETE'], url_path="del-scientific-work", detail=True,
+            permission_classes=[CanEditScientificProgram])
     def del_scientific_work(self, request, *args, **kwargs):
 
         ScientificData.objects.get(id=self.kwargs['pk']).delete()
@@ -349,6 +372,10 @@ class GeneratorViewSet(
     def save_discipline_indicator(self, request, *args, **kwargs):
         data = self.request.data
 
+        instance: PlanLinesLink = self.get_object()
+        instance.person = self.request.user.userprofile.mira_id
+        instance.save()
+
         serializer_data = DisciplineIndicatorsAddSerializer(data=data)
         serializer_data.is_valid(raise_exception=True)
         serializer_data.save()
@@ -358,6 +385,10 @@ class GeneratorViewSet(
     @action(methods=['POST'], url_path="save-discipline-themes", detail=True, permission_classes=[CanEditRPDProgram])
     def save_discipline_themes(self, request, *args, **kwargs):
         data = self.request.data
+
+        instance: PlanLinesLink = self.get_object()
+        instance.person = self.request.user.userprofile.mira_id
+        instance.save()
 
         serializer_data = DisciplineThemeSerializer(data=data)
         serializer_data.is_valid(raise_exception=True)
@@ -377,13 +408,18 @@ class GeneratorViewSet(
     def save_discipline_work(self, request, *args, **kwargs):
         data = self.request.data
 
+        instance: PlanLinesLink = self.get_object()
+        instance.person = self.request.user.userprofile.mira_id
+        instance.save()
+
         serializer_data = DisciplineWorkHoursSerializer(data=data)
         serializer_data.is_valid(raise_exception=True)
         serializer_data.save()
 
         return Response(serializer_data.data)
 
-    @action(methods=['GET'], url_path="delete-discipline-work-hour", detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['GET'], url_path="delete-discipline-work-hour", detail=True,
+            permission_classes=[CanEditRPDProgram])
     def delete_discipline_work_hour(self, request, *args, **kwargs):
         pk = self.request.query_params.get('id')
 
@@ -394,6 +430,9 @@ class GeneratorViewSet(
     @action(methods=['POST'], url_path="save-additional-info", detail=True, permission_classes=[CanEditRPDProgram])
     def save_additional_info(self, request, *args, **kwargs):
         data = self.request.data
+        instance: PlanLinesLink = self.get_object()
+        instance.person = self.request.user.userprofile.mira_id
+        instance.save()
 
         serializer_data = AdditionalInfoSerializer(
             data={"planlineslink_id": self.kwargs['pk'], "type": data['type'], "value": data['value']})
@@ -402,63 +441,29 @@ class GeneratorViewSet(
 
         return Response(serializer_data.data)
 
-    @action(methods=['GET'], url_path="get-rpd-report", detail=True)
+    @action(methods=['GET'], url_path="get-rpd-report", detail=True, permission_classes=[IsAuthenticated])
     def get_rpd_report(self, request, *args, **kwargs):
+        instance: PlanLinesLink = self.get_object()
 
-        instance = self.get_object()
-        pk = self.kwargs['pk']
+        # для файлов загруженных вручную
+        if instance.uploaded_directly and instance.status == PlanLinesLink.StatusChoices.accepted:
+            return redirect((settings.FORCE_SCRIPT_NAME or "") + instance.last_accepted_file.url)
 
-        rpd_data = GeneratorService.get_rpd_data(pk, self.request.user.userprofile.mira_id)
+        updated_at_max = PlanLinesLink.objects.filter(pk=instance.pk).annotate(t_updated_at=F('accept_date')).values(
+            "t_updated_at").union(
+            DisciplineIndicators.objects.filter(planlineid_id=instance.planlines_id).values("updated_at"),
+            DisciplineThemes.objects.filter(planlineslink_id=instance.pk).values("updated_at"),
+            DisciplineWorkHours.objects.filter(planlineslink_id=instance.pk).values("updated_at"),
+            AdditionalInfo.objects.filter(planlineslink_id=instance.pk).values("updated_at"),
+        ).aggregate(updated_at=Max(F("t_updated_at")))
 
-        # filename = f"РПД_{instance.planlines.dis}_{result['admission']['abbr']}-{result['admission']['yr']}.docx".replace(
-        #     ',', ' ')
-        filename = f"РПД_{instance.planlines.dis}_{rpd_data['admission']['abbr']}-{rpd_data['admission']['yr']}.pdf".replace(
-            ',', ' ')
-        path = f'templates/outputs/'
+        updated_at = (updated_at_max['updated_at'] or instance.file_updated_at)
 
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-        response['Content-Disposition'] = f"attachment; filename={escape_uri_path(filename)}"
+        if settings.DONT_SAVE_RPD_FILES or (
+                not instance.file or not instance.file_updated_at or (instance.file_updated_at < updated_at)):
+            instance = ReportService.generate_rpd_report(instance)
 
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-        path_doc_file = f"{os.path.abspath(path)}/{pk}.docx"
-        path_pdf_file = f"{os.path.abspath(path)}/{pk}.pdf"
-
-        if rpd_data['planlines']['viewpract']:
-            tpl = ReportService.get_practice_report(rpd_data)
-        else:
-            tpl = ReportService.get_rpd_report(rpd_data)
-        # tpl.save(response)
-
-        tpl.save(path_doc_file)
-
-        if platform.system() == 'Linux':
-            run([
-                'libreoffice', '--headless', '--invisible', '--convert-to',
-                'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
-            ])
-
-        elif platform.system() == 'Windows':
-            from win32com.client import Dispatch
-
-            word = Dispatch('Word.Application')
-            doc = word.Documents.Open(path_doc_file)
-            doc.SaveAs(path_pdf_file, FileFormat=17)
-            word.Quit()
-        else:
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        with open(path_pdf_file, 'rb') as file:
-            response.write(file.read())
-
-        if os.path.exists(path_doc_file):
-            os.remove(path_doc_file)
-
-        if os.path.exists(path_pdf_file):
-            os.remove(path_pdf_file)
-
-        return response
+        return redirect((settings.FORCE_SCRIPT_NAME or "") + instance.file.url)
 
     @action(methods=['GET'], url_path="get-rpd-annotation", detail=True)
     def get_rpd_annotation(self, request, *args, **kwargs):
@@ -493,7 +498,6 @@ class GeneratorViewSet(
         return Response(data={'status_verbose': PlanLinesLink.StatusChoices.is_filled.label,
                               'status': PlanLinesLink.StatusChoices.is_filled})
 
-
     @action(methods=['GET'], url_path="send-rpd-on-review", detail=True, permission_classes=[CanEditRPDProgram])
     def send_rpd_on_review(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -522,7 +526,12 @@ class GeneratorViewSet(
             instance.status = PlanLinesLink.StatusChoices.accepted
         elif instance.user_confirmed and instance.user_accepted:
             instance.status = PlanLinesLink.StatusChoices.accepted
+        elif instance.planlines.caf == 208: # кафедра физкультуры требует утверждение только Демидова (зав кафедры)
+            instance.status = PlanLinesLink.StatusChoices.accepted
         instance.save()
+
+        if instance.status == PlanLinesLink.StatusChoices.accepted:
+            ReportService.generate_rpd_report(instance)
 
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
         GeneratorService.reset_practice_list_cache(self.request.user.userprofile.mira_id)
@@ -539,12 +548,26 @@ class GeneratorViewSet(
             instance.status = PlanLinesLink.StatusChoices.accepted
         instance.save()
 
+        if instance.status == PlanLinesLink.StatusChoices.accepted:
+            ReportService.generate_rpd_report(instance)
+
         GeneratorService.reset_program_list_cache(self.request.user.userprofile.mira_id)
         GeneratorService.reset_practice_list_cache(self.request.user.userprofile.mira_id)
 
         return Response({"success": True})
 
-    @action(methods=['POST'], url_path="send-rpd-on-refile", detail=True, permission_classes=[CanAcceptRPDProgram | CanConfirmRPDProgram])
+    @action(methods=['POST'], url_path="toggle-can-be-copied-by-anyone", detail=True,
+            permission_classes=[CanEditRPDProgram])
+    def toggle_can_be_copied_by_anyone(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.can_be_copied_by_anyone = not instance.can_be_copied_by_anyone
+
+        instance.save()
+
+        return Response({"success": True})
+
+    @action(methods=['POST'], url_path="send-rpd-on-refile", detail=True,
+            permission_classes=[CanAcceptRPDProgram | CanConfirmRPDProgram])
     def send_rpd_on_refile(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.status = PlanLinesLink.StatusChoices.on_refile
@@ -566,9 +589,48 @@ class GeneratorViewSet(
 
         return Response([i for i in data])
 
-    @action(methods=['GET'], url_path="copy-old-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
+    @action(methods=['POST'], url_path="set-themes-order", detail=True, permission_classes=[CanEditRPDProgram])
+    def set_themes_order(self, request, *args, **kwargs):
+        serializer = ThemesOrderSerializer(data=self.request.data)
+        serializer.is_valid()
+
+        whens = []
+        ids = serializer.validated_data['order']
+        for index, _id in enumerate(ids, start=1):
+            whens.append(When(id=_id, then=Value(index)), )
+
+        if whens:
+            DisciplineThemes.objects.filter(planlineslink_id=self.kwargs['pk'], id__in=ids).update(
+                num=Case(*whens)
+            )
+
+        return Response()
+
+
+    @action(methods=['POST'], url_path="set-work-hours-order", detail=True, permission_classes=[CanEditRPDProgram])
+    def set_work_order(self, request, *args, **kwargs):
+        serializer = WorkHoursOrderSerializer(data=self.request.data)
+        serializer.is_valid()
+
+        whens = []
+        ids = serializer.validated_data['order']
+        for index, _id in enumerate(ids, start=1):
+            whens.append(When(id=_id, then=Value(index)),)
+
+        if whens:
+            DisciplineWorkHours.objects.filter(planlineslink_id=self.kwargs['pk'], id__in=ids).update(
+                num=Case(*whens)
+            )
+
+        return Response()
+
+
+    @action(methods=['POST'], url_path="copy-old-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
     def get_old_rpd(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
+
+        serializer = CopyProgramSerializer(data=self.request.data)
+        serializer.is_valid()
 
         old_pk = int(self.request.query_params['old_pk'])
 
@@ -587,115 +649,155 @@ class GeneratorViewSet(
         kind_srs_by_id = {i['id']: i['name'] for i in kind_srs}
 
         cattitle = RPDGenSerivce.get_rpd_line(old_pk)
+
+        if not cattitle:
+            raise APIException("Нет данных для копирования")
         cattitle_id = cattitle[0]['id']
 
-        DisciplineThemes.objects.filter(planlineslink_id=pk).delete()
-        DisciplineWorkHours.objects.filter(planlineslink_id=pk).delete()
-        DisciplineIndicators.objects.filter(planlineid_id=instance['planlines']['id']).delete()
+        if serializer.validated_data['indicators']:
+            if serializer.validated_data['replace']:
+                DisciplineIndicators.objects.filter(planlineid_id=instance['planlines']['id']).delete()
 
-        instance_indicators_by_index = {i['indicator_index']: i['id'] for i in instance['planlines']['indicators']}
-        plan_indikators = RPDGenSerivce.get_mleha_planindikator(cattitle[0]['cplanlines'])
+            instance_indicators_by_index = {i['indicator_index']: i['id'] for i in instance['planlines']['indicators']}
+            plan_indikators = RPDGenSerivce.get_mleha_planindikator(cattitle[0]['cplanlines'])
 
-        for item in plan_indikators:
-            indicator = RPDGenSerivce.get_mleha_indikator(item['indikid'])
+            for item in plan_indikators:
+                indicator = RPDGenSerivce.get_mleha_indikator(item['indikid'])
 
-            indicator_id = instance_indicators_by_index.get(indicator[0]['index'])
+                indicator_id = instance_indicators_by_index.get(indicator[0]['index'])
 
-            if indicator_id:
-
-                dis_indicator_serializer = DisciplineIndicatorsAddSerializer(data={
-                    "indicator_id": indicator_id,
-                    "planlineid_id": instance['planlines']['id'],
-                    "know": item['znat'],
-                    "able": item['umet'],
-                    "own": item['vladet'],
-                    "criteria": item['kriteriy_oceniv'],
-                    "methods": item['metod_oceniv'],
-                })
-                dis_indicator_serializer.is_valid(raise_exception=True)
-                dis_indicator_serializer.save()
-
-
-        d2s = RPDGenSerivce.get_displ2semestr(cattitle_id)
-
-        for item in d2s:
-
-            d2lek = RPDGenSerivce.get_displ2lek(item['id'])
-
-            for i in d2lek:
-
-                control = current_control_by_id.get(i['ccurrent_control'], 'Отчет')
-                form_control_id = form_control_by_name.get(control, None)
-
-                theme_serializer = DisciplineThemeSerializer(data={
-                    "planlineslink_id": pk,
-                    "name": i['tema'] or '-',
-                    "semester": item['semestr'],
-                    "formcontrol_list": [form_control_id],
-                    "comment": i['note'],
-                    "num": i['num'] or 1,
-                })
-                theme_serializer.is_valid(raise_exception=True)
-                theme_serializer.save()
-
-                lek_serializer = DisciplineWorkHoursSerializer(data={
-                    "planlineslink_id": pk,
-                    "theme_id": theme_serializer.data['id'],
-                    "type": DisciplineWorkHours.TypeChoices.lectures,
-                    "name": i['tema'] or '-',
-                    "hours": i['hour'] or 0,
-                    "semester": item['semestr'],
-                    "num": i['num'] or 1,
-                })
-                lek_serializer.is_valid(raise_exception=True)
-                lek_serializer.save()
-
-                d2sam = RPDGenSerivce.get_displ2sam(i['id'])
-
-                for sam in d2sam:
-                    independent = kind_srs_by_id.get(sam['ckindsrs'], '-')
-
-                    sam_serializer = DisciplineWorkHoursSerializer(data={
-                        "planlineslink_id": pk,
-                        "theme_id": theme_serializer.data['id'],
-                        "type": DisciplineWorkHours.TypeChoices.independent,
-                        "name": independent or '-',
-                        "hours": sam['hour'] or 0,
-                        "semester": item['semestr'],
-                        "num": sam['num'] or 1,
+                if indicator_id:
+                    dis_indicator_serializer = DisciplineIndicatorsAddSerializer(data={
+                        "indicator_id": indicator_id,
+                        "planlineid_id": instance['planlines']['id'],
+                        "know": item['znat'],
+                        "able": item['umet'],
+                        "own": item['vladet'],
+                        "criteria": item['kriteriy_oceniv'],
+                        "methods": item['metod_oceniv'],
                     })
-                    sam_serializer.is_valid(raise_exception=True)
-                    sam_serializer.save()
+                    dis_indicator_serializer.is_valid(raise_exception=True)
+                    dis_indicator_serializer.save()
 
-                d2pract = RPDGenSerivce.get_displ2pract(i['id'])
 
-                for pract in d2pract:
-                    pract_serializer = DisciplineWorkHoursSerializer(data={
-                        "planlineslink_id": pk,
-                        "theme_id": theme_serializer.data['id'],
-                        "type": DisciplineWorkHours.TypeChoices.practice,
-                        "name": pract['tema'] or '-',
-                        "hours": pract['hour'] or 0,
-                        "semester": item['semestr'],
-                        "num": pract['num'] or 1,
-                    })
-                    pract_serializer.is_valid(raise_exception=True)
-                    pract_serializer.save()
+        has_to_change_themes = any([
+            serializer.validated_data['themes'],
+            serializer.validated_data['lections'],
+            serializer.validated_data['labs'],
+            serializer.validated_data['practices'],
+            serializer.validated_data['srs'],
+        ])
 
-                d2lab = RPDGenSerivce.get_displ2lab(i['id'])
+        if has_to_change_themes:
+            themes_to_keep = DisciplineThemes.objects.filter(planlineslink_id=pk)
+            themes_to_keep = {
+                f"{i.semester}_{i.name}": i
+                for i in themes_to_keep
+            }
 
-                for lab in d2lab:
-                    lab_serializer = DisciplineWorkHoursSerializer(data={
-                        "planlineslink_id": pk,
-                        "theme_id": theme_serializer.data['id'],
-                        "type": DisciplineWorkHours.TypeChoices.laboratory,
-                        "name": lab['tema'] or '-',
-                        "hours": lab['hour'] or 0,
-                        "semester": item['semestr'],
-                        "num": lab['num'] or 1,
-                    })
-                    lab_serializer.is_valid(raise_exception=True)
-                    lab_serializer.save()
+            if serializer.validated_data['replace']:
+                # DisciplineThemes.objects.filter(planlineslink_id=pk).delete()
+                if serializer.validated_data['lections']:
+                    DisciplineWorkHours.objects.filter(planlineslink_id=pk, type=DisciplineWorkHours.TypeChoices.lectures).delete()
+                if serializer.validated_data['labs']:
+                    DisciplineWorkHours.objects.filter(planlineslink_id=pk, type=DisciplineWorkHours.TypeChoices.laboratory).delete()
+                if serializer.validated_data['practices']:
+                    DisciplineWorkHours.objects.filter(planlineslink_id=pk, type=DisciplineWorkHours.TypeChoices.practice).delete()
+                if serializer.validated_data['srs']:
+                    DisciplineWorkHours.objects.filter(planlineslink_id=pk, type=DisciplineWorkHours.TypeChoices.independent).delete()
+
+            d2s = RPDGenSerivce.get_displ2semestr(cattitle_id)
+
+            for item in d2s:
+
+                d2lek = RPDGenSerivce.get_displ2lek(item['id'])
+
+                for i in d2lek:
+                    control = current_control_by_id.get(i['ccurrent_control'], 'Отчет')
+                    form_control_id = form_control_by_name.get(control, None)
+
+                    theme = themes_to_keep.get(f"{item['semestr']}_{i['tema'] or '-'}")
+                    if not theme:
+                        theme_serializer = DisciplineThemeSerializer(data={
+                            "planlineslink_id": pk,
+                            "name": i['tema'] or '-',
+                            "semester": item['semestr'],
+                            "formcontrol_list": [form_control_id],
+                            "comment": i['note'],
+                            "num": i['num'] or 1,
+                        })
+                        theme_serializer.is_valid(raise_exception=True)
+                        theme = theme_serializer.save()
+
+                    if serializer.validated_data['lections']:
+                        lek_serializer = DisciplineWorkHoursSerializer(data={
+                            "planlineslink_id": pk,
+                            "theme_id": theme.id,
+                            "type": DisciplineWorkHours.TypeChoices.lectures,
+                            "name": i['tema'] or '-',
+                            "hours": i['hour'] or 0,
+                            "semester": item['semestr'],
+                            "num": i['num'] or 1,
+                        })
+                        lek_serializer.is_valid(raise_exception=True)
+                        lek_serializer.save()
+
+                    if serializer.validated_data['srs']:
+                        d2sam = RPDGenSerivce.get_displ2sam(i['id'])
+
+                        for sam in d2sam:
+                            independent = kind_srs_by_id.get(sam['ckindsrs'], '-')
+
+                            sam_serializer = DisciplineWorkHoursSerializer(data={
+                                "planlineslink_id": pk,
+                                "theme_id": theme.id,
+                                "type": DisciplineWorkHours.TypeChoices.independent,
+                                "name": independent or '-',
+                                "hours": sam['hour'] or 0,
+                                "semester": item['semestr'],
+                                "num": sam['num'] or 1,
+                            })
+                            sam_serializer.is_valid(raise_exception=True)
+                            sam_serializer.save()
+
+                    if serializer.validated_data['practices']:
+                        d2pract = RPDGenSerivce.get_displ2pract(i['id'])
+
+                        for pract in d2pract:
+                            pract_serializer = DisciplineWorkHoursSerializer(data={
+                                "planlineslink_id": pk,
+                                "theme_id": theme.id,
+                                "type": DisciplineWorkHours.TypeChoices.practice,
+                                "name": pract['tema'] or '-',
+                                "hours": pract['hour'] or 0,
+                                "semester": item['semestr'],
+                                "num": pract['num'] or 1,
+                            })
+                            pract_serializer.is_valid(raise_exception=True)
+                            pract_serializer.save()
+
+                    if serializer.validated_data['labs']:
+                        d2lab = RPDGenSerivce.get_displ2lab(i['id'])
+
+                        for lab in d2lab:
+                            lab_serializer = DisciplineWorkHoursSerializer(data={
+                                "planlineslink_id": pk,
+                                "theme_id": theme.id,
+                                "type": DisciplineWorkHours.TypeChoices.laboratory,
+                                "name": lab['tema'] or '-',
+                                "hours": lab['hour'] or 0,
+                                "semester": item['semestr'],
+                                "num": lab['num'] or 1,
+                            })
+                            lab_serializer.is_valid(raise_exception=True)
+                            lab_serializer.save()
+
+        if serializer.validated_data['replace']:
+            if serializer.validated_data['themes']:
+                DisciplineThemes.objects.filter(
+                    ~Q(id__in=DisciplineWorkHours.objects.filter(planlineslink_id=pk).values("theme_id")),
+                    planlineslink_id=pk,
+                )
 
         return Response(data={"success": True}, status=status.HTTP_200_OK)
 
@@ -704,10 +806,218 @@ class GeneratorViewSet(
         pk = self.kwargs['pk']
         from_pk = int(self.request.data['from_pk'])
 
+        anyone_can_copy = PlanLinesLink.objects.filter(can_be_copied_by_anyone=True, id=from_pk).exists()
         programs = GeneratorService.get_program_list(self.request.user.userprofile.mira_id)
-        if from_pk not in [i['id'] for i in programs if 'person' in i['type']]:
+        if not anyone_can_copy and from_pk not in [i['id'] for i in programs if 'person' in i['type']]:
             raise APIException("Вы можете копировать только со своих програм")
 
         GeneratorService.copy_rpd_program(from_pk, pk)
 
         return Response(data={"success": True}, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], url_path="upload-rpd-program", detail=True, permission_classes=[CanUploadRPDProgramFile])
+    def upload_rpd_program(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        instance: PlanLinesLink = self.get_object()
+        instance.last_accepted_file = self.request.FILES['file']
+        instance.file = instance.last_accepted_file
+        instance.file_updated_at = datetime.datetime.now()
+        instance.status = PlanLinesLink.StatusChoices.accepted
+        instance.user_accepted = self.request.user
+        instance.user_confirmed = self.request.user
+        instance.confirm_date = pendulum.now()
+        instance.accept_date = pendulum.now()
+        instance.uploaded_directly = True
+
+        instance.save()
+
+        return Response(data={"success": True}, status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], url_path="get-document-types", detail=False, permission_classes=[])
+    def get_document_types(self, request, *args, **kwargs):
+        doc_types = DocumentsTypes.objects.values("id", "name").all()
+
+        return Response(doc_types)
+
+    @action(methods=['GET'], url_path="get-admissions-for-site-info", detail=False, permission_classes=[], serializer_class=GetAdmissionsForSiteInfoSerializer)
+    def get_admissions_for_site_info(self, request, *args, **kwargs):
+        data = []
+
+        serializer = GetAdmissionsForSiteInfoSerializer(data=self.request.query_params)
+        serializer.is_valid()
+
+        query = PlanData.objects.filter(is_deleted=False).all()
+        if 'startyear' in serializer.validated_data:
+            query = query.filter(startyear=serializer.validated_data['startyear'])
+
+        if 'level' in serializer.validated_data:
+            studylevel = {
+                1: 'ВПО-Специалисты', #	специалисты
+                2: 'ВПО-Бакалавры', #	бакалавры
+                3: 'ВПО-Магистры', #	магистры
+                4: 'СПО-Базовый уровень (на базе 11 кл)', #	СПО
+                5: 'Аспирантура', #	аспирантура
+            }.get(serializer.validated_data['level'])
+            if studylevel:
+                query = query.filter(studylevel=studylevel)
+
+        query = list(query)
+
+        for plan in query:
+            admission_info = Catadmission.objects.filter(
+                cuchplan_id=plan.mira_id
+            ).values(
+                'id',
+                'cfob_id',
+                'cfob__name',
+                'cadmkind_id',
+                'cadmkind__name_ak',
+                'spec_name',
+                'cspec__name',
+                'cprofili__name',
+                'direct_name',
+            ).first()
+
+            if not admission_info:
+                continue
+
+            rpds = list(PlanLinesLink.objects.filter(
+                planlines__plan_id=plan.id,
+                last_accepted_file__isnull=False
+            ).exclude(last_accepted_file=''))
+
+            files = UploadFiles.objects.filter(rpd=plan.id)
+            files_by_type = {i.type_id: i for i in files}
+            documents = PlanDocuments.objects.filter(plan_id=plan.id)
+
+
+            data.append({
+                # "species": plan.species,
+                "cfob": admission_info['cfob_id'],
+                "cfob__name": admission_info['cfob__name'],
+                "level": admission_info['cadmkind_id'],
+                "level__name": admission_info['cadmkind__name_ak'],
+                "napr": plan.napr_t,
+                "species": admission_info['cprofili__name'] or admission_info['cspec__name'],
+                "plan_id": plan.mira_id,
+                "cadmission_id": admission_info['id'],
+                "year": plan.startyear,
+                "documents": [
+                    {
+                        "title": d.name,
+                        "type": d.new_type_id,
+                        "url": settings.SITE_URL + files_by_type.get(d.new_type_id).file.url
+                    } for d in documents if d.new_type_id in files_by_type
+                ],
+                "rpds": [
+                    {
+                        'url': settings.SITE_URL + i.last_accepted_file.url,
+                        'name': i.planlines.dis,
+                        'id': i.id,
+                    } for i in rpds if i.planlines.viewpract is None
+                ],
+                "practices": [
+                    {
+                        'url': settings.SITE_URL + i.last_accepted_file.url,
+                        'name': i.planlines.dis,
+                        'id': i.id,
+                    } for i in rpds if i.planlines.viewpract is not None
+                ]
+            })
+
+        # plan.studylevel
+        # plan.studylevel
+
+        return Response(
+            data=data,
+        )
+
+    @action(methods=['GET'], url_path="get-rpd-done-info", detail=False, permission_classes=[])
+    def get_rpd_done_info(self, request, *args, **kwargs):
+        data = []
+
+        query = PlanData.objects.filter(is_deleted=False).all()
+
+        query = list(query)
+
+        for plan in query:
+            admission_info = Catadmission.objects.filter(
+                cuchplan_id=plan.mira_id
+            ).values(
+                'abbr',
+            ).first()
+
+            if not admission_info:
+                continue
+
+            rpds = list(PlanLinesLink.objects.filter(
+                planlines__plan_id=plan.id,
+                # last_accepted_file__isnull=False
+            ).exclude(last_accepted_file=''))
+
+            for rpd in rpds:
+                data.append({
+                    'Абревиатура': admission_info['abbr'],
+                    'Группа': plan.startyear,
+                    'Дисциплина': rpd.planlines.dis,
+                    'newdisid': rpd.planlines.newdisid,
+                    'Статус': rpd.status_verbose,
+                    'Дата загрузки программы': rpd.created_at.strftime("%Y-%m-%d"),
+                })
+
+        df = pd.DataFrame(data)
+
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = f'attachment; filename=rpd_info.xlsx'
+
+        df.to_excel(response, index=False)
+
+        return response
+
+    @action(methods=['GET'], url_path="get-oop-done-info", detail=False, permission_classes=[])
+    def get_oop_done_info(self, request, *args, **kwargs):
+        data = []
+
+        query = PlanData.objects.filter(is_deleted=False).all()
+
+        query = list(query)
+
+        for plan in query:
+            admission_info = Catadmission.objects.filter(
+                cuchplan_id=plan.mira_id
+            ).values(
+                'name',
+            ).first()
+
+            if not admission_info:
+                continue
+
+            files = UploadFiles.objects.filter(rpd=plan.id)
+            files_by_type = {i.type_id: i for i in files}
+            documents = PlanDocuments.objects.filter(plan_id=plan.id)
+
+            upload_docs = [d for d in documents if d.new_type_id in files_by_type]
+            all_upload_docs_titles = [d.name for d in upload_docs]
+
+            data.append({
+                'Группа': admission_info['name'],
+                'Доков надо': len(documents),
+                'Доков сделано': len(upload_docs),
+                'ООП': '+' if 'ООП' in all_upload_docs_titles else '-',
+                'АОП': '+' if 'АОП' in all_upload_docs_titles else '-',
+                'Программа ГИА': '+' if 'Программа ГИА' in all_upload_docs_titles else '-',
+                'ФОС ГИА': '+' if 'ФОС ГИА' in all_upload_docs_titles else '-',
+                'Рабочая программа воспитания': '+' if 'Рабочая программа воспитания' in all_upload_docs_titles else '-',
+                'Схема компетенций': '',
+                'Матрица компетенций':'',
+                'Все документы': all_upload_docs_titles,
+            })
+
+        df = pd.DataFrame(data)
+
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = f'attachment; filename=oop_info.xlsx'
+
+        df.to_excel(response, index=False)
+
+        return response

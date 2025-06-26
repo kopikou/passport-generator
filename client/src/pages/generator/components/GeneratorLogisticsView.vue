@@ -36,15 +36,22 @@ function addOborud(data) {
   saveOborud()
 }
 
-function deleteOborud(id) {
-  let key = _.findKey(oborudData.value, (x) => x.id == id)
-  oborudData.value.splice(key, 1)
-  saveOborud()
+function deleteOborud(item) {
+  $q.dialog({
+    title: 'Подтвердите',
+    message: `Вы точно хотите удалить "${item.name}"?`,
+    cancel: "Отмена",
+    ok: "Удалить"
+  }).onOk(() => {
+    oborudData.value = oborudData.value.filter(x => x != item)
+    saveOborud()
+  })
 }
 
 async function saveOborud() {
   if (generatorViewStore.abortGetDataController)
     generatorViewStore.abortGetDataController.abort()
+
 
   // $q.loading.show()
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
@@ -82,11 +89,7 @@ function checkTaken(id) {
   return _.map(oborudData.value, (x) => x.id).includes(id);
 }
 
-function addMTO() {
-  // if (!disciplineLogistics.value[0]) {
-  //   _.set(disciplineLogistics.value, "[0].value", [])
-  //   saveOborud()
-  // }
+function upsertMTO(data: any) {
 
   $q.notify({
     message: "Убедитесь, что выбранный источник доступен всем студентам и в достаточном количестве.",
@@ -97,12 +100,30 @@ function addMTO() {
     timeout: 3500,
   })
 
+  if (!data) {
+    data = {
+      name: ''
+    }
+  }
+
   $q.dialog({
     component: GeneratorAddLogisticsDialog,
-  }).onOk(() => {
-    // oborudData.value = disciplineLogistics.value[0]?.value || []
+    componentProps: {
+      mto: data
+    }
+  }).onOk((data) => {
+    if (!oborudData.value.includes(data)) {
+      oborudData.value.push(data);
+    }
     saveOborud()
   })
+}
+
+function addDefaultMTO() {
+  oborudData.value.push({name: `Учебная аудитория для проведения лекционных занятий, групповых и индивидуальных консультаций, текущего контроля и промежуточной аттестации. Оснащение: комплект учебной мебели, рабочее место преподавателя, доска. Мультимедийное оборудование (в том числе переносное): мультимедийный проектор, экран, акустическая система, компьютер с выходом в интернет.`})
+  oborudData.value.push({name: `Учебная аудитория для проведения лабораторных/практических (семинарских) занятий, групповых и индивидуальных консультаций, текущего контроля и промежуточной аттестации. Оснащение: комплект учебной мебели, рабочее место преподавателя, доска. Мультимедийное оборудование (в том числе переносное): мультимедийный проектор, экран, акустическая система, компьютер с выходом в интернет.`})
+  // oborudData.value.push({name: `Учебная аудитория для проведения лабораторных/практических (семинарских) занятий, групповых и индивидуальных консультаций, текущего контроля и промежуточной аттестации. Оснащение: комплект учебной мебели, рабочее место преподавателя, доска. Мультимедийное оборудование (в том числе переносное): мультимедийный проектор, экран, акустическая система, компьютер с выходом в интернет. Рабочие места обучающихся, оснащенные компьютерами с выходом в интернет.`})
+  saveOborud()
 }
 
 watch(disciplineLogistics, () => {
@@ -115,67 +136,80 @@ watch(disciplineLogistics, () => {
 
 <template>
   <div class="q-px-md">
-      <span class="text-h6">Перечень материально-технического обеспечения для дисциплины</span>
-      <p></p>
-      <q-separator class="q-mt-md q-mb-md"/>
-      <q-btn
-        class="q-mb-md"
-        label="Добавить МТО"
-        color="secondary"
-        @click="addMTO"
-        v-show="!disabled"
-      />
-      <q-option-group
-        :options="typeOptions"
-        type="radio"
-        v-model="searchType"
-        inline
-        v-show="!disabled"
-      />
-      <div class="row q-gutter-x-md q-mb-md" v-show="!disabled">
-        <q-input
-          label="Введите текст для поиска"
-          stack-label
-          v-model="searchVal"
-          filled
-          class="col"
-          :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"
-        />
-        <q-btn color="secondary" @click="searchOborud" label="Поиск"/>
-      </div>
-      <div class="row">
-        <div class="col-5">
-          <div class="text-h6">Выбранное МТО</div>
-          <div v-for="item in oborudData" style="width: 95%">
-            <q-field label="Название" stack-label filled class="q-mb-md">
-              <template #control>
-                <div class="text-subtitle1 self-center full-width no-outline">
+    <span class="text-h6">Перечень материально-технического обеспечения для дисциплины</span>
+    <p></p>
+    <q-separator class="q-mt-md q-mb-md"/>
+    <q-btn
+      class="q-mb-md"
+      label="Добавить МТО"
+      color="secondary"
+      @click="upsertMTO"
+      v-show="!disabled"
+    />
+    <q-btn
+      class="q-mb-md q-ml-sm"
+      label="Добавить МТО по-умолчанию"
+      color="purple-2"
+      text-color="black"
+      @click="addDefaultMTO"
+      v-show="!disabled"
+    />
+    <!--    <q-option-group-->
+    <!--      :options="typeOptions"-->
+    <!--      type="radio"-->
+    <!--      v-model="searchType"-->
+    <!--      inline-->
+    <!--      v-show="!disabled"-->
+    <!--    />-->
+    <!--    <div class="row q-gutter-x-md q-mb-md" v-show="!disabled">-->
+    <!--      <q-input-->
+    <!--        label="Введите текст для поиска"-->
+    <!--        stack-label-->
+    <!--        v-model="searchVal"-->
+    <!--        filled-->
+    <!--        class="col"-->
+    <!--        :rules="[ val => val.length >= 4 || 'Введите больше 3-ех символов']"-->
+    <!--      />-->
+    <!--      <q-btn color="secondary" @click="searchOborud" label="Поиск"/>-->
+    <!--    </div>-->
+    <div class="row">
+      <div class="col-12">
+        <div class="text-h6">Выбранное МТО</div>
+        <div v-for="item in oborudData" style="width: 95%">
+          <q-field label="Название" stack-label filled class="q-mb-md">
+            <template #control>
+              <div class="text-subtitle1 self-center full-width no-outline">
                   <span>{{ item.name }} <q-chip v-if="item.inv" :label="`${item.inv}`"/> <q-chip v-if="item.caud__name"
                                                                                                  :label="`${item.caud__name}`"/></span>
-                </div>
-                <div class="q-gutter-x-md q-mt-md" v-show="!disabled">
-                  <q-btn color="red" label="Удалить" @click="deleteOborud(item.id)"/>
-                </div>
-              </template>
-            </q-field>
-          </div>
-        </div>
-        <div class="col-7">
-          <div v-for="item in searchData">
-            <q-field label="Название" stack-label filled class="q-mb-md">
-              <template #control>
-                <div class="text-subtitle1 self-center full-width no-outline">
-                  <span>{{ item.name }} <q-chip v-if="item.inv" :label="`${item.inv}`"/> <q-chip v-if="item.caud__name"
-                                                                                                 :label="`${item.caud__name}`"/></span>
-                </div>
-                <div class="q-gutter-x-md q-mt-md">
-                  <q-btn color="primary" label="Добавить" @click="addOborud(item)" :disable="checkTaken(item.id)"/>
-                </div>
-              </template>
-            </q-field>
-          </div>
+              </div>
+
+              <div class="q-gutter-x-md q-mt-md" v-show="!disabled">
+                <q-btn color="primary" label="Редактировать" @click="upsertMTO(item)"/>
+              </div>
+            </template>
+            <template v-slot:append>
+              <q-btn color="red-7" flat round densed icon="mdi-close" @click="deleteOborud(item)" v-show="!disabled">
+              </q-btn>
+            </template>
+          </q-field>
         </div>
       </div>
+      <!--      <div class="col-7">-->
+      <!--        <div v-for="item in searchData">-->
+      <!--          <q-field label="Название" stack-label filled class="q-mb-md">-->
+      <!--            <template #control>-->
+      <!--              <div class="text-subtitle1 self-center full-width no-outline">-->
+      <!--                  <span>{{ item.name }} <q-chip v-if="item.inv" :label="`${item.inv}`"/> <q-chip v-if="item.caud__name"-->
+      <!--                                                                                                 :label="`${item.caud__name}`"/></span>-->
+      <!--              </div>-->
+      <!--              <div class="q-gutter-x-md q-mt-md">-->
+      <!--                <q-btn color="primary" label="Добавить" @click="addOborud(item)" :disable="checkTaken(item.id)"/>-->
+      <!--              </div>-->
+      <!--            </template>-->
+      <!--          </q-field>-->
+      <!--        </div>-->
+      <!--      </div>-->
+    </div>
   </div>
 </template>
 

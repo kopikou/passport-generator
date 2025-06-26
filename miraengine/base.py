@@ -1,3 +1,5 @@
+import traceback
+
 from mssql import features, base
 
 class DatabaseFeatures(features.DatabaseFeatures):
@@ -7,3 +9,12 @@ class DatabaseFeatures(features.DatabaseFeatures):
 class DatabaseWrapper(base.DatabaseWrapper):
     _sql_server_versions = {**base.DatabaseWrapper._sql_server_versions, 8: 2000}
     features_class = DatabaseFeatures
+
+    def _close(self):
+        if self.connection is not None:
+            with self.wrap_database_errors:
+                try:
+                    self.connection.commit()
+                except Exception as ex:
+                    traceback.print_stack()
+                return self.connection.close()

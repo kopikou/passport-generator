@@ -5,7 +5,7 @@ from django.db.models.enums import TextChoices, IntegerChoices
 
 from auths.models import UserProfile
 from rpd.models import LinesData, LinesIndicators
-from app.utils import TimestampsModel
+from app.utils import TimestampsModel, OverwriteStorage
 
 
 # Create your models here.
@@ -24,7 +24,7 @@ class PlanLinesLink(TimestampsModel):
 
     cadmission = models.IntegerField()
     planlines = models.ForeignKey(LinesData, on_delete=models.CASCADE)
-    mira_id = models.IntegerField()
+    mira_id = models.IntegerField(verbose_name="id из UchPlanLines")
     person = models.IntegerField()
     status = models.IntegerField(choices=StatusChoices.choices, default=StatusChoices.appointed)
     protocol_number = models.TextField(null=True, blank=True)
@@ -41,6 +41,18 @@ class PlanLinesLink(TimestampsModel):
     review_date = models.DateField(null=True, blank=True)
     accept_date = models.DateField(null=True, blank=True)
     confirm_date = models.DateField(null=True, blank=True)
+
+    can_be_copied_by_anyone = models.BooleanField("Каждый ли может скопировать программу", default=False)
+
+    file = models.FileField(upload_to="rpd_generator/", verbose_name="Файл программы", null=True)
+    last_accepted_file = models.FileField(upload_to="rpd_generator/", verbose_name="Файл программы", null=True)
+    file_updated_at = models.DateTimeField(null=True, blank=True)
+    uploaded_directly = models.BooleanField("Был ли файл загружен напрямую", null=True, default=False)
+    can_upload_file_directly = models.BooleanField("Можно ли файл загрузать напрямую", null=True, default=False)
+    #
+    # @property
+    # def is_spo(self):
+    #     return self.planlines.caf in (1988516, 1988517)
 
     @property
     def status_verbose(self):
@@ -108,7 +120,7 @@ class DisciplineWorkHours(TimestampsModel):
 
 
     planlineslink = models.ForeignKey("PlanLinesLink", on_delete=models.CASCADE, related_name="discipline_work_hour")
-    theme = models.ForeignKey("DisciplineThemes", on_delete=models.CASCADE)
+    theme = models.ForeignKey("DisciplineThemes", on_delete=models.SET_NULL, null=True)
     type = models.IntegerField(choices=TypeChoices.choices)
     name = models.TextField()
     hours = models.FloatField()

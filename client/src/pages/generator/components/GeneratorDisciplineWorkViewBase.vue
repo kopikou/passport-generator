@@ -24,6 +24,22 @@ const tab = defineModel('tab', {
   default: 0
 });
 
+const labelAllDone = computed(() => {
+  if (props.allPercentValue > props.allPercent) {
+    return `Превышено контрольное значение  ${props.allPercentValue} / ${props.allPercent}, уменьшите количество часов`
+  } else {
+    return `${props.allPercentValue} / ${props.allPercent}`
+  }
+})
+
+
+const labelDone = computed(() => {
+  if (props.allSemesterPercentValue > props.allSemesterPercent) {
+    return `Превышено контрольное значение  ${props.allSemesterPercentValue} / ${props.allSemesterPercent}, уменьшите количество часов`
+  } else {
+    return `${props.allSemesterPercentValue} / ${props.allSemesterPercent}`
+  }
+})
 
 
 </script>
@@ -37,9 +53,10 @@ const tab = defineModel('tab', {
     </template>
     <template #header>
       <div v-if="allPercent != 0">
-        <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent" color="teal-3">
+        <q-linear-progress class="q-mb-md" size="20px" rounded :value="allPercentValue / allPercent"
+                           :color="allPercentValue <= allPercent ? 'teal-3' : 'red-10'">
           <div class="absolute-full flex flex-center">
-            <q-badge color="white" text-color="black" :label="`${allPercentValue} / ${allPercent}`"/>
+            <q-badge color="white" text-color="black" :label="labelAllDone"/>
           </div>
         </q-linear-progress>
         <q-tabs
@@ -52,11 +69,14 @@ const tab = defineModel('tab', {
                  :label="`${generatorViewStore.semesterYearLabel} ${item.num}`"/>
           <q-tab class="text-teal" :name="-1">Все</q-tab>
         </q-tabs>
-        <q-linear-progress class="q-mb-md" size="20px" rounded :value="allSemesterPercentValue / allSemesterPercent"
-                           color="orange-3">
+        <q-linear-progress class="q-mb-md"
+                           size="20px" rounded :value="allSemesterPercentValue / allSemesterPercent"
+                           :color="allSemesterPercentValue <= allSemesterPercent ? 'orange-3' : 'red-10'"
+
+        >
           <div class="absolute-full flex flex-center">
             <q-badge color="white" text-color="black"
-                     :label="`${allSemesterPercentValue} / ${allSemesterPercent}`"/>
+                     :label="labelDone"/>
           </div>
         </q-linear-progress>
       </div>

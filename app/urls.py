@@ -8,6 +8,7 @@ from arim.api import ArimViewSet
 from auths.views import LoginView, LogoutView, BitrixAuthView
 from auths.api import UserApiViewSet
 from generator.api.GeneratorViewSet import GeneratorViewSet
+from prof_activity.api import ProfActivityViewSet
 from rpd.api.AccreditationInfoViewSet import AccreditationInfoViewSet
 from rpd.api.PlxUploadViewSet import PlxUploadViewSet
 from uplfile.api import UploadFileViewSet
@@ -19,6 +20,7 @@ router.register(r'arim', ArimViewSet, basename="arim")
 router.register(r'accreditation', AccreditationInfoViewSet, basename="accreditation")
 router.register(r'generator', GeneratorViewSet, basename="generator")
 router.register(r'upload', UploadFileViewSet, basename="upload")
+router.register(r'activity', ProfActivityViewSet, basename="activity")
 
 # router_old = routers.DefaultRouter()
 # router_old.register(r'asp', AspPlanViewSet, basename="asp")

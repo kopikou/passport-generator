@@ -17,6 +17,7 @@ const generatorViewStore = useGeneratorViewStore();
 
 const {
   semestersData,
+  semestersDataNum,
   independentDisciplineWorkHour,
   rpdData,
   disciplineThemes,
@@ -26,13 +27,21 @@ const {
 
 const tab = ref(0)
 
+
 const allPercent = computed(() => {
-  let hoursList = _.map(semestersData.value, (x) => x.srs)
+  let hoursList = _(semestersData.value)
+    .filter(x => semestersDataNum.value.includes(x.num))
+    .map((x) => x.srs)
+    .value()
   return _.sum(hoursList) || 0
 })
 
+
 const allPercentValue = computed(() => {
-  let value = _.map(independentDisciplineWorkHour.value, (x) => x.hours)
+  let value = _(independentDisciplineWorkHour.value)
+    .filter(x => semestersDataNum.value.includes(x.semester))
+    .map((x) => x.hours)
+    .value()
   return _.sum(value) || 0
 })
 
@@ -126,28 +135,6 @@ async function fieldUp(num, sem) {
   ])
 }
 
-async function fieldDown(num, sem) {
-  let newKey = _.findKey(independentDisciplineWorkHour.value, (x) => x.num == num + 1 && x.semester == sem)
-  let oldKey = _.findKey(independentDisciplineWorkHour.value, (x) => x.num == num && x.semester == sem)
-
-  _.set(independentDisciplineWorkHour.value, `[${oldKey}].num`, num + 1)
-  _.set(independentDisciplineWorkHour.value, `[${newKey}].num`, num)
-  await Promise.all([
-    saveData(_.get(independentDisciplineWorkHour.value, `[${oldKey}]`)),
-    saveData(_.get(independentDisciplineWorkHour.value, `[${newKey}]`))
-  ])
-}
-
-async function saveData(data) {
-  let r = await api.post(`/api/generator/${activeRpdId.value}/save-discipline-work-hour/`, data)
-  return r.data
-}
-
-function getRowColor(id) {
-  let number = _.findKey(filteredData.value, x => x.id == id)
-  return number % 2 == 0 ? 'bg-grey-1' : 'bg-white'
-}
-
 </script>
 
 <template>
@@ -167,8 +154,6 @@ function getRowColor(id) {
       <generator-discipline-work-hour-container
         :data="filteredData"
         v-model:sem="tab"
-        @field-down="fieldDown"
-        @field-up="fieldUp"
         @delete="deleteIndependent"
         @edit="updateIndependent"
       />

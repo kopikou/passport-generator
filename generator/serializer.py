@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from generator.models import PlanLinesLink, DisciplineIndicators, DisciplineThemes, DisciplineWorkHours, AdditionalInfo, \
@@ -54,11 +55,17 @@ class DisciplineIndicatorsAddSerializer(serializers.Serializer):
         ]
 
     def create(self, validate_data):
-        discipline_indicators, created = DisciplineIndicators.objects.update_or_create(
-            indicator_id=validate_data.get('indicator_id'),
-            planlineid_id=validate_data.get('planlineid_id'),
-            defaults=validate_data,
-        )
+        with transaction.atomic():
+            DisciplineIndicators.objects.filter(
+                indicator_id=validate_data.get('indicator_id'),
+                planlineid_id=validate_data.get('planlineid_id'),
+            ).select_for_update()
+
+            discipline_indicators, created = DisciplineIndicators.objects.update_or_create(
+                indicator_id=validate_data.get('indicator_id'),
+                planlineid_id=validate_data.get('planlineid_id'),
+                defaults=validate_data,
+            )
 
         return discipline_indicators
 
@@ -146,15 +153,21 @@ class AdditionalInfoSerializer(serializers.Serializer):
         ]
 
     def create(self, validated_data):
-        additional_info, created = AdditionalInfo.objects.update_or_create(
-            planlineslink_id=validated_data['planlineslink_id'],
-            type=validated_data['type'],
-            defaults={
-                "type": validated_data['type'],
-                "value": validated_data['value'],
-                "planlineslink_id": validated_data['planlineslink_id'],
-            }
-        )
+        with transaction.atomic():
+            AdditionalInfo.objects.filter(
+                planlineslink_id=validated_data['planlineslink_id'],
+                type=validated_data['type']
+            ).select_for_update()
+
+            additional_info, created = AdditionalInfo.objects.update_or_create(
+                planlineslink_id=validated_data['planlineslink_id'],
+                type=validated_data['type'],
+                defaults={
+                    "type": validated_data['type'],
+                    "value": validated_data['value'],
+                    "planlineslink_id": validated_data['planlineslink_id'],
+                }
+            )
 
         return additional_info
 
@@ -208,6 +221,7 @@ class PlanLinesLinkSerializer(serializers.Serializer):
     user_confirmed_id = serializers.IntegerField(required=False)
     user_type = serializers.IntegerField(required=False)
     meeting = serializers.CharField(required=False)
+    can_be_copied_by_anyone = serializers.BooleanField(required=False)
 
     review_date = serializers.DateField(required=False)
     accept_date = serializers.DateField(required=False)
@@ -245,6 +259,7 @@ class PlanLinesLinkSerializer(serializers.Serializer):
             'discipline_themes',
             'discipline_work_hour',
             'additional_info',
+            'can_be_copied_by_anyone',
         ]
 
 
@@ -315,3 +330,41 @@ class ScientificDataSerializer(serializers.Serializer):
         )
 
         return data
+
+
+class ThemesOrderSerializer(serializers.Serializer):
+    order = serializers.ListField(child=serializers.IntegerField())
+
+
+class WorkHoursOrderSerializer(serializers.Serializer):
+    order = serializers.ListField(child=serializers.IntegerField())
+
+
+class GetAdmissionsForSiteInfoSerializer(serializers.Serializer):
+    year = serializers.IntegerField(required=False)
+    level = serializers.IntegerField(required=False)
+
+
+class CopyProgramSerializer(serializers.Serializer):
+    replace = serializers.BooleanField(required=False, default=False)
+
+    indicators = serializers.BooleanField(required=False, default=False)
+    themes = serializers.BooleanField(required=False, default=False)
+    lections = serializers.BooleanField(required=False, default=False)
+    labs = serializers.BooleanField(required=False, default=False)
+    practices = serializers.BooleanField(required=False, default=False)
+    srs = serializers.BooleanField(required=False, default=False)
+
+    additional_info_resources= serializers.BooleanField(required=False, default=False)
+    additional_info_interactiveMethods= serializers.BooleanField(required=False, default=False)
+    additional_info_disciplinePlace= serializers.BooleanField(required=False, default=False)
+    additional_info_software= serializers.BooleanField(required=False, default=False)
+    additional_info_logistics= serializers.BooleanField(required=False, default=False)
+    additional_info_guidelines= serializers.BooleanField(required=False, default=False)
+    additional_info_library= serializers.BooleanField(required=False, default=False)
+    additional_info_tat= serializers.BooleanField(required=False, default=False)
+    additional_info_fos= serializers.BooleanField(required=False, default=False)
+
+
+
+

@@ -147,13 +147,17 @@ export interface GeneratorListData {
   yr: number,
   id_admission: number,
   mira_id: number,
-  type: Array,
+  type: Array<number>,
   person: string,
   id: number,
   status: number,
   status_verbose: string,
   kafcode: number,
   discode: string,
+  can_upload_file_directly: boolean
+  last_accepted_file_url: string | null
+  user_confirmed_name: string
+  user_accepted_name: string
 }
 
 export interface GeneratorPlanLineData {
@@ -174,6 +178,7 @@ export interface GeneratorPlanLineData {
   semesters: PlanSemestrData[],
   indicators: PlanIndicatorData[],
   plan: PlanData[],
+
 }
 
 export interface AdmissionInfo {
@@ -201,6 +206,7 @@ export interface AdmissionInfo {
 export interface OtherDiscipline {
   disid: number,
   dis: string;
+  semesters: number[],
 }
 
 export interface GeneratorData {
@@ -240,7 +246,18 @@ export interface GeneratorData {
     startyear: number;
     id: number;
     species: string;
+  }[]
+  common: {
+    abbrprofile: string;
+    startyear: number;
+    id: number;
+    species: string;
   }[];
+  users: {
+    accepted: string | null
+    developer: string | null
+    confirmed: string | null
+  }
   protocol_number: null;
   protocol_date: null;
   user_accepted_id: null;
@@ -248,6 +265,7 @@ export interface GeneratorData {
   meeting: null;
   review_date: null;
   accept_date: null;
+  can_be_copied_by_anyone: boolean;
   additional_info: any[]; // Можно уточнить тип, если известна структура
 }
 
@@ -317,4 +335,23 @@ export interface DefaultRecources {
   name: string,
   type: number,
   url: string,
+}
+
+export interface CopyOptions {
+  replace: boolean,
+  indicators: boolean,
+  themes: boolean,
+  lections: boolean,
+  labs: boolean,
+  practices: boolean,
+  srs: boolean,
+  additional_info_resources: boolean,
+  additional_info_interactiveMethods: boolean,
+  additional_info_disciplinePlace: boolean,
+  additional_info_software: boolean,
+  additional_info_logistics: boolean,
+  additional_info_guidelines: boolean,
+  additional_info_library: boolean,
+  additional_info_tat: boolean,
+  additional_info_fos: boolean,
 }

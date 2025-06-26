@@ -38,7 +38,8 @@ function filterFn(val: any, update: any, abort: any) {
 </script>
 
 <template>
-  <q-select use-input v-bind="attrs" @filter="filterFn" :options="filteredOptions" />
+  <q-select use-input v-bind="attrs" @filter="filterFn" :options="filteredOptions">
+  </q-select>
 </template>
 
 <style scoped>

@@ -17,15 +17,29 @@ const {
   disciplinePlace,
   additionalInfo,
   disabled,
+  semesterYearLabel,
+  semestersDataNum
 } = storeToRefs(generatorViewStore)
 
 const precedence = ref([])
 const subsequent = ref([])
 
 const filteredOthderDiscipline = computed(() => {
-  const data = _.orderBy(otherDiscipline.value, x => x.dis)
-  data.push({disid: 0, dis: 'Нет'})
+  const data = _(otherDiscipline.value).map(x => ({
+    ...x, dis: `${x.dis} / ${(x.semesters || []).join(", ")} ${semesterYearLabel.value}`
+  })).orderBy(x => [(x.semesters || [])[0], x.dis]).value()
+  data.push({disid: 0, dis: 'Нет', semesters: [0]})
   return data
+})
+
+
+const filteredOtherDisciplinePrevious = computed(() => {
+  return filteredOthderDiscipline.value.filter(x => _.min(x.semesters) <= _.min(semestersDataNum.value))
+})
+
+
+const filteredOtherDisciplineNext = computed(() => {
+  return filteredOthderDiscipline.value.filter(x => _.min(x.semesters) >= _.min(semestersDataNum.value))
 })
 
 async function savePrecSubDiscipline() {
@@ -44,7 +58,7 @@ async function savePrecSubDiscipline() {
     $q.notify({
       message: "Данные <span class='text-bold'>о месте дисциплины в структуре ООП</span> сохранены!",
       color: "secondary",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
 
@@ -70,7 +84,7 @@ async function savePrecSubDiscipline() {
     $q.notify({
       message: "Данные <span class='text-bold'>о месте дисциплины в структуре ООП</span> не сохранены!",
       color: "negative",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
 
@@ -103,7 +117,7 @@ watch(disciplinePlace, () => {
         multiple
         map-options
         emit-value
-        :options="filteredOthderDiscipline"
+        :options="filteredOtherDisciplinePrevious"
         :readonly="disabled"
         @update:modelValue="savePrecSubDiscipline"
       />
@@ -119,7 +133,7 @@ watch(disciplinePlace, () => {
         multiple
         map-options
         emit-value
-        :options="filteredOthderDiscipline"
+        :options="filteredOtherDisciplineNext"
         :readonly="disabled"
         @update:modelValue="savePrecSubDiscipline"
       />

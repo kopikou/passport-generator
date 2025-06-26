@@ -1,11 +1,12 @@
 from pprint import pprint
 
 from django.core.management import BaseCommand
-from django.db.models import Q
+from django.db.models import Q, Case, When, Value
 
 from arim.models import UchPlanPlan, UchPlanLines, UchPlanDiscpl, UchPlanKaf, UchPlanSemestr, BoolChoice, Catadmission, \
     UchPlanFiles
 from arim.services import AISServices
+from generator.models import PlanLinesLink
 from rpd.models import RPDFile, LinesData, PlanData, SemesterData, PlanDocuments
 
 
@@ -20,6 +21,12 @@ class Command(BaseCommand):
         kaf_codes = UchPlanKaf.objects.all()
         kaf_codes = {i['ckaf2rpgen']: i for i in kaf_codes.values()}
 
+        uchplan_to_keep = []
+        uchplan_files_to_keep = []
+        uchplan_semester_to_keep = []
+        uchplan_displ_to_keep = []
+        uchplan_lines_to_keep = []
+
         for i in data:
             plan_data = PlanData.objects.filter(file_id=i.id).values()
             line_data = LinesData.objects.filter(plan__file_id=i.id).values()
@@ -28,7 +35,9 @@ class Command(BaseCommand):
 
             transfer_plan_data = {}
             for plan in plan_data:
-                cadmission = Catadmission.objects.get(abbr=plan['abbrprofile'], yr=plan['startyear'])
+                cadmission = Catadmission.objects.filter(abbr=plan['abbrprofile'], yr=plan['startyear']).first()
+                if not cadmission:
+                    continue
 
                 transfer_plan_data = {
                     "species": plan['species'],
@@ -55,6 +64,8 @@ class Command(BaseCommand):
                     defaults=transfer_plan_data,
                 )
 
+                uchplan_to_keep.append(uchplan.id)
+
                 PlanData.objects.filter(id=plan['id']).update(mira_id=uchplan.id)
 
                 Catadmission.objects.filter(id=cadmission.id).update(cuchplan_id=uchplan.id)
@@ -74,6 +85,8 @@ class Command(BaseCommand):
                     defaults=transfer_file_data,
                 )
 
+                uchplan_files_to_keep.append(files.id)
+
             query = Q()
             for line in line_data:
                 query |= Q(name=line['dis'])
@@ -90,6 +103,8 @@ class Command(BaseCommand):
                     disid = disid.id
                 else:
                     disid = discpl_names.get(line['dis'])['id']
+
+                uchplan_displ_to_keep.append(disid)
 
                 transfer_line_data = {
                     "planid_id": uchplan.id,
@@ -114,6 +129,8 @@ class Command(BaseCommand):
                     newdisid=transfer_line_data['newdisid'],
                     defaults=transfer_line_data,
                 )
+
+                uchplan_lines_to_keep.append(lines.id)
 
                 # print(transfer_line_data)
 
@@ -144,5 +161,18 @@ class Command(BaseCommand):
                             num=transfer_semester_data['num'],
                             defaults=transfer_semester_data,
                         )
+
+                        uchplan_semester_to_keep.append(semesters.id)
+
+
+            UchPlanLines.objects.filter(planid=uchplan.id).update(
+                fordel=Case(When(id__in=uchplan_lines_to_keep, then=Value(BoolChoice.f)), default=Value(BoolChoice.t))
+            )
+
+            lines = UchPlanLines.objects.filter(planid=uchplan.id)
+            for line in lines:
+                PlanLinesLink.objects.filter(mira_id=line.id).update(
+                    is_deleted=True if line.fordel == BoolChoice.t else False
+                )
 
             RPDFile.objects.filter(id=i.id).update(status=RPDFile.StatusChoice.finished)

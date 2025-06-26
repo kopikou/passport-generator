@@ -61,7 +61,7 @@ async function saveDiscplineGoal() {
     $q.notify({
       message: "Данные <span class='text-bold'>о цели освоения дисциплины</span> сохранены!",
       color: "secondary",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
     let key = _.findKey(additionalInfo.value, (x) => x.id == v.data.id)
@@ -70,7 +70,7 @@ async function saveDiscplineGoal() {
     $q.notify({
       message: "Данные <span class='text-bold'>о цели освоения дисциплины</span> не сохранены!",
       color: "negative",
-      position: "bottom",
+      position: "bottom-right",
       html: true,
     })
   })
@@ -107,6 +107,16 @@ function getSpecName(name) {
   }
 }
 
+const can_be_copied_by_anyone = computed({
+  get() {
+    return rpdData.value.can_be_copied_by_anyone
+  },
+  async set(value) {
+    await api.post(`api/generator/${activeRpdId.value}/toggle-can-be-copied-by-anyone/`)
+    rpdData.value.can_be_copied_by_anyone = !rpdData.value.can_be_copied_by_anyone;
+  }
+});
+
 const cafDataById = computed(() => {
   return _.keyBy(cafData.value, 'value')
 })
@@ -121,36 +131,50 @@ watch(additionalInfo, () => {
 
   <div class="q-px-md">
     <span class="text-h6" v-if="planlinesData.viewpract">Данные по практике</span>
-      <span class="text-h6 q-pl-lg" v-else>Данные по дисциплине</span>
-      <p>Данные для рабочей программы
-        <span v-if="planlinesData.viewpract">практики</span>
-        <span v-else>по дисциплине</span>
-         "{{ rpdData.planlines?.dis }}" получены автоматически из учебного
-        плана</p>
-      <q-separator class="q-mt-md q-mb-md"/>
-      <div class="q-pb-md">
-        <div v-if="!planlinesData.viewpract">
-          <span class="text-subtitle1">Наименование дисциплины</span>
-          <q-field outlined dense>
-            <template v-slot:control>
-              <div class="self-center full-width no-outline">{{ rpdData.planlines?.dis }}</div>
-            </template>
-          </q-field>
-        </div>
-        <div v-else>
-          <span class="text-subtitle1">Вид практики</span>
-          <q-field outlined dense>
-            <template v-slot:control>
-              <div class="self-center full-width no-outline">{{ practiceName.type }}</div>
-            </template>
-          </q-field>
-          <span class="text-subtitle1">Тип практики</span>
-          <q-field outlined dense>
-            <template v-slot:control>
-              <div class="self-center full-width no-outline">{{ practiceName.text }}</div>
-            </template>
-          </q-field>
-        </div>
+    <span class="text-h6" v-else>Данные по дисциплине</span>
+    <div class="flex">
+      Данные для рабочей программы
+      <span v-if="planlinesData.viewpract">практики</span>
+      <span v-else>по дисциплине</span>
+      "{{ rpdData.planlines?.dis }}" получены автоматически из учебного плана
+    </div>
+    <div>
+      <a target="__blank" :href="rpdData.plx_file">Скачать *.plx</a>
+    </div>
+    <q-separator class="q-mt-md q-mb-md"/>
+    <div>
+      <q-toggle v-model="can_be_copied_by_anyone">Разрешить копировать дисциплину любому преподавателю (т.е. любой преподаватель сможет скопировать себе в РПД данные, которые вы внесли, при условии совпадения названия дисциплины)</q-toggle>
+    </div>
+    <q-separator class="q-mt-md q-mb-md"/>
+    <div v-if="rpdData.users">
+      <div v-if="rpdData.users.developer"><b>Разработал:</b> {{rpdData.users.developer}}</div>
+      <div v-if="rpdData.users.confirmed"><b>Согласовал:</b> {{rpdData.users.confirmed}}</div>
+      <div v-if="rpdData.users.accepted"><b>Утвердил:</b> {{rpdData.users.accepted}}</div>
+    </div>
+    <q-separator class="q-mt-md q-mb-md"/>
+    <div class="q-pb-md">
+      <div v-if="!planlinesData.viewpract">
+        <span class="text-subtitle1">Наименование дисциплины</span>
+        <q-field outlined dense>
+          <template v-slot:control>
+            <div class="self-center full-width no-outline">{{ rpdData.planlines?.dis }}</div>
+          </template>
+        </q-field>
+      </div>
+      <div v-else>
+        <span class="text-subtitle1">Вид практики</span>
+        <q-field outlined dense>
+          <template v-slot:control>
+            <div class="self-center full-width no-outline">{{ practiceName.type }}</div>
+          </template>
+        </q-field>
+        <span class="text-subtitle1">Тип практики</span>
+        <q-field outlined dense>
+          <template v-slot:control>
+            <div class="self-center full-width no-outline">{{ practiceName.text }}</div>
+          </template>
+        </q-field>
+      </div>
       <span v-if="admissionData?.cadmkind != 5" class="text-subtitle1">Профиль/Специальность</span>
       <q-field outlined dense v-if="admissionData?.cadmkind != 5">
         <template v-slot:control>
@@ -188,6 +212,7 @@ watch(additionalInfo, () => {
         </template>
       </q-field>
     </div>
+
     <div class="flex justify-center items-center">
       <span class="text-subtitle1">Количество семестров</span>
       <q-field filled dense style="width: 5%" class="q-ml-md q-mr-md">

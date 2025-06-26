@@ -34,6 +34,7 @@ function addTheme() {
       id: null,
     },
   }).onOk(() => {
+    generatorViewStore.getData();
     generatorViewStore.checkErrors()
   })
 }
@@ -46,11 +47,12 @@ function updateTheme(id) {
       id: id,
     },
   }).onOk(() => {
+    generatorViewStore.getData();
     generatorViewStore.checkErrors()
   })
 }
 
-async function deleteTheme(id) {
+async function deleteTheme(item) {
 
   $q.dialog({
     title: 'Удаление темы',
@@ -69,14 +71,15 @@ async function deleteTheme(id) {
   }).onOk(async () => {
 
     $q.loading.show({message: "Удаление"})
-    let r = await api.get(`/api/generator/${activeRpdId.value}/delete-discipline-themes/`, {params: {id: id}})
+    let r = await api.get(`/api/generator/${activeRpdId.value}/delete-discipline-themes/`, {params: {id: item.id}})
 
-    rpdData.value.discipline_themes.splice(_.findKey(disciplineThemes.value, (x) => x.id == id), 1)
-    rpdData.value.discipline_work_hour = _.filter(disciplineWorkHour.value, x => x.theme_id != id)
+    rpdData.value.discipline_themes = rpdData.value.discipline_themes.filter(x => x.id != item.id)
+    rpdData.value.discipline_work_hour = _.filter(disciplineWorkHour.value, x => x.theme_id != item.id)
+    await prepareOrderBySemester(item.semester)
 
+    generatorViewStore.getData();
     generatorViewStore.checkErrors()
     $q.loading.hide()
-
   })
 
 }
@@ -89,28 +92,42 @@ const filteredData = computed(() => {
   return _.orderBy(disciplineThemes.value, (x) => x.num, 'asc')
 })
 
-async function fieldUp(num, sem) {
-  let newKey = _.findKey(disciplineThemes.value, (x) => x.num == num - 1 && x.semester == sem)
-  let oldKey = _.findKey(disciplineThemes.value, (x) => x.num == num && x.semester == sem)
-
-  _.set(disciplineThemes.value, `[${oldKey}].num`, num - 1)
-  _.set(disciplineThemes.value, `[${newKey}].num`, num)
-  await Promise.all([
-    saveThemeData(_.get(disciplineThemes.value, `[${oldKey}]`)),
-    saveThemeData(_.get(disciplineThemes.value, `[${newKey}]`))
-  ])
+async function prepareOrderBySemester(semester: number) {
+  await api.post(`/api/generator/${activeRpdId.value}/set-themes-order/`, {
+    order: disciplineThemes.value.filter(x => x.semester == semester).map(x => x.id)
+  })
 }
 
-async function fieldDown(num, sem) {
-  let newKey = _.findKey(disciplineThemes.value, (x) => x.num == num + 1 && x.semester == sem)
-  let oldKey = _.findKey(disciplineThemes.value, (x) => x.num == num && x.semester == sem)
+async function fieldUp(item) {
+  let dontChange =  disciplineThemes.value.filter(x => x.semester != item.semester);
 
-  _.set(disciplineThemes.value, `[${oldKey}].num`, num + 1)
-  _.set(disciplineThemes.value, `[${newKey}].num`, num)
-  await Promise.all([
-    saveThemeData(_.get(disciplineThemes.value, `[${oldKey}]`)),
-    saveThemeData(_.get(disciplineThemes.value, `[${newKey}]`))
-  ])
+  let currentSemester = disciplineThemes.value.filter(x => x.semester == item.semester);
+  let newData = currentSemester.filter(x => x.num < item.num - 1 && x != item).concat(
+    [item],
+    currentSemester.filter(x => x.num >= item.num - 1 && x != item),
+  ).map((x, index) => ({...x, num: index + 1}))
+
+  disciplineThemes.value = dontChange.concat(newData);
+
+  await api.post(`/api/generator/${activeRpdId.value}/set-themes-order/`, {
+    order: newData.map(x => x.id)
+  })
+}
+
+async function fieldDown(item) {
+  let dontChange =  disciplineThemes.value.filter(x => x.semester != item.semester);
+
+  let currentSemester = disciplineThemes.value.filter(x => x.semester == item.semester);
+  let newData = currentSemester.filter(x => x.num <= item.num + 1 && x != item).concat(
+    [item],
+    currentSemester.filter(x => x.num > item.num + 1 && x != item)
+  ).map((x, index) => ({...x, num: index + 1}))
+
+  disciplineThemes.value = dontChange.concat(newData);
+
+  await api.post(`/api/generator/${activeRpdId.value}/set-themes-order/`, {
+    order: newData.map(x => x.id)
+  })
 }
 
 async function saveThemeData(data) {
@@ -195,18 +212,18 @@ watchEffect(() => {
               </div>
               <div>
                 <q-btn
-                  icon="mdi-delete" color="red" flat @click="deleteTheme(item.id)" :disabled="disabled"
+                  icon="mdi-delete" color="red" flat @click="deleteTheme(item)" :disabled="disabled"
                 />
                 <q-btn
                   icon="mdi-pencil-outline" color="green" flat @click="updateTheme(item.id)" :disabled="disabled"
                 />
                 <q-btn v-if="item.num != 1"
                        icon="mdi-arrow-up-thin" color="black" flat :disabled="disabled"
-                       @click="fieldUp(item.num, item.semester)"
+                       @click="fieldUp(item)"
                 />
                 <q-btn v-if="item.num != maxNumberInSemester"
                        icon="mdi-arrow-down-thin" color="black" flat :disabled="disabled"
-                       @click="fieldDown(item.num, item.semester)"
+                       @click="fieldDown(item)"
                 />
               </div>
             </div>

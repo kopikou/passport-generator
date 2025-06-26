@@ -1,10 +1,18 @@
+import datetime
 import os
+import platform
 import re
+import shutil
 from itertools import groupby
 from pathlib import Path
+from subprocess import run
+from tempfile import TemporaryDirectory
+from time import sleep
 
 import pendulum
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import UploadedFile
+from django.utils.encoding import escape_uri_path
 from docxtpl import DocxTemplate
 
 from app.settings import BASE_DIR
@@ -63,6 +71,80 @@ def get_work_hours(data, type):
 
 class ReportService(object):
 
+    @classmethod
+    def generate_rpd_report(cls, instance: PlanLinesLink):
+        from generator.services.generator_service import GeneratorService
+        pk = instance.id
+        rpd_data = GeneratorService.get_rpd_data(pk)
+
+        path = f'templates/outputs/'
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        dr = TemporaryDirectory()
+        path_doc_file = os.path.join(dr.name, f"{pk}.docx")
+        path_pdf_file = os.path.join(dr.name, f"{pk}.pdf")
+
+        if rpd_data['planlines']['viewpract']:
+            tpl = ReportService.get_practice_report(rpd_data)
+        else:
+            tpl = ReportService.get_rpd_report(rpd_data)
+        # tpl.save(response)
+
+        tpl.save(path_doc_file)
+
+        if platform.system() == 'Linux':
+            run([
+                'libreoffice', '--headless', '--invisible', '--convert-to',
+                'pdf', path_doc_file, '--outdir', os.path.dirname(path_pdf_file),
+            ])
+        elif platform.system() == 'Windows':
+            from win32com.client import Dispatch
+
+            word = Dispatch('Word.Application')
+            doc = word.Documents.Open(path_doc_file)
+            doc.SaveAs(path_pdf_file, FileFormat=17)
+            word.Quit()
+
+        success = False
+        for i in range(10):
+            try:
+                with open(path_pdf_file, 'rb') as file:
+                    name = f"{rpd_data['admission']['abbr']}_{rpd_data['admission']['yr']}_{rpd_data['planlines']['dis']}_{pk}"
+                    if instance.status == PlanLinesLink.StatusChoices.accepted:
+                        name = f"{name}_accepted"
+
+                    uploaded_file = UploadedFile(file, f"{name}.pdf")
+                    uploaded_file.seek(0)
+
+                    if instance.file \
+                            and (not instance.last_accepted_file or instance.file.name != instance.last_accepted_file.name):
+                        instance.file.delete()
+
+                    instance.file = uploaded_file
+                    instance.file_updated_at = datetime.datetime.now()
+
+                    if  instance.status == PlanLinesLink.StatusChoices.accepted:
+                        if instance.last_accepted_file:
+                            instance.last_accepted_file.delete()
+                        instance.last_accepted_file = instance.file
+                    instance.save(update_fields=['file', 'last_accepted_file', 'file_updated_at'])
+                    success = True
+            except FileNotFoundError:
+                sleep(0.5)
+
+            if success:
+                break
+
+        try:
+            dr.cleanup()
+        except NotADirectoryError:
+            pass
+
+        return instance
+
+
     @staticmethod
     def get_rpd_annotation(data):
         path = f'{BASE_DIR}{Path("/templates/docxRPD/annotation.docx")}'
@@ -112,7 +194,10 @@ class ReportService(object):
     @staticmethod
     def get_practice_report(data):
 
-        path = f'{BASE_DIR}{Path("/templates/docxRPD/practice.docx")}'
+        if data['admission']['cadmkind'] == 3 and data['planlines']['viewpract'] == 8:
+            path = f'{BASE_DIR}{Path("/templates/docxRPD/practice_nis.docx")}'
+        else:
+            path = f'{BASE_DIR}{Path("/templates/docxRPD/practice.docx")}'
 
         doc = DocxTemplate(path)
 
@@ -140,27 +225,61 @@ class ReportService(object):
                 'methods': item['discipline_indicator'][0]['methods'] if item['discipline_indicator'] else '',
             })
 
-        if data['admission']['ckaf_id'] == 105:
-            podrazdelene = data['admission']['cfac__name'].strip()
+        ckafs = AISServices.get_kaf_codes()
+        ckafs_by_id = {i['value']: i['label'] for i in ckafs}
+
+        if data['planlines']['caf']:
+            podrazdelene = ckafs_by_id.get(data['planlines']['caf'], '')
         else:
-            podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
+            if data['admission']['ckaf_id'] == 105:
+                podrazdelene = data['admission']['cfac__name'].strip()
+            else:
+                podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
 
         discipline = data['planlines']['dis'].split(': ')
+
+        sems = [i['num'] for i in data['planlines']['semesters']]
 
         additional_library = []
         main_library = []
         tat = []
+        fos = []
         resources = []
         software = []
         logistics = []
         practice_way = []
+        practice_form = []
         practice_content_text = ''
         practice_content = []
         practice_report = []
         practice_report_req = ''
+        sem_or_year = 'Учебный год' if data['admission']['cfob__name'] == 'заочная' else 'Семестр'
+
         for item in data['additional_info']:
             if item['type'] == 'practiceWay':
-                practice_way = item['value']['practiceWay']
+                practice_way = item['value'].get('practiceWay', [])
+                practice_form = item['value'].get('practiceForm', [])
+
+            if item['type'] == 'fos':
+                q = 0
+
+                # fos_choiced = set(flatten([i['formcontrol_list'] for i in data['discipline_themes']]))
+
+                fos_sorted = sorted(data['discipline_themes'], key=lambda x: x['semester'])
+                fos_grouped = {key: set(flatten([q['formcontrol_list'] for q in list(i)])) for key, i in groupby(fos_sorted, key=lambda x: x['semester'])}
+
+                for i in item['value']:
+                    if i['type'] in fos_grouped.get(int(i['num']), []):
+                        if i['title'].find(sem_or_year.lower(), 0, 15) != -1:
+                            q += 1
+                            fos.append({
+                                'num': i['num'],
+                                'number': q,
+                                'type': i['type'],
+                                'title': i['title'],
+                                'about': i['about'] if 'about' in i else '',
+                                'criteria': i['criteria'] if 'criteria' in i else '',
+                            })
 
             if item['type'] == 'practiceContent':
                 practice_content = item['value']
@@ -170,7 +289,7 @@ class ReportService(object):
 
             if item['type'] == 'practiceReport':
                 practice_report_req = item['value']['requirements']
-                practice_report = item['value']['documents'].split('\n')
+                practice_report = [i.strip() for i in item['value']['documents'].split('\n') if i.strip()]
 
             if item['type'] == 'resources':
                 resources = item['value']
@@ -207,21 +326,23 @@ class ReportService(object):
                 for k, i in enumerate(item['value'], start=1):
                     logistics.append({
                         'number': k,
-                        'name': i['name'],
+                        'name': i.get('name', ''),
                     })
 
             if item['type'] == 'tat':
                 q = 0
                 for i in item['value']:
+                    if i['num'] not in sems:
+                        continue
                     q += 1
                     if i['type'] == 'zach':
                         tat.append({
                             'number': q,
                             'type': i['type'],
-                            'title': i['title'].lower(),
-                            'form': i['form'],
-                            'formabout': i['formabout'],
-                            "tat": i['tat'],
+                            'title': f"{sem_or_year} {i['num']}, {i['title'].lower()}",
+                            'form': i.get('form', ''),
+                            'formabout': i.get('formabout', ''),
+                            "tat": i.get('tat', ''),
                             'passed': i['passed'],
                             'unpassed': i['unpassed'],
                         })
@@ -229,35 +350,302 @@ class ReportService(object):
                         tat.append({
                             'number': q,
                             'type': i['type'],
-                            'title': i['title'].lower(),
-                            'form': i['form'],
-                            'formabout': i['formabout'],
-                            "tat": i['tat'],
+                            'title': f"{sem_or_year} {i['num']}, {i['title'].lower()}",
+                            'form': i.get('form', ''),
+                            'formabout': i.get('formabout', ''),
+                            "tat": i.get('tat', ''),
                             'great': i['great'],
                             'good': i['good'],
                             'satisfactorily': i['satisfactorily'],
                             'unsatisfactory': i['unsatisfactory'],
                         })
 
+
+
         semesters = []
+        semester_hours = []
+        tic_all = {}
         for item in data['planlines']['semesters']:
+            tic_all[item['num']] = ", ".join(get_tic_name(item, data))
             semesters.append({
                 "num": item['num'],
                 "kurs": (item['num'] + 1) // 2,
                 "srs_hours": item['srs'] or 0,
-                "weeks": int(item['srs'] / 54),
-                "zet": int(item['zet']) or 0,
+                "weeks": int(item['srs'] / 54) if item['srs'] else 0,
+                "zet": int(item['zet']) if item['zet'] else 0,
                 "tic": ', '.join(get_tic_name(item)),
             })
 
-        contex = {
+            semester_hours.append({
+                "num": item['num'],
+                "aud_hours": sum([
+                    item['lekc'] or 0,
+                    item['lab'] or 0,
+                    item['pr'] or 0,
+                ]),
+                "contact_hours": sum([
+                    item['lekc'] or 0,
+                    item['lab'] or 0,
+                    item['pr'] or 0,
+                    item['eios'] or 0,
+                ]),
+                "lekc_hours": item['lekc'] or 0,
+                "lab_hours": item['lab'] or 0,
+                "pr_hours": item['pr'] or 0,
+                "srs_hours": item['srs'] or 0,
+                "ekz_hours": item['ekzhour'] or 0,
+                "eios_hours": item['eios'] or 0,
+                "tic": tic_all[item['num']],
+            })
+
+
+        semester_hours_sorted = sorted(semester_hours, key=lambda x: x['num'])
+        semester_hours_grouped = {key: list(item) for key, item in
+                                  groupby(semester_hours_sorted, key=lambda x: x['num'])}
+
+        discipline_themes = {item['id']: item for item in data['discipline_themes']}
+        discipline_sorted = sorted(data['discipline_themes'], key=lambda item: (item['semester'], item['num']))
+        discipline_grouped = {sem: list(item) for sem, item in
+                              groupby(discipline_sorted, key=lambda item: item['semester']) if sem in semester_hours_grouped}
+
+        semester_hours_all = {
+            "lekc_hours_all": sum([i['lekc'] for i in data['planlines']['semesters'] if i['lekc'] is not None]),
+            "lab_hours_all": sum([i['lab'] for i in data['planlines']['semesters'] if i['lab'] is not None]),
+            "pr_hours_all": sum([i['pr'] for i in data['planlines']['semesters'] if i['pr'] is not None]),
+            "srs_hours_all": sum([i['srs'] for i in data['planlines']['semesters'] if i['srs'] is not None]),
+            "ekz_hours_all": sum([i['ekzhour'] for i in data['planlines']['semesters'] if i['ekzhour'] is not None]),
+            "eios_hours_all": sum([i['eios'] for i in data['planlines']['semesters'] if i['eios'] is not None]),
+        }
+        semester_hours_all.update({
+            "aud_hours_all": sum([
+                semester_hours_all['lekc_hours_all'] or 0,
+                semester_hours_all['lab_hours_all'] or 0,
+                semester_hours_all['pr_hours_all'] or 0,
+            ]),
+        })
+        semester_hours_all.update({
+            "contact_hours_all": sum([
+                semester_hours_all['aud_hours_all'] or 0,
+                semester_hours_all['eios_hours_all'] or 0,
+            ]),
+        })
+        semester_hours_all.update({
+            "tic_all": ", ".join(set([item for key, item in tic_all.items()])),
+        })
+
+
+        formcontrols = FormControl.objects.all()
+        formcontrol_by_id = {i.id: i.name for i in formcontrols}
+
+        work_hour = []
+        for e, item in enumerate(data['discipline_work_hour']):
+            work_hour.append({
+                "num": item['semester'],
+                "theme": discipline_themes[item['theme_id']]['name'],
+                "theme_id": item['theme_id'],
+                "formcontrol": ', '.join(
+                    [formcontrol_by_id[i] for i in discipline_themes[item['theme_id']]['formcontrol_list']]),
+                "type": item['type'],
+                "content": item['name'],
+                "hours": item['hours'],
+                "number": item['num'],
+                "tic": [s['ekz_hours'] for s in semester_hours if s['num'] == item['semester']],
+                "tic_all": [s['tic'] for s in semester_hours if s['num'] == item['semester']]
+            })
+
+
+        srs_work = get_work_hours(work_hour, 2)
+        srs_work_sorted = sorted(srs_work, key=lambda item: (item['num'], item['content']))
+        srs_work_grouped = {key: list(item) for key, item in groupby(srs_work_sorted, key=lambda item: item['num']) if key in semester_hours_grouped}
+
+        lekc_work = get_work_hours(work_hour, 0)
+        lekc_work_sorted = sorted(lekc_work, key=lambda item: (item['num'], item['number']))
+        lekc_work_grouped = {key: list(item) for key, item in groupby(lekc_work_sorted, key=lambda item: item['num']) if
+                             key in semester_hours_grouped}
+
+        lab_work = get_work_hours(work_hour, 3)
+        lab_work_sorted = sorted(lab_work, key=lambda item: (item['num'], item['number']))
+        lab_work_grouped = {key: list(item) for key, item in groupby(lab_work_sorted, key=lambda item: item['num']) if
+                            key in semester_hours_grouped}
+
+        pr_work = get_work_hours(work_hour, 1)
+        pr_work_sorted = sorted(pr_work, key=lambda item: (item['num'], item['number']))
+        pr_work_grouped = {key: list(item) for key, item in groupby(pr_work_sorted, key=lambda item: item['num']) if
+                           key in semester_hours_grouped}
+
+        srs_work_res = {}
+        for sem, items in srs_work_grouped.items():
+            res_sorted = sorted(items, key=lambda i: i['content'])
+            res_grouped = {k: list(i) for k, i in groupby(res_sorted, key=lambda item: item['content'])}
+
+            tmp = []
+            v = 1
+            for k, i in res_grouped.items():
+                tmp.append({
+                    "content": k,
+                    "number": v,
+                    "hours": sum([q['hours'] for q in i]),
+                    "theme": i[0]['theme'],
+                    "theme_id": i[0]['theme_id'],
+                })
+                v += 1
+
+            srs_work_res[sem] = tmp
+
+        wk_data = {}
+        for sem, items in discipline_grouped.items():
+
+            if sem not in semester_hours_grouped:
+                continue
+
+            res = []
+            for item in items:
+                tmp_srs = []
+                tmp_lab = []
+                tmp_pr = []
+                tmp_lekc = []
+                if srs_work_grouped.get(sem):
+                    for q in srs_work_grouped[sem]:
+                        if item['id'] == q['theme_id']:
+                            tmp_srs.append({
+                                "hours": q['hours'],
+                                "theme": q['theme'],
+                                "theme_id": q['theme_id'],
+                                "name": q['content'],
+                            })
+
+                if lab_work_grouped.get(sem):
+                    for q in lab_work_grouped[sem]:
+                        if item['id'] == q['theme_id']:
+                            tmp_lab.append({
+                                "hours": q['hours'],
+                                "theme": q['theme'],
+                                "theme_id": q['theme_id'],
+                                "name": q['content'],
+                                "number": q['number'],
+                            })
+
+                if pr_work_grouped.get(sem):
+                    for q in pr_work_grouped[sem]:
+                        if item['id'] == q['theme_id']:
+                            tmp_pr.append({
+                                "hours": q['hours'],
+                                "theme": q['theme'],
+                                "theme_id": q['theme_id'],
+                                "name": q['content'],
+                                "number": q['number'],
+                            })
+
+                if lekc_work_grouped.get(sem):
+                    for q in lekc_work_grouped[sem]:
+                        if item['id'] == q['theme_id']:
+                            tmp_lekc.append({
+                                "hours": q['hours'],
+                                "theme": q['theme'],
+                                "theme_id": q['theme_id'],
+                                "name": q['content'],
+                                "number": q['number'],
+                            })
+
+                res.append({
+                    **item,
+                    "srs": tmp_srs,
+                    "lab": tmp_lab,
+                    "pr": tmp_pr,
+                    "lekc": tmp_lekc,
+                })
+
+            wk_data[sem] = res
+
+
+        for sem, items in wk_data.items():
+            if sem not in semester_hours_grouped:
+                continue
+
+            tmp = []
+            for item in items:
+                res = []
+                if srs_work_grouped:
+                    for q in srs_work_grouped[sem]:
+                        if q['theme'] == item['name']:
+                            r = list(filter(
+                                lambda x: x['content'] == q['content'], srs_work_res[sem]
+                            ))
+                            res.append(str(r[0]['number']))
+
+                tmp.append({
+                    "name": item['name'],
+                    "tic": ', '.join([formcontrol_by_id[i] for i in item['formcontrol_list']]),
+                    "num": item['num'],
+                    "lekc": item['num'],
+                    "lekc_hours": sum([i['hours'] for i in item['lekc']]) if sum(
+                        [i['hours'] for i in item['lekc']]) != 0 else '',
+                    "lab": ', '.join([str(i['number']) for i in item['lab']]),
+                    "lab_hours": sum([i['hours'] for i in item['lab']]) if sum(
+                        [i['hours'] for i in item['lab']]) != 0 else '',
+                    "pr": ', '.join([str(i['number']) for i in item['pr']]),
+                    "pr_hours": sum([i['hours'] for i in item['pr']]) if sum(
+                        [i['hours'] for i in item['pr']]) != 0 else '',
+                    "srs": ', '.join(res),
+                    "srs_hours": sum([i['hours'] for i in item['srs']]) if sum(
+                        [i['hours'] for i in item['srs']]) != 0 else '',
+                })
+
+            wk_data[sem] = tmp
+
+            wk_data[sem].append({
+                "name": 'Промежуточная аттестация',
+                "tic": semester_hours_grouped[sem][0]['tic'],
+                "num": '',
+                "lekc": '',
+                "lekc_hours": '',
+                "lab": '',
+                "lab_hours": '',
+                "pr": '',
+                "pr_hours": '',
+                "srs": '',
+                "srs_hours": semester_hours_grouped[sem][0]['ekz_hours'] if semester_hours_grouped[sem][0][
+                                                                                'ekz_hours'] != 0 else '',
+            })
+
+            wk_data[sem].append({
+                "name": 'Всего',
+                "tic": '',
+                "num": '',
+                "lekc": '',
+                "lekc_hours": sum([i['lekc_hours'] for i in tmp if i['lekc_hours'] != '']) if sum(
+                    [i['lekc_hours'] for i in tmp if i['lekc_hours'] != '']) != 0 else '',
+                "lab": '',
+                "lab_hours": sum([i['lab_hours'] for i in tmp if i['lab_hours'] != '']) if sum(
+                    [i['lab_hours'] for i in tmp if i['lab_hours'] != '']) != 0 else '',
+                "pr": '',
+                "pr_hours": sum([i['pr_hours'] for i in tmp if i['pr_hours'] != '']) if sum(
+                    [i['pr_hours'] for i in tmp if i['pr_hours'] != '']) != 0 else '',
+                "srs": '',
+                "srs_hours": sum([i['srs_hours'] for i in tmp if i['srs_hours'] != '']) if sum(
+                    [i['srs_hours'] for i in tmp if i['srs_hours'] != '']) != 0 else '',
+            })
+
+        if data['protocol_date'] is not None:
+            protocol_date = pendulum.from_format(data['protocol_date'], "YYYY-MM-DD")
+            protocol_date_str = protocol_date.format("DD MMMM YYYY")
+            protocol_year_str = protocol_date.format("YYYY")
+        else:
+            protocol_date_str = ""
+            protocol_year_str = ""
+
+
+        context = {
+            "protocol_date": protocol_date_str,
+            "protocol_year": protocol_year_str,
+            "person_name": CatPerson.objects.get(id=data['person']).name,
             "now": pendulum.now().start_of("day"),
             "current_year": pendulum.now().year,
             "kaf_name": data['admission']['ckaf__name'],
             "fac_name": data['admission']['cfac__name'],
             "podrazdelene": podrazdelene,
             "view_pract": discipline[0],
-            "discipline": discipline[1],
+            "discipline": data['planlines']['dis'],
             "kvalif": data['admission']['kvalif_name'],
             "spec_name": data['admission']['spec_name'],
             "kind": data['admission']['cadmkind__name_prof'],
@@ -273,6 +661,7 @@ class ReportService(object):
             "semesters": semesters,
             "status": data['status'],
             "practice_way": ', '.join(practice_way),
+            "practice_form": ', '.join(practice_form),
             "competence": competence,
             "indicators": indicators,
             "practice_content_text": practice_content_text,
@@ -285,15 +674,35 @@ class ReportService(object):
             "software": software,
             "logistics": logistics,
             "tat": tat,
+            "srsw": srs_work_res,
+            "prw": pr_work_grouped,
+            "dg": discipline_grouped,
+            "wk": wk_data,
+            "fos": fos,
         }
 
-        doc.render(contex)
+        if data['status'] == PlanLinesLink.StatusChoices.accepted:
+            user_accepted = User.objects.filter(id=data['user_accepted_id']).first()
+            user_confirmed = User.objects.filter(id=data['user_confirmed_id']).first()
+
+            is_only_accepted = user_confirmed is None
+
+            user_confirmed = (
+                        user_confirmed.last_name + " " + user_confirmed.first_name + " " + user_confirmed.userprofile.middle_name) if user_confirmed is not None else ""
+
+            context.update({
+                "user_accepted": f"{user_accepted.last_name} {user_accepted.first_name} {user_accepted.userprofile.middle_name}",
+                "user_confirmed": user_confirmed,
+                "user_accepted_is_confirmed": user_confirmed != "" and user_confirmed == f"{user_accepted.last_name} {user_accepted.first_name} {user_accepted.userprofile.middle_name}",
+                "is_only_accepted": is_only_accepted,
+            })
+
+        doc.render(context)
 
         return doc
 
     @staticmethod
     def get_rpd_report(data):
-
         path = f'{BASE_DIR}{Path("/templates/docxRPD/rpd.docx")}'
 
         if data['admission']['cadmkind'] == 5:
@@ -309,15 +718,22 @@ class ReportService(object):
                                groupby(competences_sorted, key=lambda item: item['competence_index'])}
         competence = []
         for sem, item in competences_grouped.items():
+
+            indicator = ''
+            if data['admission']['cadmkind'] != 5:
+                indicator = ", ".join(i['indicator_index'] for i in sorted(item, key=lambda x: x['indicator_index']))
+            else:
+                indicator =  "\n".join(f"{i['indicator_index']} {i['indicator']}" for i in sorted(item, key=lambda x: x['indicator_index'])),
+
             competence.append({
                 "index": sem,
                 "content": item[0]['competence'],
-                "indicators": ", ".join([i['indicator_index'] for i in item]) if data['admission']['cadmkind'] != 5 else "\n".join([f"{i['indicator_index']} {i['indicator']}" for i in item]),
+                "indicators": indicator,
                 "ind_content": ", ".join([i['indicator'] for i in item]),
             })
 
         indicators = []
-        for item in data['planlines']['indicators']:
+        for item in sorted(data['planlines']['indicators'], key=lambda x: x['indicator_index']):
             indicators.append({
                 'index': item['indicator_index'],
                 'content': item['indicator'],
@@ -373,6 +789,18 @@ class ReportService(object):
         precedence = []
         subsequent = []
         interactive_methods = None
+
+        sems = [i['num'] for i in data['planlines']['semesters']]
+        sems_info = {i['num']: i for i in data['planlines']['semesters']}
+
+        has_labs = sum(i['lab'] for i in data['planlines']['semesters'] if i['lab']) > 0
+        has_pr = sum(i['pr'] for i in data['planlines']['semesters'] if i['pr']) > 0
+        has_lekc = sum(i['lekc'] for i in data['planlines']['semesters'] if i['lekc']) > 0
+        has_kp = sum(i['kp_hour'] for i in data['planlines']['semesters'] if i['kp_hour']) > 0
+        has_kr = sum(i['kr_hour'] for i in data['planlines']['semesters'] if i['kr_hour']) > 0
+        has_kp_kr = has_kp or has_kr
+        sem_or_year = 'Учебный год' if  data['admission']['cfob__name'] == 'заочная' else  'Семестр'
+
         for item in data['additional_info']:
             if item['type'] == 'interactiveMethods':
                 interactive_methods = item['value']['interactiveMethods']
@@ -384,6 +812,13 @@ class ReportService(object):
             if item['type'] == 'guidelines':
                 q = 0
                 for k, i in item['value'][0].items():
+                    if k == 'course' and not has_kp_kr:
+                        continue
+                    if k == 'practice' and not has_pr:
+                        continue
+                    if k == 'laboratory' and not has_labs:
+                        continue
+
                     q += 1
                     guidelines.append({
                         'number': q,
@@ -395,17 +830,23 @@ class ReportService(object):
             if item['type'] == 'fos':
                 q = 0
 
-                fos_choiced = set(flatten([i['formcontrol_list'] for i in data['discipline_themes']]))
+                # fos_choiced = set(flatten([i['formcontrol_list'] for i in data['discipline_themes']]))
+
+                fos_sorted = sorted(data['discipline_themes'], key=lambda x: x['semester'])
+                fos_grouped = {key: set(flatten([q['formcontrol_list'] for q in list(i)])) for key, i in groupby(fos_sorted, key=lambda x: x['semester'])}
+
                 for i in item['value']:
-                    if i['type'] in fos_choiced:
-                        q += 1
-                        fos.append({
-                            'number': q,
-                            'type': i['type'],
-                            'title': i['title'],
-                            'about': i['about'] if 'about' in i else '',
-                            'criteria': i['criteria'] if 'criteria' in i else '',
-                        })
+                    if i['type'] in fos_grouped.get(int(i['num']), []):
+                        if i['title'].find(sem_or_year.lower(), 0, 15) != -1:
+                            q += 1
+                            fos.append({
+                                'num': i['num'],
+                                'number': q,
+                                'type': i['type'],
+                                'title': i['title'],
+                                'about': i['about'] if 'about' in i else '',
+                                'criteria': i['criteria'] if 'criteria' in i else '',
+                            })
 
             if item['type'] == 'resources':
                 resources = item['value']
@@ -442,21 +883,36 @@ class ReportService(object):
                 for k, i in enumerate(item['value'], start=1):
                     logistics.append({
                         'number': k,
-                        'name': i['name'],
+                        'name': i.get('name', ''),
                     })
 
             if item['type'] == 'tat':
                 q = 0
-                for i in item['value']:
+                for i in sorted([k for k in item['value'] if k.get('num')], key=lambda x: x['num']):
+                    if i['num'] not in sems:
+                        continue
+
+                    sem_info = sems_info[i['num']]
+
+                    if i['type'] == 'ekz' and not sem_info['ekz']:
+                        continue
+                    if i['type'] == 'zacho' and not sem_info['zacho']:
+                        continue
+                    if i['type'] == 'zach' and not sem_info['zach']:
+                        continue
+                    if i['type'] == 'krkp' and not (sem_info['kp'] or sem_info['kr']):
+                        continue
+
                     q += 1
                     if i['type'] == 'zach':
                         tat.append({
                             'number': q,
                             'type': i['type'],
-                            'title': tat_titles[i['type']],
+                            'title': f"{sem_or_year} {i['num']}, {tat_titles[i['type']]}",
                             # 'main': i['main'],
+                            'num': i['num'],
                             'about': i['about'],
-                            'example': i['example'],
+                            'example': (i['example'] or "").strip(),
                             'passed': i['passed'],
                             'unpassed': i['unpassed'],
                         })
@@ -464,10 +920,11 @@ class ReportService(object):
                         tat.append({
                             'number': q,
                             'type': i['type'],
-                            'title': tat_titles[i['type']],
+                            'title': f"{sem_or_year} {i['num']}, {tat_titles[i['type']]}",
 #                             'main': i['main'],
+                            'num': i['num'],
                             'about': i['about'],
-                            'example': i['example'],
+                            'example': (i['example'] or "").strip(),
                             'great': i['great'],
                             'good': i['good'],
                             'satisfactorily': i['satisfactorily'],
@@ -498,9 +955,6 @@ class ReportService(object):
                     item['pr'] or 0,
                 ]),
                 "contact_hours": sum([
-                    item['lekc'] or 0,
-                    item['lab'] or 0,
-                    item['pr'] or 0,
                     item['eios'] or 0,
                 ]),
                 "lekc_hours": item['lekc'] or 0,
@@ -517,13 +971,14 @@ class ReportService(object):
                                   groupby(semester_hours_sorted, key=lambda x: x['num'])}
 
         semester_hours_all = {
-            "lekc_hours_all": sum([i['lekc'] for i in data['planlines']['semesters'] if i['lekc'] is not None]),
-            "lab_hours_all": sum([i['lab'] for i in data['planlines']['semesters'] if i['lab'] is not None]),
-            "pr_hours_all": sum([i['pr'] for i in data['planlines']['semesters'] if i['pr'] is not None]),
-            "srs_hours_all": sum([i['srs'] for i in data['planlines']['semesters'] if i['srs'] is not None]),
-            "ekz_hours_all": sum([i['ekzhour'] for i in data['planlines']['semesters'] if i['ekzhour'] is not None]),
-            "eios_hours_all": sum([i['eios'] for i in data['planlines']['semesters'] if i['eios'] is not None]),
+            "lekc_hours_all": sum([i['lekc'] or 0 for i in data['planlines']['semesters']]),
+            "lab_hours_all": sum([i['lab'] or 0 for i in data['planlines']['semesters']]),
+            "pr_hours_all": sum([i['pr'] or 0 for i in data['planlines']['semesters']]),
+            "srs_hours_all": sum([i['srs'] or 0 for i in data['planlines']['semesters']]),
+            "ekz_hours_all": sum([i['ekzhour'] or 0 for i in data['planlines']['semesters']]),
+            "eios_hours_all": sum([i['eios'] or 0 for i in data['planlines']['semesters']]),
         }
+
         semester_hours_all.update({
             "aud_hours_all": sum([
                 semester_hours_all['lekc_hours_all'] or 0,
@@ -531,9 +986,9 @@ class ReportService(object):
                 semester_hours_all['pr_hours_all'] or 0,
             ]),
         })
+
         semester_hours_all.update({
             "contact_hours_all": sum([
-                semester_hours_all['aud_hours_all'] or 0,
                 semester_hours_all['eios_hours_all'] or 0,
             ]),
         })
@@ -550,9 +1005,9 @@ class ReportService(object):
         for e, item in enumerate(data['discipline_work_hour']):
             work_hour.append({
                 "num": item['semester'],
-                "theme": discipline_themes[item['theme_id']]['name'],
+                "theme": discipline_themes[item['theme_id']]['name'] if item['theme_id'] else '',
                 "theme_id": item['theme_id'],
-                "formcontrol": ', '.join([formcontrol_by_id[i] for i in discipline_themes[item['theme_id']]['formcontrol_list']]),
+                "formcontrol": ', '.join([formcontrol_by_id[i] for i in discipline_themes[item['theme_id']]['formcontrol_list']]) if item['theme_id'] else '',
                 "type": item['type'],
                 "content": item['name'],
                 "hours": item['hours'],
@@ -683,7 +1138,7 @@ class ReportService(object):
                     "name": item['name'],
                     "tic": ', '.join([formcontrol_by_id[i] for i in item['formcontrol_list']]),
                     "num": item['num'],
-                    "lekc": item['num'],
+                    "lekc": ', '.join([str(i['number']) for i in item['lekc']]),
                     "lekc_hours": sum([i['hours'] for i in item['lekc']]) if sum(
                         [i['hours'] for i in item['lekc']]) != 0 else '',
                     "lab": ', '.join([str(i['number']) for i in item['lab']]),
@@ -742,6 +1197,7 @@ class ReportService(object):
                 podrazdelene = data['admission']['cfac__name'].strip()
             else:
                 podrazdelene = data['admission']['ckaf__ccatdep__nameshort'].strip()
+
         context = {
             "now": pendulum.now().start_of("day"),
             "current_year": pendulum.now().year,
@@ -758,6 +1214,7 @@ class ReportService(object):
             "asp_spec": asp_spec,
             "asp_napr": asp_napr,
             "asp_code": asp_code,
+            "sem_or_year": sem_or_year,
             "fob": data['admission']['cfob__name'],
             "year_post": data['admission']['yr'],
             "person": data['person'],
@@ -777,8 +1234,8 @@ class ReportService(object):
             "srsw": srs_work_res,
             "interactive_methods": interactive_methods,
             "guidelines": guidelines,
-            "fos": fos,
-            "tat": tat,
+            "fos": [{**i, "number": index} for index, i in enumerate(sorted(fos, key=lambda x: int(x['num'])), start=1)],
+            "tat": [{**i, "number": index} for index, i in enumerate(sorted(tat, key=lambda x: int(x['num'])), start=1)],
             'additional_library': additional_library,
             'main_library': main_library,
             "resources": resources,
@@ -802,7 +1259,7 @@ class ReportService(object):
             user_confirmed = (user_confirmed.last_name + " " + user_confirmed.first_name + " " + user_confirmed.userprofile.middle_name) if user_confirmed is not None else ""
 
             context.update({
-                "protocol_date": f'{protocol_date}',
+                "protocol_date": protocol_date.format("DD MMMM YYYY"),
                 "protocol_year": protocol_date.format("YYYY"),
                 "user_accepted": f"{user_accepted.last_name} {user_accepted.first_name} {user_accepted.userprofile.middle_name}",
                 "user_confirmed": user_confirmed,

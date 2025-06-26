@@ -15,6 +15,7 @@ const {
   tatInfo,
   disabled,
   planlinesData,
+  semesterYearLabel,
 } = storeToRefs(generatorViewStore)
 
 const props = defineProps({
@@ -24,6 +25,9 @@ const props = defineProps({
   type: {
     required: true,
   },
+  num: {
+    required: true,
+  }
 })
 
 const main = ref('')
@@ -44,14 +48,14 @@ async function saveData() {
   if (generatorViewStore.abortGetDataController)
     generatorViewStore.abortGetDataController.abort()
 
-
   let res = {
-      "great": great.value,
-      "good": good.value,
-      "satisfactorily": satisfactorily.value,
-      "unsatisfactory": unsatisfactory.value,
-      "title": props.title,
-      "type": props.type,
+    "great": great.value,
+    "good": good.value,
+    "satisfactorily": satisfactorily.value,
+    "unsatisfactory": unsatisfactory.value,
+    "title": props.title,
+    "type": props.type,
+    "num": props.num,
   }
   if (planlinesData.value.viewpract) {
     res = {
@@ -68,7 +72,8 @@ async function saveData() {
     }
   }
 
-  const data = [...((tatInfo.value || []).filter((x: any) => x.type != props.type)), res]
+  const data = [...((tatInfo.value || []).filter((x: any) => !(x.type == props.type && x.num == props.num))), res]
+  tatInfo.value = data;
 
   let r = await api.post(`/api/generator/${activeRpdId.value}/save-additional-info/`, {
     "type": 'tat',
@@ -77,7 +82,7 @@ async function saveData() {
   $q.notify({
     message: "Данные <span class='text-bold'>о типовых оценочных средствах</span> сохранены!",
     color: "secondary",
-    position: "bottom",
+    position: "bottom-right",
     html: true,
   })
   await generatorViewStore.getData()
@@ -87,7 +92,7 @@ async function saveData() {
 }
 
 watchEffect(() => {
-  const data = _.find(tatInfo.value, x => x.type == props.type)
+  const data = _.find(tatInfo.value, x => x.type == props.type && x.num == props.num)
   if (data) {
     about.value = _.get(data, 'about', '')
     great.value = _.get(data, 'great', '')
@@ -105,11 +110,12 @@ watchEffect(() => {
 
 <template>
   <q-expansion-item
-    :label=props.title
+    group="tat-item"
+    :label="`${semesterYearLabel} ${props.num} | ${props.title}`"
   >
     <q-card>
       <q-card-section>
-        <div class="q-gutter-md">
+        <div class="q-gutter-md" style="display: grid; grid-template-columns: 3fr 2fr">
           <!--          <q-input-->
           <!--            label="Основная информация"-->
           <!--            type="textarea"-->
@@ -120,28 +126,31 @@ watchEffect(() => {
           <!--            debounce="1000"-->
           <!--            @update:modelValue="saveData"-->
           <!--          />-->
-          <div class="q-gutter-y-md" v-if="!planlinesData.viewpract">
+          <div v-if="!planlinesData.viewpract">
             <q-input
-            label="Описание процедуры"
-            type="textarea"
-            filled
-            stack-label
-            v-model="about"
-            :readonly="disabled"
-            debounce="1000"
-            @update:modelValue="saveData"
-          />
-          <q-input
-            label="Пример задания"
-            type="textarea"
-            filled
-            stack-label
-            v-model="example"
-            :readonly="disabled"
-            debounce="1000"
-            @update:modelValue="saveData"
-          /></div>
-          <div class="q-gutter-y-md" v-else>
+              label="Описание процедуры"
+              type="textarea"
+              filled
+              stack-label
+              v-model="about"
+              :readonly="disabled"
+              debounce="1000"
+              @update:modelValue="saveData"
+              class="q-mb-md"
+              hint="Вопросы к билету рекомендуется писать в поле описание процедуры"
+            />
+            <q-input
+              label="Пример задания"
+              type="textarea"
+              filled
+              stack-label
+              v-model="example"
+              :readonly="disabled"
+              debounce="1000"
+              @update:modelValue="saveData"
+            />
+          </div>
+          <div v-else>
             <q-input
               label="Типовые оценочные средства"
               type="text"
@@ -170,16 +179,19 @@ watchEffect(() => {
               @update:modelValue="saveData"
             />
           </div>
-          <p class="text-subtitle1">Критерии оценивания</p>
+
+          <div>
+<!--          <div class="text-subtitle1">Критерии оценивания</div>-->
           <q-list bordered>
             <q-expansion-item
+              group="tat-item-mark"
               label="Отлично"
             >
               <q-input
                 class="q-pa-sm"
-                label="Отлично"
                 type="textarea"
                 filled
+                label="укажите критерий оценивания для получения оценки"
                 stack-label
                 v-model="great"
                 :readonly="disabled"
@@ -187,12 +199,12 @@ watchEffect(() => {
                 @update:modelValue="saveData"
               />
             </q-expansion-item>
-            <q-expansion-item label="Хорошо">
+            <q-expansion-item group="tat-item-mark" label="Хорошо">
               <q-input
                 class="q-pa-sm"
-                label="Хорошо"
                 type="textarea"
                 filled
+                 label="укажите критерий оценивания для получения оценки"
                 stack-label
                 v-model="good"
                 :readonly="disabled"
@@ -200,24 +212,24 @@ watchEffect(() => {
                 @update:modelValue="saveData"
               />
             </q-expansion-item>
-            <q-expansion-item label="Удовлетворительно">
+            <q-expansion-item group="tat-item-mark" label="Удовлетворительно">
               <q-input
                 class="q-pa-sm"
-                label="Удовлетворительно"
                 type="textarea"
                 filled
+                label="укажите критерий оценивания для получения оценки"
                 stack-label
                 v-model="satisfactorily"
                 debounce="1000"
                 @update:modelValue="saveData"
               />
             </q-expansion-item>
-            <q-expansion-item label="Неудовлетворительно">
+            <q-expansion-item group="tat-item-mark" label="Неудовлетворительно">
               <q-input
                 class="q-pa-sm"
-                label="Неудовлетворительно"
                 type="textarea"
                 filled
+                label="укажите критерий оценивания для получения оценки"
                 stack-label
                 v-model="unsatisfactory"
                 :readonly="disabled"
@@ -226,6 +238,7 @@ watchEffect(() => {
               />
             </q-expansion-item>
           </q-list>
+            </div>
           <!--          <q-btn-->
           <!--            label="Сохранить"-->
           <!--            color="primary"-->
