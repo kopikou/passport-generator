@@ -52,6 +52,8 @@ from django.shortcuts import render
 
 import pandas as pd
 
+from datetime import datetime
+
 
 class GeneratorViewSet(
     RetrieveModelMixin,
@@ -960,7 +962,7 @@ class GeneratorViewSet(
                     'Дисциплина': rpd.planlines.dis,
                     'newdisid': rpd.planlines.newdisid,
                     'Статус': rpd.status_verbose,
-                    'Дата загрузки программы': str(rpd.review_date)
+                    'Дата загрузки программы': rpd.created_at.strftime("%Y-%m-%d"),
                 })
 
         df = pd.DataFrame(data)
