@@ -7,6 +7,7 @@ const mainStore = useMainStore();
 
 const {
   cafData,
+  cafDataById,
 } = storeToRefs(generatorViewStore)
 
 const {
@@ -23,16 +24,20 @@ import _ from "lodash";
 import useMainStore from "stores/mainStore";
 import GeneratorManageDialog from "pages/generator/components/dialogs/GeneratorManageDialog.vue";
 import LayoutHCF from "components/LayoutHCF.vue";
+import FileUploader from "pages/upload/components/FileUploader.vue";
+import GeneratorListViewItem from "pages/generator/components/GeneratorListViewItem.vue";
 
 const $q = useQuasar()
 const router = useRouter()
 const listData = ref<GeneratorListData[]>([])
+const uploadRpdFile = ref();
 
 const typeFilterLabel = {
   rop: 'Руководитель ОП',
   fac: 'Директор',
   zav: 'Заведующий кафедры',
   person: 'Разработчик РПД',
+  view: 'Просмотр РПД',
 }
 
 const STATUSES = {
@@ -81,16 +86,16 @@ const myFilter = ref(LocalStorage.getItem('surp_myfilter') || 0)
 const textFilter = ref<String>(LocalStorage.getItem('surp_rpdfilter') || '')
 
 const filteredListData = computed(() => {
-  let txtFilter = textFilter.value.trim().toLowerCase();
 
-  return _(listData.value)
+  let txtFilter = textFilter.value.trim().toLowerCase();
+  let data = _(listData.value)
     .filter(x => {
       return (myFilter.value == 0 || x.type.includes('person'))
-        && ((txtFilter == '' || x.person.toLowerCase().includes(txtFilter))
+        && ((txtFilter == '' || (x.person || '').toLowerCase().includes(txtFilter))
           || (txtFilter == '' || x.abbr.toLowerCase().includes(txtFilter))
           || (txtFilter == '' || x.discode.toLowerCase().includes(txtFilter))
           || (txtFilter == '' || x.discpl.toLowerCase().includes(txtFilter)))
-          && (!statusFilter.value || x.status_verbose == statusFilter.value)
+        && (!statusFilter.value || x.status_verbose == statusFilter.value)
     })
     .orderBy(x => [x.abbr, x.yr, x.discode], 'asc')
     .groupBy(x => `${x.abbr}-${x.yr.toString().slice(-2)}`)
@@ -100,6 +105,8 @@ const filteredListData = computed(() => {
       return [
         item[0],
         {
+          abbr: item[0],
+          plx_file: items[0].plx_file,
           items: items,
           types: _(items).map(x => x.type).flatten().uniq().value(),
           statuses: _(items).orderBy(x => STATUSES[x["status_verbose"]].index).groupBy('status_verbose').value(),
@@ -108,34 +115,26 @@ const filteredListData = computed(() => {
     })
     .fromPairs()
     .value()
+
+  return data
 })
 
-
-function openManageDialog(id, item) {
-  $q.dialog({
-    component: GeneratorManageDialog,
-    componentProps: {
-      id: id,
-      data: item,
-    }
-  }).onOk(() => {
-    getProgramData()
-  })
+function clearFilter() {
+  textFilter.value = ''
 }
 
+
 async function getProgramData() {
-  listData.value = []
+  const loadProgram = $q.loading.show({
+    group: 'programs',
+    message: 'Обновление списка дисциплин',
+  })
+
   let r = await api.get("/api/generator/get-program-list/")
   listData.value = r.data
 }
 
-const cafDataById = computed(() => {
-  return _.keyBy(cafData.value, 'value')
-})
-
-function getEditRules(type) {
-  const rules = ['person']
-  return type.some(q => rules.includes(q))
+  loadProgram()
 }
 
 function getViewRules(type) {
@@ -147,6 +146,11 @@ function getRowColor(number) {
   return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
 }
 
+
+async function onFileDirectlyUploaded() {
+  await getProgramData();
+}
+
 watch([discplFilter, groupFilter, myFilter, textFilter], () => {
   $q.localStorage.setItem("surp_discplfilter", discplFilter.value)
   $q.localStorage.setItem("surp_groupfilter", groupFilter.value)
@@ -155,9 +159,7 @@ watch([discplFilter, groupFilter, myFilter, textFilter], () => {
 })
 
 onBeforeMount(async () => {
-  $q.loading.show({message: "Загрузка дисциплин"})
   await getProgramData()
-  $q.loading.hide()
 })
 
 </script>
@@ -168,7 +170,8 @@ onBeforeMount(async () => {
       <div class="q-px-sm q-pb-sm">
         <div class="flex justify-between q-my-sm q-px-sm"
              style="display: grid; grid-template-columns: 1fr 220px auto; gap: 8px">
-          <q-input outlined label="Поиск по аббревиатуре, дисциплине, разработчику программы" v-model="textFilter"/>
+          <q-input outlined label="Поиск по аббревиатуре, дисциплине, разработчику программы" v-model="textFilter"
+                   clearable @clear="clearFilter"/>
           <!--        <q-input outlined label="Дисциплина" v-model="discplFilter"/>-->
           <q-select v-model="statusFilter"
                     label="Статус"

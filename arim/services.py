@@ -7,7 +7,7 @@ from django.db.models import Q
 
 from app.utils import cache_function, Mira
 from arim.models import UistLicense, OborudData, BoolChoice, UchPlanKaf, Catadmission, CatFaculty, CatKaf, RpdUsers, \
-    UchPlanPlan
+    UchPlanPlan, CatPerson
 
 
 class AISServices(object):
@@ -111,7 +111,7 @@ class AISServices(object):
             data[i] = {
                 **data[i],
                 "admin": admin,
-                "can_upload": adm_user.can_upload if adm_user else 't'
+                "can_upload": adm_user.can_upload if adm_user else 'f'
             }
 
         return data
@@ -163,18 +163,24 @@ class AISServices(object):
 
     @staticmethod
     # @cache_function(timeout=10 * 1)
-    def get_disciplines_by_person(id):
+    def get_disciplines_by_person(id, year):
 
         # q = f"""exec rpd_list_for_person %s"""
         q = f"""
 
             declare @id INT;
+            declare @year INT;
+            declare @cfacADM int;
+            DECLARE @adm varchar;
+            SET @id = %s;
+            SET @year = %s;
+            (SELECT @cfacADM = cfac, @adm = isadmin from rpdusers where cperson = @id)
 
-            SET @id = %s
 
             SELECT
             DISTINCT
             t.discpl,
+			t.newdisid,
             t.id_discpl,
             t.planlin,
             t.abbr,
@@ -182,35 +188,72 @@ class AISServices(object):
             t.id_admission,
             t.mira_id,
             cp.name AS person,
+            t.ckaf as ckaf,
             t.type AS type
             FROM (
-            SELECT d.name as discpl,d.id as id_discpl, u.id as planlin, p.abbrprofile as abbr, p.startyear as yr, p.cadmission as id_admission,  u.cperson AS mira_id, 'person' AS type  -- Преподаватель
+            SELECT d.name as discpl
+                ,d.id as id_discpl
+                , u.id as planlin
+				, u.newdisid
+                , p.abbrprofile as abbr
+                , p.startyear as yr
+                , p.cadmission as id_admission
+                ,  u.cperson AS mira_id
+                , p.ckaf as ckaf
+                , 'person' AS type  -- Преподаватель
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
-            where u.cperson = @id and p.fordel = 'f' and u.fordel = 'f' --and u.type != 3
+            where u.cperson = @id and p.fordel = 'f' and u.fordel = 'f' --and u.type != 3 and p.startyear = @year
 
             UNION ALL
 
-            select d.name as discpl,d.id as id_discpl, u.id as planlin, p.abbrprofile as abbr, p.startyear as yr, p.cadmission as id_admission, u.cperson AS mira_id, 'zav' AS type -- Заведующий кафедры
+            select d.name as discpl
+                ,d.id as id_discpl
+                , u.id as planlin
+				, u.newdisid
+                , p.abbrprofile as abbr
+                , p.startyear as yr
+                , p.cadmission as id_admission
+                , u.cperson AS mira_id
+                , p.ckaf as ckaf
+                , 'zav' AS type -- Заведующий кафедры
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
             LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where u.ckaf in (SELECT id FROM dbo.catkaf WHERE czav = @id AND isreal = 't') and p.fordel = 'f' and u.fordel = 'f'-- and  u.type != 3
+            where u.ckaf in (SELECT id FROM dbo.catkaf WHERE czav = @id AND isreal = 't') and p.fordel = 'f' and u.fordel = 'f'-- and  u.type != 3 and p.startyear = @year
 
             UNION ALL
 
-            select d.name as discpl,d.id as id_discpl, u.id as planlin, p.abbrprofile as abbr, p.startyear as yr, p.cadmission as id_admission,  u.cperson AS mira_id, 'fac' AS type -- Заведующий факультета
+            select d.name as discpl
+                ,d.id as id_discpl
+                , u.id as planlin
+				, u.newdisid
+                , p.abbrprofile as abbr
+                , p.startyear as yr
+                , p.cadmission as id_admission
+                ,  u.cperson AS mira_id
+                , p.ckaf as ckaf
+                , 'fac' AS type -- Заведующий факультета
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
             LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where a.cfac in (SELECT id FROM dbo.catfaculty WHERE cdean = @id AND realfac = 't') and p.fordel = 'f' and u.fordel = 'f'-- and  u.type != 3
+            where a.cfac in (SELECT id FROM dbo.catfaculty WHERE cdean = @id AND realfac = 't') and p.fordel = 'f' and u.fordel = 'f'-- and  u.type != 3 and p.startyear = @year
 
             UNION ALL
 
-            SELECT DISTINCT d.name as discpl,d.id as id_discpl, u.id as planlin, p.abbrprofile as abbr, p.startyear as yr, p.cadmission as id_admission,  u.cperson AS mira_id, 'rop' AS type  -- Руководитель программы
+            SELECT DISTINCT d.name as discpl
+                ,d.id as id_discpl
+                , u.id as planlin
+				, u.newdisid
+                , p.abbrprofile as abbr
+                , p.startyear as yr
+                , p.cadmission as id_admission
+                ,  u.cperson AS mira_id
+                , p.ckaf as ckaf
+                , 'rop' AS type  -- Руководитель программы
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
@@ -218,8 +261,29 @@ class AISServices(object):
             where p.cperson = @id
             --a.cspec in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id) OR a.cprofili in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id)
             --OR a.cdirection in (SELECT id FROM dbo.[cl$direction] WHERE cperson = @id)
-            AND p.fordel = 'f' and u.fordel = 'f' --and  u.type != 3
+            AND p.fordel = 'f' and u.fordel = 'f' --and  u.type != 3 and p.startyear = @year
 
+			UNION ALL
+
+			SELECT DISTINCT d.name as discpl
+			,d.id as id_discpl
+			, u.id as planlin
+			, u.newdisid
+			, p.abbrprofile as abbr
+			, p.startyear as yr
+			, p.cadmission as id_admission
+			,  u.cperson AS mira_id
+			, p.ckaf as ckaf
+			, 'view' AS type -- Админский просмотр
+            FROM uchplan_lines u
+            left join uchplan_discpl d on (u.disid = d.id)
+            left join uchplan_plan p on (p.id = u.planid)
+            LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
+            where
+			((@cfacADM is not null and a.cfac = @cfacADM) or @adm = 't')
+            --a.cspec in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id) OR a.cprofili in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id)
+            --OR a.cdirection in (SELECT id FROM dbo.[cl$direction] WHERE cperson = @id)
+            AND p.fordel = 'f' and u.fordel = 'f' and  u.type != 3 and p.startyear = @year
             ) t
             LEFT JOIN dbo.catperson cp ON cp.id = t.mira_id
             WHERE t.mira_id IS NOT NULL
@@ -234,7 +298,7 @@ class AISServices(object):
         #
         # data = r.json()['RecordSet']
 
-        data = Mira.fetch(q, [int(id)])
+        data = Mira.fetch(q, [int(id), int(year)])
 
         return data
 
@@ -352,7 +416,7 @@ class AISServices(object):
             left join uchplan_lines l2 on l2.planid = p2.id
 			left join uchplan_discpl d on d.id = l.disid
 			left join uchplan_discpl d2 on d2.id = l2.disid
-            where l.id = %s and p2.fordel = 'f' and l2.fordel = 'f' and l2.id <> %s and d.name = d2.name
+            where l.id = %s /*and p2.fordel = 'f' and l2.fordel = 'f' */ and l2.id <> %s and d.name = d2.name
         """
 
         data = Mira.fetch(query, [id, id])
