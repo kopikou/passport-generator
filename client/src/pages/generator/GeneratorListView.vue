@@ -273,6 +273,8 @@ function getFileNameFromHeaders(headers) {
                 </q-tooltip>
               </q-badge>
             </div>
+
+            <a :href="value.plx_file">Скачать *.plx</a>
           </q-item>
         </q-list>
 

@@ -117,7 +117,7 @@ watch(() => props.items, (item) => {
   immediate: true
 })
 
-async function onFileUploaded() {
+async function onFileUploaded(item) {
   const loadingHelpers = $q.loading.show({
     group: 'third',
     message: 'Загружаю документ',
@@ -125,7 +125,7 @@ async function onFileUploaded() {
   const formData = new FormData()
   formData.append('file', uploadRpdFile.value)
 
-  let r = await api.post(`/api/generator/${props.item.id}/upload-rpd-program/`, formData)
+  let r = await api.post(`/api/generator/${item.id}/upload-rpd-program/`, formData)
 
   emit('data-updated')
 
@@ -198,7 +198,7 @@ function rowClassFn (row) {
                         :filter="fileFilter"
                         accept="*.pdf, application/pdf"
                         style="width: 300px"
-                        @update:model-value="onFileUploaded"
+                        @update:model-value="onFileUploaded(props.row)"
                         max-files="1">
 
                   <template #file>
@@ -222,7 +222,7 @@ function rowClassFn (row) {
                 <q-btn v-if="canEdit(props.row)" dense flat color="primary" icon="mdi-pencil"
                        label="заполнить" @click="router.push(`/generator/${props.row.id}/main`)"/>
                 <q-btn v-if="canView(props.row)" dense flat color="secondary" icon="mdi-briefcase-eye"
-                       label="просмотр" @click="openManageDialog"/>
+                       label="просмотр" @click="openManageDialog(props.row)"/>
                 <q-btn v-if="adminView(props.row)" dense flat color="black" icon="mdi-download"
                        :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.row.id}/get-rpd-report/`"
                        target="_blank"
