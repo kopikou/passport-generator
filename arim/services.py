@@ -189,7 +189,9 @@ class AISServices(object):
             t.mira_id,
             cp.name AS person,
             t.ckaf as ckaf,
-            t.type AS type
+            t.type AS type,
+            cp1.name AS zavkaf,
+            cp2.name AS rukprog
             FROM (
             SELECT d.name as discpl
                 ,d.id as id_discpl
@@ -201,6 +203,7 @@ class AISServices(object):
                 ,  u.cperson AS mira_id
                 , p.ckaf as ckaf
                 , 'person' AS type  -- Преподаватель
+                , u.planid
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
@@ -218,6 +221,7 @@ class AISServices(object):
                 , u.cperson AS mira_id
                 , p.ckaf as ckaf
                 , 'zav' AS type -- Заведующий кафедры
+                , u.planid
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
@@ -236,6 +240,7 @@ class AISServices(object):
                 ,  u.cperson AS mira_id
                 , p.ckaf as ckaf
                 , 'fac' AS type -- Заведующий факультета
+                , u.planid
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
@@ -254,6 +259,7 @@ class AISServices(object):
                 ,  u.cperson AS mira_id
                 , p.ckaf as ckaf
                 , 'rop' AS type  -- Руководитель программы
+                , u.planid
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
@@ -275,6 +281,7 @@ class AISServices(object):
 			,  u.cperson AS mira_id
 			, p.ckaf as ckaf
 			, 'view' AS type -- Админский просмотр
+			, u.planid
             FROM uchplan_lines u
             left join uchplan_discpl d on (u.disid = d.id)
             left join uchplan_plan p on (p.id = u.planid)
@@ -286,6 +293,10 @@ class AISServices(object):
             AND p.fordel = 'f' and u.fordel = 'f' and  u.type != 3 and p.startyear = @year
             ) t
             LEFT JOIN dbo.catperson cp ON cp.id = t.mira_id
+            LEFT JOIN dbo.catkaf ck ON  ck.id = t.ckaf
+            LEFT JOIN uchplan_plan p on p.id = t.planid
+            LEFT JOIN dbo.catperson cp1 ON cp1.id = ck.czav
+            LEFT JOIN dbo.catperson cp2 ON cp2.id = p.cperson
             WHERE t.mira_id IS NOT NULL
             """
 
