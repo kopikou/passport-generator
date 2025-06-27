@@ -353,10 +353,16 @@ class GeneratorService(object):
         DisciplineWorkHours.objects.filter(planlineslink_id=to_planlineslink_id).delete()
         from_work_hours = DisciplineWorkHours.objects.filter(planlineslink_id=from_planlineslink_id)
         for wh in from_work_hours:
-            wh.planlineslink_id = to_planlineslink_id
-            wh.id = None
-            wh.theme_id = themes_associations[wh.theme_id]
-            wh.save()
+            if wh.theme_id:
+                wh.planlineslink_id = to_planlineslink_id
+                wh.id = None
+                wh.theme_id = themes_associations[wh.theme_id]
+                wh.save()
+            else:
+                wh.planlineslink_id = to_planlineslink_id
+                wh.id = None
+                wh.theme_id = None
+                wh.save()
 
         AdditionalInfo.objects.filter(planlineslink_id=to_planlineslink_id).delete()
         from_additional_info = AdditionalInfo.objects.filter(planlineslink_id=from_planlineslink_id)
