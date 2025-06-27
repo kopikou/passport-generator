@@ -214,21 +214,21 @@ function getFileNameFromHeaders(headers) {
           />
           <q-toggle outlined label="Только мои" v-model="myFilter" :true-value="1" :false-value="0"/>
 
-          <q-btn
-            color="green-6"
-            size="md"
-            label="Скачать РПД"
-            target="_blank"
-            @click="getDoneFile('api/generator/get-rpd-done-info/')"
-          />
+<!--          <q-btn-->
+<!--            color="green-6"-->
+<!--            size="md"-->
+<!--            label="Скачать РПД"-->
+<!--            target="_blank"-->
+<!--            @click="getDoneFile('api/generator/get-rpd-done-info/')"-->
+<!--          />-->
 
-          <q-btn
-            color="green-6"
-            size="md"
-            label="Скачать ООП"
-            target="_blank"
-            @click="getDoneFile('api/generator/get-oop-done-info/')"
-          />
+<!--          <q-btn-->
+<!--            color="green-6"-->
+<!--            size="md"-->
+<!--            label="Скачать ООП"-->
+<!--            target="_blank"-->
+<!--            @click="getDoneFile('api/generator/get-oop-done-info/')"-->
+<!--          />-->
         </div>
       </div>
     </template>
