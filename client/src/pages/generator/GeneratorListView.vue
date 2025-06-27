@@ -1,19 +1,6 @@
 <script setup lang="ts">
 
 import useGeneratorViewStore from "stores/generatorViewStore";
-
-const generatorViewStore = useGeneratorViewStore();
-const mainStore = useMainStore();
-
-const {
-  cafData,
-  cafDataById,
-} = storeToRefs(generatorViewStore)
-
-const {
-  mira_id,
-} = storeToRefs(mainStore)
-
 import {computed, onBeforeMount, ref, watch} from "vue";
 import {api} from "boot/axios";
 import {LocalStorage, SessionStorage, useQuasar} from "quasar";
@@ -27,10 +14,23 @@ import LayoutHCF from "components/LayoutHCF.vue";
 import FileUploader from "pages/upload/components/FileUploader.vue";
 import GeneratorListViewItem from "pages/generator/components/GeneratorListViewItem.vue";
 
+const generatorViewStore = useGeneratorViewStore();
+const mainStore = useMainStore();
+
+const {
+  cafData,
+} = storeToRefs(generatorViewStore)
+
+const {
+  mira_id,
+} = storeToRefs(mainStore)
+
 const $q = useQuasar()
 const router = useRouter()
 const listData = ref<GeneratorListData[]>([])
-const uploadRpdFile = ref();
+
+const currentData = ref(null);
+
 
 const typeFilterLabel = {
   rop: 'Руководитель ОП',
@@ -157,6 +157,41 @@ onBeforeMount(async () => {
   await getProgramData()
 })
 
+async function getDoneFile(fileUrl: string) {
+  const response = await api.get(fileUrl, {
+     responseType: 'blob',
+  });
+
+  const fileName = getFileNameFromHeaders(response.headers) || 'document.xml';
+
+    const url = window.URL.createObjectURL(
+      new Blob([response.data], { type: 'application/xml' })
+    );
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.style.display = 'none';
+
+    document.body.appendChild(link);
+    link.click();
+
+    setTimeout(() => {
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }, 100);
+}
+
+function getFileNameFromHeaders(headers) {
+    const contentDisposition = headers['content-disposition'];
+    if (!contentDisposition) return null;
+
+    const fileNameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+    if (fileNameMatch && fileNameMatch[1]) {
+      return fileNameMatch[1].replace(/['"]/g, '');
+    }
+    return null;
+}
 </script>
 
 <template>
@@ -164,7 +199,7 @@ onBeforeMount(async () => {
     <template #header>
       <div class="q-px-sm q-pb-sm">
         <div class="flex justify-between q-my-sm q-px-sm"
-             style="display: grid; grid-template-columns: 1fr 220px auto; gap: 8px">
+             style="display: grid; grid-template-columns: 1fr 220px auto auto auto; gap: 8px">
           <q-input outlined label="Поиск по аббревиатуре, дисциплине, разработчику программы" v-model="textFilter"
                    clearable @clear="clearFilter"/>
           <!--        <q-input outlined label="Дисциплина" v-model="discplFilter"/>-->
@@ -178,78 +213,79 @@ onBeforeMount(async () => {
                     clearable
           />
           <q-toggle outlined label="Только мои" v-model="myFilter" :true-value="1" :false-value="0"/>
+
+          <q-btn
+            color="green-6"
+            size="md"
+            label="Скачать РПД"
+            target="_blank"
+            @click="getDoneFile('api/generator/get-rpd-done-info/')"
+          />
+
+          <q-btn
+            color="green-6"
+            size="md"
+            label="Скачать ООП"
+            target="_blank"
+            @click="getDoneFile('api/generator/get-oop-done-info/')"
+          />
         </div>
       </div>
     </template>
     <template #content>
-      <div style="height: 100%; overflow-y: auto">
-        <div v-if="_.size(filteredListData) > 0" style="overflow: auto" class="full-height">
-          <q-list bordered separator>
-            <q-item
-              class="q-pa-none"
-              v-for="(item, index) in filteredListData"
-              :key="index"
-              dense
-            >
-              <q-item-section>
-                <q-expansion-item
-                  :label="item.abbr"
-                  group="programs"
+         <div v-if="_.size(filteredListData) > 0"
+           style="display: grid; grid-template-columns: 300px 1fr; overflow: hidden;height: 100%"
+      >
+        <q-list
+          style="overflow-y:auto; height: 100%; box-shadow: 0 0 8px silver; z-index: 100"
+          separator
+        >
+          <q-item
+            v-for="(value, key) in filteredListData"
+            clickable
+            style="display: grid; grid-template-rows: auto auto; gap: 8px"
+            :active="currentKey === key"
+            @click="currentData = value"
+          >
+            <div style="display: grid; grid-template-columns: 100px 1fr">
+              <div style="display: flex; justify-content: center; align-content: center; font-size: 1.25rem;">
+                {{ key }}
+              </div>
+
+              <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                <q-badge v-for="type in value.types">
+                  {{ typeFilterLabel[type] }}
+                </q-badge>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: start">
+              <q-badge
+                :text-color="STATUSES[status].textColor"
+                :color="STATUSES[status].color"
+                v-for="(status_items, status) in value.statuses"
+              >
+                {{ status_items.length }}
+                <q-tooltip
+                  style="font-size: 12px; background-color: white; color: black"
                 >
-                  <template #header>
-                    <div class="q-item__section column q-item__section--main justify-center">
-                      <div class="q-item__label">
-                        <div style="display: flex; gap: 8px; justify-content: space-between">
-                          <div style="display: flex; gap: 8px;">
-                            <div style="width: 70px">{{ item.abbr }}</div>
+                  {{ status }}: {{ status_items.length }}
+                </q-tooltip>
+              </q-badge>
+            </div>
+          </q-item>
+        </q-list>
 
-                            <q-badge v-for="type in item.types">
-                              {{ typeFilterLabel[type] }}
-                            </q-badge>
-                          </div>
+        <generator-list-view-item v-if="currentData !== null" :items="currentData.items"/>
 
-                          <div style="display: flex; gap: 8px;">
-                            <q-badge :text-color="STATUSES[status].textColor" :color="STATUSES[status].color"
-                                     v-for="(status_items, status) in item.statuses">
-                              {{ status }}: {{ status_items.length }}
-                            </q-badge>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </template>
-                  <q-card>
-                    <q-card-section>
-                      <a :href="item.plx_file">Скачать *.plx</a>
-                      <div class="rpd-container">
-
-                        <div class="rpd-row rpd-row__header text-weight-bold text-center">
-                          <div>Код</div>
-                          <div>Дисциплина</div>
-                          <div>Составитель</div>
-                          <div>Кафедра</div>
-                          <div>Согласован</div>
-                          <div>Утвержден</div>
-                          <div>Статус</div>
-                          <div>Управление</div>
-                        </div>
-                        <div v-for="i in item.items" :class="{[`status-${i.status}`]: true}"
-                             class="rpd-row rpd-row__body text-center">
-                          <generator-list-view-item :item="i" @data-updated="getProgramData"/>
-                        </div>
-                      </div>
-                    </q-card-section>
-                  </q-card>
-                </q-expansion-item>
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </div>
-        <div v-else class="text-h6 q-pa-md">
-          <span v-if="_.size(listData) > 0">Не найдены дисциплины с текущими фильтрами</span>
-          <span v-else>Дисциплины не назначены</span>
-        </div>
+        <span
+          v-if="currentData === null"
+          style="align-content: center; text-align: center; font-size: 20px; font-weight: bold"
+        >
+          Выберите нужный раздел слева
+        </span>
       </div>
+
     </template>
   </layout-h-c-f>
 
@@ -262,27 +298,29 @@ onBeforeMount(async () => {
 }
 
 :deep(.rpd-row) {
-  display: contents;
+  //display: contents;
 
-  &.status-0 > div { // "Назначен"
+  &.status-0 > td { // "Назначен"
     background: white;
   }
 
-  &.status-1 > div { // "Заполняется"
+  &.status-1 > td { // "Заполняется"
     background: $light-blue-1;
   }
 
-  &.status-2 > div { // "Отправлен на проверку"
+  &.status-2 > td { // "Отправлен на проверку"
     background: $amber-1;
   }
 
-  &.status-3 > div { // "Утвержден"
+  &.status-3 > td { // "Утвержден"
     background: $green-1;
   }
 
-  &.status-4 > div { // "Требуются правки"
+  &.status-4 > td { // "Требуются правки"
     background: $red-1;
   }
+
+
 
 
   $border: solid 1px silver;
