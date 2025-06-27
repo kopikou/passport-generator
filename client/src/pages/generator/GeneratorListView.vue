@@ -13,7 +13,6 @@ import GeneratorManageDialog from "pages/generator/components/dialogs/GeneratorM
 import LayoutHCF from "components/LayoutHCF.vue";
 import FileUploader from "pages/upload/components/FileUploader.vue";
 import GeneratorListViewItem from "pages/generator/components/GeneratorListViewItem.vue";
- import { saveAs } from 'file-saver';
 
 const generatorViewStore = useGeneratorViewStore();
 const mainStore = useMainStore();
