@@ -17,27 +17,43 @@ import GeneratorListViewItem from "pages/generator/components/GeneratorListViewI
 const generatorViewStore = useGeneratorViewStore();
 const mainStore = useMainStore();
 
-const {
-  cafData,
-} = storeToRefs(generatorViewStore)
-
-const {
-  mira_id,
-} = storeToRefs(mainStore)
-
 const $q = useQuasar()
-const router = useRouter()
 const listData = ref<GeneratorListData[]>([])
 
 const currentData = ref(null);
 
+const buttonsLoading = ref([
+  false,
+  false
+]);
+
+const filesLink = ref([
+  'api/generator/get-rpd-done-info/',
+  'api/generator/get-oop-done-info/'
+]);
 
 const typeFilterLabel = {
-  rop: 'Руководитель ОП',
-  fac: 'Директор',
-  zav: 'Заведующий кафедры',
-  person: 'Разработчик РПД',
-  view: 'Просмотр РПД',
+  rop:
+    {
+      title: 'Руководитель ОП',
+      icon: 'mdi mdi-owl',
+    },
+  fac: {
+    title: 'Директор',
+    icon: 'mdi mdi-kangaroo',
+  },
+  zav: {
+    title: 'Заведующий кафедры',
+    icon: 'mdi mdi-panda',
+  },
+  person: {
+    title: 'Разработчик РПД',
+    icon: 'mdi mdi-koala',
+  },
+  view: {
+    title: 'Просмотр РПД',
+    icon: 'mdi mdi-linux',
+  },
 }
 
 const STATUSES = {
@@ -116,11 +132,20 @@ const filteredListData = computed(() => {
     .fromPairs()
     .value()
 
+  if (txtFilter !== '' && currentData.value === null) {
+    const firstKey = Object.keys(data)[0];
+    currentData.value = data[firstKey];
+  } else if (currentData.value !== null && data[currentData.value.abbr]) {
+    currentData.value.items = data[currentData.value.abbr].items;
+  } else if (currentData.value !== null && !data[currentData.value.abbr]) {
+    currentData.value.items = [];
+  }
+
   return data
 })
 
 function clearFilter() {
-  textFilter.value = ''
+  textFilter.value = '';
 }
 
 
@@ -157,29 +182,34 @@ onBeforeMount(async () => {
   await getProgramData()
 })
 
-async function getDoneFile(fileUrl: string) {
+async function getDoneFile(id: number) {
+  const fileUrl = filesLink.value[id];
+
+  buttonsLoading.value[id] = true;
+
   const response = await api.get(fileUrl, {
      responseType: 'blob',
   });
 
   const fileName = getFileNameFromHeaders(response.headers) || 'document.xml';
 
-    const url = window.URL.createObjectURL(
-      new Blob([response.data], { type: 'application/xml' })
-    );
+  const url = window.URL.createObjectURL(
+    new Blob([response.data], { type: 'application/xml' })
+  );
 
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    link.style.display = 'none';
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  link.style.display = 'none';
 
-    document.body.appendChild(link);
-    link.click();
+  document.body.appendChild(link);
+  link.click();
 
-    setTimeout(() => {
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    }, 100);
+  setTimeout(() => {
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    buttonsLoading.value[id] = false;
+  }, 100);
 }
 
 function getFileNameFromHeaders(headers) {
@@ -219,7 +249,8 @@ function getFileNameFromHeaders(headers) {
             size="md"
             label="Скачать РПД"
             target="_blank"
-            @click="getDoneFile('api/generator/get-rpd-done-info/')"
+            @click="getDoneFile(0)"
+            :loading="buttonsLoading[0]"
           />
 
           <q-btn
@@ -227,8 +258,19 @@ function getFileNameFromHeaders(headers) {
             size="md"
             label="Скачать ООП"
             target="_blank"
-            @click="getDoneFile('api/generator/get-oop-done-info/')"
+            @click="getDoneFile(1)"
+            :loading="buttonsLoading[1]"
           />
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; justify-content: start; gap: 8px;">
+          <div v-for="status in STATUSES">
+            <q-icon
+              :color="status.color"
+              name="square"
+            />
+            {{ status.title }}
+          </div>
         </div>
       </div>
     </template>
@@ -242,19 +284,24 @@ function getFileNameFromHeaders(headers) {
         >
           <q-item
             v-for="(value, key) in filteredListData"
+            style="display: grid; gap: 8px;"
             clickable
-            style="display: grid; grid-template-rows: auto auto; gap: 8px"
-            :active="currentKey === key"
+            :active="currentData && currentData.abbr === key"
             @click="currentData = value"
+            active-class="my-active-item"
           >
-            <div style="display: grid; grid-template-columns: 100px 1fr">
-              <div style="display: flex; justify-content: center; align-content: center; font-size: 1.25rem;">
+            <div style="display: grid; grid-template-columns: 1fr auto">
+              <div style="display: flex; justify-content: left; font-size: 1.25rem;">
                 {{ key }}
               </div>
 
-              <div style="display: flex; flex-wrap: wrap; gap: 8px">
-                <q-badge v-for="type in value.types">
-                  {{ typeFilterLabel[type] }}
+              <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: right; align-items: center">
+                <q-badge v-for="type in value.types" style="font-size: 15px; padding: 4px;">
+                  <i :class="typeFilterLabel[type].icon" ></i>
+
+                  <q-tooltip style="font-size: 12px; background-color: white; color: black">
+                    {{ typeFilterLabel[type].title}}
+                  </q-tooltip>
                 </q-badge>
               </div>
             </div>
@@ -274,11 +321,13 @@ function getFileNameFromHeaders(headers) {
               </q-badge>
             </div>
 
-            <a :href="value.plx_file">Скачать *.plx</a>
+            <div style="width: 50%">
+              <a :href="value.plx_file">Скачать *.plx</a>
+            </div>
           </q-item>
         </q-list>
 
-        <generator-list-view-item v-if="currentData !== null" :items="currentData.items"/>
+        <generator-list-view-item v-if="currentData !== null && currentData.items" :items="currentData.items"/>
 
         <span
           v-if="currentData === null"
@@ -294,6 +343,13 @@ function getFileNameFromHeaders(headers) {
 </template>
 
 <style scoped lang="scss">
+:deep(.table-header) {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background: $blue-grey-2;
+}
+
 .rpd-container {
   display: grid;
   grid-template-columns: auto repeat(5, 1fr) auto auto;
@@ -353,5 +409,9 @@ function getFileNameFromHeaders(headers) {
   }
 
 }
+
+ :deep(.my-active-item) {
+   background: $blue-grey-2;
+ }
 
 </style>

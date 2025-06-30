@@ -152,7 +152,7 @@ function rowClassFn (row) {
         separator="cell"
         :rows-per-page-options="[0]"
         :table-row-class-fn="rowClassFn"
-        table-header-style="position: sticky; z-index: 1; top: 0; background: #FAA862FF"
+        table-header-class="table-header"
       >
 
         <template #body-cell-kaf="props">
@@ -192,14 +192,16 @@ function rowClassFn (row) {
         </template>
 
         <template #body-cell-control="props">
-          <div>
-              <template v-if="props.row.can_upload_file_directly">
+          <q-td>
+              <div v-if="props.row.can_upload_file_directly">
                 <q-file :label="'Загрузить программу'" outlined bottom-slots v-model="uploadRpdFile"
                         :filter="fileFilter"
                         accept="*.pdf, application/pdf"
                         style="width: 300px"
                         @update:model-value="onFileUploaded(props.row)"
-                        max-files="1">
+                        max-files="1"
+                        v-if="props.row.can_upload_file_directly"
+                >
 
                   <template #file>
                     {{ fileName(props.row) }}
@@ -217,8 +219,8 @@ function rowClassFn (row) {
                     />
                   </template>
                 </q-file>
-              </template>
-              <template v-else>
+              </div>
+              <div v-else>
                 <q-btn v-if="canEdit(props.row)" dense flat color="primary" icon="mdi-pencil"
                        label="заполнить" @click="router.push(`/generator/${props.row.id}/main`)"/>
                 <q-btn v-if="canView(props.row)" dense flat color="secondary" icon="mdi-briefcase-eye"
@@ -227,8 +229,8 @@ function rowClassFn (row) {
                        :href="`${FORCE_SCRIPT_NAME}/api/generator/${props.row.id}/get-rpd-report/`"
                        target="_blank"
                 />
-              </template>
-          </div>
+              </div>
+          </q-td>
         </template>
 
       </q-table>
