@@ -46,10 +46,6 @@ from rpd.models import PlanData, LinesIndicators, PlanDocuments, DocumentsTypes
 from rpd.services import RPDGenSerivce
 from uplfile.models import UploadFiles
 
-from django.template.loader import render_to_string
-
-from django.shortcuts import render
-
 import pandas as pd
 
 from datetime import datetime
