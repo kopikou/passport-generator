@@ -146,7 +146,7 @@ const filteredListData = computed(() => {
 })
 
 function clearFilter() {
-  textFilter.value = '';
+  textFilter.value = ''
 }
 
 

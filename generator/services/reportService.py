@@ -371,7 +371,7 @@ class ReportService(object):
                 "num": item['num'],
                 "kurs": (item['num'] + 1) // 2,
                 "srs_hours": item['srs'] or 0,
-                "weeks": int(item['srs'] / 54) if item['srs'] else 0,
+                "weeks": round(item['srs'] / 54) if item['srs'] else 0,
                 "zet": int(item['zet']) if item['zet'] else 0,
                 "tic": ', '.join(get_tic_name(item)),
             })
