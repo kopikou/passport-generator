@@ -36,7 +36,7 @@ const typeFilterLabel = {
   rop:
     {
       title: 'Руководитель ОП',
-      icon: 'mdi mdi-owl',
+      icon: 'mdi mdi-duck',
     },
   fac: {
     title: 'Директор',
@@ -44,7 +44,7 @@ const typeFilterLabel = {
   },
   zav: {
     title: 'Заведующий кафедры',
-    icon: 'mdi mdi-panda',
+    icon: 'mdi mdi-bird',
   },
   person: {
     title: 'Разработчик РПД',
@@ -78,19 +78,19 @@ const STATUSES = {
   "Отправлен на проверку": {
     color: "light-green-6",
     textColor: "white",
-    index: 3,
+    index: 4,
     title: "Отправлен на проверку",
   },
   "Требуются правки": {
     color: "red-5",
     textColor: "white",
-    index: 4,
+    index: 5,
     title: "Требуются правки",
   },
   "Утвержден": {
     color: "green-5",
     textColor: "white",
-    index: 5,
+    index: 6,
     title: "Утвержден",
   },
 }
@@ -118,6 +118,7 @@ const filteredListData = computed(() => {
     .toPairs()
     .map((item) => {
       let items = item[1];
+      items.forEach(x => x.status = STATUSES[x["status_verbose"]].index);
       return [
         item[0],
         {
@@ -229,7 +230,7 @@ function getFileNameFromHeaders(headers) {
     <template #header>
       <div class="q-px-sm q-pb-sm">
         <div class="flex justify-between q-my-sm q-px-sm"
-             style="display: grid; grid-template-columns: 1fr 220px auto auto auto; gap: 8px">
+             style="display: grid; grid-template-columns: 1fr 220px auto auto auto; gap: 8px; align-items: center;">
           <q-input outlined label="Поиск по аббревиатуре, дисциплине, разработчику программы" v-model="textFilter"
                    clearable @clear="clearFilter"/>
           <!--        <q-input outlined label="Дисциплина" v-model="discplFilter"/>-->
@@ -245,18 +246,20 @@ function getFileNameFromHeaders(headers) {
           <q-toggle outlined label="Только мои" v-model="myFilter" :true-value="1" :false-value="0"/>
 
           <q-btn
+            icon="mdi-download"
             color="green-6"
             size="md"
-            label="Скачать РПД"
+            label="РПД"
             target="_blank"
             @click="getDoneFile(0)"
             :loading="buttonsLoading[0]"
           />
 
           <q-btn
+            icon="mdi-download"
             color="green-6"
             size="md"
-            label="Скачать ООП"
+            label="ООП"
             target="_blank"
             @click="getDoneFile(1)"
             :loading="buttonsLoading[1]"
@@ -306,24 +309,26 @@ function getFileNameFromHeaders(headers) {
               </div>
             </div>
 
-            <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: start">
-              <q-badge
-                :text-color="STATUSES[status].textColor"
-                :color="STATUSES[status].color"
-                v-for="(status_items, status) in value.statuses"
-              >
-                {{ status_items.length }}
-                <q-tooltip
-                  style="font-size: 12px; background-color: white; color: black"
+            <div style="display: grid; grid-template-columns: 1fr auto">
+              <div>
+                <q-badge
+                  :text-color="STATUSES[status].textColor"
+                  :color="STATUSES[status].color"
+                  v-for="(status_items, status) in value.statuses"
+                  style="margin-right: 4px;"
                 >
-                  {{ status }}: {{ status_items.length }}
-                </q-tooltip>
-              </q-badge>
+                  {{ status_items.length }}
+                  <q-tooltip
+                    style="font-size: 12px; background-color: white; color: black"
+                  >
+                    {{ status }}: {{ status_items.length }}
+                  </q-tooltip>
+                </q-badge>
+              </div>
+
+              <a :href="value.plx_file">*.plx</a>
             </div>
 
-            <div style="width: 50%">
-              <a :href="value.plx_file">Скачать *.plx</a>
-            </div>
           </q-item>
         </q-list>
 
@@ -358,24 +363,28 @@ function getFileNameFromHeaders(headers) {
 :deep(.rpd-row) {
   //display: contents;
 
-  &.status-0 > td { // "Назначен"
+  &.status-1 > td { // "Назначен"
     background: white;
   }
 
-  &.status-1 > td { // "Заполняется"
+  &.status-2 > td { // "Заполняется"
     background: $light-blue-1;
   }
 
-  &.status-2 > td { // "Отправлен на проверку"
+  &.status-3 > td { // "Требует моего согласования/утверждения"
     background: $amber-1;
   }
 
-  &.status-3 > td { // "Утвержден"
+    &.status-4 > td { // "Отправлен на проверку"
     background: $green-1;
   }
 
-  &.status-4 > td { // "Требуются правки"
+  &.status-5 > td { // "Требуются правки"
     background: $red-1;
+  }
+
+  &.status-6 > td { // "Утвержден"
+    background: $green-2;
   }
 
 
