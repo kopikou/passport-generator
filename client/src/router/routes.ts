@@ -9,6 +9,8 @@ import PlxDocumentsView from "pages/plx/components/PlxDocumentsView.vue";
 import PlxIndicatorsView from "pages/plx/components/PlxIndicatorsView.vue";
 import PlxSemesterView from "pages/plx/components/PlxSemesterView.vue";
 import GeneratorView from "pages/generator/GeneratorView.vue";
+import RopListView from "pages/rop/RopListView.vue";
+import RopView from "pages/rop/RopView.vue";
 // import GeneratorMainView from "pages/generator/components/GeneratorMainView.vue";
 import GeneratorCompetenceView from "pages/generator/components/GeneratorCompetenceView.vue";
 import GeneratorIndicatorsView from "pages/generator/components/GeneratorIndicatorsView.vue";
@@ -259,6 +261,20 @@ const routes: RouteRecordRaw[] = [
           },
         ]
       },
+    ]
+  },
+  {
+    path: "/rop",
+    name: "RopListView",
+    meta: {
+      permissions: [Permissions.can_upload_files],
+    },
+    children: [
+      {
+        path: ':id',
+        name: 'RopView',
+        component: RopView
+      }
     ]
   },
   {
