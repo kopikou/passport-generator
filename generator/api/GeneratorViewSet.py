@@ -48,8 +48,6 @@ from uplfile.models import UploadFiles
 
 import pandas as pd
 
-from datetime import datetime
-
 
 class GeneratorViewSet(
     RetrieveModelMixin,

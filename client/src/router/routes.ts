@@ -38,7 +38,6 @@ import GeneratorMainView from "pages/generator/components/GeneratorMainView.vue"
 import ProfActivityView from "pages/activity/ProfActivityView.vue";
 import ProfActivityItem from "pages/activity/components/ProfActivityItem.vue";
 
-
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
@@ -266,9 +265,9 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/rop",
     name: "RopListView",
-    meta: {
-      permissions: [Permissions.can_upload_files],
-    },
+    // meta: {
+    //   permissions: [rop],
+    // },
     children: [
       {
         path: ':id',

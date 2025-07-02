@@ -90,8 +90,8 @@ onBeforeMount(async () => {
           <q-route-tab icon="mdi-format-list-checks" label="PLX файлы" to="/plx"
                        v-permissions-required="Permissions.can_upload_plx_files"
           />
-          <q-route-tab icon="mdi-file-excel" label="РОП"
-                       to="/rop"
+          <q-route-tab icon="mdi-file-excel" label="РОП" to="/rop"
+                       v-if="rop"
           />
           <q-btn-dropdown auto-close stretch flat :label="`${lastName} ${firstName}`">
             <q-list>

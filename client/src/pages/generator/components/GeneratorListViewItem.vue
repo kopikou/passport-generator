@@ -84,9 +84,9 @@ const cafDataById = computed(() => {
   return _.keyBy(cafData.value, 'value')
 })
 
-const fileName = computed((item) => {
+function fileName (item) {
   return decodeURI(item?.last_accepted_file_url || "").split('/').pop()
-})
+}
 
 function openManageDialog(item) {
   $q.dialog({
@@ -125,11 +125,17 @@ async function onFileUploaded(item) {
   const formData = new FormData()
   formData.append('file', uploadRpdFile.value)
 
-  let r = await api.post(`/api/generator/${item.id}/upload-rpd-program/`, formData)
+  try {
+    let r = await api.post(`/api/generator/${item.id}/upload-rpd-program/`, formData)
+  } catch (e) {
+    return;
+  } finally {
+    loadingHelpers()
+  }
+
+  uploadRpdFile.value = null;
 
   emit('data-updated')
-
-  loadingHelpers()
 }
 
 function rowClassFn (row) {
@@ -193,7 +199,8 @@ function rowClassFn (row) {
 
         <template #body-cell-control="props">
           <q-td>
-              <div v-if="props.row.can_upload_file_directly">
+
+              <div v-if="props.row.can_upload_file_directly && props.row.type.includes('person')">
                 <q-file :label="'Загрузить программу'" outlined bottom-slots v-model="uploadRpdFile"
                         :filter="fileFilter"
                         accept="*.pdf, application/pdf"
@@ -202,7 +209,6 @@ function rowClassFn (row) {
                         max-files="1"
                         v-if="props.row.can_upload_file_directly"
                 >
-
                   <template #file>
                     {{ fileName(props.row) }}
                   </template>

@@ -337,7 +337,7 @@ function getFileNameFromHeaders(headers) {
           </q-item>
         </q-list>
 
-        <generator-list-view-item v-if="currentData !== null && currentData.items" :items="currentData.items"/>
+        <generator-list-view-item @data-updated="getProgramData" v-if="currentData !== null && currentData.items" :items="currentData.items"/>
 
         <span
           v-if="currentData === null"
