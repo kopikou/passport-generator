@@ -5,16 +5,12 @@ import {computed, onBeforeMount, ref, watch} from "vue";
 import {api} from "boot/axios";
 import {LocalStorage, SessionStorage, useQuasar} from "quasar";
 import {GeneratorListData} from "src/types";
-import {useRouter} from "vue-router";
 import {storeToRefs} from "pinia";
 import _ from "lodash";
 import useMainStore from "stores/mainStore";
-import GeneratorManageDialog from "pages/generator/components/dialogs/GeneratorManageDialog.vue";
 import LayoutHCF from "components/LayoutHCF.vue";
-import FileUploader from "pages/upload/components/FileUploader.vue";
 import GeneratorListViewItem from "pages/generator/components/GeneratorListViewItem.vue";
 
-const generatorViewStore = useGeneratorViewStore();
 const mainStore = useMainStore();
 const {
   rop
@@ -25,15 +21,26 @@ const listData = ref<GeneratorListData[]>([])
 
 const currentData = ref(null);
 
-const buttonsLoading = ref([
-  false,
-  false
-]);
+// const buttonsLoading = ref([
+//   false,
+//   false
+// ]);
+//
+// const filesLink = ref([
+//   'api/generator/get-rpd-done-info/',
+//   'api/generator/get-oop-done-info/'
+// ]);
 
-const filesLink = ref([
-  'api/generator/get-rpd-done-info/',
-  'api/generator/get-oop-done-info/'
-]);
+const filesButtons = ref({
+  rpd: {
+    url: 'api/generator/get-rpd-done-info/',
+    isLoading: false
+  },
+  oop: {
+    url: 'api/generator/get-oop-done-info/',
+    isLoading: false
+  }
+});
 
 const typeFilterLabel = {
   rop:
@@ -165,12 +172,6 @@ async function getProgramData() {
   loadProgram()
 }
 
-
-function getRowColor(number) {
-  return number % 2 == 0 ? 'bg-grey-3' : 'bg-white'
-}
-
-
 async function onFileDirectlyUploaded() {
   await getProgramData();
 }
@@ -186,10 +187,10 @@ onBeforeMount(async () => {
   await getProgramData()
 })
 
-async function getDoneFile(id: number) {
-  const fileUrl = filesLink.value[id];
+async function getDoneFile(key: string) {
+  const fileUrl = filesButtons.value[key]['url'];
 
-  buttonsLoading.value[id] = true;
+  filesButtons.value[key]['isLoading'] = true;
 
   const response = await api.get(fileUrl, {
      responseType: 'blob',
@@ -212,7 +213,7 @@ async function getDoneFile(id: number) {
   setTimeout(() => {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-    buttonsLoading.value[id] = false;
+    filesButtons.value[key]['isLoading'] = false;
   }, 100);
 }
 
@@ -226,6 +227,22 @@ function getFileNameFromHeaders(headers) {
     }
     return null;
 }
+
+const columns = [
+  { name: 'discode', align: 'center', label: 'Код', field: 'discode', sortable: true },
+  { name: 'discpl', align: 'center', label: 'Дисциплина', field: 'discpl', sortable: true },
+  { name: 'person', align: 'center', label: 'Составитель', field: 'person', sortable: true },
+  { name: 'kaf', align: 'center', label: 'Кафедра', field: 'kafcode', sortable: true },
+  { name: 'rukprog', align: 'center', label: 'Согласован', field: 'rukprog', sortable: true },
+  { name: 'zavkaf', align: 'center', label: 'Утвержден', field: 'zavkaf', sortable: true },
+  { name: 'status_verbose', align: 'center', label: 'Статус', field: 'status_verbose', sortable: true },
+  { name: 'control', align: 'center', label: 'Управление', field: 'type', sortable: false },
+];
+
+function rowClassFn (row) {
+  return `rpd-row status-${row.status}`;
+}
+
 </script>
 
 <template>
@@ -254,8 +271,8 @@ function getFileNameFromHeaders(headers) {
             size="md"
             label="РПД"
             target="_blank"
-            @click="getDoneFile(0)"
-            :loading="buttonsLoading[0]"
+            @click="getDoneFile('rpd')"
+            :loading="filesButtons.rpd.isLoading"
             v-if="rop"
           />
 
@@ -265,8 +282,8 @@ function getFileNameFromHeaders(headers) {
             size="md"
             label="ООП"
             target="_blank"
-            @click="getDoneFile(1)"
-            :loading="buttonsLoading[1]"
+            @click="getDoneFile('oop')"
+            :loading="filesButtons.oop.isLoading"
             v-if="rop"
           />
         </div>
@@ -337,7 +354,27 @@ function getFileNameFromHeaders(headers) {
           </q-item>
         </q-list>
 
-        <generator-list-view-item @data-updated="getProgramData" v-if="currentData !== null && currentData.items" :items="currentData.items"/>
+           <q-table
+             v-if="currentData !== null && currentData.items"
+            :rows="currentData.items"
+            :columns="columns"
+            virtual-scroll
+            style="overflow-y: auto; height: 100%;"
+            wrap-cells
+            row-key="discode"
+            flat
+            bordered
+            separator="cell"
+            :rows-per-page-options="[0]"
+            :table-row-class-fn="rowClassFn"
+            table-header-class="table-header"
+          >
+            <template  v-slot:body="props">
+              <q-tr :props="props">
+                <generator-list-view-item @data-updated="getProgramData" :item="props.row"/>
+              </q-tr>
+            </template>
+          </q-table>
 
         <span
           v-if="currentData === null"

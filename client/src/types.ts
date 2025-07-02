@@ -158,6 +158,8 @@ export interface GeneratorListData {
   last_accepted_file_url: string | null
   user_confirmed_name: string
   user_accepted_name: string
+  rukprog: string
+  zavkaf: string
 }
 
 export interface GeneratorPlanLineData {
