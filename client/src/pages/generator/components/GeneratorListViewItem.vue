@@ -189,52 +189,6 @@ async function onFileUploaded() {
       />
     </div>
   </q-td>
-
-<!--      </q-table>-->
-<!--  <div>{{ item.discode }}</div>-->
-<!--  <div>{{ item.discpl }}</div>-->
-<!--  <div>{{ item.person }}</div>-->
-<!--  <div>{{ cafDataById[item.kafcode]?.label }}</div>-->
-<!--  <div>{{ item.user_confirmed_name }}</div>-->
-<!--  <div>{{ item.user_accepted_name }}</div>-->
-<!--  <div>{{ item.status_verbose }}</div>-->
-<!--  <div>-->
-<!--    <template v-if="item.can_upload_file_directly">-->
-<!--      <q-file :label="'Загрузить программу'" outlined bottom-slots v-model="uploadRpdFile"-->
-<!--              :filter="fileFilter"-->
-<!--              accept="*.pdf, application/pdf"-->
-<!--              style="width: 300px"-->
-<!--              @update:model-value="onFileUploaded"-->
-<!--              max-files="1">-->
-
-<!--        <template #file>-->
-<!--          {{ fileName }}-->
-<!--        </template>-->
-
-<!--        <template v-slot:after v-if="item.last_accepted_file_url">-->
-<!--          <q-btn-->
-<!--            icon="mdi-eye"-->
-<!--            flat-->
-<!--            dense-->
-<!--            style="height: 100%"-->
-<!--            v-show="item.last_accepted_file_url"-->
-<!--            color="secondary"-->
-<!--            @click="openUrl(item.last_accepted_file_url)"-->
-<!--          />-->
-<!--        </template>-->
-<!--      </q-file>-->
-<!--    </template>-->
-<!--    <template v-else>-->
-<!--      <q-btn v-if="canEdit" dense flat color="primary" icon="mdi-pencil"-->
-<!--             label="заполнить" @click="router.push(`/generator/${item.id}/main`)"/>-->
-<!--      <q-btn v-if="canView" dense flat color="secondary" icon="mdi-briefcase-eye"-->
-<!--             label="просмотр" @click="openManageDialog"/>-->
-<!--      <q-btn v-if="adminView" dense flat color="black" icon="mdi-download"-->
-<!--             :href="`${FORCE_SCRIPT_NAME}/api/generator/${item.id}/get-rpd-report/`"-->
-<!--             target="_blank"-->
-<!--      />-->
-<!--    </template>-->
-<!--  </div>-->
 </template>
 
 <style scoped>

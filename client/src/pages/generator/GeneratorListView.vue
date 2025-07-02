@@ -311,7 +311,7 @@ function rowClassFn (row) {
             v-for="(value, key) in filteredListData"
             style="display: grid; gap: 8px;"
             clickable
-            :active="currentData && currentData.abbr === key"
+            :active="currentData !== null && currentData.abbr === key"
             @click="currentData = value"
             active-class="my-active-item"
           >
