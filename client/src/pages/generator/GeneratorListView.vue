@@ -16,6 +16,9 @@ import GeneratorListViewItem from "pages/generator/components/GeneratorListViewI
 
 const generatorViewStore = useGeneratorViewStore();
 const mainStore = useMainStore();
+const {
+  rop
+} = storeToRefs(mainStore)
 
 const $q = useQuasar()
 const listData = ref<GeneratorListData[]>([])
@@ -253,6 +256,7 @@ function getFileNameFromHeaders(headers) {
             target="_blank"
             @click="getDoneFile(0)"
             :loading="buttonsLoading[0]"
+            v-if="rop"
           />
 
           <q-btn
@@ -263,6 +267,7 @@ function getFileNameFromHeaders(headers) {
             target="_blank"
             @click="getDoneFile(1)"
             :loading="buttonsLoading[1]"
+            v-if="rop"
           />
         </div>
 
