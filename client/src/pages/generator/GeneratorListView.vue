@@ -146,9 +146,9 @@ const filteredListData = computed(() => {
   if (txtFilter !== '' && currentData.value === null) {
     const firstKey = Object.keys(data)[0];
     currentData.value = data[firstKey];
-  } else if (currentData.value !== null && data[currentData.value.abbr]) {
+  } else if (currentData.value && data[currentData.value.abbr]) {
     currentData.value.items = data[currentData.value.abbr].items;
-  } else if (currentData.value !== null && !data[currentData.value.abbr]) {
+  } else if (currentData.value && !data[currentData.value.abbr]) {
     currentData.value.items = [];
   }
 
@@ -172,10 +172,6 @@ async function getProgramData() {
   loadProgram()
 }
 
-async function onFileDirectlyUploaded() {
-  await getProgramData();
-}
-
 watch([discplFilter, groupFilter, myFilter, textFilter], () => {
   $q.localStorage.setItem("surp_discplfilter", discplFilter.value)
   $q.localStorage.setItem("surp_groupfilter", groupFilter.value)
@@ -185,6 +181,7 @@ watch([discplFilter, groupFilter, myFilter, textFilter], () => {
 
 onBeforeMount(async () => {
   await getProgramData()
+  textFilter.value = ''
 })
 
 async function getDoneFile(key: string) {
@@ -266,7 +263,7 @@ function rowClassFn (row) {
           <q-toggle outlined label="Только мои" v-model="myFilter" :true-value="1" :false-value="0"/>
 
           <q-btn
-            icon="mdi-download"
+            icon="mdi-file-excel"
             color="green-6"
             size="md"
             label="РПД"
@@ -277,7 +274,7 @@ function rowClassFn (row) {
           />
 
           <q-btn
-            icon="mdi-download"
+            icon="mdi-file-excel"
             color="green-6"
             size="md"
             label="ООП"
@@ -311,7 +308,7 @@ function rowClassFn (row) {
             v-for="(value, key) in filteredListData"
             style="display: grid; gap: 8px;"
             clickable
-            :active="currentData !== null && currentData.abbr === key"
+            :active="currentData && currentData.abbr === key"
             @click="currentData = value"
             active-class="my-active-item"
           >
@@ -321,7 +318,7 @@ function rowClassFn (row) {
               </div>
 
               <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: right; align-items: center">
-                <q-badge v-for="type in value.types" style="font-size: 15px; padding: 4px;">
+                <q-badge v-for="type in value.types" class="animal-icon">
                   <i :class="typeFilterLabel[type].icon" ></i>
 
                   <q-tooltip style="font-size: 12px; background-color: white; color: black">
@@ -355,7 +352,7 @@ function rowClassFn (row) {
         </q-list>
 
            <q-table
-             v-if="currentData !== null && currentData.items"
+             v-if="currentData && currentData.items !== []"
             :rows="currentData.items"
             :columns="columns"
             virtual-scroll
@@ -377,7 +374,7 @@ function rowClassFn (row) {
           </q-table>
 
         <span
-          v-if="currentData === null"
+          v-if="!currentData"
           style="align-content: center; text-align: center; font-size: 20px; font-weight: bold"
         >
           Выберите нужный раздел слева
@@ -465,4 +462,10 @@ function rowClassFn (row) {
    background: $blue-grey-2;
  }
 
+ :deep(.animal-icon){
+   background: $grey-3;
+   color: black;
+   font-size: 18px;
+   padding: 4px;
+ }
 </style>
