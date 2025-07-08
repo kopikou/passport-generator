@@ -228,10 +228,10 @@ function getFileNameFromHeaders(headers) {
 const columns = [
   { name: 'discode', align: 'center', label: 'Код', field: 'discode', sortable: true },
   { name: 'discpl', align: 'center', label: 'Дисциплина', field: 'discpl', sortable: true },
-  { name: 'person', align: 'center', label: 'Составитель', field: 'person', sortable: true },
+  { name: 'person', align: 'center', label: 'Составитель', field: 'razrab_name', sortable: true },
   { name: 'kaf', align: 'center', label: 'Кафедра', field: 'kafcode', sortable: true },
-  { name: 'rukprog', align: 'center', label: 'Согласован', field: 'rukprog', sortable: true },
-  { name: 'zavkaf', align: 'center', label: 'Утвержден', field: 'zavkaf', sortable: true },
+  { name: 'rukprog', align: 'center', label: 'Согласовал', field: 'rop_name', sortable: true },
+  { name: 'zavkaf', align: 'center', label: 'Утвердил', field: 'zavkaf_name', sortable: true },
   { name: 'status_verbose', align: 'center', label: 'Статус', field: 'status_verbose', sortable: true },
   { name: 'control', align: 'center', label: 'Управление', field: 'type', sortable: false },
 ];

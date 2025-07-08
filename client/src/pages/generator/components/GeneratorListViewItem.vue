@@ -114,7 +114,7 @@ async function onFileUploaded() {
   </q-td>
 
   <q-td key="person">
-    {{ item.person }}
+    {{ item.razrab_name }}
   </q-td>
 
   <q-td key="kaf">
@@ -130,7 +130,7 @@ async function onFileUploaded() {
         size="15px"
       >
       </q-icon>
-      {{ item.rukprog }}
+      {{ item.rop_name }}
     </div>
   </q-td>
 
@@ -143,7 +143,7 @@ async function onFileUploaded() {
         size="15px"
       >
       </q-icon>
-      {{ item.zavkaf }}
+      {{ item.zavkaf_name }}
     </div>
   </q-td>
 

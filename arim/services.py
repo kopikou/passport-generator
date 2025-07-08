@@ -176,128 +176,45 @@ class AISServices(object):
             SET @year = %s;
             (SELECT @cfacADM = cfac, @adm = isadmin from rpdusers where cperson = @id)
 
-
             SELECT
             DISTINCT
-            t.discpl,
-			t.newdisid,
-            t.id_discpl,
-            t.planlin,
-            t.abbr,
-            t.yr,
-            t.id_admission,
-            t.mira_id,
-            cp.name AS person,
-            t.ckaf as ckaf,
-            t.type AS type,
-            cp1.name AS zavkaf,
-            cp2.name AS rukprog
-            FROM (
-            SELECT d.name as discpl
-                ,d.id as id_discpl
-                , u.id as planlin
-				, u.newdisid
-                , p.abbrprofile as abbr
-                , p.startyear as yr
-                , p.cadmission as id_admission
-                ,  u.cperson AS mira_id
-                , p.ckaf as ckaf
-                , 'person' AS type  -- Преподаватель
-                , u.planid
+            d.name as discpl
+            , d.id as id_discpl
+            , u.id as planlin
+            , u.newdisid
+            , p.abbrprofile as abbr
+            , p.startyear as yr
+            , p.cadmission as id_admission
+            , u.cperson AS mira_id
+            , p.ckaf as ckaf
+            , u.planid
+            , u.cperson AS razrab
+            , ck.czav AS zavkaf
+            , p.cperson AS rop
+            , f.cdean AS fac
+			, ck.zav AS zavkaf_name
+			, f.dean AS fac_name
+			, cp1.name AS razrab_name
+			, cp2.name AS rop_name
             FROM uchplan_lines u
-            left join uchplan_discpl d on (u.disid = d.id)
-            left join uchplan_plan p on (p.id = u.planid)
-            where u.cperson = @id and p.fordel = 'f' and u.fordel = 'f' --and u.type != 3 and p.startyear = @year
-
-            UNION ALL
-
-            select d.name as discpl
-                ,d.id as id_discpl
-                , u.id as planlin
-				, u.newdisid
-                , p.abbrprofile as abbr
-                , p.startyear as yr
-                , p.cadmission as id_admission
-                , u.cperson AS mira_id
-                , p.ckaf as ckaf
-                , 'zav' AS type -- Заведующий кафедры
-                , u.planid
-            FROM uchplan_lines u
-            left join uchplan_discpl d on (u.disid = d.id)
-            left join uchplan_plan p on (p.id = u.planid)
-            LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where u.ckaf in (SELECT id FROM dbo.catkaf WHERE czav = @id AND isreal = 't') and p.fordel = 'f' and u.fordel = 'f'-- and  u.type != 3 and p.startyear = @year
-
-            UNION ALL
-
-            select d.name as discpl
-                ,d.id as id_discpl
-                , u.id as planlin
-				, u.newdisid
-                , p.abbrprofile as abbr
-                , p.startyear as yr
-                , p.cadmission as id_admission
-                ,  u.cperson AS mira_id
-                , p.ckaf as ckaf
-                , 'fac' AS type -- Заведующий факультета
-                , u.planid
-            FROM uchplan_lines u
-            left join uchplan_discpl d on (u.disid = d.id)
-            left join uchplan_plan p on (p.id = u.planid)
-            LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where a.cfac in (SELECT id FROM dbo.catfaculty WHERE cdean = @id AND realfac = 't') and p.fordel = 'f' and u.fordel = 'f'-- and  u.type != 3 and p.startyear = @year
-
-            UNION ALL
-
-            SELECT DISTINCT d.name as discpl
-                ,d.id as id_discpl
-                , u.id as planlin
-				, u.newdisid
-                , p.abbrprofile as abbr
-                , p.startyear as yr
-                , p.cadmission as id_admission
-                ,  u.cperson AS mira_id
-                , p.ckaf as ckaf
-                , 'rop' AS type  -- Руководитель программы
-                , u.planid
-            FROM uchplan_lines u
-            left join uchplan_discpl d on (u.disid = d.id)
-            left join uchplan_plan p on (p.id = u.planid)
-            LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where p.cperson = @id
-            --a.cspec in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id) OR a.cprofili in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id)
-            --OR a.cdirection in (SELECT id FROM dbo.[cl$direction] WHERE cperson = @id)
-            AND p.fordel = 'f' and u.fordel = 'f' --and  u.type != 3 and p.startyear = @year
-
-			UNION ALL
-
-			SELECT DISTINCT d.name as discpl
-			,d.id as id_discpl
-			, u.id as planlin
-			, u.newdisid
-			, p.abbrprofile as abbr
-			, p.startyear as yr
-			, p.cadmission as id_admission
-			,  u.cperson AS mira_id
-			, p.ckaf as ckaf
-			, 'view' AS type -- Админский просмотр
-			, u.planid
-            FROM uchplan_lines u
-            left join uchplan_discpl d on (u.disid = d.id)
-            left join uchplan_plan p on (p.id = u.planid)
-            LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
-            where
-			((@cfacADM is not null and a.cfac = @cfacADM) or @adm = 't')
-            --a.cspec in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id) OR a.cprofili in (SELECT id FROM dbo.[cl$spec] WHERE cprepod = @id)
-            --OR a.cdirection in (SELECT id FROM dbo.[cl$direction] WHERE cperson = @id)
-            AND p.fordel = 'f' and u.fordel = 'f' and  u.type != 3 and p.startyear = @year
-            ) t
-            LEFT JOIN dbo.catperson cp ON cp.id = t.mira_id
-            LEFT JOIN dbo.catkaf ck ON  ck.id = t.ckaf
-            LEFT JOIN uchplan_plan p on p.id = t.planid
-            LEFT JOIN dbo.catperson cp1 ON cp1.id = ck.czav
-            LEFT JOIN dbo.catperson cp2 ON cp2.id = p.cperson
-            WHERE t.mira_id IS NOT NULL
+                LEFT JOIN uchplan_discpl d ON u.disid = d.id
+                LEFT JOIN uchplan_plan p ON p.id = u.planid
+                LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
+                LEFT JOIN dbo.catkaf ck ON  ck.id = u.ckaf
+                LEFT JOIN dbo.catfaculty f ON f.id = a.cfac
+                LEFT JOIN dbo.catperson cp1 ON cp1.id = u.cperson
+                LEFT JOIN dbo.catperson cp2 ON cp2.id = p.cperson
+            WHERE 
+                u.cperson IS NOT NULL 
+                AND p.fordel = 'f' 
+                AND u.fordel = 'f' 
+                AND (
+                    u.cperson = @id
+                    OR ck.czav = @id
+                    OR f.cdean = @id
+                    OR p.cperson = @id
+                    OR ((@cfacADM is not null and a.cfac = @cfacADM) OR @adm = 't')
+                )
             """
 
         # r = requests.get(f"{settings.ARIM_URL}/wizard.sql", {

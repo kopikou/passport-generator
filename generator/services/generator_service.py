@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.cache import cache
 
 from app.utils import cache_function
-from arim.models import CatPerson
+from arim.models import CatPerson, RpdUsers
 from arim.services import AISServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, DefaultsResources, PlanLinesLinkComments, DisciplineThemes, \
@@ -52,6 +52,8 @@ class GeneratorService(object):
         lineslink_sorted = sorted(lineslink, key=lambda x: x.mira_id)
         lineslink_by_id = {i.mira_id: i for i in lineslink_sorted}
 
+        rpd_user = RpdUsers.objects.filter(cperson=user_mira_id).first()
+
         result = []
         for item in data:
 
@@ -79,6 +81,28 @@ class GeneratorService(object):
                 if res.is_deleted:
                     continue
 
+                types = [
+                    {
+                        'name': 'person',
+                        'id': item['razrab'],
+                    },
+                    {
+                        'name': 'zav',
+                        'id': item['zavkaf'],
+                    },
+                    {
+                        'name': 'rop',
+                        'id': item['rop'],
+                    },
+                    {
+                        'name': 'fac',
+                        'id': item['fac'],
+                    },
+                ]
+
+                result_types = [i['name'] for i in types if user_mira_id == i['id']]
+                result_types.append('view') if rpd_user and rpd_user.isadmin else None
+
                 result.append({
                     **item,
                     "id": res.id,
@@ -98,22 +122,24 @@ class GeneratorService(object):
                     "confirm_date": res.confirm_date,
                     "discode": res.planlines.newdisid,
                     "plan_id": line.plan_id,
+                    "type": result_types,
                 })
 
-        sorted_result = sorted(result, key=lambda x: (x['planlin'], x['mira_id']))
-        grouped_result = {key: list(items) for key, items in
-                          groupby(sorted_result, key=lambda x: (x['planlin'], x['mira_id']))}
+        # sorted_result = sorted(result, key=lambda x: (x['planlin'], x['mira_id']))
+        # grouped_result = {key: list(items) for key, items in
+        #                   groupby(sorted_result, key=lambda x: (x['planlin'], x['mira_id']))}
+        result = sorted(result, key=lambda x: (x['planlin'], x['mira_id']))
 
-        res = []
-        for key, items in grouped_result.items():
-            temp = {
-                **items[0],
-                "type": [i['type'] for i in items],
-            }
-            res.append(temp)
+        # res = []
+        # for key, items in grouped_result.items():
+        #     temp = {
+        #         **items[0],
+        #         "type": [i['type'] for i in items],
+        #     }
+        #     res.append(temp)
 
         lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
-        for item in res:
+        for item in result:
             item['only_zav_required'] = item['discpl'] in lst \
                                         or item['kafcode'] in (208,) # кафедра физры
             if item['status'] == PlanLinesLink.StatusChoices.on_review:
@@ -123,9 +149,9 @@ class GeneratorService(object):
                 if require_my_accept or require_my_confirm:
                     item['status_verbose'] = "Требует моего согласования/утверждения"
 
-        cache.set(cache_key, res, 60)
+        cache.set(cache_key, result, 60)
 
-        return res
+        return result
 
     @classmethod
     @cache_function(timeout=60 * 1)
