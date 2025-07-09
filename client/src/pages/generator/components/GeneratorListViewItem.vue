@@ -133,7 +133,6 @@ async function onFileUploaded() {
       {{ item.rop_name }}
     </div>
   </q-td>
-
   <q-td key="zavkaf">
     <div :style="{color: props.item.user_accepted_name === null ? 'grey' : ''}">
       <q-icon
