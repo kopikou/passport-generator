@@ -22,8 +22,6 @@ class CanEditRPDProgram(ProgramListPermissionMixin, IsAuthenticated):
         if not super().has_permission(request, view):
             return False
 
-        programms = self.get_program_list(request, view)
-        # practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
 
         can_edit = PlanLinesLink.objects.filter(id=pk, status__in=[
@@ -33,10 +31,11 @@ class CanEditRPDProgram(ProgramListPermissionMixin, IsAuthenticated):
             PlanLinesLink.StatusChoices.accepted,
         ])
 
-        program = int(pk) in [i['id'] for i in programms if 'person' in i['type']] and can_edit.exists()
-        # practice = int(pk) in [i['id'] for i in practices]
+        pk = view.kwargs['pk']
+        info = AISServices.get_plan_users_info(pk)
+        mira_id = request.user.userprofile.mira_id
 
-        return program# or practice
+        return (mira_id == info['razrab']) and can_edit.exists()
 
 
 class CanEditScientificProgram(ProgramListPermissionMixin,IsAuthenticated):
@@ -63,12 +62,14 @@ class CanViewRPDProgram(ProgramListPermissionMixin, IsAuthenticated):
         if request.user.is_superuser:
             return True
 
-        programms = self.get_program_list(request, view)
-        # practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
-        program = int(pk) in [i['id'] for i in programms]
-        # practice = int(pk) in [i['id'] for i in practices]
-        return program # or practice
+        info = AISServices.get_plan_users_info(pk)
+        mira_id = request.user.userprofile.mira_id
+
+        return mira_id == info['razrab'] \
+            or mira_id == info['zavkaf'] \
+            or mira_id == info['rop'] \
+            or mira_id == info['fac']
 
 
 class CanAcceptRPDProgram(ProgramListPermissionMixin, IsAuthenticated):
@@ -77,8 +78,6 @@ class CanAcceptRPDProgram(ProgramListPermissionMixin, IsAuthenticated):
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
             return False
-        programms = self.get_program_list(request, view)
-        practices = GeneratorService.get_practice_list(request.user.userprofile.mira_id)
         pk = view.kwargs['pk']
 
         can_accept = PlanLinesLink.objects.filter(
@@ -86,10 +85,10 @@ class CanAcceptRPDProgram(ProgramListPermissionMixin, IsAuthenticated):
             | (~Q(status__in=[PlanLinesLink.StatusChoices.accepted]) & Q(planlines__viewpract__isnull=False))
             , id=pk)
 
-        program = int(pk) in [i['id'] for i in programms if 'zav' in i['type']] and can_accept.exists()
-        practice = int(pk) in [i['id'] for i in practices]
+        info = AISServices.get_plan_users_info(pk)
+        mira_id = request.user.userprofile.mira_id
 
-        return program or practice
+        return (mira_id == info['zavkaf']) and can_accept.exists()
 
 
 class CanConfirmRPDProgram(ProgramListPermissionMixin, IsAuthenticated):
@@ -98,14 +97,16 @@ class CanConfirmRPDProgram(ProgramListPermissionMixin, IsAuthenticated):
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
             return False
-        programms = self.get_program_list(request, view)
         pk = view.kwargs['pk']
 
         can_accept = PlanLinesLink.objects.filter(id=pk, status__in=[
             PlanLinesLink.StatusChoices.on_review,
         ])
 
-        return int(pk) in [i['id'] for i in programms if 'rop' in i['type']] and can_accept.exists()
+        info = AISServices.get_plan_users_info(pk)
+        mira_id = request.user.userprofile.mira_id
+
+        return (mira_id == info['zavkaf']) and can_accept.exists()
 
 
 class CanUploadRPDProgramFile(ProgramListPermissionMixin, IsAuthenticated):

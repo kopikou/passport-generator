@@ -8,6 +8,7 @@ from django.db.models import Q
 from app.utils import cache_function, Mira
 from arim.models import UistLicense, OborudData, BoolChoice, UchPlanKaf, Catadmission, CatFaculty, CatKaf, RpdUsers, \
     UchPlanPlan, CatPerson
+from generator.models import PlanLinesLink
 
 
 class AISServices(object):
@@ -162,10 +163,38 @@ class AISServices(object):
         return data
 
     @staticmethod
+    def get_plan_users_info(plan_link_id):
+        plan_link_mira_id = PlanLinesLink.objects.filter(id=plan_link_id).values('mira_id').first()
+        data = None
+        if plan_link_mira_id:
+            q = f"""
+                SELECT u.cperson AS razrab
+                , ck.czav AS zavkaf
+                , p.cperson AS rop
+                , f.cdean AS fac
+                FROM uchplan_lines u
+                    LEFT JOIN uchplan_discpl d ON u.disid = d.id
+                    LEFT JOIN uchplan_plan p ON p.id = u.planid
+                    LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
+                    LEFT JOIN dbo.catkaf ck ON  ck.id = u.ckaf
+                    LEFT JOIN dbo.catfaculty f ON f.id = a.cfac
+                    LEFT JOIN dbo.catperson cp1 ON cp1.id = u.cperson
+                    LEFT JOIN dbo.catperson cp2 ON cp2.id = p.cperson
+                WHERE 
+                    u.cperson IS NOT NULL 
+                    AND p.fordel = 'f' 
+                    AND u.fordel = 'f' 
+                    AND u.id = %s
+                """
+
+            data = Mira.fetch(q, [int(plan_link_mira_id['mira_id'])])
+            return data[0]
+
+        # return data
+
+    @staticmethod
     # @cache_function(timeout=10 * 1)
     def get_disciplines_by_person(id, year):
-
-        # q = f"""exec rpd_list_for_person %s"""
         q = f"""
 
             declare @id INT;
