@@ -106,7 +106,7 @@ class CanConfirmRPDProgram(ProgramListPermissionMixin, IsAuthenticated):
         info = AISServices.get_plan_users_info(pk)
         mira_id = request.user.userprofile.mira_id
 
-        return (mira_id == info['zavkaf']) and can_accept.exists()
+        return (mira_id == info['rop']) and can_accept.exists()
 
 
 class CanUploadRPDProgramFile(ProgramListPermissionMixin, IsAuthenticated):
