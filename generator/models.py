@@ -58,6 +58,11 @@ class PlanLinesLink(TimestampsModel):
     def status_verbose(self):
         return PlanLinesLink.StatusChoices.labels[self.status]
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['mira_id'])
+        ]
+
 
 class PlanLinesLinkComments(TimestampsModel):
 

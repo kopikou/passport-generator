@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.db.models import Index
 
 from app.utils import TimestampsModel
 
@@ -75,6 +76,7 @@ class PlanData(TimestampsModel):
             models.Index(fields=['studylevel']),
             models.Index(fields=['startyear']),
             models.Index(fields=['studylevel', 'startyear']),
+            models.Index(fields=['abbrprofile', 'startyear'])
         ]
 
 
@@ -97,6 +99,11 @@ class LinesData(TimestampsModel):
     viewobject = models.IntegerField(null=True)
     kompetences = models.TextField(null=True, blank=True)
     synchronize = models.BooleanField(default=1)
+
+    class Meta:
+        indexes = [
+            Index(fields=['dis', 'type', 'synchronize'])
+        ]
 
 
 class SemesterData(TimestampsModel):

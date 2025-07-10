@@ -244,6 +244,7 @@ class AISServices(object):
                     OR p.cperson = @id
                     OR ((@cfacADM is not null and a.cfac = @cfacADM) OR @adm = 't')
                 )
+                AND p.startyear = @year
             """
 
         # r = requests.get(f"{settings.ARIM_URL}/wizard.sql", {
