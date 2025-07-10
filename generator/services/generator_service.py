@@ -44,11 +44,16 @@ class GeneratorService(object):
 
         filtered_data = list(LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
                                                  plan__startyear__in=startyear_list, newdisid__in=newdisid_list,
-                                                 plan__file__status=4, synchronize=True).select_related("plan"))
+                                                 plan__file__status=4, synchronize=True).select_related("plan", "plan__file"))
 
         filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.newdisid}_{i.plan.startyear}": i for i in filtered_data}
 
-        lineslink = PlanLinesLink.objects.filter(mira_id__in=[i['planlin'] for i in data]).select_related("planlines", "user_confirmed", "user_accepted")
+        lineslink = PlanLinesLink.objects.filter(mira_id__in=[i['planlin'] for i in data]).select_related(
+            "planlines",
+            "user_confirmed",
+            "user_accepted",
+
+        )
         lineslink_sorted = sorted(lineslink, key=lambda x: x.mira_id)
         lineslink_by_id = {i.mira_id: i for i in lineslink_sorted}
 
