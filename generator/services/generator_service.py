@@ -37,16 +37,12 @@ class GeneratorService(object):
 
         data = AISServices.get_disciplines_by_person(user_mira_id, year)
 
-        discpl_list = list(set(i['discpl'] for i in data))
-        abbrprofile_list = list(set(i['abbr'] for i in data))
-        startyear_list = list(set(i['yr'] for i in data))
-        newdisid_list = list(set(i['newdisid'] for i in data))
+        planlin_list = list(set(i['planlin'] for i in data))
 
-        filtered_data = list(LinesData.objects.filter(dis__in=discpl_list, plan__abbrprofile__in=abbrprofile_list,
-                                                 plan__startyear__in=startyear_list, newdisid__in=newdisid_list,
+        filtered_data = list(LinesData.objects.filter(mira_id__in=planlin_list,
                                                  plan__file__status=4, synchronize=True).select_related("plan", "plan__file"))
 
-        filtered_data_sorted = {f"{i.dis}_{i.plan.abbrprofile}_{i.newdisid}_{i.plan.startyear}": i for i in filtered_data}
+        filtered_data_sorted = {f"{i.mira_id}": i for i in filtered_data}
 
         lineslink = PlanLinesLink.objects.filter(mira_id__in=[i['planlin'] for i in data]).select_related(
             "planlines",
@@ -62,7 +58,7 @@ class GeneratorService(object):
         result = []
         for item in data:
 
-            line = filtered_data_sorted.get(f"{item['discpl']}_{item['abbr']}_{item['newdisid']}_{item['yr']}")
+            line = filtered_data_sorted.get(f"{item['planlin']}")
 
             if line:
 

@@ -131,6 +131,8 @@ class Command(BaseCommand):
                 )
 
                 uchplan_lines_to_keep.append(lines.id)
+                if created:
+                    LinesData.objects.filter(id=line['id']).update(mira_id=lines.id)
 
                 # print(transfer_line_data)
 

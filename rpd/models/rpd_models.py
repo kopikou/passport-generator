@@ -99,6 +99,7 @@ class LinesData(TimestampsModel):
     viewobject = models.IntegerField(null=True)
     kompetences = models.TextField(null=True, blank=True)
     synchronize = models.BooleanField(default=1)
+    mira_id = models.IntegerField("Ссылка на uchplanlines", null=True)
 
     class Meta:
         indexes = [
