@@ -261,6 +261,89 @@ class AISServices(object):
         return data
 
     @staticmethod
+    # @cache_function(timeout=10 * 1)
+    def get_groups_by_person(id, year):
+        q = f"""
+                declare @id INT;
+                declare @year INT;
+                declare @cfacADM int;
+                DECLARE @adm varchar;
+                SET @id = %s;
+                SET @year = %s;
+                (SELECT @cfacADM = cfac, @adm = isadmin from rpdusers where cperson = @id)
+
+                SELECT
+                DISTINCT
+                d.name as discpl
+                , u.id as planlin
+                , p.abbrprofile as abbr
+                , p.startyear as yr
+                , p.cadmission as id_admission
+                , p.ckaf as ckaf
+                , u.planid
+                , u.cperson AS razrab
+                , ck.czav AS zavkaf
+                , p.cperson AS rop
+                , f.cdean AS fac
+                FROM uchplan_lines u
+                    LEFT JOIN uchplan_discpl d ON u.disid = d.id
+                    LEFT JOIN uchplan_plan p ON p.id = u.planid
+                    LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
+                    LEFT JOIN dbo.catkaf ck ON  ck.id = u.ckaf
+                    LEFT JOIN dbo.catfaculty f ON f.id = a.cfac
+                WHERE 
+                    u.cperson IS NOT NULL 
+                    AND p.fordel = 'f' 
+                    AND u.fordel = 'f' 
+                    AND (
+                        u.cperson = @id
+                        OR ck.czav = @id
+                        OR f.cdean = @id
+                        OR p.cperson = @id
+                        OR ((@cfacADM is not null and a.cfac = @cfacADM) OR @adm = 't')
+                    )
+                    AND p.startyear = @year
+                """
+
+        data = Mira.fetch(q, [int(id), int(year)])
+
+        return data
+
+    @staticmethod
+    # @cache_function(timeout=10 * 1)
+    def get_programs_by_plan(plan_id):
+        q = f"""
+                declare @plan_id INT;
+                SET @plan_id = %s;
+                
+                SELECT
+                DISTINCT
+                d.name as discpl
+                , u.id as planlin
+                , d.id as id_discpl
+                , u.newdisid
+                , ck.czav AS zavkaf
+                , p.cperson AS rop
+    			, ck.zav AS zavkaf_name
+    			, f.dean AS fac_name
+    			, cp1.name AS razrab_name
+    			, cp2.name AS rop_name
+                FROM uchplan_lines u
+                    LEFT JOIN uchplan_discpl d ON u.disid = d.id
+                    LEFT JOIN uchplan_plan p ON p.id = u.planid
+                    LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
+                    LEFT JOIN dbo.catkaf ck ON  ck.id = u.ckaf
+                    LEFT JOIN dbo.catfaculty f ON f.id = a.cfac
+                    LEFT JOIN dbo.catperson cp1 ON cp1.id = u.cperson
+                    LEFT JOIN dbo.catperson cp2 ON cp2.id = p.cperson
+                WHERE 
+                    u.planid = @plan_id
+                """
+        data = Mira.fetch(q, [int(plan_id)])
+
+        return data
+
+    @staticmethod
     def get_asp_old_plans(id):
 
         query = f"""

@@ -155,6 +155,158 @@ class GeneratorService(object):
         return result
 
     @classmethod
+    # @cache_function(timeout=60 * 1)
+    def get_group_list(cls, user_mira_id, year=2025):
+        cache_key = f"rpd_get_program_list_{user_mira_id}"
+        if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
+            result = cache.get(cache_key)
+            if result:
+                return result
+
+        data = AISServices.get_groups_by_person(user_mira_id, year)
+
+        planlin_list = list(set(i['planlin'] for i in data))
+
+        filtered_data = list(LinesData.objects.filter(mira_id__in=planlin_list,
+                                                      plan__file__status=4, synchronize=True).select_related("plan",
+                                                                                                             "plan__file"))
+
+        filtered_data_sorted = {f"{i.mira_id}": i for i in filtered_data}
+
+        lineslink = PlanLinesLink.objects.filter(mira_id__in=[i['planlin'] for i in data]).select_related(
+            "planlines",
+            "user_confirmed",
+            "user_accepted",
+
+        )
+        lineslink_sorted = sorted(lineslink, key=lambda x: x.mira_id)
+        lineslink_by_id = {i.mira_id: i for i in lineslink_sorted}
+
+        rpd_user = RpdUsers.objects.filter(cperson=user_mira_id).first()
+
+        result = []
+        for item in data:
+
+            line = filtered_data_sorted.get(f"{item['planlin']}")
+
+            if line:
+
+                res = lineslink_by_id.get(item['planlin'], [])
+
+                if not res:
+                    res, created = PlanLinesLink.objects.select_related("user_accepted__userprofile",
+                                                                        "user_confirmed__userprofile").get_or_create(
+                        cadmission=item['id_admission'],
+                        mira_id=item['planlin'],
+                        person=item['mira_id'],
+                        defaults={
+                            "cadmission": item['id_admission'],
+                            "mira_id": item['planlin'],
+                            "person": item['mira_id'],
+                            "status": PlanLinesLink.StatusChoices.appointed,
+                            "planlines_id": line.id,
+                            "can_be_copied_by_anyone": False,
+                        }
+                    )
+
+                if res.is_deleted:
+                    continue
+
+                types = [
+                    {
+                        'name': 'person',
+                        'id': item['razrab'],
+                    },
+                    {
+                        'name': 'zav',
+                        'id': item['zavkaf'],
+                    },
+                    {
+                        'name': 'rop',
+                        'id': item['rop'],
+                    },
+                    {
+                        'name': 'fac',
+                        'id': item['fac'],
+                    },
+                ]
+
+                result_types = [i['name'] for i in types if user_mira_id == i['id']]
+                result_types.append('view') if rpd_user and rpd_user.isadmin else None
+
+                result.append({
+                    **item,
+                    "id": res.id,
+                    "plx_file": settings.SITE_URL + line.plan.file.file.url if line.plan.file else '',
+                    "status": res.status,
+                    "status_verbose": res.status_verbose,
+                    "kafcode": res.planlines.caf,
+                    # "is_spo": item['ckaf'] in (1988516, 1988517),
+                    "discode": res.planlines.newdisid,
+                    "type": result_types,
+                })
+
+        result = sorted(result, key=lambda x: (x['planlin']))
+
+        lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
+        for item in result:
+            item['only_zav_required'] = item['discpl'] in lst \
+                                        or item['kafcode'] in (208,)  # кафедра физры
+            if item['status'] == PlanLinesLink.StatusChoices.on_review:
+                require_my_accept = 'zav' in item['type'] and not item['user_accepted']
+                require_my_confirm = not item['only_zav_required'] \
+                                     and 'rop' in item['type'] and not item['user_confirmed']
+                if require_my_accept or require_my_confirm:
+                    item['status_verbose'] = "Требует моего согласования/утверждения"
+
+        cache.set(cache_key, result, 60)
+
+        return result
+
+    @classmethod
+    # @cache_function(timeout=60 * 1)
+    def get_group_program(cls, plan_id, user_mira_id):
+        data = AISServices.get_programs_by_plan(plan_id)
+
+        result = []
+        for item in data:
+            lines_link = PlanLinesLink.objects.filter(mira_id = item['planlin']).select_related(
+                "planlines",
+                "user_confirmed",
+                "user_accepted",
+            ).first()
+
+            if lines_link:
+                result.append({
+                    **item,
+                    "status": lines_link.status,
+                    "status_verbose": lines_link.status_verbose,
+                    "kafcode": lines_link.planlines.caf,
+                    "can_upload_file_directly": lines_link.can_upload_file_directly,
+                    "last_accepted_file_url": (
+                                                          settings.FORCE_SCRIPT_NAME or "") + lines_link.last_accepted_file.url if lines_link.last_accepted_file else None,
+                    "user_confirmed": lines_link.user_confirmed_id,
+                    "can_be_copied_by_anyone": lines_link.can_be_copied_by_anyone,
+                    "user_accepted": lines_link.user_accepted_id,
+                    "accept_date": lines_link.accept_date,
+                    "confirm_date": lines_link.confirm_date,
+                    "discode": lines_link.planlines.newdisid,
+                })
+
+        lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
+        for item in result:
+            item['only_zav_required'] = item['discpl'] in lst \
+                                        or item['kafcode'] in (208,)  # кафедра физры
+            if item['status'] == PlanLinesLink.StatusChoices.on_review:
+                require_my_accept = item['zavkaf'] == user_mira_id and not item['user_accepted']
+                require_my_confirm = not item['only_zav_required'] \
+                                     and item['rop'] == user_mira_id and not item['user_confirmed']
+                if require_my_accept or require_my_confirm:
+                    item['status_verbose'] = "Требует моего согласования/утверждения"
+
+        return result
+
+    @classmethod
     @cache_function(timeout=60 * 1)
     def get_practice_list(cls, user_mira_id):
         cache_key = f"rpd_get_practice_list_{user_mira_id}"

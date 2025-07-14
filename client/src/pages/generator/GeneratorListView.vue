@@ -4,7 +4,7 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {computed, onBeforeMount, ref, watch} from "vue";
 import {api} from "boot/axios";
 import {LocalStorage, SessionStorage, useQuasar} from "quasar";
-import {GeneratorListData} from "src/types";
+import {GeneratorListData, GeneratorGroupsList} from "src/types";
 import {storeToRefs} from "pinia";
 import _ from "lodash";
 import useMainStore from "stores/mainStore";
@@ -19,17 +19,9 @@ const {
 const $q = useQuasar()
 const listData = ref<GeneratorListData[]>([])
 
-const currentData = ref(null);
+const groupsList = ref<GeneratorGroupsList[]>([]);
 
-// const buttonsLoading = ref([
-//   false,
-//   false
-// ]);
-//
-// const filesLink = ref([
-//   'api/generator/get-rpd-done-info/',
-//   'api/generator/get-oop-done-info/'
-// ]);
+const currentData = ref(null);
 
 const filesButtons = ref({
   rpd: {
@@ -114,7 +106,7 @@ const textFilter = ref<String>(LocalStorage.getItem('surp_rpdfilter') || '')
 const filteredListData = computed(() => {
 
   let txtFilter = textFilter.value.trim().toLowerCase();
-  let data = _(listData.value)
+  let data = _(groupsList.value)
     .filter(x => {
       return (myFilter.value == 0 || x.type.includes('person'))
         && ((txtFilter == '' || (x.person || '').toLowerCase().includes(txtFilter))
@@ -134,7 +126,7 @@ const filteredListData = computed(() => {
         {
           abbr: item[0],
           plx_file: items[0].plx_file,
-          items: items,
+          // items: items,
           types: _(items).map(x => x.type).flatten().uniq().value(),
           statuses: _(items).orderBy(x => STATUSES[x["status_verbose"]].index).groupBy('status_verbose').value(),
         }
@@ -143,14 +135,14 @@ const filteredListData = computed(() => {
     .fromPairs()
     .value()
 
-  if (txtFilter !== '' && currentData.value === null) {
-    const firstKey = Object.keys(data)[0];
-    currentData.value = data[firstKey];
-  } else if (currentData.value && data[currentData.value.abbr]) {
-    currentData.value.items = data[currentData.value.abbr].items;
-  } else if (currentData.value && !data[currentData.value.abbr]) {
-    currentData.value.items = [];
-  }
+  // if (txtFilter !== '' && currentData.value === null) {
+  //   const firstKey = Object.keys(data)[0];
+  //   currentData.value = data[firstKey];
+  // } else if (currentData.value && data[currentData.value.abbr]) {
+  //   currentData.value.items = data[currentData.value.abbr].items;
+  // } else if (currentData.value && !data[currentData.value.abbr]) {
+  //   currentData.value.items = [];
+  // }
 
   return data
 })
@@ -160,14 +152,20 @@ function clearFilter() {
 }
 
 
-async function getProgramData() {
+// async function getProgramData() {
+//   const loadProgram = $q.loading.show({
+//     group: 'programs',
+//     message: 'Обновление списка дисциплин',
+//   })
+
+async function getGroupsList() {
   const loadProgram = $q.loading.show({
     group: 'programs',
     message: 'Обновление списка дисциплин',
   })
 
-  let r = await api.get("/api/generator/get-program-list/")
-  listData.value = r.data
+  let r = await api.get("/api/generator/get-group-list/")
+  groupsList.value = r.data
 
   loadProgram()
 }
@@ -180,7 +178,7 @@ watch([discplFilter, groupFilter, myFilter, textFilter], () => {
 })
 
 onBeforeMount(async () => {
-  await getProgramData()
+  await getGroupsList()
   textFilter.value = ''
 })
 

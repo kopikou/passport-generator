@@ -168,6 +168,24 @@ export interface GeneratorListData {
   razrab_name: string
 }
 
+export interface GeneratorGroupsList {
+  discpl: string,
+  planlin: number,
+  abbr: string,
+  yr: number,
+  id_admission: number,
+  type: Array<number>,
+  id: number,
+  status: number,
+  status_verbose: string,
+  kafcode: number,
+  discode: string,
+  zavkaf: number
+  fac: number
+  rop: number
+  razrab: number
+}
+
 export interface GeneratorPlanLineData {
   id: number,
   plan_id: number,
