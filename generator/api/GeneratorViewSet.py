@@ -239,8 +239,26 @@ class GeneratorViewSet(
         plan_id = self.kwargs['pk']
         res = GeneratorService.get_group_program(plan_id, self.request.user.userprofile.mira_id)
 
+        txtFilter = self.request.query_params.get('text')
+        status = self.request.query_params.get('status')
+        myFilter = self.request.query_params.get('my')
+
+        data = [
+            item for item in res
+            if (
+                (txtFilter == ''
+                 or txtFilter.lower() in item['discpl'].lower()
+                 or txtFilter.lower() in item['razrab_name'].lower()
+                 or txtFilter.lower() in item['discode'].lower())
+                and (status == ''
+                     or item['status_verbose'].lower() == status.lower())
+                and (int(myFilter) == 0
+                     or 'person' in item['type'])
+            )
+        ]
+
         return Response(
-            data=res,
+            data=data,
         )
 
     @action(methods=['GET'], url_path="get-practice-list", detail=False, permission_classes=[IsAuthenticated])

@@ -274,19 +274,14 @@ class AISServices(object):
 
                 SELECT
                 DISTINCT
-                d.name as discpl
-                , u.id as planlin
-                , p.abbrprofile as abbr
-                , p.startyear as yr
-                , p.cadmission as id_admission
-                , p.ckaf as ckaf
-                , u.planid
-                , u.cperson AS razrab
-                , ck.czav AS zavkaf
-                , p.cperson AS rop
-                , f.cdean AS fac
+				p.abbrprofile as abbr
+				, u.id AS planlin 
+				, COUNT(CASE WHEN u.cperson = @id THEN 1 END) AS person_type
+				, COUNT(CASE WHEN ck.czav = @id THEN 1 END) AS zav_type
+				, COUNT(CASE WHEN p.cperson = @id THEN 1 END) AS rop_type
+				, COUNT(CASE WHEN f.cdean = @id THEN 1 END) AS fac_type
+				, MIN(u.planid) as plan_id
                 FROM uchplan_lines u
-                    LEFT JOIN uchplan_discpl d ON u.disid = d.id
                     LEFT JOIN uchplan_plan p ON p.id = u.planid
                     LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
                     LEFT JOIN dbo.catkaf ck ON  ck.id = u.ckaf
@@ -295,7 +290,7 @@ class AISServices(object):
                     u.cperson IS NOT NULL 
                     AND p.fordel = 'f' 
                     AND u.fordel = 'f' 
-                    AND (
+					AND (
                         u.cperson = @id
                         OR ck.czav = @id
                         OR f.cdean = @id
@@ -303,6 +298,7 @@ class AISServices(object):
                         OR ((@cfacADM is not null and a.cfac = @cfacADM) OR @adm = 't')
                     )
                     AND p.startyear = @year
+				GROUP BY p.abbrprofile, u.id
                 """
 
         data = Mira.fetch(q, [int(id), int(year)])
@@ -322,8 +318,10 @@ class AISServices(object):
                 , u.id as planlin
                 , d.id as id_discpl
                 , u.newdisid
+                , u.cperson AS razrab
                 , ck.czav AS zavkaf
                 , p.cperson AS rop
+                , f.cdean AS fac
     			, ck.zav AS zavkaf_name
     			, f.dean AS fac_name
     			, cp1.name AS razrab_name
@@ -338,6 +336,7 @@ class AISServices(object):
                     LEFT JOIN dbo.catperson cp2 ON cp2.id = p.cperson
                 WHERE 
                     u.planid = @plan_id
+                    AND u.cperson IS NOT NULL 
                 """
         data = Mira.fetch(q, [int(plan_id)])
 

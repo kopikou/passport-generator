@@ -166,6 +166,7 @@ class GeneratorService(object):
         data = AISServices.get_groups_by_person(user_mira_id, year)
 
         planlin_list = list(set(i['planlin'] for i in data))
+        abbr_list = list(set(i['abbr'] for i in data))
 
         filtered_data = list(LinesData.objects.filter(mira_id__in=planlin_list,
                                                       plan__file__status=4, synchronize=True).select_related("plan",
@@ -185,80 +186,54 @@ class GeneratorService(object):
         rpd_user = RpdUsers.objects.filter(cperson=user_mira_id).first()
 
         result = []
-        for item in data:
+        for abbr in abbr_list:
+            types = []
 
-            line = filtered_data_sorted.get(f"{item['planlin']}")
+            types.append('person') if sum([a['person_type'] for a in data if a['abbr'] == abbr]) > 0 else None
+            types.append('zav') if sum([a['zav_type'] for a in data if a['abbr'] == abbr]) > 0 else None
+            types.append('rop') if sum([a['rop_type'] for a in data if a['abbr'] == abbr]) > 0 else None
+            types.append('fac') if sum([a['fac_type'] for a in data if a['abbr'] == abbr]) > 0 else None
+            types.append('view') if rpd_user and rpd_user.isadmin else None
 
-            if line:
+            plan_id = None
+            statuses = {
+                "Назначен": 0,
+                "Заполняется": 0,
+                "Требует моего согласования/утверждения": 0,
+                "Отправлен на проверку": 0,
+                "Требуются правки": 0,
+                "Утвержден": 0,
+            }
 
-                res = lineslink_by_id.get(item['planlin'], [])
+            planlin_list = [x for x in data if x['abbr'] == abbr]
 
-                if not res:
-                    res, created = PlanLinesLink.objects.select_related("user_accepted__userprofile",
-                                                                        "user_confirmed__userprofile").get_or_create(
-                        cadmission=item['id_admission'],
-                        mira_id=item['planlin'],
-                        person=item['mira_id'],
-                        defaults={
-                            "cadmission": item['id_admission'],
-                            "mira_id": item['planlin'],
-                            "person": item['mira_id'],
-                            "status": PlanLinesLink.StatusChoices.appointed,
-                            "planlines_id": line.id,
-                            "can_be_copied_by_anyone": False,
-                        }
-                    )
+            for planline in planlin_list:
+                line = filtered_data_sorted.get(f"{planline['planlin']}")
 
-                if res.is_deleted:
-                    continue
+                if line:
 
-                types = [
-                    {
-                        'name': 'person',
-                        'id': item['razrab'],
-                    },
-                    {
-                        'name': 'zav',
-                        'id': item['zavkaf'],
-                    },
-                    {
-                        'name': 'rop',
-                        'id': item['rop'],
-                    },
-                    {
-                        'name': 'fac',
-                        'id': item['fac'],
-                    },
-                ]
+                    res = lineslink_by_id.get(planline['planlin'], [])
 
-                result_types = [i['name'] for i in types if user_mira_id == i['id']]
-                result_types.append('view') if rpd_user and rpd_user.isadmin else None
+                    if res.is_deleted:
+                        continue
 
-                result.append({
-                    **item,
-                    "id": res.id,
-                    "plx_file": settings.SITE_URL + line.plan.file.file.url if line.plan.file else '',
-                    "status": res.status,
-                    "status_verbose": res.status_verbose,
-                    "kafcode": res.planlines.caf,
-                    # "is_spo": item['ckaf'] in (1988516, 1988517),
-                    "discode": res.planlines.newdisid,
-                    "type": result_types,
-                })
+                    if (res.status == PlanLinesLink.StatusChoices.on_review
+                            and (('zav' in types and not res.user_accepted)
+                                 or ('rop' in types and not res.user_confirmed and not res.planlines.caf in (208,)))):
+                        statuses['Требует моего согласования/утверждения'] += 1
+                    else:
+                        statuses[res.status_verbose] += 1
 
-        result = sorted(result, key=lambda x: (x['planlin']))
+                plan_id = planline['plan_id']
 
-        lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
-        for item in result:
-            item['only_zav_required'] = item['discpl'] in lst \
-                                        or item['kafcode'] in (208,)  # кафедра физры
-            if item['status'] == PlanLinesLink.StatusChoices.on_review:
-                require_my_accept = 'zav' in item['type'] and not item['user_accepted']
-                require_my_confirm = not item['only_zav_required'] \
-                                     and 'rop' in item['type'] and not item['user_confirmed']
-                if require_my_accept or require_my_confirm:
-                    item['status_verbose'] = "Требует моего согласования/утверждения"
+            result.append({
+                'abbr': abbr,
+                'types': types,
+                'plan_id': plan_id,
+                'statuses': statuses,
+            })
 
+        result = sorted(result, key=lambda x: (x['abbr'].lower()))
         cache.set(cache_key, result, 60)
 
         return result
@@ -268,6 +243,8 @@ class GeneratorService(object):
     def get_group_program(cls, plan_id, user_mira_id):
         data = AISServices.get_programs_by_plan(plan_id)
 
+        rpd_user = RpdUsers.objects.filter(cperson=user_mira_id).first()
+
         result = []
         for item in data:
             lines_link = PlanLinesLink.objects.filter(mira_id = item['planlin']).select_related(
@@ -276,7 +253,29 @@ class GeneratorService(object):
                 "user_accepted",
             ).first()
 
-            if lines_link:
+            types = [
+                {
+                    'name': 'person',
+                    'id': item['razrab'],
+                },
+                {
+                    'name': 'zav',
+                    'id': item['zavkaf'],
+                },
+                {
+                    'name': 'rop',
+                    'id': item['rop'],
+                },
+                {
+                    'name': 'fac',
+                    'id': item['fac'],
+                },
+            ]
+
+            result_types = [i['name'] for i in types if user_mira_id == i['id']]
+            result_types.append('view') if rpd_user and rpd_user.isadmin else None
+
+            if lines_link and len(result_types) > 0:
                 result.append({
                     **item,
                     "status": lines_link.status,
@@ -291,6 +290,7 @@ class GeneratorService(object):
                     "accept_date": lines_link.accept_date,
                     "confirm_date": lines_link.confirm_date,
                     "discode": lines_link.planlines.newdisid,
+                    "type": result_types,
                 })
 
         lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
@@ -298,9 +298,9 @@ class GeneratorService(object):
             item['only_zav_required'] = item['discpl'] in lst \
                                         or item['kafcode'] in (208,)  # кафедра физры
             if item['status'] == PlanLinesLink.StatusChoices.on_review:
-                require_my_accept = item['zavkaf'] == user_mira_id and not item['user_accepted']
+                require_my_accept = 'zav' in item['type'] and not item['user_accepted']
                 require_my_confirm = not item['only_zav_required'] \
-                                     and item['rop'] == user_mira_id and not item['user_confirmed']
+                                     and 'rop' in item['type'] and not item['user_confirmed']
                 if require_my_accept or require_my_confirm:
                     item['status_verbose'] = "Требует моего согласования/утверждения"
 
