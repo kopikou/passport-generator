@@ -62,7 +62,7 @@ watch([meeting, protocolNumber, protocolDate], () => {
 })
 
 const canSendToRefill = computed(() => {
-    return props.data.status == 2 &&
+    return props.data.status == 4 &&
       (
         (props.data.type.includes('rop') && !props.data.user_confirmed)
         || (props.data.type.includes('zav') && !props.data.user_accepted)
@@ -128,16 +128,18 @@ function translateDate(date) {
 
 function getStatusColor(status) {
   switch (status) {
-    case 0:
-      return ''
     case 1:
-      return 'bg-accent text-white'
+      return ''
     case 2:
       return 'bg-secondary text-white'
     case 3:
-      return 'bg-positive text-white'
+      return 'bg-amber text-white'
     case 4:
+      return 'bg-green-3'
+    case 5:
       return 'bg-warning text-white'
+    case 6:
+      return 'bg-positive text-white'
   }
 }
 
@@ -151,9 +153,9 @@ function getStatusColor(status) {
           {{ data.abbr }}-{{ data.yr }} - {{ data.discpl }}
         </div>
         <div class="text-subtitle2">Составитель:
-          <q-chip style="max-width: 500px" square :label="props.data.person">
+          <q-chip style="max-width: 500px" square :label="props.data.razrab_name">
             <q-tooltip>
-              {{ props.data.person }}
+              {{ props.data.razrab_name }}
             </q-tooltip>
           </q-chip>
         </div>
@@ -184,7 +186,7 @@ function getStatusColor(status) {
           <!--          />-->
         </div>
       </q-card-section>
-      <q-card-section v-if="props.data.status != 3">
+      <q-card-section v-if="props.data.status != 6">
         <q-input
           label="Комментарий"
           v-model="comment"
@@ -203,7 +205,7 @@ function getStatusColor(status) {
       </q-card-section>
 
       <q-card-section style="display: flex; gap: 8px; justify-content: space-between">
-        <template v-if="data.status == 2 || data.status == 3">
+        <template v-if="data.status == 4 || data.status == 6">
           <q-btn v-if="data.type.includes('rop') && data.type.includes('zav')" flat class="bg-light-green-1"
                  color="light-green-8"
                  @click="onAcceptConfirmButtonClick" :disable="!!data.user_accepted">
