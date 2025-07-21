@@ -22,7 +22,6 @@ const listData = ref<GeneratorListData[]>([])
 const groupsList = ref<GeneratorGroupsList[]>([]);
 
 const currentData = ref(null);
-const currentGroup = ref<string>('');
 const currentPlan = ref<number>();
 
 const tableLoading = ref(false);
@@ -108,37 +107,36 @@ const myFilter = ref(LocalStorage.getItem('surp_myfilter') || 0)
 const textFilter = ref<String>(LocalStorage.getItem('surp_rpdfilter') || '')
 
 const filteredListData = computed(() => {
-
-  let txtFilter = textFilter.value.trim().toLowerCase();
-  let data = _(groupsList.value)
-    .filter(x => {
-      return (myFilter.value == 0 || x.type.includes('person'))
-        && ((txtFilter == '' || x.abbr.toLowerCase().includes(txtFilter))
-          || (txtFilter == '' || x.discode.toLowerCase().includes(txtFilter))
-          || (txtFilter == '' || x.discpl.toLowerCase().includes(txtFilter)))
-        && (!statusFilter.value || x.status_verbose == statusFilter.value)
-    })
-    .orderBy(x => [x.abbr, x.yr, x.discode], 'asc')
-    .groupBy(x => `${x.abbr}-${x.yr.toString().slice(-2)}`)
-    .toPairs()
-    .map((item) => {
-      let items = item[1];
-      // items.forEach(x => x.status = STATUSES[x["status_verbose"]].index);
-      console.log(items)
-      return [
-        item[0],
-        {
-          abbr: item[0],
-          plx_file: items[0].plx_file,
-          // items: items,
-          types: _(items).map(x => x.type).flatten().uniq().value(),
-          statuses: _(items).orderBy(x => STATUSES[x["status_verbose"]].index).groupBy('status_verbose').value(),
-          plan_id: items[0].planid,
-        }
-      ]
-    })
-    .fromPairs()
-    .value()
+  // let txtFilter = textFilter.value.trim().toLowerCase();
+  // let data = _(groupsList.value)
+    // .filter(x => {
+    //   return (myFilter.value == 0 || x.type.includes('person'))
+    //     && ((txtFilter == '' || x.abbr.toLowerCase().includes(txtFilter))
+    //       || (txtFilter == '' || x.discode.toLowerCase().includes(txtFilter))
+    //       || (txtFilter == '' || x.discpl.toLowerCase().includes(txtFilter)))
+    //     && (!statusFilter.value || x.status_verbose == statusFilter.value)
+    // })
+    // .orderBy(x => [x.abbr, x.yr, x.discode], 'asc')
+    // .groupBy(x => `${x.abbr}-${x.yr.toString().slice(-2)}`)
+    // .toPairs()
+    // .map((item) => {
+    //   let items = item[1];
+    //   // items.forEach(x => x.status = STATUSES[x["status_verbose"]].index);
+    //   console.log(items)
+    //   return [
+    //     item[0],
+    //     {
+    //       abbr: item[0],
+    //       plx_file: items[0].plx_file,
+    //       // items: items,
+    //       types: _(items).map(x => x.type).flatten().uniq().value(),
+    //       statuses: _(items).orderBy(x => STATUSES[x["status_verbose"]].index).groupBy('status_verbose').value(),
+    //       plan_id: items[0].planid,
+    //     }
+    //   ]
+    // })
+    // .fromPairs()
+    // .value()
 
   // if (txtFilter !== '' && currentData.value === null) {
   //   const firstKey = Object.keys(data)[0];
@@ -149,7 +147,7 @@ const filteredListData = computed(() => {
   //   currentData.value.items = [];
   // }
 
-  return data
+  return groupsList
 })
 
 function clearFilter() {
@@ -324,7 +322,7 @@ function rowClassFn (row) {
       </div>
     </template>
     <template #content>
-         <div v-if="_.size(filteredListData) > 0"
+         <div v-if="_.size(groupsList) > 0"
            style="display: grid; grid-template-columns: 300px 1fr; overflow: hidden;height: 100%"
       >
         <q-list
@@ -332,16 +330,16 @@ function rowClassFn (row) {
           separator
         >
           <q-item
-            v-for="(value, key) in filteredListData"
+            v-for="value in groupsList"
             style="display: grid; gap: 8px;"
             clickable
-            :active="currentGroup === key"
-            @click="getGroupProgram(value.plan_id); currentGroup = key"
+            :active="currentPlan === value.plan_id"
+            @click="getGroupProgram(value.plan_id)"
             active-class="my-active-item"
           >
             <div style="display: grid; grid-template-columns: 1fr auto">
               <div style="display: flex; justify-content: left; font-size: 1.25rem;">
-                {{ key }}
+                {{ `${value.abbr}-${value.yr.toString().slice(-2)}` }}
               </div>
 
               <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: right; align-items: center">
@@ -360,14 +358,14 @@ function rowClassFn (row) {
                 <q-badge
                   :text-color="STATUSES[status].textColor"
                   :color="STATUSES[status].color"
-                  v-for="(status_items, status) in value.statuses"
+                  v-for="(status_value, status) in value.statuses"
                   style="margin-right: 4px;"
                 >
-                  {{ status_items.length }}
+                  {{ status_value }}
                   <q-tooltip
                     style="font-size: 12px; background-color: white; color: black"
                   >
-                    {{ status }}: {{ status_items.length }}
+                    {{ status }}: {{ status_value }}
                   </q-tooltip>
                 </q-badge>
               </div>
@@ -396,7 +394,7 @@ function rowClassFn (row) {
           >
             <template  v-slot:body="props">
               <q-tr :props="props">
-                <generator-list-view-item @data-updated="getProgramData" :item="props.row"/>
+                <generator-list-view-item @data-updated="getGroupProgram" :item="props.row"/>
               </q-tr>
             </template>
           </q-table>

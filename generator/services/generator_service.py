@@ -188,6 +188,7 @@ class GeneratorService(object):
         result = []
         for abbr in abbr_list:
             types = []
+            plx_file = ''
 
             types.append('person') if sum([a['person_type'] for a in data if a['abbr'] == abbr]) > 0 else None
             types.append('zav') if sum([a['zav_type'] for a in data if a['abbr'] == abbr]) > 0 else None
@@ -224,6 +225,8 @@ class GeneratorService(object):
                     else:
                         statuses[res.status_verbose] += 1
 
+                    plx_file = settings.SITE_URL + line.plan.file.file.url if line.plan.file else '',
+
                 plan_id = planline['plan_id']
 
             result.append({
@@ -231,6 +234,8 @@ class GeneratorService(object):
                 'types': types,
                 'plan_id': plan_id,
                 'statuses': statuses,
+                'yr': year,
+                'plx_file': plx_file,
             })
 
         result = sorted(result, key=lambda x: (x['abbr'].lower()))

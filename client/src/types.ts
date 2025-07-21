@@ -169,21 +169,12 @@ export interface GeneratorListData {
 }
 
 export interface GeneratorGroupsList {
-  discpl: string,
-  planlin: number,
   abbr: string,
   yr: number,
-  id_admission: number,
   type: Array<number>,
-  id: number,
-  status: number,
-  status_verbose: string,
-  kafcode: number,
-  discode: string,
-  zavkaf: number
-  fac: number
-  rop: number
-  razrab: number
+  plan_id: number,
+  plx_file: string,
+  statuses: {[key:string]: number};
 }
 
 export interface GeneratorPlanLineData {
