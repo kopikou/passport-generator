@@ -117,7 +117,7 @@ const filteredListData = computed(() => {
   let data = _(listData.value)
     .filter(x => {
       return (myFilter.value == 0 || x.type.includes('person'))
-        && ((txtFilter == '' || (x.person || '').toLowerCase().includes(txtFilter))
+        && ((txtFilter == '' || (x.razrab_name || '').toLowerCase().includes(txtFilter))
           || (txtFilter == '' || x.abbr.toLowerCase().includes(txtFilter))
           || (txtFilter == '' || x.discode.toLowerCase().includes(txtFilter))
           || (txtFilter == '' || x.discpl.toLowerCase().includes(txtFilter)))
