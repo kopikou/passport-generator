@@ -169,8 +169,7 @@ class GeneratorService(object):
         abbr_list = list(set(i['abbr'] for i in data))
 
         filtered_data = list(LinesData.objects.filter(mira_id__in=planlin_list,
-                                                      plan__file__status=4, synchronize=True).select_related("plan",
-                                                                                                             "plan__file"))
+                                                      plan__file__status=4, synchronize=True).select_related("plan__file"))
 
         filtered_data_sorted = {f"{i.mira_id}": i for i in filtered_data}
 
@@ -186,6 +185,8 @@ class GeneratorService(object):
         rpd_user = RpdUsers.objects.filter(cperson=user_mira_id).first()
 
         result = []
+
+        lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
         for abbr in abbr_list:
             types = []
             plx_file = ''
@@ -220,7 +221,7 @@ class GeneratorService(object):
 
                     if (res.status == PlanLinesLink.StatusChoices.on_review
                             and (('zav' in types and not res.user_accepted)
-                                 or ('rop' in types and not res.user_confirmed and not res.planlines.caf in (208,)))):
+                                 or ('rop' in types and not res.user_confirmed and not (res.planlines.caf in (208,) or line.dis in lst)))):
                         statuses['Требует моего согласования/утверждения'] += 1
                     else:
                         statuses[res.status_verbose] += 1

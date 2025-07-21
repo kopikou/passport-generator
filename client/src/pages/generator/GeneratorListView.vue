@@ -354,20 +354,22 @@ function rowClassFn (row) {
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr auto">
-              <div>
-                <q-badge
-                  :text-color="STATUSES[status].textColor"
-                  :color="STATUSES[status].color"
-                  v-for="(status_value, status) in value.statuses"
-                  style="margin-right: 4px;"
-                >
-                  {{ status_value }}
-                  <q-tooltip
-                    style="font-size: 12px; background-color: white; color: black"
+              <div class="row">
+                <div v-for="(status_value, status) in value.statuses">
+                  <q-badge
+                    :text-color="STATUSES[status].textColor"
+                    :color="STATUSES[status].color"
+                    v-if="status_value > 0"
+                    style="margin-right: 4px;"
                   >
-                    {{ status }}: {{ status_value }}
-                  </q-tooltip>
-                </q-badge>
+                    {{ status_value }}
+                    <q-tooltip
+                      style="font-size: 12px; background-color: white; color: black"
+                    >
+                      {{ status }}: {{ status_value }}
+                    </q-tooltip>
+                  </q-badge>
+                </div>
               </div>
 
               <a :href="value.plx_file">*.plx</a>
