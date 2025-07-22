@@ -36,7 +36,7 @@ class UserProfile(TimestampsModel):
 
     @property
     def fio(self):
-        return f"{self.user.first_name} {self.user.last_name} {self.middle_name}"
+        return f"{self.user.last_name} {self.user.first_name} {self.middle_name}"
 
 
 @receiver(post_save, sender=User)
