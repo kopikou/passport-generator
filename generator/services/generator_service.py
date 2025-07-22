@@ -156,14 +156,14 @@ class GeneratorService(object):
 
     @classmethod
     # @cache_function(timeout=60 * 1)
-    def get_group_list(cls, user_mira_id, year=2025):
+    def get_group_list(cls, user_mira_id, year=2025, txt_filter = '', status_filter = '', my_filter = 0):
         cache_key = f"rpd_get_program_list_{user_mira_id}"
         if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
             result = cache.get(cache_key)
             if result:
                 return result
 
-        data = AISServices.get_groups_by_person(user_mira_id, year)
+        data = AISServices.get_groups_by_person(user_mira_id, year, txt_filter, my_filter)
 
         planlin_list = list(set(i['planlin'] for i in data))
         abbr_list = list(set(i['abbr'] for i in data))
@@ -197,7 +197,6 @@ class GeneratorService(object):
             types.append('fac') if sum([a['fac_type'] for a in data if a['abbr'] == abbr]) > 0 else None
             types.append('view') if rpd_user and rpd_user.isadmin else None
 
-            plan_id = None
             statuses = {
                 "Назначен": 0,
                 "Заполняется": 0,
@@ -208,6 +207,7 @@ class GeneratorService(object):
             }
 
             planlin_list = [x for x in data if x['abbr'] == abbr]
+            plan_id = planlin_list[0]['plan_id']
 
             for planline in planlin_list:
                 line = filtered_data_sorted.get(f"{planline['planlin']}")
@@ -221,23 +221,26 @@ class GeneratorService(object):
 
                     if (res.status == PlanLinesLink.StatusChoices.on_review
                             and (('zav' in types and not res.user_accepted)
-                                 or ('rop' in types and not res.user_confirmed and not (res.planlines.caf in (208,) or line.dis in lst)))):
+                                 or ('rop' in types and not res.user_confirmed and not (res.planlines.caf in (208,) or line.dis in lst)))
+                            and (status_filter == '' or status_filter == 'Требует моего согласования/утверждения')):
                         statuses['Требует моего согласования/утверждения'] += 1
-                    else:
+                    elif status_filter == '' or status_filter == res.status_verbose:
                         statuses[res.status_verbose] += 1
 
                     plx_file = settings.SITE_URL + line.plan.file.file.url if line.plan.file else '',
 
-                plan_id = planline['plan_id']
 
-            result.append({
-                'abbr': abbr,
-                'types': types,
-                'plan_id': plan_id,
-                'statuses': statuses,
-                'yr': year,
-                'plx_file': plx_file,
-            })
+            for key in statuses:
+                if statuses[key] > 0:
+                    result.append({
+                        'abbr': abbr,
+                        'types': types,
+                        'plan_id': plan_id,
+                        'statuses': statuses,
+                        'yr': year,
+                        'plx_file': plx_file,
+                    })
+                    break
 
         result = sorted(result, key=lambda x: (x['abbr'].lower()))
         cache.set(cache_key, result, 60)
@@ -288,11 +291,12 @@ class GeneratorService(object):
                     "status_verbose": lines_link.status_verbose,
                     "kafcode": lines_link.planlines.caf,
                     "can_upload_file_directly": lines_link.can_upload_file_directly,
-                    "last_accepted_file_url": (
-                                                          settings.FORCE_SCRIPT_NAME or "") + lines_link.last_accepted_file.url if lines_link.last_accepted_file else None,
+                    "last_accepted_file_url": (settings.FORCE_SCRIPT_NAME or "") + lines_link.last_accepted_file.url if lines_link.last_accepted_file else None,
                     "user_confirmed": lines_link.user_confirmed_id,
                     "can_be_copied_by_anyone": lines_link.can_be_copied_by_anyone,
+                    "user_confirmed_name": lines_link.user_confirmed.userprofile.fio if lines_link.user_confirmed else None,
                     "user_accepted": lines_link.user_accepted_id,
+                    "user_accepted_name": lines_link.user_accepted.userprofile.fio if lines_link.user_accepted else None,
                     "accept_date": lines_link.accept_date,
                     "confirm_date": lines_link.confirm_date,
                     "discode": lines_link.planlines.newdisid,

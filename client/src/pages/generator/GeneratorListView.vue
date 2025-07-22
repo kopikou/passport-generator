@@ -17,12 +17,12 @@ const {
 } = storeToRefs(mainStore)
 
 const $q = useQuasar()
-const listData = ref<GeneratorListData[]>([])
+// const listData = ref<GeneratorListData[]>([])
 
 const groupsList = ref<GeneratorGroupsList[]>([]);
 
-const currentData = ref(null);
-const currentPlan = ref<number>();
+const currentProgram = ref([]);
+const currentPlan = ref<number>(0);
 
 const tableLoading = ref(false);
 
@@ -106,7 +106,7 @@ const discplFilter = ref($q.localStorage.getItem("surp_discplfilter") ? $q.local
 const myFilter = ref(LocalStorage.getItem('surp_myfilter') || 0)
 const textFilter = ref<String>(LocalStorage.getItem('surp_rpdfilter') || '')
 
-const filteredListData = computed(() => {
+// const filteredListData = computed(() => {
   // let txtFilter = textFilter.value.trim().toLowerCase();
   // let data = _(groupsList.value)
     // .filter(x => {
@@ -147,8 +147,25 @@ const filteredListData = computed(() => {
   //   currentData.value.items = [];
   // }
 
-  return groupsList
-})
+//   return groupsList
+// })
+
+const filteredProgramData = computed(() => {
+  let txtFilter = textFilter.value.trim().toLowerCase();
+  let data = _(currentProgram.value)
+    .filter(x => {
+      return (myFilter.value == 0 || x.type.includes('person'))
+        && ((txtFilter == '' || x.discode.toLowerCase().includes(txtFilter))
+          || (txtFilter == '' || x.discpl.toLowerCase().includes(txtFilter))
+          || (txtFilter == '' || x.razrab_name.toLowerCase().includes(txtFilter)))
+        && (!statusFilter.value || x.status_verbose == statusFilter.value)
+    })
+    .value();
+
+    data.forEach(x => x.status = STATUSES[x.status_verbose].index)
+
+    return data
+});
 
 function clearFilter() {
   textFilter.value = ''
@@ -167,7 +184,13 @@ async function getGroupsList() {
     message: 'Обновление списка дисциплин',
   });
 
-  let r = await api.get("/api/generator/get-group-list/");
+  let r = await api.get("/api/generator/get-group-list/", {
+    params: {
+      text: textFilter.value,
+      status: statusFilter.value,
+      my: myFilter.value,
+    },
+  });
   groupsList.value = r.data;
 
   loadProgram();
@@ -176,33 +199,27 @@ async function getGroupsList() {
 async function getGroupProgram(planId: number) {
   tableLoading.value = true;
 
-  let r = await api.get(`/api/generator/${planId}/get-group-program/`, {
-    params: {
-      text: textFilter.value,
-      status: statusFilter.value,
-      my: myFilter.value,
-    },
-  });
-  currentData.value = r.data;
+  let r = await api.get(`/api/generator/${planId}/get-group-program/`);
+  currentProgram.value = r.data;
 
   currentPlan.value = planId
 
   tableLoading.value = false;
 }
 
-watch([discplFilter, groupFilter, myFilter, textFilter, statusFilter], () => {
+const updateDataFunction = _.debounce(async () => {
   $q.localStorage.setItem("surp_discplfilter", discplFilter.value)
   $q.localStorage.setItem("surp_groupfilter", groupFilter.value)
   $q.localStorage.setItem("surp_myfilter", myFilter.value)
   $q.localStorage.setItem("surp_rpdfilter", textFilter.value)
 
-  if (!currentPlan.value) {
-    const firstKey = Object.keys(filteredListData)[0];
-    currentPlan.value = filteredListData[firstKey].plan_id
-  }
-  // getGroupsList();
-  getGroupProgram(currentPlan.value);
-})
+  await getGroupsList();
+
+  if (!currentPlan.value)
+    await getGroupProgram(groupsList.value[0].plan_id);
+}, 300)
+
+watch([discplFilter, groupFilter, myFilter, textFilter, statusFilter], updateDataFunction)
 
 onBeforeMount(async () => {
   await getGroupsList()
@@ -379,8 +396,8 @@ function rowClassFn (row) {
         </q-list>
 
            <q-table
-              v-if="currentData"
-              :rows="currentData"
+              v-if="currentPlan !== 0"
+              :rows="filteredProgramData"
               :columns="columns"
               virtual-scroll
               style="overflow-y: auto; height: 100%;"
@@ -402,7 +419,7 @@ function rowClassFn (row) {
           </q-table>
 
         <span
-          v-if="!currentData"
+          v-else
           style="align-content: center; text-align: center; font-size: 20px; font-weight: bold"
         >
           Выберите нужный раздел слева

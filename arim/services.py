@@ -262,14 +262,18 @@ class AISServices(object):
 
     @staticmethod
     # @cache_function(timeout=10 * 1)
-    def get_groups_by_person(id, year):
+    def get_groups_by_person(id, year, txt_filter = '', my_filter = 0):
         q = f"""
                 declare @id INT;
                 declare @year INT;
+                declare @txt_filter VARCHAR(50);
+                declare @my_filter INT;
                 declare @cfacADM int;
                 DECLARE @adm varchar;
                 SET @id = %s;
                 SET @year = %s;
+                SET @txt_filter = %s;
+                SET @my_filter = %s;
                 (SELECT @cfacADM = cfac, @adm = isadmin from rpdusers where cperson = @id)
 
                 SELECT
@@ -282,26 +286,39 @@ class AISServices(object):
 				, COUNT(CASE WHEN f.cdean = @id THEN 1 END) AS fac_type
 				, MIN(u.planid) as plan_id
                 FROM uchplan_lines u
+                    LEFT JOIN uchplan_discpl d ON u.disid = d.id
                     LEFT JOIN uchplan_plan p ON p.id = u.planid
                     LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
                     LEFT JOIN dbo.catkaf ck ON  ck.id = u.ckaf
                     LEFT JOIN dbo.catfaculty f ON f.id = a.cfac
+                    LEFT JOIN dbo.catperson cp1 ON cp1.id = u.cperson
                 WHERE 
                     u.cperson IS NOT NULL 
                     AND p.fordel = 'f' 
                     AND u.fordel = 'f' 
 					AND (
-                        u.cperson = @id
-                        OR ck.czav = @id
-                        OR f.cdean = @id
-                        OR p.cperson = @id
-                        OR ((@cfacADM is not null and a.cfac = @cfacADM) OR @adm = 't')
+					    ( @my_filter = 0 
+                            AND (
+                            u.cperson = @id
+                            OR ck.czav = @id
+                            OR f.cdean = @id
+                            OR p.cperson = @id
+                            OR ((@cfacADM is not null and a.cfac = @cfacADM) OR @adm = 't')
+                            )
+                        )
+                        OR u.cperson = @id
                     )
                     AND p.startyear = @year
+                    AND ( 
+                        p.abbrprofile LIKE @txt_filter
+                        OR d.name LIKE @txt_filter
+                        OR cp1.name LIKE @txt_filter
+                        OR u.newdisid LIKE @txt_filter
+                    )
 				GROUP BY p.abbrprofile, u.id
                 """
 
-        data = Mira.fetch(q, [int(id), int(year)])
+        data = Mira.fetch(q, [int(id), int(year), str('%' + txt_filter + '%'), int(my_filter)])
 
         return data
 
