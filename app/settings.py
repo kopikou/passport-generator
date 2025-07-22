@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'auths',
     'arim',
     'arim_library',
+    'rop_monitoring',
 ]
 
 MIDDLEWARE = [

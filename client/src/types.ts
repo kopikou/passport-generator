@@ -366,3 +366,16 @@ export interface CopyOptions {
   additional_info_tat: boolean,
   additional_info_fos: boolean,
 }
+
+export interface Admission {
+  id: number,
+  name: string,
+  rop_id: number,
+  rop_name: string,
+  avg_abit_score: number,
+  ratio_CR: number,
+  ratio_celev_CR: number,
+  abit_score_points: number,
+  ratio_CR_points: number,
+  ratio_celev_CR_points: number,
+}
