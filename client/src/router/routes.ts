@@ -37,6 +37,7 @@ import GeneratorPracticeReportView from "pages/generator/components/GeneratorPra
 import GeneratorMainView from "pages/generator/components/GeneratorMainView.vue";
 import ProfActivityView from "pages/activity/ProfActivityView.vue";
 import ProfActivityItem from "pages/activity/components/ProfActivityItem.vue";
+import RopMonitorView from "pages/rop/RopMonitorView.vue";
 
 const routes: RouteRecordRaw[] = [
   {
@@ -275,6 +276,14 @@ const routes: RouteRecordRaw[] = [
         component: RopView
       }
     ]
+  },
+  {
+    path: "/rop-monitor",
+    name: "RopMonitorView",
+    component: RopMonitorView,
+    meta: {
+      permissions: [Permissions.can_monitor_rops],
+    }
   },
   {
     path: "/plx",

@@ -87,6 +87,10 @@ onBeforeMount(async () => {
                        to="/scientific-plan"
                        v-permissions-required="Permissions.can_use_generator"
           />
+          <q-route-tab icon="mdi-table-eye" label="Мониторинг РОПов"
+                       to="/rop-monitor"
+                       v-permissions-required="Permissions.can_monitor_rops"
+          />
           <q-route-tab icon="mdi-format-list-checks" label="PLX файлы" to="/plx"
                        v-permissions-required="Permissions.can_upload_plx_files"
           />

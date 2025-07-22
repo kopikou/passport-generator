@@ -14,6 +14,7 @@ class Permissions(TextChoices):
     can_use_generator = "can_use_generator", "Может использовать генератор"
     can_upload_files = "can_upload_files", "Может загружать файлы Программы"
     scientific_admin = "scientific_admin", "Просмотр всех ПНД по программе аспирантуры"
+    can_monitor_rops = "can_monitor_rops", "Может мониторить РОПов",
 
 
 # Create your models here.

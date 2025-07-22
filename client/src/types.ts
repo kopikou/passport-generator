@@ -4,6 +4,7 @@ export enum Permissions {
   can_upload_files = 'can_upload_files',
   can_edit_rpd = "can_edit_rpd",
   scientific_admin = "scientific_admin",
+  can_monitor_rops = "can_monitor_rops",
 }
 
 export interface PlanLineItem {
