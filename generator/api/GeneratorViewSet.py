@@ -5,6 +5,8 @@ from itertools import groupby
 from subprocess import run
 from time import sleep
 
+from sqlalchemy import False_
+
 from app.settings import BASE_DIR
 from pathlib import Path
 
@@ -219,6 +221,28 @@ class GeneratorViewSet(
     @action(methods=['GET'], url_path="get-program-list", detail=False, permission_classes=[IsAuthenticated])
     def get_program_list(self, request, *args, **kwargs):
         res = GeneratorService.get_program_list(self.request.user.userprofile.mira_id, 2025)
+
+        return Response(
+            data=res,
+        )
+
+    @action(methods=['GET'], url_path="get-group-list", detail=False, permission_classes=[IsAuthenticated])
+    def get_group_list(self, request, *args, **kwargs):
+
+        txt_filter = self.request.query_params.get('text')
+        status = self.request.query_params.get('status')
+        my_filter = self.request.query_params.get('my')
+
+        res = GeneratorService.get_group_list(self.request.user.userprofile.mira_id, datetime.datetime.now().year, txt_filter, status, my_filter)
+
+        return Response(
+            data=res,
+        )
+
+    @action(methods=['GET'], url_path="get-group-program", detail=True, permission_classes=[IsAuthenticated])
+    def get_group_program(self, request, *args, **kwargs):
+        plan_id = self.kwargs['pk']
+        res = GeneratorService.get_group_program(plan_id, self.request.user.userprofile.mira_id)
 
         return Response(
             data=res,

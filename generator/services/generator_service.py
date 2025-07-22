@@ -155,6 +155,168 @@ class GeneratorService(object):
         return result
 
     @classmethod
+    # @cache_function(timeout=60 * 1)
+    def get_group_list(cls, user_mira_id, year=2025, txt_filter = '', status_filter = '', my_filter = 0):
+        cache_key = f"rpd_get_program_list_{user_mira_id}"
+        if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
+            result = cache.get(cache_key)
+            if result:
+                return result
+
+        data = AISServices.get_groups_by_person(user_mira_id, year, txt_filter, my_filter)
+
+        planlin_list = list(set(i['planlin'] for i in data))
+        abbr_list = list(set(i['abbr'] for i in data))
+
+        filtered_data = list(LinesData.objects.filter(mira_id__in=planlin_list,
+                                                      plan__file__status=4, synchronize=True).select_related("plan__file"))
+
+        filtered_data_sorted = {f"{i.mira_id}": i for i in filtered_data}
+
+        lineslink = PlanLinesLink.objects.filter(mira_id__in=[i['planlin'] for i in data]).select_related(
+            "planlines",
+            "user_confirmed",
+            "user_accepted",
+
+        )
+        lineslink_sorted = sorted(lineslink, key=lambda x: x.mira_id)
+        lineslink_by_id = {i.mira_id: i for i in lineslink_sorted}
+
+        rpd_user = RpdUsers.objects.filter(cperson=user_mira_id).first()
+
+        result = []
+
+        lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
+        for abbr in abbr_list:
+            types = []
+            plx_file = ''
+
+            types.append('person') if sum([a['person_type'] for a in data if a['abbr'] == abbr]) > 0 else None
+            types.append('zav') if sum([a['zav_type'] for a in data if a['abbr'] == abbr]) > 0 else None
+            types.append('rop') if sum([a['rop_type'] for a in data if a['abbr'] == abbr]) > 0 else None
+            types.append('fac') if sum([a['fac_type'] for a in data if a['abbr'] == abbr]) > 0 else None
+            types.append('view') if rpd_user and rpd_user.isadmin else None
+
+            statuses = {
+                "Назначен": 0,
+                "Заполняется": 0,
+                "Требует моего согласования/утверждения": 0,
+                "Отправлен на проверку": 0,
+                "Требуются правки": 0,
+                "Утвержден": 0,
+            }
+
+            planlin_list = [x for x in data if x['abbr'] == abbr]
+            plan_id = planlin_list[0]['plan_id']
+
+            for planline in planlin_list:
+                line = filtered_data_sorted.get(f"{planline['planlin']}")
+
+                if line:
+
+                    res = lineslink_by_id.get(planline['planlin'], [])
+
+                    if res.is_deleted:
+                        continue
+
+                    if (res.status == PlanLinesLink.StatusChoices.on_review
+                            and (('zav' in types and not res.user_accepted)
+                                 or ('rop' in types and not res.user_confirmed and not (res.planlines.caf in (208,) or line.dis in lst)))
+                            and (status_filter == '' or status_filter == 'Требует моего согласования/утверждения')):
+                        statuses['Требует моего согласования/утверждения'] += 1
+                    elif status_filter == '' or status_filter == res.status_verbose:
+                        statuses[res.status_verbose] += 1
+
+                    plx_file = settings.SITE_URL + line.plan.file.file.url if line.plan.file else '',
+
+
+            for key in statuses:
+                if statuses[key] > 0:
+                    result.append({
+                        'abbr': abbr,
+                        'types': types,
+                        'plan_id': plan_id,
+                        'statuses': statuses,
+                        'yr': year,
+                        'plx_file': plx_file,
+                    })
+                    break
+
+        result = sorted(result, key=lambda x: (x['abbr'].lower()))
+        cache.set(cache_key, result, 60)
+
+        return result
+
+    @classmethod
+    # @cache_function(timeout=60 * 1)
+    def get_group_program(cls, plan_id, user_mira_id):
+        data = AISServices.get_programs_by_plan(plan_id)
+
+        rpd_user = RpdUsers.objects.filter(cperson=user_mira_id).first()
+
+        result = []
+        for item in data:
+            lines_link = PlanLinesLink.objects.filter(mira_id = item['planlin']).select_related(
+                "planlines",
+                "user_confirmed",
+                "user_accepted",
+            ).first()
+
+            types = [
+                {
+                    'name': 'person',
+                    'id': item['razrab'],
+                },
+                {
+                    'name': 'zav',
+                    'id': item['zavkaf'],
+                },
+                {
+                    'name': 'rop',
+                    'id': item['rop'],
+                },
+                {
+                    'name': 'fac',
+                    'id': item['fac'],
+                },
+            ]
+
+            result_types = [i['name'] for i in types if user_mira_id == i['id']]
+            result_types.append('view') if rpd_user and rpd_user.isadmin else None
+
+            if lines_link and len(result_types) > 0:
+                result.append({
+                    **item,
+                    "status": lines_link.status,
+                    "status_verbose": lines_link.status_verbose,
+                    "kafcode": lines_link.planlines.caf,
+                    "can_upload_file_directly": lines_link.can_upload_file_directly,
+                    "last_accepted_file_url": (settings.FORCE_SCRIPT_NAME or "") + lines_link.last_accepted_file.url if lines_link.last_accepted_file else None,
+                    "user_confirmed": lines_link.user_confirmed_id,
+                    "can_be_copied_by_anyone": lines_link.can_be_copied_by_anyone,
+                    "user_confirmed_name": lines_link.user_confirmed.userprofile.fio if lines_link.user_confirmed else None,
+                    "user_accepted": lines_link.user_accepted_id,
+                    "user_accepted_name": lines_link.user_accepted.userprofile.fio if lines_link.user_accepted else None,
+                    "accept_date": lines_link.accept_date,
+                    "confirm_date": lines_link.confirm_date,
+                    "discode": lines_link.planlines.newdisid,
+                    "type": result_types,
+                })
+
+        lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
+        for item in result:
+            item['only_zav_required'] = item['discpl'] in lst \
+                                        or item['kafcode'] in (208,)  # кафедра физры
+            if item['status'] == PlanLinesLink.StatusChoices.on_review:
+                require_my_accept = 'zav' in item['type'] and not item['user_accepted']
+                require_my_confirm = not item['only_zav_required'] \
+                                     and 'rop' in item['type'] and not item['user_confirmed']
+                if require_my_accept or require_my_confirm:
+                    item['status_verbose'] = "Требует моего согласования/утверждения"
+
+        return result
+
+    @classmethod
     @cache_function(timeout=60 * 1)
     def get_practice_list(cls, user_mira_id):
         cache_key = f"rpd_get_practice_list_{user_mira_id}"

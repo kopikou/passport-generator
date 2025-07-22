@@ -34,6 +34,10 @@ class UserProfile(TimestampsModel):
         verbose_name = 'Профиль пользователя'
         verbose_name_plural = "Профили пользователей"
 
+    @property
+    def fio(self):
+        return f"{self.user.first_name} {self.user.last_name} {self.middle_name}"
+
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
