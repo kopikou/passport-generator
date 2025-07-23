@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pendulum
 
 from app.utils import Mira
@@ -26,6 +28,64 @@ class RopMonitor:
             'academ': [5, 34]
         }
         self.celev_set = 2
+
+    def get_current_course(self, admission_year):
+        current_year = datetime.now().year
+        course = current_year - admission_year + 1
+        if course < 1:
+            course = 1
+        return course
+
+    def get_ratio_score(self, admission_period, course_year, actual_students_ratio, is_for_celev):
+        table = {
+            4: {
+                1: (0.90, 0.95),
+                2: (0.80, 0.90),
+                3: (0.70, 0.85),
+                4: (0.55, 0.75),
+            },
+            4.5: {
+                1: (0.90, 0.95),
+                2: (0.80, 0.90),
+                3: (0.70, 0.85),
+                4: (0.60, 0.80),
+                5: (0.55, 0.75),
+            },
+            5.5: {
+                1: (0.90, 0.95),
+                2: (0.80, 0.90),
+                3: (0.70, 0.85),
+                4: (0.60, 0.80),
+                5: (0.55, 0.75),
+                6: (0.55, 0.75),
+            },
+            6.5: {
+                1: (0.90, 0.95),
+                2: (0.80, 0.90),
+                3: (0.70, 0.85),
+                4: (0.60, 0.80),
+                5: (0.55, 0.75),
+                6: (0.55, 0.75),
+                7: (0.55, 0.75),
+            }
+        }
+
+        if admission_period not in table:
+            return 0
+
+        course_thresholds = table[admission_period]
+
+        if course_year not in course_thresholds:
+            return 0
+
+        min_for_2, min_for_4 = course_thresholds[course_year]
+
+        if actual_students_ratio >= min_for_4:
+            return 4
+        elif actual_students_ratio >= min_for_2:
+            return 2
+        else:
+            return 0
 
     def get_marks(self):
         marks = Mira.fetch(MARKS_QUERY, [])
@@ -281,6 +341,7 @@ class RopMonitor:
                     'admission_rop': admission['admission_rop'],
                     'admission_abbr': admission['admission_abbr'],
                     'admission_year': admission['admission_year'],
+                    'admission_period': admission['admission_period'],
                     'faculty_name': admission['faculty_name'],
                     'direction_name': admission['direction_name'],
                     'admission_date_end': admission['admission_date_end'],
@@ -359,10 +420,15 @@ class RopMonitor:
                                           )
                                          , 2)
 
+                course_year = self.get_current_course(admission["admission_year"])
+
+                score = self.get_ratio_score(admission["admission_period"], course_year, actual_students_ratio,False)
+
                 admission_rows_by_id[admission['admission_id']] = {
                     'admission_name': admission['admission_name'],
                     'admission_rop': admission['admission_rop'],
                     'actual_students_ratio': actual_students_ratio,
+                    'actual_students_ratio_score': score,
                 }
         return admission_rows_by_id
 
@@ -379,6 +445,7 @@ class RopMonitor:
                     'admission_abbr': admission['admission_abbr'],
                     'admission_rop': admission['admission_rop'],
                     'admission_year': admission['admission_year'],
+                    'admission_period': admission['admission_period'],
                     'faculty_name': admission['faculty_name'],
                     'direction_name': admission['direction_name'],
                     'admission_date_end': admission['admission_date_end'],
@@ -547,6 +614,9 @@ class RopMonitor:
                         (len(admission['active_celev_students']) + len(admission['finished_celev_students'])) /
                         (len(admission['all_celev_students']))
                 , 2) if len(admission['all_celev_students']) > 0 else 0
+
+                course_year = self.get_current_course(admission["admission_year"])
+                score = self.get_ratio_score(admission["admission_period"], course_year, celev_students_ratio, True)
 
                 admission_rows_by_id[admission['admission_id']] = {
                     'admission_name': admission['admission_name'],
