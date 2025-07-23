@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 
 import pendulum
@@ -37,38 +38,87 @@ class RopMonitor:
         return course
 
     def get_ratio_score(self, admission_period, course_year, actual_students_ratio, is_for_celev):
-        table = {
-            4: {
-                1: (0.90, 0.95),
-                2: (0.80, 0.90),
-                3: (0.70, 0.85),
-                4: (0.55, 0.75),
-            },
-            4.5: {
-                1: (0.90, 0.95),
-                2: (0.80, 0.90),
-                3: (0.70, 0.85),
-                4: (0.60, 0.80),
-                5: (0.55, 0.75),
-            },
-            5.5: {
-                1: (0.90, 0.95),
-                2: (0.80, 0.90),
-                3: (0.70, 0.85),
-                4: (0.60, 0.80),
-                5: (0.55, 0.75),
-                6: (0.55, 0.75),
-            },
-            6.5: {
-                1: (0.90, 0.95),
-                2: (0.80, 0.90),
-                3: (0.70, 0.85),
-                4: (0.60, 0.80),
-                5: (0.55, 0.75),
-                6: (0.55, 0.75),
-                7: (0.55, 0.75),
+        if is_for_celev:
+            table = {
+                4: {
+                    1: (0.85, 0.90),
+                    2: (0.70, 0.80),
+                    3: (0.60, 0.70),
+                    4: (0.40, 0.60),
+                },
+                4.5: {
+                    1: (0.85, 0.90),
+                    2: (0.70, 0.80),
+                    3: (0.60, 0.70),
+                    4: (0.50, 0.65),
+                    5: (0.40, 0.60),
+                },
+                5: {
+                    1: (0.85, 0.90),
+                    2: (0.70, 0.80),
+                    3: (0.60, 0.70),
+                    4: (0.50, 0.65),
+                    5: (0.40, 0.60),
+                },
+                5.5: {
+                    1: (0.85, 0.90),
+                    2: (0.70, 0.80),
+                    3: (0.60, 0.70),
+                    4: (0.50, 0.65),
+                    5: (0.40, 0.60),
+                    6: (0.40, 0.60),
+                },
+                6: {
+                    1: (0.85, 0.90),
+                    2: (0.70, 0.80),
+                    3: (0.60, 0.70),
+                    4: (0.50, 0.65),
+                    5: (0.40, 0.60),
+                    6: (0.40, 0.60),
+                },
+                6.5: {
+                    1: (0.85, 0.90),
+                    2: (0.70, 0.80),
+                    3: (0.60, 0.70),
+                    4: (0.50, 0.65),
+                    5: (0.40, 0.60),
+                    6: (0.40, 0.60),
+                    7: (0.40, 0.60),
+                }
             }
-        }
+        else:
+            table = {
+                4: {
+                    1: (0.90, 0.95),
+                    2: (0.80, 0.90),
+                    3: (0.70, 0.85),
+                    4: (0.55, 0.75),
+                },
+                4.5: {
+                    1: (0.90, 0.95),
+                    2: (0.80, 0.90),
+                    3: (0.70, 0.85),
+                    4: (0.60, 0.80),
+                    5: (0.55, 0.75),
+                },
+                5.5: {
+                    1: (0.90, 0.95),
+                    2: (0.80, 0.90),
+                    3: (0.70, 0.85),
+                    4: (0.60, 0.80),
+                    5: (0.55, 0.75),
+                    6: (0.55, 0.75),
+                },
+                6.5: {
+                    1: (0.90, 0.95),
+                    2: (0.80, 0.90),
+                    3: (0.70, 0.85),
+                    4: (0.60, 0.80),
+                    5: (0.55, 0.75),
+                    6: (0.55, 0.75),
+                    7: (0.55, 0.75),
+                }
+            }
 
         if admission_period not in table:
             return 0
@@ -78,14 +128,24 @@ class RopMonitor:
         if course_year not in course_thresholds:
             return 0
 
-        min_for_2, min_for_4 = course_thresholds[course_year]
+        if is_for_celev:
+            min_for_1, min_for_2 = course_thresholds[course_year]
 
-        if actual_students_ratio >= min_for_4:
-            return 4
-        elif actual_students_ratio >= min_for_2:
-            return 2
+            if actual_students_ratio >= min_for_2:
+                return 2
+            elif actual_students_ratio >= min_for_1:
+                return 1
+            else:
+                return 0
         else:
-            return 0
+            min_for_2, min_for_4 = course_thresholds[course_year]
+
+            if actual_students_ratio >= min_for_4:
+                return 4
+            elif actual_students_ratio >= min_for_2:
+                return 2
+            else:
+                return 0
 
     def get_marks(self):
         marks = Mira.fetch(MARKS_QUERY, [])
@@ -194,7 +254,7 @@ class RopMonitor:
                     'is_dvi': []
                 }
 
-    def generate_a1(self):
+    def get_ege_indicator(self):
         students_with_marks = {}
         for student in self.students.values():
             student_id = student['student_id']
@@ -328,7 +388,7 @@ class RopMonitor:
 
         return admission_rows_by_id
 
-    def generate_a3(self):
+    def get_student_contingent_indicator(self):
         current_date = pendulum.now()
         admissions = {}
         for admission in self.admissions.values():
@@ -411,7 +471,7 @@ class RopMonitor:
         admissions = sorted(admissions.values(), key=lambda d: d['admission_name'])
         for admission in admissions:
             if len(admission['admitted_students']) > 0:
-                actual_students_ratio = round((len(admission['active_students']) + len(admission['finished_students'])) /
+                contingent_students_ratio = round((len(admission['active_students']) + len(admission['finished_students'])) /
                                          (len(admission['admitted_students']) -
                                           (len(admission['went_to_other_group_students']) +
                                            len(admission['went_to_academ_students'])) +
@@ -422,17 +482,17 @@ class RopMonitor:
 
                 course_year = self.get_current_course(admission["admission_year"])
 
-                score = self.get_ratio_score(admission["admission_period"], course_year, actual_students_ratio,False)
+                score = self.get_ratio_score(admission["admission_period"], course_year, contingent_students_ratio,False)
 
                 admission_rows_by_id[admission['admission_id']] = {
                     'admission_name': admission['admission_name'],
                     'admission_rop': admission['admission_rop'],
-                    'actual_students_ratio': actual_students_ratio,
-                    'actual_students_ratio_score': score,
+                    'contingent_students_ratio': contingent_students_ratio,
+                    'contingent_students_ratio_score': score,
                 }
         return admission_rows_by_id
 
-    def generate_a4(self):
+    def get_celev_student_contingent_indicator(self):
         current_date = pendulum.now()
         admissions = {}
         for admission in self.admissions.values():
@@ -622,5 +682,9 @@ class RopMonitor:
                     'admission_name': admission['admission_name'],
                     'admission_rop': admission['admission_rop'],
                     'celev_students_ratio': celev_students_ratio,
+                    'celev_students_ratio_score': score,
                 }
         return admission_rows_by_id
+
+    def get_admissions(self):
+        return self.admissions

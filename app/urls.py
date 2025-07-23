@@ -9,6 +9,7 @@ from auths.views import LoginView, LogoutView, BitrixAuthView
 from auths.api import UserApiViewSet
 from generator.api.GeneratorViewSet import GeneratorViewSet
 from prof_activity.api import ProfActivityViewSet
+from rop_monitoring.api import RopMonitoringViewSet
 from rpd.api.AccreditationInfoViewSet import AccreditationInfoViewSet
 from rpd.api.PlxUploadViewSet import PlxUploadViewSet
 from uplfile.api import UploadFileViewSet
@@ -21,6 +22,7 @@ router.register(r'accreditation', AccreditationInfoViewSet, basename="accreditat
 router.register(r'generator', GeneratorViewSet, basename="generator")
 router.register(r'upload', UploadFileViewSet, basename="upload")
 router.register(r'activity', ProfActivityViewSet, basename="activity")
+router.register(r'rop-monitoring', RopMonitoringViewSet, basename="rop-monitoring")
 
 # router_old = routers.DefaultRouter()
 # router_old.register(r'asp', AspPlanViewSet, basename="asp")
