@@ -287,6 +287,7 @@ class GeneratorService(object):
             if lines_link and len(result_types) > 0:
                 result.append({
                     **item,
+                    "id": lines_link.id,
                     "status": lines_link.status,
                     "status_verbose": lines_link.status_verbose,
                     "kafcode": lines_link.planlines.caf,
