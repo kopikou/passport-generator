@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import LayoutHCF from "components/LayoutHCF.vue";
-import {ref, watch} from "vue";
+import {onBeforeMount, ref, watch} from "vue";
 import {LocalStorage} from "quasar";
 import {Admission} from "src/types";
+import api from "axios";
 
 let ropMonitorData: any = {};
 
@@ -18,12 +19,12 @@ const admissions = ref<Admission[]>([]);
 const columns = [
   {name: 'name', align: 'center', label: 'Название программы', field: 'name', sortable: true},
   {name: 'rop', align: 'center', label: 'РОП', field: 'rop', sortable: true},
-  {name: 'ege_avg_mark', align: 'center', label: 'Ср. балл ЕГЭ (ДВИ)', field: 'ege_avg_marks', sortable: true},
+  {name: 'ege_avg_marks', align: 'center', label: 'Ср. балл ЕГЭ (ДВИ)', field: 'ege_avg_marks', sortable: true},
   {
-    name: 'ege_avg_mark_score',
+    name: 'ege_avg_marks_score',
     align: 'center',
     label: 'Баллы за ср. балл ЕГЭ',
-    field: 'ege_avg_mark_score',
+    field: 'ege_avg_marks_score',
     sortable: true
   },
   {
@@ -56,7 +57,6 @@ const columns = [
   },
 ]
 
-const rows = ref([])
 const pagination = ref({
   rowsPerPage: 0,
 });
@@ -66,6 +66,19 @@ watch(textFilter, () => {
     admissionTextFilter: textFilter.value,
   })
 }, {immediate: true});
+
+onBeforeMount(async () => {
+  if(admissions.value.length == 0)
+    await getAdmissions();
+})
+
+async function getAdmissions() {
+  loadingAdmissions.value = true;
+  admissions.value = [];
+  let r = await api.get('api/rop-monitoring/get-rop-indicators/');
+  admissions.value = r.data;
+  loadingAdmissions.value = false;
+}
 </script>
 
 <template>
@@ -80,6 +93,7 @@ watch(textFilter, () => {
             icon="mdi-update"
             color="orange-7"
             label="Обновить"
+            @click="getAdmissions"
           />
         </div>
       </div>
@@ -88,7 +102,7 @@ watch(textFilter, () => {
       <div class="q-pa-md">
         <q-table
           flat bordered
-          :rows="rows"
+          :rows="admissions"
           :columns="columns"
           row-key="id"
           virtual-scroll
