@@ -48,9 +48,13 @@ STUDENTS_QUERY = f"""
         direction.code AS direction_code, 
         cs.cset AS student_set,
         CASE WHEN cs.yearpost = ca.yr THEN 1 ELSE 0 END AS that_year_student,
-        CASE WHEN cs.cset IN (1, 2, 6) THEN 'b' WHEN cs.cset IN (3, 7) THEN 'c' ELSE NULL END AS student_set_name
+        CASE WHEN cs.cset IN (1, 2, 6) THEN 'b' WHEN cs.cset IN (3, 7) THEN 'c' ELSE NULL END AS student_set_name,
+        pers.name AS admission_rop,
+        pers.id AS admission_rop_id
     FROM dbo.catstud cs 
     LEFT JOIN dbo.catadmission ca ON ca.id = cs.cadmission
+    LEFT JOIN dbo.uchplan_plan pl ON pl.id = ca.cuchplan
+    LEFT JOIN dbo.catperson pers ON pers.id = pl.cperson
     LEFT JOIN dbo.catfaculty cf ON cf.id = ca.cfac
     LEFT JOIN dbo.catdogcelev dog_c ON cs.id = dog_c.cstud
     LEFT JOIN (
@@ -116,9 +120,13 @@ ADMISSIONS_QUERY = f"""
         convert(varchar, ca.dateend, 104) AS admission_date_end,
         cf.name AS faculty_name, 
         direction.full_name AS direction_name,
-        direction.code AS direction_code
+        direction.code AS direction_code,
+        pers.name AS admission_rop,
+        pers.id AS admission_rop_id
     FROM dbo.catadmission ca
     LEFT JOIN dbo.catfaculty cf ON cf.id = ca.cfac
+    LEFT JOIN dbo.uchplan_plan pl ON pl.id = ca.cuchplan
+    LEFT JOIN dbo.catperson pers ON pers.id = pl.cperson
     LEFT JOIN (
             SELECT a.id,
                 CASE 

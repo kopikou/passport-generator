@@ -1,3 +1,6 @@
+import pendulum
+
+from app.utils import Mira
 from rop_monitoring.sql_queries import MARKS_QUERY, STUDENTS_QUERY, ORDERS_QUERY, ADMISSIONS_QUERY
 
 
@@ -14,7 +17,6 @@ class RopMonitor:
         self.admissions = {}
         self.admissions_with_dvi = ['07.03.01', '07.03.02', '07.03.03', '29.03.04', '38.05.02', '42.03.02', '54.03.01',
                                     '54.05.01']
-        self.miraDB = MiraDB()
         self.marks = self.get_marks()
         self.students = self.get_students()
         self.student_states = {
@@ -26,36 +28,27 @@ class RopMonitor:
         self.celev_set = 2
 
     def get_marks(self):
-        print('Getting marks')
-        marks = self.miraDB.sqlExecuteAsList(MARKS_QUERY)
+        marks = Mira.fetch(MARKS_QUERY, [])
 
-        print('Processing marks')
         marks_by_student_id = {}
         for mark in marks:
             student_id = mark["student_id"]
             if student_id not in marks_by_student_id:
                 marks_by_student_id[student_id] = []
             marks_by_student_id[student_id].append(mark)
-        print('Processing marks finished')
 
         return marks_by_student_id
 
     def get_students(self):
-        print('Getting students')
-        students = self.miraDB.sqlExecuteAsList(STUDENTS_QUERY)
+        students = Mira.fetch(STUDENTS_QUERY, [])
 
-        print('Getting orders')
-        orders = self.miraDB.sqlExecuteAsList(ORDERS_QUERY)
+        orders = Mira.fetch(ORDERS_QUERY, [])
 
-        print('Getting admissions')
-        admissions = self.miraDB.sqlExecuteAsList(ADMISSIONS_QUERY)
+        admissions = Mira.fetch(ADMISSIONS_QUERY, [])
 
-        print('Processing admissions')
         admissions_by_id = {int(ca['admission_id']): ca for ca in admissions}
         self.admissions = admissions_by_id
-        print('Processing admissions finished')
 
-        print('Processing orders')
         filtered_orders = [
             order for order in orders
             if safe_int(order['admission_id']) in admissions_by_id and order['order_date'] is not None
@@ -66,9 +59,7 @@ class RopMonitor:
             if student_id not in orders_by_student_id:
                 orders_by_student_id[student_id] = []
             orders_by_student_id[student_id].append(order)
-        print('Processing orders finished')
 
-        print('Processing students')
         students_by_id = {}
         for student in students:
             student_id = student["student_id"]
@@ -96,12 +87,12 @@ class RopMonitor:
                 'admission_name': first_admission['admission_name'],
                 'admission_abbr': first_admission['admission_abbr'],
                 'admission_year': first_admission['admission_year'],
-                'admission_date_end': first_admission['admission_date_end']
+                'admission_date_end': first_admission['admission_date_end'],
+                'admission_rop': first_admission['admission_rop'],
+                'admission_rop_id': first_admission['admission_rop_id'],
             }
             if student_id not in students_by_id:
                 students_by_id[student_id] = student
-
-        print('Processing students finished')
 
         return students_by_id
 
@@ -144,8 +135,6 @@ class RopMonitor:
                 }
 
     def generate_a1(self):
-        print('Generating A1')
-
         students_with_marks = {}
         for student in self.students.values():
             student_id = student['student_id']
@@ -184,7 +173,9 @@ class RopMonitor:
             admission_id = student['admission_id']
             if admission_id not in admissions:
                 admissions[admission_id] = {
+                    'admission_id': admission_id,
                     'admission_name': student['admission_name'],
+                    'admission_rop': student['admission_rop'],
                     'admission_year': student['admission_year'],
                     'faculty_name': student['faculty_name'],
                     'direction_name': student['direction_name'],
@@ -233,7 +224,7 @@ class RopMonitor:
                         elif budget is False:
                             admissions[admission_id]['commercial_dvi_marks_sum'] += mark['mark']
 
-        admission_rows = []
+        admission_rows_by_id = {}
         for admission in admissions.values():
             admission['avg_ege_marks'] = int(
                 admission['ege_marks_sum'] /
@@ -244,13 +235,6 @@ class RopMonitor:
                 admission['dvi_marks_sum'] /
                 (admission['count_dvi_students'] * admission['count_dvi_subjects'])
             ) if (admission['count_dvi_students'] * admission['count_dvi_subjects']) > 0 else 0
-
-            # admission['avg_marks'] = int(
-            #     (admission['ege_marks_sum'] + admission['dvi_marks_sum']) /
-            #     (admission['count_ege_subjects'] * admission['count_ege_students'] +
-            #      admission['count_dvi_subjects'] * admission['count_dvi_students'])
-            # ) if (admission['count_ege_subjects'] * admission['count_ege_students'] +
-            #       admission['count_dvi_subjects'] * admission['count_dvi_students']) > 0 else 0
 
             admission['avg_marks'] = 0
             if admission['avg_ege_marks'] > 0 and admission['avg_dvi_marks'] > 0:
@@ -265,52 +249,36 @@ class RopMonitor:
             admission_date_end = pendulum.from_format(str_admission_date_end, 'DD.MM.YYYY').timestamp()
             admission['admission_finished'] = '+' if current_date > admission_date_end else '−'
 
-            admission_rows.append([
-                admission['admission_name'],
-                admission['admission_year'],
-                admission['faculty_name'],
-                admission['direction_name'],
-                admission['count_all_students'],
-                admission['count_budget_students'],
-                admission['count_commercial_students'],
-                admission['ege_marks_sum'],
-                admission['budget_ege_marks_sum'],
-                admission['commercial_ege_marks_sum'],
-                admission['count_ege_subjects'],
-                admission['dvi_marks_sum'],
-                admission['budget_dvi_marks_sum'],
-                admission['commercial_dvi_marks_sum'],
-                admission['count_dvi_subjects'],
-                admission['count_ege_students'],
-                admission['count_dvi_students'],
-                admission['avg_ege_marks'],
-                admission['avg_dvi_marks'],
-                admission['avg_marks']
+            avg = admission['avg_marks']
+            if avg < 65:
+                score = 0
+            elif 66 <= avg <= 69:
+                score = 1
+            elif avg > 70:
+                score = 2
+            else:
+                score = 0
 
-            ])
+            admission_rows_by_id[admission['admission_id']] = {
+                'admission_name': admission['admission_name'],
+                'admission_rop': admission['admission_rop'],
+                'avg_marks': admission['avg_marks'],
+                'avg_marks_score': score,
+            }
 
-        headers = ['Группа', 'Год', 'Институт', 'Направление', 'Общее кол-во поступивших',
-                   'Кол-во Бюджетников', 'Кол-во Коммерции', 'Баллы по ЕГЭ',
-                   'Баллы по ЕГЭ бюджет', 'Баллы по ЕГЭ коммерция', 'Кол-во предметов ЕГЭ',
-                   'Баллы по ДВИ', 'Баллы по ДВИ бюджет', 'Баллы по ДВИ коммерция',
-                   'Кол-во предметов ДВИ', 'Кол-во сдававших ЕГЭ', 'Кол-во сдававших ДВИ', 'Средний балл ЕГЭ',
-                   'Средний балл ДВИ', 'Средний балл вступительных испытаний']
-
-        export_to_excel(headers, admission_rows, 'AP_1')
-        print('Generating A1 finished')
+        return admission_rows_by_id
 
     def generate_a3(self):
-        print('Generating A3')
-
         current_date = pendulum.now()
         admissions = {}
-        for admission in tqdm(self.admissions.values(), desc='Обработка профилей'):
+        for admission in self.admissions.values():
             admission_id = admission['admission_id']
             if admission_id not in admissions:
                 date_end = pendulum.from_format(admission['admission_date_end'], "DD.MM.YYYY")
                 admissions[admission_id] = {
-                    'admission_id': admission['admission_id'],
+                    'admission_id': admission_id,
                     'admission_name': admission['admission_name'],
+                    'admission_rop': admission['admission_rop'],
                     'admission_abbr': admission['admission_abbr'],
                     'admission_year': admission['admission_year'],
                     'faculty_name': admission['faculty_name'],
@@ -327,7 +295,7 @@ class RopMonitor:
                     'finished_students': [],
                 }
 
-        for student in tqdm(self.students.values(), desc='Поиск поступивших и актуальных'):
+        for student in self.students.values():
             first_admission_id = student['first_admission']['admission_id']
             actual_admission_id = student['admission_id']
             student_state = student.get('student_state', -1)
@@ -345,8 +313,7 @@ class RopMonitor:
                 elif student_state in self.student_states['fired']:
                     admissions[actual_admission_id]['fired_students'].append(student)
 
-        debug_admissions = []
-        for admission in tqdm(admissions.values(), desc='Поиск пропавших и появившихся'):
+        for admission in admissions.values():
             for student in admission['admitted_students']:
                 if student not in admission['active_students'] + admission['finished_students']:
                     if student['admission_id'] == admission['admission_id']:
@@ -378,52 +345,39 @@ class RopMonitor:
                             and student['first_admission']['admission_year'] != admission['admission_year']):
                         admission['came_from_academ_students'].append(student)
                         continue
+        admission_rows_by_id = {}
 
-            if 'эсбз'.lower() in admission['admission_name'].lower():
-                debug_admissions.append(admission)
-
-        admission_rows = []
         admissions = sorted(admissions.values(), key=lambda d: d['admission_name'])
         for admission in admissions:
             if len(admission['admitted_students']) > 0:
-                admission_rows.append([
-                    admission['admission_name'],
-                    admission['admission_year'],
-                    admission['direction_name'],
-                    len(admission['admitted_students']),
-                    len(admission['went_to_other_group_students']),
-                    len(admission['went_to_academ_students']),
-                    len(admission['fired_students']),
-                    len(admission['came_from_academ_students']),
-                    len(admission['restored_or_new_students']),
-                    len(admission['active_students']),
-                    len(admission['finished_students']),
-                    'Да' if admission['admission_finished'] else 'Нет',
-                ])
+                actual_students_ratio = round((len(admission['active_students']) + len(admission['finished_students'])) /
+                                         (len(admission['admitted_students']) -
+                                          (len(admission['went_to_other_group_students']) +
+                                           len(admission['went_to_academ_students'])) +
+                                          (len(admission['came_from_academ_students']) +
+                                           len(admission['restored_or_new_students']))
+                                          )
+                                         , 2)
 
-        headers = ['Группа', 'Год', 'Направление', 'Кол-во поступивших на программу',
-                   'Кол-во перешедших в другую группу', 'Кол-во ушедших в академ', 'Кол-во исключённых',
-                   'Кол-во пришедших из академа', 'Кол-во пришедших из другой группы',
-                   'Кол-во активных', 'Кол-во выпущенных',
-                   'Поток выпустился']
-
-        export_to_excel(headers, admission_rows, 'AP_3')
-
-        print('Generating A3 finished')
+                admission_rows_by_id[admission['admission_id']] = {
+                    'admission_name': admission['admission_name'],
+                    'admission_rop': admission['admission_rop'],
+                    'actual_students_ratio': actual_students_ratio,
+                }
+        return admission_rows_by_id
 
     def generate_a4(self):
-        print('Generating A4')
-
         current_date = pendulum.now()
         admissions = {}
-        for admission in tqdm(self.admissions.values(), desc='Обработка профилей'):
+        for admission in self.admissions.values():
             admission_id = admission['admission_id']
             if admission_id not in admissions:
                 date_end = pendulum.from_format(admission['admission_date_end'], "DD.MM.YYYY")
                 admissions[admission_id] = {
-                    'admission_id': admission['admission_id'],
+                    'admission_id': admission_id,
                     'admission_name': admission['admission_name'],
                     'admission_abbr': admission['admission_abbr'],
+                    'admission_rop': admission['admission_rop'],
                     'admission_year': admission['admission_year'],
                     'faculty_name': admission['faculty_name'],
                     'direction_name': admission['direction_name'],
@@ -451,7 +405,7 @@ class RopMonitor:
                     'finished_celev_students': [],
                 }
 
-        for student in tqdm(self.students.values(), desc='Поиск поступивших и актуальных'):
+        for student in self.students.values():
             first_admission_id = student['first_admission']['admission_id']
             actual_admission_id = student['admission_id']
             student_state = student.get('student_state', -1)
@@ -469,7 +423,8 @@ class RopMonitor:
                         admissions[first_admission_id]['admitted_celev_students'].append(student)
                     elif student_dog_in_edu == 't':
                         admissions[first_admission_id]['dogs_celev_students'].append(student)
-                    if inactive_student_dog and student not in admissions[first_admission_id]['closed_celev_dog_students']:
+                    if inactive_student_dog and student not in admissions[first_admission_id][
+                        'closed_celev_dog_students']:
                         admissions[first_admission_id]['closed_celev_dog_students'].append(student)
 
             if actual_admission_id in admissions:
@@ -480,7 +435,8 @@ class RopMonitor:
                     elif student_dog_in_edu == 't':
                         admissions[actual_admission_id]['dogs_celev_students'].append(student)
 
-                    if inactive_student_dog and student not in admissions[actual_admission_id]['closed_celev_dog_students']:
+                    if inactive_student_dog and student not in admissions[actual_admission_id][
+                        'closed_celev_dog_students']:
                         admissions[actual_admission_id]['closed_celev_dog_students'].append(student)
 
                 if student_state in self.student_states['active']:
@@ -503,8 +459,7 @@ class RopMonitor:
                         admissions[actual_admission_id]['fired_celev_students'].append(student)
                     admissions[actual_admission_id]['fired_students'].append(student)
 
-        debug_admissions = []
-        for admission in tqdm(admissions.values(), desc='Поиск пропавших и появившихся'):
+        for admission in admissions.values():
             admission['all_celev_students'] = admission['admitted_celev_students'] + admission['dogs_celev_students']
 
             for student in admission['admitted_students']:
@@ -543,7 +498,8 @@ class RopMonitor:
                             if student['admission_year'] != admission['admission_year']:
                                 if student not in admission['went_to_academ_students']:
                                     admission['went_to_academ_students'].append(student)
-                                if student_dog and active_student_dog and student not in admission['academ_celev_students']:
+                                if student_dog and active_student_dog and student not in admission[
+                                    'academ_celev_students']:
                                     admission['academ_celev_students'].append(student)
                                 continue
 
@@ -562,7 +518,8 @@ class RopMonitor:
                     if student['first_admission']['admission_abbr'] != admission['admission_abbr']:
                         admission['restored_or_new_students'].append(student)
 
-                        if student_dog and active_student_dog and student not in admission['restored_or_new_celev_students']:
+                        if student_dog and active_student_dog and student not in admission[
+                            'restored_or_new_celev_students']:
                             admission['restored_or_new_celev_students'].append(student)
 
                         continue
@@ -570,63 +527,30 @@ class RopMonitor:
                             and student['first_admission']['admission_year'] != admission['admission_year']):
                         admission['came_from_academ_students'].append(student)
 
-                        if student_dog and active_student_dog and student not in admission['came_from_academ_celev_students']:
+                        if student_dog and active_student_dog and student not in admission[
+                            'came_from_academ_celev_students']:
                             admission['came_from_academ_celev_students'].append(student)
 
                         continue
-
-            if 'ВВб-24'.lower() in admission['admission_name'].lower():
-                debug_admissions.append(admission)
 
             admission['all_disappeared_celev_students'] = (admission['academ_celev_students'] +
                                                            admission['moved_celev_students'] +
                                                            admission['fired_celev_students'] +
                                                            admission['closed_celev_dog_students'])
 
-        admission_rows = []
+        admission_rows_by_id = {}
+
         admissions = sorted(admissions.values(), key=lambda d: d['admission_name'])
         for admission in admissions:
             if len(admission['admitted_students']) > 0:
-                admission_rows.append([
-                    admission['admission_name'],
-                    admission['admission_year'],
-                    admission['direction_name'],
-                    len(admission['admitted_students']),
-                    len(admission['all_celev_students']),
-                    len(admission['admitted_celev_students']),
-                    len(admission['dogs_celev_students']),
-                    len(admission['all_disappeared_celev_students']),
-                    len(admission['academ_celev_students']),
-                    len(admission['moved_celev_students']),
-                    len(admission['fired_celev_students']),
-                    len(admission['closed_celev_dog_students']),
-                    len(admission['restored_or_new_celev_students']),
-                    len(admission['came_from_academ_celev_students']),
-                    len(admission['active_students']),
-                    len(admission['active_celev_students']),
-                    len(admission['finished_students']),
-                    len(admission['finished_celev_students']),
-                    'Да' if admission['admission_finished'] else 'Нет',
-                ])
+                celev_students_ratio = round(
+                        (len(admission['active_celev_students']) + len(admission['finished_celev_students'])) /
+                        (len(admission['all_celev_students']))
+                , 2) if len(admission['all_celev_students']) > 0 else 0
 
-        headers = ['Группа', 'Год', 'Направление',
-                   'Кол-во поступивших на программу',
-                   'Всего с целевыми договорами',
-                   'Кол-во по целевому набору',
-                   'Кол-во по уч. договорам',
-                   'Кол-во потерь целевиков',
-                   'Кол-во целевиков в академ. отпуске',
-                   'Кол-во переведенных целевиков',
-                   'Кол-во отчисленных целевиков',
-                   'Расторгли целевой договор',
-                   'Пришли из другой группы',
-                   'Пришли из академа',
-                   'Активные студенты',
-                   'Активные целевые студенты',
-                   'Выпустившиеся студенты',
-                   'Выпустившиеся целевики',
-                   'Поток выпустился']
-
-        export_to_excel(headers, admission_rows, 'AP_4')
-
-        print('Generating A4 finished')
+                admission_rows_by_id[admission['admission_id']] = {
+                    'admission_name': admission['admission_name'],
+                    'admission_rop': admission['admission_rop'],
+                    'celev_students_ratio': celev_students_ratio,
+                }
+        return admission_rows_by_id
