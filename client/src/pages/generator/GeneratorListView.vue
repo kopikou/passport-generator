@@ -197,12 +197,12 @@ async function getGroupsList() {
 }
 
 async function getGroupProgram(planId: number) {
+  currentPlan.value = planId;
+
   tableLoading.value = true;
 
-  let r = await api.get(`/api/generator/${planId}/get-group-program/`);
+  const r = await api.get(`/api/generator/${planId}/get-group-program/`);
   currentProgram.value = r.data;
-
-  currentPlan.value = planId
 
   tableLoading.value = false;
 }
@@ -410,12 +410,17 @@ function rowClassFn (row) {
               :table-row-class-fn="rowClassFn"
               table-header-class="table-header"
               :loading="tableLoading"
+              loading-label="Загрузка"
           >
             <template  v-slot:body="props">
               <q-tr :props="props">
                 <generator-list-view-item @data-updated="getGroupProgram" :item="props.row"/>
               </q-tr>
             </template>
+
+             <template v-slot:loading>
+                <q-inner-loading showing color="primary" />
+              </template>
           </q-table>
 
         <span
