@@ -252,7 +252,7 @@ export interface GeneratorData {
     id: number;
     species: string;
   }[];
-   new: {
+  new: {
     abbrprofile: string;
     startyear: number;
     id: number;
@@ -365,6 +365,25 @@ export interface CopyOptions {
   additional_info_library: boolean,
   additional_info_tat: boolean,
   additional_info_fos: boolean,
+}
+
+export interface RopMonitoring {
+  id: number,
+  name: string,
+}
+
+export interface Indicator {
+  id: number,
+  name: string,
+}
+
+export interface RopMonitoringScore {
+  id: number,
+  rop_monitoring: number | RopMonitoring,
+  admission: number,
+  person: number,
+  indicator: number | Indicator,
+  score: number,
 }
 
 export interface Admission {

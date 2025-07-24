@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import LayoutHCF from "components/LayoutHCF.vue";
 import {onBeforeMount, ref, watch} from "vue";
-import {Admission} from "src/types";
+import {Admission, RopMonitoring} from "src/types";
 import api from "axios";
 import 'src/css/styles.css'
+import RopMonitoringDialog from "components/rop_monitoring/RopMonitoringDialog.vue";
+import useRopMonitoringStore from "stores/ropMonitoringStore";
+import {storeToRefs} from "pinia";
+
+const ropMonitoringStore = useRopMonitoringStore();
+const {
+  ropMonitorings,
+} = storeToRefs(ropMonitoringStore);
 
 let ropMonitorData: any = {};
 
@@ -17,8 +25,9 @@ const loadingAdmissions = ref(false);
 const loadingRopMonitoringOptions = ref(false);
 const admissions = ref<Admission[]>([]);
 
-const ropMonitoring = ref();
-const ropMonitoringOptions = ref([]);
+const ropMonitoringsDialog = ref(false);
+const ropMonitoring = ref<RopMonitoring | Number>();
+const ropMonitoringOptions = ref<RopMonitoring[] | number[]>([]);
 
 const columns = [
   {name: 'name', align: 'center', label: 'Название программы', field: 'name', sortable: true},
@@ -73,25 +82,9 @@ watch(textFilter, () => {
 
 onBeforeMount(async () => {
   if (ropMonitoringOptions.value.length == 0) {
-    await getRopMonitoringOptions();
+    await ropMonitoringStore.getRopMonitorings();
   }
 })
-
-async function getAdmissions() {
-  loadingAdmissions.value = true;
-  admissions.value = [];
-  let r = await api.get('api/rop-monitoring/get-rop-score/');
-  admissions.value = r.data;
-  loadingAdmissions.value = false;
-}
-
-async function getRopMonitoringOptions() {
-  loadingRopMonitoringOptions.value = true;
-  ropMonitoringOptions.value = [];
-  let r = await api.get('api/rop-monitoring/get-rop-score-years/');
-  ropMonitoringOptions.value = r.data;
-  loadingRopMonitoringOptions.value = false;
-}
 
 function getContingentScoreStyle(value) {
   if (value === 0) {
@@ -114,6 +107,14 @@ function getCelevScoreStyle(value) {
   }
   return ''
 }
+
+function openRopMonitoringsDialog() {
+  ropMonitoringsDialog.value = true;
+}
+
+function closeRopMonitoringsDialog() {
+  ropMonitoringsDialog.value = false;
+}
 </script>
 
 <template>
@@ -125,12 +126,12 @@ function getCelevScoreStyle(value) {
           <q-input outlined label="Поиск по программе или РОПу"
                    v-model="textFilter" :disable="admissions.length == 0" clearable/>
           <q-select v-model="ropMonitoring" outlined
-                    label="Мониторинг"
+                    label="Мониторинги"
                     :options="ropMonitoringOptions"
                     emit-value
                     map-options
                     clearable
-                    :loading="loadingAdmissionYears"
+                    :loading="loadingRopMonitoringOptions"
                     :disable="ropMonitoringOptions.length == 0"
                     style="min-width: 200px"
           />
@@ -139,14 +140,14 @@ function getCelevScoreStyle(value) {
               icon="mdi-format-list-bulleted"
               color="orange-7"
               label="Управление мониторингами"
-              @click="getAdmissions"
+              @click="openRopMonitoringsDialog"
               :class="{ 'pulse-effect': ropMonitoringOptions.length == 0 }"
             />
             <q-btn
               icon="mdi-creation-outline"
               color="green-7"
               label="Сформировать"
-              @click="getAdmissions"
+              @click=""
               :disable="!ropMonitoring"
             />
           </div>
@@ -181,6 +182,9 @@ function getCelevScoreStyle(value) {
           </template>
         </q-table>
       </div>
+      <q-dialog v-model="ropMonitoringsDialog">
+        <rop-monitoring-dialog @dialog-closed="closeRopMonitoringsDialog"/>
+      </q-dialog>
     </template>
   </layout-h-c-f>
 </template>

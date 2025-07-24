@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import status
 
+from rop_monitoring.models import RopMonitoring
+from rop_monitoring.serializers import RopMonitoringSerializer
 from rop_monitoring.services import RopMonitor
 
 
@@ -14,11 +16,11 @@ class RopMonitoringViewSet(
     CreateModelMixin,
     GenericViewSet,
 ):
-    queryset = None
-    serializer_class = None
+    queryset = RopMonitoring.objects.all()
+    serializer_class = RopMonitoringSerializer
 
-    @action(methods=['GET'], url_path="get-rop-score", detail=False)
-    def get_rop_score(self, request, *args, **kwargs):
+    @action(methods=['GET'], url_path="count-rop-score", detail=False)
+    def count_rop_score(self, request, *args, **kwargs):
         monitor = RopMonitor()
         admissions = monitor.get_admissions()
         ege_indicator = monitor.get_ege_indicator()
