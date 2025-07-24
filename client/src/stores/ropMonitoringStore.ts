@@ -8,31 +8,16 @@ const useRopMonitoringStore = defineStore("RopMonitoringStore", () => {
   const loadingRopMonitorings = ref(false);
 
   async function getRopMonitorings() {
-  loadingRopMonitorings.value = true;
-  ropMonitorings.value = [];
-  let r = await api.get('api/rop-monitoring/');
-  ropMonitorings.value = r.data;
-  loadingRopMonitorings.value = false;
-}
-
-  async function createRopMonitoring() {
-
-  }
-
-  async function deleteRopMonitoring() {
-
-  }
-
-  async function updateRopMonitoring() {
-
+    loadingRopMonitorings.value = true;
+    ropMonitorings.value = [];
+    let r = await api.get('api/rop-monitoring/');
+    ropMonitorings.value = r.data;
+    loadingRopMonitorings.value = false;
   }
 
   return {
     ropMonitorings,
     getRopMonitorings,
-    createRopMonitoring,
-    deleteRopMonitoring,
-    updateRopMonitoring,
   }
 });
 
