@@ -3,8 +3,7 @@ import LayoutHCF from "components/LayoutHCF.vue";
 import {onBeforeMount, ref, watch} from "vue";
 import {Admission} from "src/types";
 import api from "axios";
-import _ from "lodash";
-import dayjs from "dayjs";
+import 'src/css/styles.css'
 
 let ropMonitorData: any = {};
 
@@ -15,11 +14,11 @@ try {
 
 const textFilter = ref(ropMonitorData.admissionTextFilter || '');
 const loadingAdmissions = ref(false);
-const loadingAdmissionYears = ref(false);
+const loadingRopMonitoringOptions = ref(false);
 const admissions = ref<Admission[]>([]);
 
-const admissionYear = ref();
-const admissionYearsOptions = ref([]);
+const ropMonitoring = ref();
+const ropMonitoringOptions = ref([]);
 
 const columns = [
   {name: 'name', align: 'center', label: 'Название программы', field: 'name', sortable: true},
@@ -73,8 +72,8 @@ watch(textFilter, () => {
 }, {immediate: true});
 
 onBeforeMount(async () => {
-  if (admissionYearsOptions.value.length == 0){
-    await getAdmissionYears();
+  if (ropMonitoringOptions.value.length == 0) {
+    await getRopMonitoringOptions();
   }
 })
 
@@ -86,12 +85,12 @@ async function getAdmissions() {
   loadingAdmissions.value = false;
 }
 
-async function getAdmissionYears() {
-  loadingAdmissionYears.value = true;
-  admissionYearsOptions.value = [];
+async function getRopMonitoringOptions() {
+  loadingRopMonitoringOptions.value = true;
+  ropMonitoringOptions.value = [];
   let r = await api.get('api/rop-monitoring/get-rop-score-years/');
-  admissionYearsOptions.value = r.data;
-  loadingAdmissionYears.value = false;
+  ropMonitoringOptions.value = r.data;
+  loadingRopMonitoringOptions.value = false;
 }
 
 function getContingentScoreStyle(value) {
@@ -125,21 +124,32 @@ function getCelevScoreStyle(value) {
              style="display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center;">
           <q-input outlined label="Поиск по программе или РОПу"
                    v-model="textFilter" :disable="admissions.length == 0" clearable/>
-          <q-select v-model="admissionYear"
-                    label="Год мониторинга"
-                    :options="admissionYearsOptions"
+          <q-select v-model="ropMonitoring" outlined
+                    label="Мониторинг"
+                    :options="ropMonitoringOptions"
                     emit-value
                     map-options
                     clearable
                     :loading="loadingAdmissionYears"
-                    v-if="admissionYearsOptions.length > 0"
+                    :disable="ropMonitoringOptions.length == 0"
+                    style="min-width: 200px"
           />
-          <q-btn
-            icon="mdi-creation-outline"
-            color="green-7"
-            label="Сформировать"
-            @click="getAdmissions"
-          />
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <q-btn
+              icon="mdi-format-list-bulleted"
+              color="orange-7"
+              label="Управление мониторингами"
+              @click="getAdmissions"
+              :class="{ 'pulse-effect': ropMonitoringOptions.length == 0 }"
+            />
+            <q-btn
+              icon="mdi-creation-outline"
+              color="green-7"
+              label="Сформировать"
+              @click="getAdmissions"
+              :disable="!ropMonitoring"
+            />
+          </div>
         </div>
       </div>
     </template>
