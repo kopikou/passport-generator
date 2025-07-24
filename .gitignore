@@ -13,3 +13,4 @@ uploads
 templates/docxRPD/~*.docx
 templates/outputs
 /venv/
+/test.py

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import LayoutHCF from "components/LayoutHCF.vue";
 import {onBeforeMount, ref, watch} from "vue";
-import {LocalStorage} from "quasar";
 import {Admission} from "src/types";
 import api from "axios";
+import _ from "lodash";
+import dayjs from "dayjs";
 
 let ropMonitorData: any = {};
 
@@ -14,7 +15,11 @@ try {
 
 const textFilter = ref(ropMonitorData.admissionTextFilter || '');
 const loadingAdmissions = ref(false);
+const loadingAdmissionYears = ref(false);
 const admissions = ref<Admission[]>([]);
+
+const admissionYear = ref();
+const admissionYearsOptions = ref([]);
 
 const columns = [
   {name: 'name', align: 'center', label: 'Название программы', field: 'name', sortable: true},
@@ -68,16 +73,47 @@ watch(textFilter, () => {
 }, {immediate: true});
 
 onBeforeMount(async () => {
-  if(admissions.value.length == 0)
-    await getAdmissions();
+  if (admissionYearsOptions.value.length == 0){
+    await getAdmissionYears();
+  }
 })
 
 async function getAdmissions() {
   loadingAdmissions.value = true;
   admissions.value = [];
-  let r = await api.get('api/rop-monitoring/get-rop-indicators/');
+  let r = await api.get('api/rop-monitoring/get-rop-score/');
   admissions.value = r.data;
   loadingAdmissions.value = false;
+}
+
+async function getAdmissionYears() {
+  loadingAdmissionYears.value = true;
+  admissionYearsOptions.value = [];
+  let r = await api.get('api/rop-monitoring/get-rop-score-years/');
+  admissionYearsOptions.value = r.data;
+  loadingAdmissionYears.value = false;
+}
+
+function getContingentScoreStyle(value) {
+  if (value === 0) {
+    return 'bg-pink-4 text-white'
+  } else if (value === 2) {
+    return 'bg-amber-8 text-white'
+  } else if (value === 4) {
+    return 'bg-green-6 text-white'
+  }
+  return ''
+}
+
+function getCelevScoreStyle(value) {
+  if (value === 0) {
+    return 'bg-pink-4 text-white'
+  } else if (value === 1) {
+    return 'bg-amber-8 text-white'
+  } else if (value === 2) {
+    return 'bg-green-6 text-white'
+  }
+  return ''
 }
 </script>
 
@@ -86,20 +122,29 @@ async function getAdmissions() {
     <template #header>
       <div class="q-px-sm q-pb-sm">
         <div class="flex justify-between q-my-sm q-px-sm"
-             style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;">
+             style="display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center;">
           <q-input outlined label="Поиск по программе или РОПу"
-                   v-model="textFilter" clearable/>
+                   v-model="textFilter" :disable="admissions.length == 0" clearable/>
+          <q-select v-model="admissionYear"
+                    label="Год мониторинга"
+                    :options="admissionYearsOptions"
+                    emit-value
+                    map-options
+                    clearable
+                    :loading="loadingAdmissionYears"
+                    v-if="admissionYearsOptions.length > 0"
+          />
           <q-btn
-            icon="mdi-update"
-            color="orange-7"
-            label="Обновить"
+            icon="mdi-creation-outline"
+            color="green-7"
+            label="Сформировать"
             @click="getAdmissions"
           />
         </div>
       </div>
     </template>
     <template #content>
-      <div class="q-pa-md">
+      <div class="q-pa-md" style="height: 100%; overflow-y: hidden">
         <q-table
           flat bordered
           :rows="admissions"
@@ -111,7 +156,20 @@ async function getAdmissions() {
           separator="cell"
           :loading="loadingAdmissions"
           wrap-cells
-        />
+          :hide-bottom="admissions.length > 0"
+          style="height: 100%; overflow-y: hidden"
+        >
+          <template v-slot:body-cell-contingent_students_ratio_score="props">
+            <q-td :props="props" :class="getContingentScoreStyle(props.value)">
+              {{ props.value }}
+            </q-td>
+          </template>
+          <template v-slot:body-cell-celev_students_ratio_score="props">
+            <q-td :props="props" :class="getCelevScoreStyle(props.value)">
+              {{ props.value }}
+            </q-td>
+          </template>
+        </q-table>
       </div>
     </template>
   </layout-h-c-f>
