@@ -205,7 +205,7 @@ async function updateAdmissionList() {
               icon="mdi-creation-outline"
               color="green-7"
               label="Обновить данные"
-              @click=""
+              @click="updateAdmissionList"
               :disable="!selectedRopMonitoringId"
             />
           </div>
