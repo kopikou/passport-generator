@@ -6,6 +6,7 @@ import useRopMonitoringStore from "stores/ropMonitoringStore";
 import {storeToRefs} from "pinia";
 import LayoutMC from "layouts/LayoutMC.vue";
 import RopMonitoringDialog from "components/rop_monitoring/RopMonitoringDialog.vue";
+import {api} from "boot/axios";
 
 const popup = ref(null);
 const ropMonitoringStore = useRopMonitoringStore();
@@ -23,7 +24,7 @@ try {
 
 const admissionTextFilter = ref(ropMonitoringFilters.ropTextFilter || '');
 const monitoringTextFilter = ref(ropMonitoringFilters.monitoringTextFilter || '');
-const loadingMonitoringData = ref(false);
+const loadingAdmissionList = ref(false);
 const admissionList = ref<Admission[]>([]);
 
 const filteredMonitoringList = computed(() => {
@@ -39,7 +40,7 @@ const filteredAdmissionList = computed(() => {
   );
 });
 
-const selectedRopMonitoring = ref(0);
+const selectedRopMonitoringId = ref(0);
 
 const columns = [
   {name: 'name', align: 'center', label: 'Название программы', field: 'name', sortable: true},
@@ -93,6 +94,10 @@ watch([admissionTextFilter, monitoringTextFilter], () => {
   })
 }, {immediate: true});
 
+watch(selectedRopMonitoringId, async() => {
+  await getAdmissionList();
+})
+
 onBeforeMount(async () => {
   if (ropMonitoringList.value.length == 0) {
     await ropMonitoringStore.getRopMonitoringList();
@@ -119,6 +124,29 @@ function getCelevScoreStyle(value) {
     return 'bg-green-6 text-white'
   }
   return ''
+}
+
+function setSelectedMonitoring(monitoringId: number) {
+  if (selectedRopMonitoringId.value != monitoringId)
+    selectedRopMonitoringId.value = monitoringId
+  else
+    selectedRopMonitoringId.value = 0
+}
+
+async function getAdmissionList() {
+  loadingAdmissionList.value = true;
+  admissionList.value = [];
+
+  let r = await api.get('api/')
+
+  loadingAdmissionList.value = false;
+}
+
+async function updateAdmissionList() {
+  loadingAdmissionList.value = true;
+  admissionList.value = [];
+
+  loadingAdmissionList.value = false;
 }
 
 </script>
@@ -148,8 +176,8 @@ function getCelevScoreStyle(value) {
           <q-list bordered separator>
             <q-item v-for="monitoring in filteredMonitoringList" :key="monitoring.id"
                     clickable
-                    :active="selectedRopMonitoring === monitoring.id"
-                    @click="selectedRopMonitoring = monitoring.id"
+                    :active="selectedRopMonitoringId === monitoring.id"
+                    @click="setSelectedMonitoring(monitoring.id)"
                     class="q-pa-sm"
                     active-class="active-item"
             >
@@ -178,7 +206,7 @@ function getCelevScoreStyle(value) {
               color="green-7"
               label="Обновить данные"
               @click=""
-              :disable="!selectedRopMonitoring"
+              :disable="!selectedRopMonitoringId"
             />
           </div>
         </div>
@@ -191,7 +219,7 @@ function getCelevScoreStyle(value) {
           v-model:pagination="pagination"
           :rows-per-page-options="[0]"
           separator="cell"
-          :loading="loadingMonitoringData"
+          :loading="loadingAdmissionList"
           wrap-cells
           :hide-bottom="admissionList.length > 0"
           style="height: 100%; overflow-y: hidden"
