@@ -5,7 +5,9 @@ import 'src/css/styles.css'
 import useRopMonitoringStore from "stores/ropMonitoringStore";
 import {storeToRefs} from "pinia";
 import LayoutMC from "layouts/LayoutMC.vue";
+import RopMonitoringDialog from "components/rop_monitoring/RopMonitoringDialog.vue";
 
+const popup = ref(null);
 const ropMonitoringStore = useRopMonitoringStore();
 const {
   ropMonitoringList,
@@ -114,7 +116,21 @@ function getCelevScoreStyle(value) {
       <div style="display: grid; grid-template-rows: auto 1fr; overflow: hidden; height: 100%">
         <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px">
           <q-input outlined bg-color="white" v-model="monitoringTextFilter" label="Название"/>
-          <q-btn icon="mdi-plus" color="green-5" @click=""/>
+          <q-btn icon="mdi-plus" color="green-5">
+            <q-popup-edit
+              v-model="popup"
+              auto-save
+              v-slot="scope"
+              :offset="[5, 0]"
+              :cover="false"
+              anchor="center right"
+              self="center left"
+              style="box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7); border: solid grey 1px"
+            >
+              <rop-monitoring-dialog/>
+            </q-popup-edit>
+          </q-btn>
+
         </div>
         <div style="overflow-y: auto;">
           <q-list bordered separator>

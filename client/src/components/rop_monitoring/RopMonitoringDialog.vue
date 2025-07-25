@@ -11,17 +11,12 @@ const $q = useQuasar()
 const formRef = ref(null)
 
 const selectedRopMonitoring = ref<RopMonitoring | Number>();
-const ropMonitoringData = ref<RopMonitoring>({});
-const emit = defineEmits(['dialogClosed']);
-
-function closeDialog() {
-  emit('dialogClosed');
-}
+const selectedRopMonitoringData = ref<RopMonitoring>({});
 
 const rulesStore = useRulesStore();
 const ropMonitoringStore = useRopMonitoringStore();
 const {
-  ropMonitorings,
+  ropMonitoringList,
 } = storeToRefs(ropMonitoringStore);
 
 async function validateForm() {
@@ -32,24 +27,22 @@ async function createRopMonitoring() {
   const valid = await validateForm()
   if (!valid) return
 
-  let r = await api.post('api/rop-monitoring/', ropMonitoringData.value);
+  let r = await api.post('api/rop-monitoring/', selectedRopMonitoringData.value);
   if (r.status == 201) {
     selectedRopMonitoring.value = 0;
     $q.notify({
-      message: `Мониторинг "${ropMonitoringData.value?.name}" создан!`,
+      message: `Мониторинг "${selectedRopMonitoringData.value?.name}" создан!`,
       color: "secondary",
       position: "bottom-right",
       html: true,
     })
-
-    closeDialog();
   }
 }
 
 async function deleteRopMonitoring() {
   $q.dialog({
     title: "Удалить мониторинг",
-    message: `Вы уверены что хотите удалить мониторинг "${ropMonitoringData.value?.name}"?`,
+    message: `Вы уверены что хотите удалить мониторинг "${selectedRopMonitoringData.value?.name}"?`,
     cancel: {
       label: 'Отмена',
       flat: true,
@@ -64,13 +57,12 @@ async function deleteRopMonitoring() {
     if (r.status == 200) {
       selectedRopMonitoring.value = 0;
       $q.notify({
-        message: `Мониторинг "${ropMonitoringData.value?.name}" удалён!`,
+        message: `Мониторинг "${selectedRopMonitoringData.value?.name}" удалён!`,
         color: "secondary",
         position: "bottom-right",
         html: true,
       })
-      await ropMonitoringStore.getRopMonitorings();
-      closeDialog();
+      await ropMonitoringStore.getRopMonitoringList();
     }
   })
 }
@@ -79,76 +71,64 @@ async function updateRopMonitoring() {
   const valid = await validateForm()
   if (!valid) return
 
-  let r = await api.patch(`api/rop-monitoring/${selectedRopMonitoring.value}/`, ropMonitoringData.value);
+  let r = await api.patch(`api/rop-monitoring/${selectedRopMonitoring.value}/`, selectedRopMonitoringData.value);
   if (r.status == 200) {
     selectedRopMonitoring.value = 0;
     $q.notify({
-      message: `Мониторинг "${ropMonitoringData.value?.name}" обновлён!`,
+      message: `Мониторинг "${selectedRopMonitoringData.value?.name}" обновлён!`,
       color: "secondary",
       position: "bottom-right",
       html: true,
     })
-    await ropMonitoringStore.getRopMonitorings();
-    closeDialog();
+    await ropMonitoringStore.getRopMonitoringList();
   }
 }
 
 </script>
 
 <template>
-  <q-card>
-    <q-card-section style="display: flex; flex-direction: row; justify-content: end; padding: 0">
-      <q-btn icon="close" flat round @click="closeDialog"/>
-    </q-card-section>
-    <q-form
-      @submit.prevent ref="formRef"
-      style="display: grid; grid-template-rows: 1fr 1fr auto; overflow: hidden; gap:8px; padding: 8px 16px 16px;"
-    >
-      <q-select
-        label="Мониторинги"
-        emit-value
-        map-options
-        clearable
-        outlined
-        :options="ropMonitorings"
-        v-model="selectedRopMonitoring"
-      />
+  <q-form
+    @submit.prevent ref="formRef"
+    style="display: grid; grid-template-rows: auto auto; padding: 8px;">
+    <div style="display: flex; justify-content: center;">
       <q-input
         outlined
         label="Название"
-        v-model="ropMonitoringData.name"
+        v-model="selectedRopMonitoringData.name"
         lazy-rules
         :rules="[rulesStore.required()]"
+        style="max-width: 300px; width: 100%;"
       />
-      <div style="display: flex; flex-direction: row; gap: 8px">
-        <q-btn
-          icon="mdi-plus-thick"
-          color="green-7"
-          label="Создать"
-          type="submit"
-          @click="createRopMonitoring"
-          v-if="!ropMonitoringData.id"
-        />
-        <q-btn
-          icon="mdi-pencil"
-          color="blue-7"
-          label="Обновить"
-          type="submit"
-          @click="updateRopMonitoring"
-          v-if="ropMonitoringData.id"
-        />
-        <q-btn
-          icon="mdi-delete-empty"
-          color="pink-7"
-          label="Удалить"
-          @click="deleteRopMonitoring"
-          :disable="!selectedRopMonitoring"
-          type="reset"
-        />
-      </div>
-    </q-form>
-  </q-card>
+    </div>
+    <div style="display: flex; justify-content: center; gap: 8px;">
+      <q-btn
+        icon="mdi-plus-thick"
+        color="green-7"
+        label="Создать"
+        type="submit"
+        @click="createRopMonitoring"
+        v-if="!selectedRopMonitoringData.id"
+      />
+      <q-btn
+        icon="mdi-pencil"
+        color="blue-7"
+        label="Обновить"
+        type="submit"
+        @click="updateRopMonitoring"
+        v-if="selectedRopMonitoringData.id"
+      />
+      <q-btn
+        icon="mdi-delete-empty"
+        color="pink-7"
+        label="Удалить"
+        @click="deleteRopMonitoring"
+        :disable="!selectedRopMonitoring"
+        type="reset"
+      />
+    </div>
+  </q-form>
 </template>
+
 
 <style scoped>
 
