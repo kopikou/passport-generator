@@ -97,6 +97,7 @@ onBeforeMount(async () => {
 <!--          <q-route-tab icon="mdi-file-excel" label="РОП" to="/rop"-->
 <!--                       v-if="rop"-->
 <!--          />-->
+          <q-route-tab icon="mdi-file" label="Инд План" to="/ind_plan"/>
           <q-btn-dropdown auto-close stretch flat :label="`${lastName} ${firstName}`">
             <q-list>
               <q-item clickable :href="`${FORCE_SCRIPT_NAME}/admin/`" v-if="isStaff">
