@@ -195,7 +195,7 @@ async function updateAdmissionList() {
       </div>
     </template>
     <template #content>
-      <div style="height: 100%; overflow-y: hidden">
+      <div style="height: 100%; overflow: hidden; display: grid; grid-template-rows: auto 1fr">
         <div class="q-my-sm" style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;">
           <q-input outlined label="Поиск по программе или РОПу"
                    v-model="admissionTextFilter" :disable="admissionList.length == 0" clearable/>
@@ -208,7 +208,7 @@ async function updateAdmissionList() {
             style="height: 100%"
           />
         </div>
-        <div style="height: 100%; overflow-y: auto">
+        <div style="overflow-y: auto">
           <q-table
             flat bordered
             :rows="filteredAdmissionList"
