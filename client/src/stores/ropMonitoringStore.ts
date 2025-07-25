@@ -1,23 +1,24 @@
 import {defineStore} from "pinia";
 import {ref} from "vue";
 import {RopMonitoring} from "src/types";
-import api from "axios";
+import {api} from "boot/axios";
 
 const useRopMonitoringStore = defineStore("RopMonitoringStore", () => {
-  const ropMonitorings = ref<RopMonitoring[] | number[]>([]);
-  const loadingRopMonitorings = ref(false);
+  const ropMonitoringList = ref<RopMonitoring[] | number[]>([]);
+  const loadingRopMonitoringList = ref(false);
 
-  async function getRopMonitorings() {
-    loadingRopMonitorings.value = true;
-    ropMonitorings.value = [];
+  async function getRopMonitoringList() {
+    loadingRopMonitoringList.value = true;
+    ropMonitoringList.value = [];
     let r = await api.get('api/rop-monitoring/');
-    ropMonitorings.value = r.data;
-    loadingRopMonitorings.value = false;
+    ropMonitoringList.value = r.data;
+    loadingRopMonitoringList.value = false;
   }
 
   return {
-    ropMonitorings,
-    getRopMonitorings,
+    ropMonitoringList,
+    loadingRopMonitoringList,
+    getRopMonitoringList,
   }
 });
 

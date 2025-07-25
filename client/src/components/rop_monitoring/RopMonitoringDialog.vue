@@ -4,8 +4,8 @@ import {RopMonitoring} from "src/types";
 import {storeToRefs} from "pinia";
 import useRopMonitoringStore from "stores/ropMonitoringStore";
 import useRulesStore from "stores/rulesStore";
-import api from "axios";
 import {useQuasar} from "quasar";
+import {api} from "boot/axios";
 
 const $q = useQuasar()
 const formRef = ref(null)
@@ -96,11 +96,14 @@ async function updateRopMonitoring() {
 </script>
 
 <template>
-  <q-card ref="formRef" @submit.prevent>
+  <q-card>
     <q-card-section style="display: flex; flex-direction: row; justify-content: end; padding: 0">
       <q-btn icon="close" flat round @click="closeDialog"/>
     </q-card-section>
-    <div style="display: grid; grid-template-rows: 1fr 1fr auto; overflow: hidden; gap:8px; padding: 8px 16px 16px;">
+    <q-form
+      @submit.prevent ref="formRef"
+      style="display: grid; grid-template-rows: 1fr 1fr auto; overflow: hidden; gap:8px; padding: 8px 16px 16px;"
+    >
       <q-select
         label="Мониторинги"
         emit-value
@@ -110,13 +113,19 @@ async function updateRopMonitoring() {
         :options="ropMonitorings"
         v-model="selectedRopMonitoring"
       />
-      <q-input outlined label="Название" v-model="ropMonitoringData.name"
-               lazy-rules :rules="[rulesStore.required()]"/>
+      <q-input
+        outlined
+        label="Название"
+        v-model="ropMonitoringData.name"
+        lazy-rules
+        :rules="[rulesStore.required()]"
+      />
       <div style="display: flex; flex-direction: row; gap: 8px">
         <q-btn
           icon="mdi-plus-thick"
           color="green-7"
           label="Создать"
+          type="submit"
           @click="createRopMonitoring"
           v-if="!ropMonitoringData.id"
         />
@@ -124,6 +133,7 @@ async function updateRopMonitoring() {
           icon="mdi-pencil"
           color="blue-7"
           label="Обновить"
+          type="submit"
           @click="updateRopMonitoring"
           v-if="ropMonitoringData.id"
         />
@@ -133,9 +143,10 @@ async function updateRopMonitoring() {
           label="Удалить"
           @click="deleteRopMonitoring"
           :disable="!selectedRopMonitoring"
+          type="reset"
         />
       </div>
-    </div>
+    </q-form>
   </q-card>
 </template>
 
