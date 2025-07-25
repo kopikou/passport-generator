@@ -94,7 +94,7 @@ watch([admissionTextFilter, monitoringTextFilter], () => {
   })
 }, {immediate: true});
 
-watch(selectedRopMonitoringId, async() => {
+watch(selectedRopMonitoringId, async () => {
   await getAdmissionList();
 })
 
@@ -196,45 +196,45 @@ async function updateAdmissionList() {
     </template>
     <template #content>
       <div style="height: 100%; overflow-y: hidden">
-        <div class="flex justify-between q-my-sm"
-             style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;">
+        <div class="q-my-sm" style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;">
           <q-input outlined label="Поиск по программе или РОПу"
                    v-model="admissionTextFilter" :disable="admissionList.length == 0" clearable/>
-          <div style="display: flex; flex-direction: column; gap: 8px">
-            <q-btn
-              icon="mdi-creation-outline"
-              color="green-7"
-              label="Обновить данные"
-              @click="updateAdmissionList"
-              :disable="!selectedRopMonitoringId"
-            />
-          </div>
+          <q-btn
+            icon="mdi-creation-outline"
+            color="green-7"
+            label="Обновить данные"
+            @click="updateAdmissionList"
+            :disable="!selectedRopMonitoringId"
+            style="height: 100%"
+          />
         </div>
-        <q-table
-          flat bordered
-          :rows="filteredAdmissionList"
-          :columns="columns"
-          row-key="id"
-          virtual-scroll
-          v-model:pagination="pagination"
-          :rows-per-page-options="[0]"
-          separator="cell"
-          :loading="loadingAdmissionList"
-          wrap-cells
-          :hide-bottom="admissionList.length > 0"
-          style="height: 100%; overflow-y: hidden"
-        >
-          <template v-slot:body-cell-contingent_students_ratio_score="props">
-            <q-td :props="props" :class="getContingentScoreStyle(props.value)">
-              {{ props.value }}
-            </q-td>
-          </template>
-          <template v-slot:body-cell-celev_students_ratio_score="props">
-            <q-td :props="props" :class="getCelevScoreStyle(props.value)">
-              {{ props.value }}
-            </q-td>
-          </template>
-        </q-table>
+        <div style="height: 100%; overflow-y: auto">
+          <q-table
+            flat bordered
+            :rows="filteredAdmissionList"
+            :columns="columns"
+            row-key="id"
+            virtual-scroll
+            v-model:pagination="pagination"
+            :rows-per-page-options="[0]"
+            separator="cell"
+            :loading="loadingAdmissionList"
+            wrap-cells
+            :hide-bottom="admissionList.length > 0"
+            style="height: 100%;"
+          >
+            <template v-slot:body-cell-contingent_students_ratio_score="props">
+              <q-td :props="props" :class="getContingentScoreStyle(props.value)">
+                {{ props.value }}
+              </q-td>
+            </template>
+            <template v-slot:body-cell-celev_students_ratio_score="props">
+              <q-td :props="props" :class="getCelevScoreStyle(props.value)">
+                {{ props.value }}
+              </q-td>
+            </template>
+          </q-table>
+        </div>
       </div>
     </template>
   </layout-m-c>

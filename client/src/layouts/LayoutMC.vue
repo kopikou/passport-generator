@@ -19,6 +19,7 @@
   grid-template-columns: 20% auto;
   grid-template-areas: "m c";
   height: 100%;
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0; overflow: hidden;
 }
 
 .left-menu {
@@ -29,12 +30,8 @@
 }
 
 .content {
-  overflow-y: hidden;
   grid-area: c;
   padding: 16px;
-  position: relative;
-  display: grid;
-  gap: 8px;
 }
 
 </style>
