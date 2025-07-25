@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onBeforeMount, ref, watch} from "vue";
+import {computed, onBeforeMount, ref, watch} from "vue";
 import {Admission, RopMonitoring} from "src/types";
 import 'src/css/styles.css'
 import useRopMonitoringStore from "stores/ropMonitoringStore";
@@ -21,10 +21,23 @@ try {
 } catch {
 }
 
-const ropTextFilter = ref(ropMonitoringFilters.ropTextFilter || '');
+const admissionTextFilter = ref(ropMonitoringFilters.ropTextFilter || '');
 const monitoringTextFilter = ref(ropMonitoringFilters.monitoringTextFilter || '');
 const loadingMonitoringData = ref(false);
-const monitoringData = ref<Admission[]>([]);
+const admissionList = ref<Admission[]>([]);
+
+const filteredMonitoringList = computed(() => {
+  const filter = monitoringTextFilter.value.toLowerCase();
+  return ropMonitoringList.value.filter(item =>
+    item.name.toLowerCase().includes(filter)
+  );
+});
+const filteredAdmissionList = computed(() => {
+  const filter = admissionTextFilter.value.toLowerCase();
+  return admissionList.value.filter(item =>
+    item.name.toLowerCase().includes(filter)
+  );
+});
 
 const selectedRopMonitoring = ref(0);
 
@@ -73,9 +86,9 @@ const pagination = ref({
   rowsPerPage: 0,
 });
 
-watch([ropTextFilter, monitoringTextFilter], () => {
+watch([admissionTextFilter, monitoringTextFilter], () => {
   localStorage.rop_monitoring_filters = JSON.stringify({
-    ropTextFilter: ropTextFilter.value,
+    ropTextFilter: admissionTextFilter.value,
     monitoringTextFilter: monitoringTextFilter.value,
   })
 }, {immediate: true});
@@ -130,11 +143,10 @@ function getCelevScoreStyle(value) {
               <rop-monitoring-dialog/>
             </q-popup-edit>
           </q-btn>
-
         </div>
         <div style="overflow-y: auto;">
           <q-list bordered separator>
-            <q-item v-for="monitoring in ropMonitoringList" :key="monitoring.id"
+            <q-item v-for="monitoring in filteredMonitoringList" :key="monitoring.id"
                     clickable
                     :active="selectedRopMonitoring === monitoring.id"
                     @click="selectedRopMonitoring = monitoring.id"
@@ -159,7 +171,7 @@ function getCelevScoreStyle(value) {
         <div class="flex justify-between q-my-sm"
              style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;">
           <q-input outlined label="Поиск по программе или РОПу"
-                   v-model="ropTextFilter" :disable="monitoringData.length == 0" clearable/>
+                   v-model="admissionTextFilter" :disable="admissionList.length == 0" clearable/>
           <div style="display: flex; flex-direction: column; gap: 8px">
             <q-btn
               icon="mdi-creation-outline"
@@ -172,7 +184,7 @@ function getCelevScoreStyle(value) {
         </div>
         <q-table
           flat bordered
-          :rows="monitoringData"
+          :rows="filteredAdmissionList"
           :columns="columns"
           row-key="id"
           virtual-scroll
@@ -181,7 +193,7 @@ function getCelevScoreStyle(value) {
           separator="cell"
           :loading="loadingMonitoringData"
           wrap-cells
-          :hide-bottom="monitoringData.length > 0"
+          :hide-bottom="admissionList.length > 0"
           style="height: 100%; overflow-y: hidden"
         >
           <template v-slot:body-cell-contingent_students_ratio_score="props">
