@@ -51,7 +51,15 @@ class RopMonitoringScore(TimestampsModel):
     admission = models.IntegerField(verbose_name="Программа")
     person = models.IntegerField(verbose_name="РОП")
     indicator = models.ForeignKey("Indicator", verbose_name="Индикатор", on_delete=SET_NULL, null=True)
+    value_numeric = models.FloatField(verbose_name="Значение показателя (численное)", null=True)
+    value_boolean = models.BooleanField(verbose_name="Значение показателя (булевое)", null=True)
     score = models.FloatField(verbose_name="Кол-во баллов", null=True)
+
+    @property
+    def value(self):
+        if self.value_boolean is not None:
+            return self.value_boolean
+        return self.value_numeric
 
     def __str__(self):
         return f"<{self.rop_monitoring}> ({self.person}) {self.indicator} -> {self.score}"

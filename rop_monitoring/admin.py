@@ -53,4 +53,4 @@ class IndicatorAdmin(admin.ModelAdmin):
 @admin.register(RopMonitoringScore)
 class RopMonitoringScoreAdmin(admin.ModelAdmin):
     search_fields = ["rop_monitoring__name", "admission", "person", "indicator__name"]
-    list_display = ["rop_monitoring", "admission", "person", "indicator", "score"]
+    list_display = ["rop_monitoring", "admission", "person", "indicator", "score", "value"]
