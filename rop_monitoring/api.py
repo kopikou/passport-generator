@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
@@ -83,30 +84,31 @@ class RopMonitoringScoreViewSet(
                             score = celev['celev_students_ratio_score'] if celev else 0
 
                         if value is not None:
+                            rop_id = admission['admission_rop_id']
+
                             rop_monitoring_scores.append({
                                 "rop_monitoring": monitoring_id,
                                 "admission": admission_id,
-                                "person": admission['admission_rop_id'],
+                                "person": rop_id,
                                 "indicator": indicator.id,
                                 "value_input": value,
                                 "score": score,
                             })
 
-                    # rop_monitoring_scores.append({
-                    #     'id': admission_id,
-                    #     'name': admission['admission_name'],
-                    #     'rop_id': admission['admission_rop_id'],
-                    #     'rop': admission['admission_rop'],
-                    #     'ege_avg_marks': ege['avg_marks'] if ege else 0,
-                    #     'ege_avg_marks_score': ege['avg_marks_score'] if ege else 0,
-                    #     'contingent_students_ratio': contingent['contingent_students_ratio'] if contingent else 0,
-                    #     'contingent_students_ratio_score': contingent['contingent_students_ratio_score'] if contingent else 0,
-                    #     'celev_students_ratio': celev['celev_students_ratio'] if celev else 0,
-                    #     'celev_students_ratio_score': celev['celev_students_ratio_score'] if celev else 0,
-                    # })
+        with transaction.atomic():
+            results = []
+            for data in rop_monitoring_scores:
+                obj, created = RopMonitoringScore.objects.update_or_create(
+                    rop_monitoring=data['rop_monitoring'],
+                    admission=data['admission'],
+                    person=data['person'],
+                    indicator=data['indicator'],
+                    defaults={
+                        'value_input': data['value_input'],
+                        'score': data['score'],
+                    }
+                )
+                results.append(obj)
 
-        serializer = self.get_serializer(data=rop_monitoring_scores, many=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
+        serializer = self.get_serializer(results, many=True)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

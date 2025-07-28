@@ -7,7 +7,9 @@ import {storeToRefs} from "pinia";
 import LayoutMC from "layouts/LayoutMC.vue";
 import RopMonitoringDialog from "components/rop_monitoring/RopMonitoringDialog.vue";
 import {api} from "boot/axios";
+import {useQuasar} from "quasar";
 
+const $q = useQuasar()
 const popup = ref(null);
 const ropMonitoringStore = useRopMonitoringStore();
 const {
@@ -151,7 +153,14 @@ async function updateAdmissionList() {
   loadingAdmissionList.value = true;
   admissionList.value = [];
   let r = await api.get(`api/rop-monitoring-score/${selectedRopMonitoringId.value}/update-monitoring-data/`);
-  admissionList.value = r.data
+
+  if (r.status == 201) {
+    admissionList.value = r.data
+    $q.notify({
+      type: 'secondary',
+      message: 'Данные обновлены!',
+    })
+  }
 
   loadingAdmissionList.value = false;
 }
