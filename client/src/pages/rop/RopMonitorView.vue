@@ -38,7 +38,8 @@ const filteredMonitoringList = computed(() => {
 const filteredAdmissionList = computed(() => {
   const filter = admissionTextFilter.value.toLowerCase();
   return admissionList.value.filter(item =>
-    item.name.toLowerCase().includes(filter)
+    (item.admission_name && item.admission_name.toLowerCase().includes(filter)) ||
+    (item.person_name && item.person_name.toLowerCase().includes(filter))
   );
 });
 

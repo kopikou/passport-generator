@@ -16,7 +16,8 @@ class RopMonitoringSerializer(serializers.ModelSerializer):
 class RopMonitoringScoreSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     value = serializers.SerializerMethodField()
-    value_input = serializers.JSONField(write_only=True)
+    admission_name = serializers.SerializerMethodField()
+    person_name = serializers.SerializerMethodField()
 
     class Meta:
         model = RopMonitoringScore
@@ -24,10 +25,11 @@ class RopMonitoringScoreSerializer(serializers.ModelSerializer):
             'id',
             'rop_monitoring',
             'admission',
+            'admission_name',
             'person',
+            'person_name',
             'indicator',
             'value',
-            'value_input',
             'score',
         ]
 
@@ -36,18 +38,18 @@ class RopMonitoringScoreSerializer(serializers.ModelSerializer):
             return obj.value_boolean
         return obj.value_numeric
 
-    def validate(self, attrs):
-        value = attrs.pop('value_input', None)
-        if value is None:
-            raise serializers.ValidationError({'value_input': 'Это поле обязательно.'})
+    def get_admission_name(self, obj):
+        from arim.models import Catadmission
+        try:
+            admission = Catadmission.objects.get(id=obj.admission)
+            return admission.name
+        except Catadmission.DoesNotExist:
+            return None
 
-        if isinstance(value, bool):
-            attrs['value_boolean'] = value
-            attrs['value_numeric'] = None
-        elif isinstance(value, (int, float)):
-            attrs['value_numeric'] = float(value)
-            attrs['value_boolean'] = None
-        else:
-            raise serializers.ValidationError({'value_input': 'Значение должно быть либо числом, либо булевым.'})
-
-        return attrs
+    def get_person_name(self, obj):
+        from arim.models import CatPerson
+        try:
+            person = CatPerson.objects.get(id=obj.person)
+            return person.name
+        except CatPerson.DoesNotExist:
+            return None

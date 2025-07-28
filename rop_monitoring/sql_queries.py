@@ -161,6 +161,7 @@ ADMISSIONS_QUERY = f"""
     AND ca.cfob in (1, 2)
     AND ca.cfac NOT IN (40)
     AND ca.cadmkind IN (1, 2, 3)
+    AND pers.id IS NOT NULL
     ORDER BY 5, 2
 """
 
