@@ -45,7 +45,7 @@ class RopMonitoringAdmin(admin.ModelAdmin):
 @admin.register(Indicator)
 class IndicatorAdmin(admin.ModelAdmin):
     search_fields = ["name"]
-    list_display = ["name", "description", "get_types_display"]
+    list_display = ["id", "name", "description", "get_types_display"]
     list_filter = (AdmissionTypesListFilter,)
     form = IndicatorForm
 

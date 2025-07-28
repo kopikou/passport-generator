@@ -13,6 +13,12 @@ class AdmissionTypes(models.IntegerChoices):
     NEW_MAG = 3, 'Новые ООП магистратуры'
 
 
+class Indicators(models.IntegerChoices):
+    EGE = 0, 'Средний балл ЕГЭ (ЕГЭ и ДВИ) обучающихся, зачисленных на ООП'
+    STUD_CONTINGENT = 1, '	Доля обучающихся, успешно завершивших обучение / Доля сохранения контингента обучающихся'
+    CELEV_STUD_CONTINGENT = 2, 'Доля обучающихся по договорам о целевом обучении, успешно завершивших обучение / Доля сохранения контингента обучающихся по договорам о целевом обучении'
+
+
 class RopMonitoring(TimestampsModel):
     name = models.TextField(verbose_name="Название мониторинга")
 

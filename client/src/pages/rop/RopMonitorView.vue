@@ -137,7 +137,12 @@ async function getAdmissionList() {
   loadingAdmissionList.value = true;
   admissionList.value = [];
 
-  let r = await api.get('api/')
+  let r = await api.get(`api/rop-monitoring-score/`, {
+    params: {
+      rop_monitoring: selectedRopMonitoringId.value,
+    },
+  });
+  admissionList.value = r.data
 
   loadingAdmissionList.value = false;
 }
@@ -145,6 +150,8 @@ async function getAdmissionList() {
 async function updateAdmissionList() {
   loadingAdmissionList.value = true;
   admissionList.value = [];
+  let r = await api.get(`api/rop-monitoring-score/${selectedRopMonitoringId.value}/update-monitoring-data/`);
+  admissionList.value = r.data
 
   loadingAdmissionList.value = false;
 }

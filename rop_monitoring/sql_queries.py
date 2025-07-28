@@ -124,7 +124,8 @@ ADMISSIONS_QUERY = f"""
         direction.code AS direction_code,
         pers.name AS admission_rop,
         pers.id AS admission_rop_id,
-        ca.uchPeriod AS admission_period
+        ca.uchPeriod AS admission_period,
+        ca.cadmkind AS admission_type
     FROM dbo.catadmission ca
     LEFT JOIN dbo.catfaculty cf ON cf.id = ca.cfac
     LEFT JOIN dbo.uchplan_plan pl ON pl.id = ca.cuchplan
