@@ -1,6 +1,16 @@
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import SET_NULL
+from django.utils.html import format_html
+
 from app.utils import TimestampsModel
+
+
+class AdmissionTypes(models.IntegerChoices):
+    BACH_SPEC = 0, 'ООП бакалавриата, специалитета'
+    MAG = 1, 'ООП магистратуры'
+    NEW_BACH_SPEC = 2, 'Новые ООП бакалавриата, специалитета'
+    NEW_MAG = 3, 'Новые ООП магистратуры'
 
 
 class RopMonitoring(TimestampsModel):
@@ -15,6 +25,18 @@ class RopMonitoring(TimestampsModel):
 
 class Indicator(TimestampsModel):
     name = models.TextField(verbose_name="Название показателя")
+    description = models.TextField(verbose_name="Описание показателя", blank=True, null=True)
+    types = ArrayField(
+        base_field=models.IntegerField(choices=AdmissionTypes.choices),
+        verbose_name='Типы ООП',
+        default=list,
+        blank=True,
+    )
+
+    def get_types_display(self):
+        return format_html("<br>".join([f"<{AdmissionTypes(type_).label}>" for type_ in self.types]))
+
+    get_types_display.short_description = "Типы ООП"
 
     def __str__(self):
         return self.name

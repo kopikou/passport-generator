@@ -156,7 +156,7 @@ async function updateAdmissionList() {
     <template #left-menu>
       <div style="display: grid; grid-template-rows: auto 1fr; overflow: hidden; height: 100%">
         <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px">
-          <q-input outlined bg-color="white" v-model="monitoringTextFilter" label="Название"/>
+          <q-input outlined bg-color="white" v-model="monitoringTextFilter" label="Название мониторинга"/>
           <q-btn icon="mdi-plus" color="green-5">
             <q-popup-edit
               v-model="popup"
