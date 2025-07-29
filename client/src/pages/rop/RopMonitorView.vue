@@ -134,6 +134,7 @@ watch([admissionTextFilter, monitoringTextFilter], () => {
 }, {immediate: true});
 
 watch(selectedRopMonitoringId, async () => {
+  admissionTextFilter.value = '';
   await getAdmissionList();
 })
 
@@ -145,33 +146,33 @@ onBeforeMount(async () => {
 
 function getEgeScoreStyle(value) {
   if (value === 0) {
-    return 'bg-pink-4 text-white'
+    return 'bg-pink-11 text-white'
   } else if (value === 1) {
-    return 'bg-amber-8 text-white'
+    return 'bg-amber-12 text-white'
   } else if (value === 2) {
-    return 'bg-green-6 text-white'
+    return 'bg-light-green-14 text-white'
   }
   return ''
 }
 
 function getContingentScoreStyle(value) {
   if (value === 0) {
-    return 'bg-pink-4 text-white'
+    return 'bg-pink-11 text-white'
   } else if (value === 2) {
-    return 'bg-amber-8 text-white'
+    return 'bg-amber-12 text-white'
   } else if (value === 4) {
-    return 'bg-green-6 text-white'
+    return 'bg-light-green-14 text-white'
   }
   return ''
 }
 
 function getCelevScoreStyle(value) {
   if (value === 0) {
-    return 'bg-pink-4 text-white'
+    return 'bg-pink-11 text-white'
   } else if (value === 1) {
-    return 'bg-amber-8 text-white'
+    return 'bg-amber-12 text-white'
   } else if (value === 2) {
-    return 'bg-green-6 text-white'
+    return 'bg-light-green-14 text-white'
   }
   return ''
 }
