@@ -13,6 +13,25 @@ def safe_int(value):
     except (ValueError, TypeError):
         return None
 
+class CalcIndiators:
+    def __init__(self):
+        self.admissions = None
+        self.monitor = RopMonitor()
+        self.ege_indicator
+        self.student_contingent_indicator
+        self.celev_student_contingent_indicator
+
+    def get_inidcator_score_value(self, admission_id, indicator_id):
+        if indicator_id == Indicators.EGE.value:
+            return self.ege_indicator(admission_id)
+
+    def get_ege_indicator(self, admission_id):
+        if not self.ege_indicator:
+            self.ege_indicator = self.monitor.get_ege_indicator()
+        ege = ege_indicator.get(admission_id)
+
+        return ege
+
 
 class RopMonitor:
     def __init__(self) -> None:
