@@ -398,3 +398,9 @@ export interface Admission {
   ratio_CR_points: number,
   ratio_celev_CR_points: number,
 }
+
+export enum MonitoringIndicators {
+  EGE = 4,
+  STUD_CONTINGENT = 5,
+  CELEV_STUD_CONTINGENT = 6,
+}

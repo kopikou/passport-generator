@@ -16,8 +16,6 @@ class RopMonitoringSerializer(serializers.ModelSerializer):
 class RopMonitoringScoreSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     value = serializers.SerializerMethodField()
-    admission_name = serializers.SerializerMethodField()
-    person_name = serializers.SerializerMethodField()
 
     class Meta:
         model = RopMonitoringScore
@@ -37,19 +35,3 @@ class RopMonitoringScoreSerializer(serializers.ModelSerializer):
         if obj.value_boolean is not None:
             return obj.value_boolean
         return obj.value_numeric
-
-    def get_admission_name(self, obj):
-        from arim.models import Catadmission
-        try:
-            admission = Catadmission.objects.get(id=obj.admission)
-            return admission.name
-        except Catadmission.DoesNotExist:
-            return None
-
-    def get_person_name(self, obj):
-        from arim.models import CatPerson
-        try:
-            person = CatPerson.objects.get(id=obj.person)
-            return person.name
-        except CatPerson.DoesNotExist:
-            return None

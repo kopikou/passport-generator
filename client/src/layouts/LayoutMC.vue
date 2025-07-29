@@ -32,6 +32,7 @@
 .content {
   grid-area: c;
   padding: 16px;
+  overflow: hidden;
 }
 
 </style>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {computed, onBeforeMount, ref, watch} from "vue";
-import {Admission, RopMonitoring} from "src/types";
+import {Admission, MonitoringIndicators, RopMonitoring} from "src/types";
 import 'src/css/styles.css'
 import useRopMonitoringStore from "stores/ropMonitoringStore";
 import {storeToRefs} from "pinia";
@@ -8,6 +8,7 @@ import LayoutMC from "layouts/LayoutMC.vue";
 import RopMonitoringDialog from "components/rop_monitoring/RopMonitoringDialog.vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
+import _ from "lodash";
 
 const $q = useQuasar()
 const popup = ref(null);
@@ -29,14 +30,49 @@ const monitoringTextFilter = ref(ropMonitoringFilters.monitoringTextFilter || ''
 const loadingAdmissionList = ref(false);
 const admissionList = ref<Admission[]>([]);
 
+function groupAdmissionList() {
+  admissionList.value = _(admissionList.value)
+    .groupBy('admission')
+    .map((items, admission) => {
+      const first = items[0]
+      const indicators = items.map(({indicator, value, score}) => ({indicator, value, score}))
+      let admissionData = {
+        id: first.id,
+        rop_monitoring: first.rop_monitoring,
+        admission: Number(admission),
+        admission_name: first.admission_name,
+        person: first.person,
+        person_name: first.person_name,
+      }
+
+      const indicatorNames = Object.entries(MonitoringIndicators).reduce((acc, [key, val]) => {
+        acc[val] = key.toLowerCase();
+        return acc;
+      }, {});
+
+      indicators.forEach(({indicator, value, score}) => {
+        const name = indicatorNames[indicator];
+        if (name) {
+          admissionData[`${name}_score`] = score;
+          admissionData[`${name}_value`] = value;
+        }
+      });
+
+      return admissionData
+    })
+    .sortBy('admission_name')
+    .value()
+}
+
 const filteredMonitoringList = computed(() => {
-  const filter = monitoringTextFilter.value.toLowerCase();
+  const filter = monitoringTextFilter.value?.toLowerCase() || '';
   return ropMonitoringList.value.filter(item =>
     item.name.toLowerCase().includes(filter)
   );
 });
+
 const filteredAdmissionList = computed(() => {
-  const filter = admissionTextFilter.value.toLowerCase();
+  const filter = admissionTextFilter.value?.toLowerCase() || '';
   return admissionList.value.filter(item =>
     (item.admission_name && item.admission_name.toLowerCase().includes(filter)) ||
     (item.person_name && item.person_name.toLowerCase().includes(filter))
@@ -46,42 +82,42 @@ const filteredAdmissionList = computed(() => {
 const selectedRopMonitoringId = ref(0);
 
 const columns = [
-  {name: 'name', align: 'center', label: 'Название программы', field: 'name', sortable: true},
-  {name: 'rop', align: 'center', label: 'РОП', field: 'rop', sortable: true},
-  {name: 'ege_avg_marks', align: 'center', label: 'Ср. балл ЕГЭ (ДВИ)', field: 'ege_avg_marks', sortable: true},
+  {name: 'name', align: 'center', label: 'Название программы', field: 'admission_name', sortable: true},
+  {name: 'rop', align: 'center', label: 'РОП', field: 'person_name', sortable: true},
+  {name: 'ege_value', align: 'center', label: 'Ср. балл ЕГЭ (ДВИ)', field: 'ege_value', sortable: true},
   {
-    name: 'ege_avg_marks_score',
+    name: 'ege_score',
     align: 'center',
     label: 'Баллы за ср. балл ЕГЭ',
-    field: 'ege_avg_marks_score',
+    field: 'ege_score',
     sortable: true
   },
   {
-    name: 'contingent_students_ratio',
+    name: 'stud_contingent_value',
     align: 'center',
     label: 'Доля завершивших/активных студентов',
-    field: 'contingent_students_ratio',
+    field: 'stud_contingent_value',
     sortable: true
   },
   {
-    name: 'contingent_students_ratio_score',
+    name: 'stud_contingent_score',
     align: 'center',
     label: 'Баллы за долю завершивших/активных студентов',
-    field: 'contingent_students_ratio_score',
+    field: 'stud_contingent_score',
     sortable: true
   },
   {
-    name: 'celev_students_ratio',
+    name: 'celev_stud_contingent_value',
     align: 'center',
     label: 'Доля завершивших/активных студентов целевиков',
-    field: 'celev_students_ratio',
+    field: 'celev_stud_contingent_value',
     sortable: true
   },
   {
-    name: 'celev_students_ratio_score',
+    name: 'celev_stud_contingent_score',
     align: 'center',
     label: 'Баллы за долю завершивших/активных студентов целевиков',
-    field: 'celev_students_ratio_score',
+    field: 'celev_stud_contingent_score',
     sortable: true
   },
 ]
@@ -106,6 +142,17 @@ onBeforeMount(async () => {
     await ropMonitoringStore.getRopMonitoringList();
   }
 })
+
+function getEgeScoreStyle(value) {
+  if (value === 0) {
+    return 'bg-pink-4 text-white'
+  } else if (value === 1) {
+    return 'bg-amber-8 text-white'
+  } else if (value === 2) {
+    return 'bg-green-6 text-white'
+  }
+  return ''
+}
 
 function getContingentScoreStyle(value) {
   if (value === 0) {
@@ -146,6 +193,7 @@ async function getAdmissionList() {
     },
   });
   admissionList.value = r.data
+  groupAdmissionList();
 
   loadingAdmissionList.value = false;
 }
@@ -157,6 +205,7 @@ async function updateAdmissionList() {
 
   if (r.status == 201) {
     admissionList.value = r.data
+    groupAdmissionList()
     $q.notify({
       type: 'secondary',
       message: 'Данные обновлены!',
@@ -172,8 +221,8 @@ async function updateAdmissionList() {
   <layout-m-c>
     <template #left-menu>
       <div style="display: grid; grid-template-rows: auto 1fr; overflow: hidden; height: 100%">
-        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px">
-          <q-input outlined bg-color="white" v-model="monitoringTextFilter" label="Название мониторинга"/>
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 8px">
+          <q-input outlined bg-color="white" v-model="monitoringTextFilter" label="Поиск мониторинга"/>
           <q-btn icon="mdi-plus" color="green-5">
             <q-popup-edit
               v-model="popup"
@@ -225,7 +274,7 @@ async function updateAdmissionList() {
             style="height: 100%"
           />
         </div>
-        <div style="overflow-y: auto">
+        <div style="max-height: 100%; overflow-y: auto">
           <q-table
             flat bordered
             :rows="filteredAdmissionList"
@@ -240,12 +289,17 @@ async function updateAdmissionList() {
             :hide-bottom="admissionList.length > 0"
             style="height: 100%;"
           >
-            <template v-slot:body-cell-contingent_students_ratio_score="props">
+            <template v-slot:body-cell-ege_score="props">
+              <q-td :props="props" :class="getEgeScoreStyle(props.value)">
+                {{ props.value }}
+              </q-td>
+            </template>
+            <template v-slot:body-cell-stud_contingent_score="props">
               <q-td :props="props" :class="getContingentScoreStyle(props.value)">
                 {{ props.value }}
               </q-td>
             </template>
-            <template v-slot:body-cell-celev_students_ratio_score="props">
+            <template v-slot:body-cell-celev_stud_contingent_score="props">
               <q-td :props="props" :class="getCelevScoreStyle(props.value)">
                 {{ props.value }}
               </q-td>
@@ -257,6 +311,11 @@ async function updateAdmissionList() {
   </layout-m-c>
 </template>
 
-<style scoped>
-
+<style lang="scss" scoped>
+:deep(.q-table thead th) {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+}
 </style>

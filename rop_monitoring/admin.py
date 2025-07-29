@@ -3,36 +3,36 @@ from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.utils.translation import gettext_lazy as _
 
-from rop_monitoring.models import Indicator, RopMonitoring, RopMonitoringScore, AdmissionTypes
+from rop_monitoring.models import Indicator, RopMonitoring, RopMonitoringScore, AdmissionKinds
 
 
 class IndicatorForm(forms.ModelForm):
-    types = forms.MultipleChoiceField(
-        choices=AdmissionTypes.choices,
+    admission_kinds = forms.MultipleChoiceField(
+        choices=AdmissionKinds.choices,
         widget=FilteredSelectMultiple(
             "Типы ООП",
             is_stacked=False
         ),
     )
 
-    def clean_types(self):
-        return [int(i) for i in self.cleaned_data['types']]
+    def clean_admission_kinds(self):
+        return [int(i) for i in self.cleaned_data['admission_kinds']]
 
     class Meta:
         model = Indicator
         fields = '__all__'
 
 
-class AdmissionTypesListFilter(admin.SimpleListFilter):
+class AdmissionKindsListFilter(admin.SimpleListFilter):
     title = _('Типы ООП')
-    parameter_name = 'types'
+    parameter_name = 'admission_kinds'
 
     def lookups(self, request, model_admin):
-        return [(choice.value, choice.label) for choice in AdmissionTypes]
+        return [(choice.value, choice.label) for choice in AdmissionKinds]
 
     def queryset(self, request, queryset):
         if self.value():
-            return queryset.filter(types__contains=[int(self.value())])
+            return queryset.filter(admission_kinds__contains=[int(self.value())])
         return queryset
 
 
@@ -45,8 +45,8 @@ class RopMonitoringAdmin(admin.ModelAdmin):
 @admin.register(Indicator)
 class IndicatorAdmin(admin.ModelAdmin):
     search_fields = ["name"]
-    list_display = ["id", "name", "description", "get_types_display"]
-    list_filter = (AdmissionTypesListFilter,)
+    list_display = ["id", "name", "description", "get_admission_kinds_display"]
+    list_filter = (AdmissionKindsListFilter,)
     form = IndicatorForm
 
 

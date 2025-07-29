@@ -1,9 +1,7 @@
-from collections import defaultdict
 from datetime import datetime
-
 import pendulum
-
 from app.utils import Mira
+from rop_monitoring.models import Indicators, MiraAdmissionKinds, AdmissionKinds, Indicator
 from rop_monitoring.sql_queries import MARKS_QUERY, STUDENTS_QUERY, ORDERS_QUERY, ADMISSIONS_QUERY
 
 
@@ -13,24 +11,104 @@ def safe_int(value):
     except (ValueError, TypeError):
         return None
 
-class CalcIndiators:
-    def __init__(self):
-        self.admissions = None
-        self.monitor = RopMonitor()
-        self.ege_indicator
-        self.student_contingent_indicator
-        self.celev_student_contingent_indicator
 
-    def get_inidcator_score_value(self, admission_id, indicator_id):
-        if indicator_id == Indicators.EGE.value:
-            return self.ege_indicator(admission_id)
+def get_monitoring_scores(monitoring_id):
+    monitor = RopMonitor()
+    admissions = monitor.get_admissions()
+
+    calculator = IndicatorsCalculator()
+
+    rop_monitoring_scores = []
+    for admission_id, admission in admissions.items():
+        admission_kind = None
+        is_new_admission = False
+
+        if admission.get('admission_kind') in [MiraAdmissionKinds.BACH.value, MiraAdmissionKinds.SPEC.value]:
+            if is_new_admission:
+                admission_kind = AdmissionKinds.NEW_BACH_SPEC.value
+            else:
+                admission_kind = AdmissionKinds.BACH_SPEC.value
+        elif admission.get('admission_kind') in [MiraAdmissionKinds.MAG.value]:
+            if is_new_admission:
+                admission_kind = AdmissionKinds.NEW_MAG.value
+            else:
+                admission_kind = AdmissionKinds.MAG.value
+
+        if admission_kind is not None:
+            indicators = list(Indicator.objects.filter(admission_kinds__contains=[admission_kind]).values())
+
+            for indicator in indicators:
+                value, score = calculator.get_indicator_value_score(admission_id, indicator['id'])
+
+                if value is not None and score is not None:
+                    value_numeric = None
+                    value_boolean = None
+
+                    if isinstance(value, bool):
+                        value_boolean = value
+                    elif isinstance(value, (int, float)):
+                        value_numeric = float(value)
+
+                    rop_monitoring_scores.append({
+                        "rop_monitoring": monitoring_id,
+                        "admission": admission_id,
+                        "person_id": admission.get('admission_rop_id'),
+                        "admission_name": admission.get('admission_name'),
+                        "person_name": admission.get('admission_rop'),
+                        "indicator_id": indicator['id'],
+                        "value": value,
+                        "value_boolean": value_boolean,
+                        "value_numeric": value_numeric,
+                        "score": score,
+                    })
+
+    return rop_monitoring_scores
+
+
+class IndicatorsCalculator:
+    def __init__(self):
+        self.monitor = RopMonitor()
+        self.admissions = None
+        self.ege_indicator = None
+        self.student_contingent_indicator = None
+        self.celev_student_contingent_indicator = None
+
+    def get_indicator_value_score(self, admission_id, indicator_id):
+        match indicator_id:
+            case Indicators.EGE.value:
+                indicator_data = self.get_ege_indicator(admission_id)
+            case Indicators.STUD_CONTINGENT.value:
+                indicator_data = self.get_student_contingent_indicator(admission_id)
+            case Indicators.CELEV_STUD_CONTINGENT.value:
+                indicator_data = self.get_celev_student_contingent_indicator(admission_id)
+            case _:
+                indicator_data = {
+                    'value': None,
+                    'score': None,
+                }
+
+        return indicator_data.get('value'), indicator_data.get('score')
 
     def get_ege_indicator(self, admission_id):
         if not self.ege_indicator:
             self.ege_indicator = self.monitor.get_ege_indicator()
-        ege = ege_indicator.get(admission_id)
+        indicator = self.ege_indicator.get(admission_id, {})
 
-        return ege
+        return indicator
+
+    def get_student_contingent_indicator(self, admission_id):
+        if not self.student_contingent_indicator:
+            self.student_contingent_indicator = self.monitor.get_student_contingent_indicator()
+        indicator = self.student_contingent_indicator.get(admission_id, {})
+
+        return indicator
+
+    def get_celev_student_contingent_indicator(self, admission_id):
+        if not self.celev_student_contingent_indicator:
+            self.celev_student_contingent_indicator = self.monitor.get_celev_student_contingent_indicator()
+        indicator = self.celev_student_contingent_indicator.get(admission_id, {})
+
+        return indicator
 
 
 class RopMonitor:
@@ -401,8 +479,8 @@ class RopMonitor:
             admission_rows_by_id[admission['admission_id']] = {
                 'admission_name': admission['admission_name'],
                 'admission_rop': admission['admission_rop'],
-                'avg_marks': admission['avg_marks'],
-                'avg_marks_score': score,
+                'value': admission['avg_marks'],
+                'score': score,
             }
 
         return admission_rows_by_id
@@ -490,24 +568,29 @@ class RopMonitor:
         admissions = sorted(admissions.values(), key=lambda d: d['admission_name'])
         for admission in admissions:
             if len(admission['admitted_students']) > 0:
-                contingent_students_ratio = round((len(admission['active_students']) + len(admission['finished_students'])) /
-                                         (len(admission['admitted_students']) -
-                                          (len(admission['went_to_other_group_students']) +
-                                           len(admission['went_to_academ_students'])) +
-                                          (len(admission['came_from_academ_students']) +
-                                           len(admission['restored_or_new_students']))
-                                          )
-                                         , 2)
+                denominator = (
+                        len(admission['admitted_students']) -
+                        (len(admission['went_to_other_group_students']) + len(admission['went_to_academ_students'])) +
+                        (len(admission['came_from_academ_students']) + len(admission['restored_or_new_students']))
+                )
+
+                numerator = len(admission['active_students']) + len(admission['finished_students'])
+
+                if denominator == 0:
+                    contingent_students_ratio = 0
+                else:
+                    contingent_students_ratio = round(numerator / denominator, 2)
 
                 course_year = self.get_current_course(admission["admission_year"])
 
-                score = self.get_ratio_score(admission["admission_period"], course_year, contingent_students_ratio,False)
+                score = self.get_ratio_score(admission["admission_period"], course_year, contingent_students_ratio,
+                                             False)
 
                 admission_rows_by_id[admission['admission_id']] = {
                     'admission_name': admission['admission_name'],
                     'admission_rop': admission['admission_rop'],
-                    'contingent_students_ratio': contingent_students_ratio,
-                    'contingent_students_ratio_score': score,
+                    'value': contingent_students_ratio,
+                    'score': score,
                 }
         return admission_rows_by_id
 
@@ -690,9 +773,9 @@ class RopMonitor:
         for admission in admissions:
             if len(admission['admitted_students']) > 0:
                 celev_students_ratio = round(
-                        (len(admission['active_celev_students']) + len(admission['finished_celev_students'])) /
-                        (len(admission['all_celev_students']))
-                , 2) if len(admission['all_celev_students']) > 0 else 0
+                    (len(admission['active_celev_students']) + len(admission['finished_celev_students'])) /
+                    (len(admission['all_celev_students']))
+                    , 2) if len(admission['all_celev_students']) > 0 else 0
 
                 course_year = self.get_current_course(admission["admission_year"])
                 score = self.get_ratio_score(admission["admission_period"], course_year, celev_students_ratio, True)
@@ -700,8 +783,8 @@ class RopMonitor:
                 admission_rows_by_id[admission['admission_id']] = {
                     'admission_name': admission['admission_name'],
                     'admission_rop': admission['admission_rop'],
-                    'celev_students_ratio': celev_students_ratio,
-                    'celev_students_ratio_score': score,
+                    'value': celev_students_ratio,
+                    'score': score,
                 }
         return admission_rows_by_id
 

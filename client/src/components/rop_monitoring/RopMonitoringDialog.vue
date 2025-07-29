@@ -36,6 +36,7 @@ async function createRopMonitoring() {
       position: "bottom-right",
       html: true,
     })
+    await ropMonitoringStore.getRopMonitoringList();
   }
 }
 
