@@ -467,11 +467,11 @@ class RopMonitor:
             admission['admission_finished'] = '+' if current_date > admission_date_end else '−'
 
             avg = admission['avg_marks']
-            if avg < 65:
+            if avg <= 65:
                 score = 0
             elif 66 <= avg <= 69:
                 score = 1
-            elif avg > 70:
+            elif avg >= 70:
                 score = 2
             else:
                 score = 0
