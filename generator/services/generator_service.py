@@ -29,11 +29,11 @@ class GeneratorService(object):
     @classmethod
     # @cache_function(timeout=60 * 1)
     def get_program_list(cls, user_mira_id, year=2025):
-        cache_key = f"rpd_get_program_list_{user_mira_id}"
-        if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
-            result = cache.get(cache_key)
-            if result:
-                return result
+        # cache_key = f"rpd_get_program_list_{user_mira_id}"
+        # if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
+        #     result = cache.get(cache_key)
+        #     if result:
+        #         return result
 
         data = AISServices.get_disciplines_by_person(user_mira_id, year)
 
@@ -150,7 +150,7 @@ class GeneratorService(object):
                 if require_my_accept or require_my_confirm:
                     item['status_verbose'] = "Требует моего согласования/утверждения"
 
-        cache.set(cache_key, result, 60)
+        # cache.set(cache_key, result, 60)
 
         return result
 
