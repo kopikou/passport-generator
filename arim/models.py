@@ -265,3 +265,21 @@ class RpdUsers(models.Model):
     isspoadm = models.CharField(max_length=1, choices=BoolChoice)
     can_upload = models.CharField(max_length=1, choices=BoolChoice)
 
+class UchNagr(models.Model):
+    name = models.CharField(max_length=50)
+    cperson = models.ForeignKey("CatPerson", on_delete=models.CASCADE, db_column="cperson")
+    discpl = models.CharField(max_length=1000)
+    grup = models.CharField(max_length=10)
+    hour = models.IntegerField()
+    sem = models.IntegerField()
+    metka = models.CharField(max_length=10)
+    direction = models.CharField(max_length=50)
+    realhour = models.FloatField()
+    doljnost = models.CharField(max_length=50)
+    done = models.BooleanField()
+    ddat = models.DateTimeField()
+
+    class Meta:
+        db_table = "person2uchnagr"
+        managed = False
+

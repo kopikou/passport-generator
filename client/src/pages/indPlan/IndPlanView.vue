@@ -6,17 +6,58 @@ import {storeToRefs} from "pinia";
 import _ from "lodash";
 import useMainStore from "stores/mainStore";
 
-const tab = ref('my')
+const planType = ref('myPlans')
+const typeOptions = [
+  {
+    label: 'Мои планы',
+    value: 'myPlans',
+  },
+  {
+    label: 'Все планы',
+    value: 'allPlans',
+  },
+]
+
+const planCategory = ref('currentPlans')
+const categoryOptions = [
+  {
+    label: 'Текущие',
+    value: 'currentPlans',
+  },
+  {
+    label: 'Архив',
+    value: 'oldPlans',
+  },
+]
+
 </script>
 
 <template>
-  <q-tabs
-    v-model="tab"
-    class="text-teal"
+  <div style="display: grid; grid-template-columns: auto auto; gap: 8px">
+    <q-select
+      v-model="planType"
+      :options="typeOptions"
+      label="Тип планов"
+      emit-value
+      map-options
+    />
+
+    <q-select
+      v-model="planCategory"
+      :options="categoryOptions"
+      label="Категория планов"
+      emit-value
+      map-options
+    />
+  </div>
+
+  <q-table
+    rows=""
   >
-    <q-tab name="my" label="Мой план" />
-    <q-tab name="all" label="Все планы" />
-  </q-tabs>
+
+  </q-table>
+
+
 </template>
 
 <style scoped>
