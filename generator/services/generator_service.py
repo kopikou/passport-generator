@@ -20,6 +20,8 @@ class GeneratorService(object):
     def reset_program_list_cache(cls, user_mira_id):
         key = f"rpd_get_program_list_{user_mira_id}_v1"
         cache.delete(key)
+        key = f"rpd_get_group_list_{user_mira_id}_v1"
+        cache.delete(key)
 
     @classmethod
     def reset_practice_list_cache(cls, user_mira_id):
@@ -29,11 +31,11 @@ class GeneratorService(object):
     @classmethod
     # @cache_function(timeout=60 * 1)
     def get_program_list(cls, user_mira_id, year=2025):
-        # cache_key = f"rpd_get_program_list_{user_mira_id}_v1"
-        # if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
-        #     result = cache.get(cache_key)
-        #     if result:
-        #         return result
+        cache_key = f"rpd_get_program_list_{user_mira_id}_v1"
+        if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
+            result = cache.get(cache_key)
+            if result:
+                return result
 
         data = AISServices.get_disciplines_by_person(user_mira_id, year)
 
@@ -150,14 +152,14 @@ class GeneratorService(object):
                 if require_my_accept or require_my_confirm:
                     item['status_verbose'] = "Требует моего согласования/утверждения"
 
-        # cache.set(cache_key, result, 60)
+        cache.set(cache_key, result, 60)
 
         return result
 
     @classmethod
     # @cache_function(timeout=60 * 1)
     def get_group_list(cls, user_mira_id, year=2025, txt_filter = '', status_filter = '', my_filter = 0):
-        cache_key = f"rpd_get_program_list_{user_mira_id}"
+        cache_key = f"rpd_get_group_list_{user_mira_id}_v1"
         if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
             result = cache.get(cache_key)
             if result:
