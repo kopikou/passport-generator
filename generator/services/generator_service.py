@@ -18,7 +18,7 @@ class GeneratorService(object):
 
     @classmethod
     def reset_program_list_cache(cls, user_mira_id):
-        key = f"rpd_get_program_list_{user_mira_id}"
+        key = f"rpd_get_program_list_{user_mira_id}_v1"
         cache.delete(key)
 
     @classmethod
@@ -29,7 +29,7 @@ class GeneratorService(object):
     @classmethod
     # @cache_function(timeout=60 * 1)
     def get_program_list(cls, user_mira_id, year=2025):
-        # cache_key = f"rpd_get_program_list_{user_mira_id}"
+        # cache_key = f"rpd_get_program_list_{user_mira_id}_v1"
         # if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
         #     result = cache.get(cache_key)
         #     if result:
