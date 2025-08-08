@@ -159,12 +159,6 @@ class GeneratorService(object):
     @classmethod
     # @cache_function(timeout=60 * 1)
     def get_group_list(cls, user_mira_id, year=2025, txt_filter = '', status_filter = '', my_filter = 0):
-        cache_key = f"rpd_get_group_list_{user_mira_id}_v1"
-        if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
-            result = cache.get(cache_key)
-            if result:
-                return result
-
         data = AISServices.get_groups_by_person(user_mira_id, year, txt_filter, my_filter)
 
         planlin_list = list(set(i['planlin'] for i in data))
@@ -245,7 +239,6 @@ class GeneratorService(object):
                     break
 
         result = sorted(result, key=lambda x: (x['abbr'].lower()))
-        cache.set(cache_key, result, 60)
 
         return result
 
