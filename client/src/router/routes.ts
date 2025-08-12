@@ -39,6 +39,7 @@ import ProfActivityView from "pages/activity/ProfActivityView.vue";
 import ProfActivityItem from "pages/activity/components/ProfActivityItem.vue";
 import RopMonitorView from "pages/rop/RopMonitorView.vue";
 import IndPlanView from "pages/indPlan/IndPlanView.vue";
+import IndPlanViewItem from "pages/indPlan/components/IndPlanViewItem.vue";
 
 const routes: RouteRecordRaw[] = [
   {
@@ -288,8 +289,8 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: "/ind_plan",
-    name: "IndPlanView",
-    component: IndPlanView,
+    name: "IndPlanViewItem",
+    component: IndPlanViewItem,
     // meta: {
     //   permissions: [rop],
     // },

@@ -487,23 +487,26 @@ class AISServices(object):
             SET @person_id = %s;
     
             SELECT
-                pun.discpl AS discpl,
-                pun.grup AS grup,
-                pun.HOUR AS hours_count,
-                pun.formcontr AS formcntr,
-                pun.direction AS direct,
-                pun.doljnost AS doljn_type,
-                pun.ddat AS ddat,
-                cp.doljnost_nauch AS doljn,
-                cp.rate AS rate,
-                ck.name AS kaf,
-                cf.name AS fac
+            pun.discpl AS discpl,
+            pun.grup AS grup,
+            pun.HOUR AS hours_count,
+            pun.formcontr AS formcntr,
+            pun.direction AS direct,
+            pun.doljnost AS doljn_type,
+            pun.ddat AS ddat,
+            pun.kurs AS kurs,
+            pun.sem AS sem,
+            cp.doljnost_nauch AS doljn,
+            cp.rate AS rate,
+            ck.name AS kaf,
+            cf.name AS fac
             FROM dbo.person2uchnagr pun
                 LEFT JOIN dbo.catperson cp ON pun.cperson = cp.id
                 LEFT JOIN dbo.catkaf ck ON ck.id = cp.ckaf
                 LEFT JOIN dbo.catfaculty cf ON cf.id = ck.cfac
             WHERE 
-                pun.cperson = @person_id 
+                pun.cperson = @person_id
+            ORDER BY pun.kurs, pun.sem
         """
         data = Mira.fetch(q, [int(person_id)])
 
