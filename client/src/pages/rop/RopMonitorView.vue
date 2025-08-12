@@ -120,6 +120,21 @@ const columns = [
     field: 'celev_stud_contingent_score',
     sortable: true
   },
+    {
+    name: 'npr_value',
+    align: 'center',
+    label: 'Доля НПР, принявших участие в опросах о кач-ве образ.',
+    field: 'npr_value',
+    sortable: true
+  },
+  {
+    name: 'npr_score',
+    align: 'center',
+    label: 'Баллы за долю НПР, принявших участие в опросах о кач-ве образ.',
+    field: 'npr_score',
+    sortable: true
+  },
+
 ]
 
 const pagination = ref({
@@ -172,6 +187,15 @@ function getCelevScoreStyle(value) {
   } else if (value === 1) {
     return 'bg-amber-12 text-white'
   } else if (value === 2) {
+    return 'bg-light-green-14 text-white'
+  }
+  return ''
+}
+
+function getNprScoreStyle(value) {
+  if (value === 0) {
+    return 'bg-pink-11 text-white'
+  } else if (value === 1) {
     return 'bg-light-green-14 text-white'
   }
   return ''
@@ -302,6 +326,11 @@ async function updateAdmissionList() {
             </template>
             <template v-slot:body-cell-celev_stud_contingent_score="props">
               <q-td :props="props" :class="getCelevScoreStyle(props.value)">
+                {{ props.value }}
+              </q-td>
+            </template>
+            <template v-slot:body-cell-npr_score="props">
+              <q-td :props="props" :class="getNprScoreStyle(props.value)">
                 {{ props.value }}
               </q-td>
             </template>

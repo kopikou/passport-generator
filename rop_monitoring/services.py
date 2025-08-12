@@ -1,8 +1,12 @@
+import os
 from datetime import datetime
+
+import pandas as pd
 import pendulum
 from app.utils import Mira
 from rop_monitoring.models import Indicators, MiraAdmissionKinds, AdmissionKinds, Indicator
-from rop_monitoring.sql_queries import MARKS_QUERY, STUDENTS_QUERY, ORDERS_QUERY, ADMISSIONS_QUERY
+from rop_monitoring.sql_queries import MARKS_QUERY, STUDENTS_QUERY, ORDERS_QUERY, ADMISSIONS_QUERY, NPR_QUERY, \
+    STUD_SOP_QUERY
 
 
 def safe_int(value):
@@ -72,6 +76,9 @@ class IndicatorsCalculator:
         self.ege_indicator = None
         self.student_contingent_indicator = None
         self.celev_student_contingent_indicator = None
+        self.npr_indicator = None
+        self.stud_sop_indicator = None
+        self.employer_indicator = None
 
     def get_indicator_value_score(self, admission_id, indicator_id):
         match indicator_id:
@@ -81,6 +88,10 @@ class IndicatorsCalculator:
                 indicator_data = self.get_student_contingent_indicator(admission_id)
             case Indicators.CELEV_STUD_CONTINGENT.value:
                 indicator_data = self.get_celev_student_contingent_indicator(admission_id)
+            case Indicators.NPR.value:
+                indicator_data = self.get_npr_indicator(admission_id)
+            # case Indicators.STUD_SOP.value:
+            #     indicator_data = self.get_stud_sop_indicator(admission_id)
             case _:
                 indicator_data = {
                     'value': None,
@@ -110,6 +121,19 @@ class IndicatorsCalculator:
 
         return indicator
 
+    def get_npr_indicator(self, admission_id):
+        if not self.npr_indicator:
+            self.npr_indicator = self.monitor.get_npr_indicator()
+        indicator = self.npr_indicator.get(admission_id, {})
+
+        return indicator
+
+    def get_stud_sop_indicator(self, admission_id):
+        if not self.stud_sop_indicator:
+            self.stud_sop_indicator = self.monitor.get_stud_sop_indicator()
+        indicator = self.stud_sop_indicator.get(admission_id, {})
+
+        return indicator
 
 class RopMonitor:
     def __init__(self) -> None:
@@ -787,6 +811,63 @@ class RopMonitor:
                     'score': score,
                 }
         return admission_rows_by_id
+
+    def get_npr_indicator(self):
+        person_cadmission = Mira.fetch(NPR_QUERY, [])
+        csv_path = os.path.join("templates", "prepod_who_go_survey_in_bitrix.csv")
+        df = pd.read_csv(csv_path)
+        data_dict = df.to_dict('records')
+
+        admissions = {}
+        for admission in self.admissions.values():
+            admission_id = admission['admission_id']
+            if admission_id not in admissions:
+                admissions[admission_id] = {
+                    'admission_id': admission_id,
+                    'admission_name': admission['admission_name'],
+                    'admission_rop': admission['admission_rop'],
+                    'total_persons': set(),
+                    'responded_persons': set(),
+                }
+
+        person_admission_map = {}
+        for person in person_cadmission:
+            mira_id = person['cperson']
+            admission_id = person['cadmission']
+
+            if mira_id not in person_admission_map:
+                person_admission_map[mira_id] = set()
+            person_admission_map[mira_id].add(admission_id)
+
+            if admission_id in admissions:
+                admissions[admission_id]['total_persons'].add(mira_id)
+
+        responded_mira_ids = {row['mira_id'] for row in data_dict}
+
+        for mira_id in responded_mira_ids:
+            if mira_id in person_admission_map:
+                for admission_id in person_admission_map[mira_id]:
+                    if admission_id in admissions:
+                        admissions[admission_id]['responded_persons'].add(mira_id)
+
+        admission_rows_by_id = {}
+        for admission in sorted(admissions.values(), key=lambda d: d['admission_name']):
+            total = len(admission['total_persons'])
+            responded = len(admission['responded_persons'])
+            ratio = round(responded / total,2) if total > 0 else 0
+            score = 1 if ratio >= 0.6 else 0
+            admission_rows_by_id[admission['admission_id']] = {
+                'admission_name': admission['admission_name'],
+                'admission_rop': admission['admission_rop'],
+                'value': ratio,
+                'score': score,
+            }
+
+        return admission_rows_by_id
+
+    def get_stud_sop_indicator(self):
+        person_cadmission = Mira.fetch(STUD_SOP_QUERY, [])
+
 
     def get_admissions(self):
         return self.admissions

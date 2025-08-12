@@ -370,6 +370,7 @@ export interface CopyOptions {
 export interface RopMonitoring {
   id: number,
   name: string,
+  year: number
 }
 
 export interface Indicator {
@@ -397,10 +398,19 @@ export interface Admission {
   abit_score_points: number,
   ratio_CR_points: number,
   ratio_celev_CR_points: number,
+  npr_score:number,
+  npr_points: number,
+  stud_sop_score:number,
+  stud_sop_points: number,
+  employer_score: number,
+  employer_points: number
 }
 
 export enum MonitoringIndicators {
   EGE = 4,
   STUD_CONTINGENT = 5,
   CELEV_STUD_CONTINGENT = 6,
+  NPR = 7,
+  STUD_SOP = 8,
+  EMPLOYER = 9,
 }

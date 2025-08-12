@@ -15,6 +15,7 @@ class RopMonitoringFilter(filters.FilterSet):
         model = RopMonitoring
         fields = [
             'name',
+            'year'
         ]
 
 

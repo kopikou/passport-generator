@@ -10,6 +10,7 @@ class RopMonitoringSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name',
+            'year'
         ]
 
 

@@ -219,3 +219,18 @@ CELEV_DOGS_QUERY = """
     FROM dbo.catdogcelev 
     ORDER BY id desc
 """
+
+
+NPR_QUERY = """
+    SELECT cadmission,cperson FROM dbo.person2uchnagr
+"""
+
+STUD_SOP_QUERY = """
+SELECT DISTINCT cs.name, lg1.cstud, lg1.cnewgrup, lg1.ddate, ISNULL(lg2.ddate, '01/01/3001')
+FROM dbo.[log$studgrup] lg1
+LEFT JOIN  dbo.[log$studgrup] lg2 ON lg1.cnewgrup = lg2.coldgrup AND lg1.cstud = lg2.cstud
+LEFT JOIN dbo.catstud cs ON cs.id = lg1.cstud
+WHERE lg1.cnewgrup IS NOT NULL 
+ AND lg1.cnewgrup = 'АСб-22-1' 
+ AND '01/01/2024' BETWEEN lg1.ddate AND COALESCE(lg2.ddate, cs.dateend,'01/01/3001')
+"""
