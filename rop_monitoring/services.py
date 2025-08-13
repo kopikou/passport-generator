@@ -3,10 +3,10 @@ from datetime import datetime
 
 import pandas as pd
 import pendulum
-from app.utils import Mira
+from app.utils import Mira, SOP
 from rop_monitoring.models import Indicators, MiraAdmissionKinds, AdmissionKinds, Indicator
 from rop_monitoring.sql_queries import MARKS_QUERY, STUDENTS_QUERY, ORDERS_QUERY, ADMISSIONS_QUERY, NPR_QUERY, \
-    STUD_SOP_QUERY
+    STUD_SOP_SUMM_QUERY, STUD_SOP_RES_QUERY
 
 
 def safe_int(value):
@@ -90,8 +90,8 @@ class IndicatorsCalculator:
                 indicator_data = self.get_celev_student_contingent_indicator(admission_id)
             case Indicators.NPR.value:
                 indicator_data = self.get_npr_indicator(admission_id)
-            # case Indicators.STUD_SOP.value:
-            #     indicator_data = self.get_stud_sop_indicator(admission_id)
+            case Indicators.STUD_SOP.value:
+                indicator_data = self.get_stud_sop_indicator(admission_id)
             case _:
                 indicator_data = {
                     'value': None,
@@ -866,7 +866,25 @@ class RopMonitor:
         return admission_rows_by_id
 
     def get_stud_sop_indicator(self):
-        person_cadmission = Mira.fetch(STUD_SOP_QUERY, [])
+        student_count_data = Mira.fetch(STUD_SOP_SUMM_QUERY, [])
+        student_results_data = SOP.fetch(STUD_SOP_RES_QUERY, [])
+        student_count = {item['cnewgrup']: item['summa'] for item in student_count_data}
+        student_result = {item['client_group']: item['summa'] for item in student_results_data}
+        admissions_rows_by_id = {}
+        for admission in self.admissions.values():
+            admission_name = admission['admission_name']
+            count = student_count.get(admission_name, 0)
+            res = student_result.get(admission_name, 0)
+            ratio = round(res / count, 2) if count > 0 else 0
+            ratio = min(ratio, 1.0)
+            score = 1 if ratio >= 0.6 else 0
+            admissions_rows_by_id[admission['admission_id']] = {
+                'admission_name': admission['admission_name'],
+                'admission_rop': admission['admission_rop'],
+                'value': ratio,
+                'score': score,
+            }
+        return admissions_rows_by_id
 
 
     def get_admissions(self):

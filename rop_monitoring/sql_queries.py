@@ -223,14 +223,29 @@ CELEV_DOGS_QUERY = """
 
 NPR_QUERY = """
     SELECT cadmission,cperson FROM dbo.person2uchnagr
+    WHERE ddat BETWEEN '10/09/2024' AND '10/09/2025'
 """
 
-STUD_SOP_QUERY = """
-SELECT DISTINCT cs.name, lg1.cstud, lg1.cnewgrup, lg1.ddate, ISNULL(lg2.ddate, '01/01/3001')
+STUD_SOP_SUMM_QUERY = """
+ SELECT LEFT(lg1.cnewgrup, LEN(lg1.cnewgrup) - 2) AS cnewgrup,
+    COUNT(DISTINCT CASE WHEN '01/01/2025' BETWEEN lg1.ddate AND COALESCE(lg2.ddate, cs.dateend,'01/01/3001') THEN lg1.cstud END) +
+    COUNT(DISTINCT CASE WHEN '01/07/2025' BETWEEN lg1.ddate AND COALESCE(lg2.ddate, cs.dateend,'01/01/3001') THEN lg1.cstud END) AS summa
 FROM dbo.[log$studgrup] lg1
-LEFT JOIN  dbo.[log$studgrup] lg2 ON lg1.cnewgrup = lg2.coldgrup AND lg1.cstud = lg2.cstud
+LEFT JOIN dbo.[log$studgrup] lg2 ON lg1.cnewgrup = lg2.coldgrup AND lg1.cstud = lg2.cstud
 LEFT JOIN dbo.catstud cs ON cs.id = lg1.cstud
-WHERE lg1.cnewgrup IS NOT NULL 
- AND lg1.cnewgrup = 'АСб-22-1' 
- AND '01/01/2024' BETWEEN lg1.ddate AND COALESCE(lg2.ddate, cs.dateend,'01/01/3001')
+WHERE lg1.cnewgrup IS NOT NULL AND lg1.cnewgrup <> ''
+AND '01/01/2025' BETWEEN lg1.ddate AND COALESCE(lg2.ddate, cs.dateend,'01/01/3001')
+GROUP BY LEFT(lg1.cnewgrup, LEN(lg1.cnewgrup) - 2)
 """
+
+STUD_SOP_RES_QUERY = """
+select cadmission, LEFT(client_group, LENGTH(client_group) - 2) AS client_group,
+        (COUNT(DISTINCT CASE WHEN s.year = 2025 AND s.semestr = 2 THEN mira_id END)  +
+        COUNT(DISTINCT CASE WHEN s.year = 2025 - 1 AND s.semestr = 1 THEN mira_id END)) as summa
+ from sop_surveyresult
+left join sop_surveydisciplineresult on sop_surveyresult.id = sop_surveydisciplineresult.survey_result_id
+ left join sop_survey s on sop_surveyresult.survey_id = s.id
+where survey_id in (select id from sop_survey where (year=2025 and semestr=2) or (year=(select 2025 - 1) and semestr=1))
+group by cadmission, LEFT(client_group, LENGTH(client_group) - 2)
+"""
+

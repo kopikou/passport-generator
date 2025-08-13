@@ -120,7 +120,7 @@ const columns = [
     field: 'celev_stud_contingent_score',
     sortable: true
   },
-    {
+  {
     name: 'npr_value',
     align: 'center',
     label: 'Доля НПР, принявших участие в опросах о кач-ве образ.',
@@ -132,6 +132,20 @@ const columns = [
     align: 'center',
     label: 'Баллы за долю НПР, принявших участие в опросах о кач-ве образ.',
     field: 'npr_score',
+    sortable: true
+  },
+  {
+    name: 'stud_sop_value',
+    align: 'center',
+    label: 'Доля обучающихся, принявших участие в опросах о кач-ве образ.',
+    field: 'stud_sop_value',
+    sortable: true
+  },
+  {
+    name: 'stud_sop_score',
+    align: 'center',
+    label: 'Баллы за долю обучающихся, принявших участие в опросах о кач-ве образ.',
+    field: 'stud_sop_score',
     sortable: true
   },
 
@@ -193,6 +207,15 @@ function getCelevScoreStyle(value) {
 }
 
 function getNprScoreStyle(value) {
+  if (value === 0) {
+    return 'bg-pink-11 text-white'
+  } else if (value === 1) {
+    return 'bg-light-green-14 text-white'
+  }
+  return ''
+}
+
+function getStudSopScoreStyle(value) {
   if (value === 0) {
     return 'bg-pink-11 text-white'
   } else if (value === 1) {
@@ -331,6 +354,11 @@ async function updateAdmissionList() {
             </template>
             <template v-slot:body-cell-npr_score="props">
               <q-td :props="props" :class="getNprScoreStyle(props.value)">
+                {{ props.value }}
+              </q-td>
+            </template>
+            <template v-slot:body-cell-stud_sop_score="props">
+              <q-td :props="props" :class="getStudSopScoreStyle(props.value)">
                 {{ props.value }}
               </q-td>
             </template>
