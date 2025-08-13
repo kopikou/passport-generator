@@ -15,7 +15,7 @@ const props = defineProps({
     required: true,
     type: Object as () => GeneratorListData
   },
-})
+});
 
 const generatorViewStore = useGeneratorViewStore();
 const {

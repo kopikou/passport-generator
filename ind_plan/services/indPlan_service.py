@@ -1,10 +1,10 @@
 from arim.services import AISServices
 
 
-class NagrService(object):
+class IndPlanService(object):
     @classmethod
-    def get_nagr(cls, user_mira_id):
-        data = AISServices.get_uch_nagr_b_person(user_mira_id)
+    def get_indPlan(cls, user_mira_id):
+        data = AISServices.get_indPlan_by_person(user_mira_id)
         discpl_list = list(set(i['discpl'] for i in data))
         groups_list = list(set(i['grup'] for i in data))
 
@@ -34,14 +34,10 @@ class NagrService(object):
         result_items_ob_rab = []
 
         for discpl in discpl_list:
-            items = []
-            podg_items = {
-                'Лаб': 0,
-                'Лек': 0,
-            }
+            uch_nagr_items = []
             for item in data:
                 if item['discpl'] == discpl:
-                    items.append({
+                    uch_nagr_items.append({
                         'grup': item['grup'],
                         'hours_count': item['hours_count'],
                         'formcntr': categories[item['formcntr']],
@@ -50,11 +46,35 @@ class NagrService(object):
                         'kurs': item['kurs'],
                         'discpl': item['discpl'],
                     })
-                    # podg_items[item['formcntr']] += item['hours_count']
 
             result_items_uch_nagr.append({
                 'discpl': discpl,
-                'items': items,
+                'items': uch_nagr_items,
             })
 
-        return result_items_uch_nagr
+        for item in data:
+            podg_items = {
+                'labs': 0,  # Проверка отчетов по лабам
+                'labs_and_practices': 0,  # Подготовка к лабам и практикам
+                'lectures': 0,  # Подготовка к лекциям
+            }
+
+            if item['formcntr'] in ['Лаб', 'Прак']:
+                podg_items['labs_and_practices'] += item['hours_count']
+                if item['formcntr'] == 'Лаб':
+                    podg_items['labs'] += item['hours_count']
+            elif item['formcntr'] == 'Лек':
+                podg_items['lectures'] += item['hours_count']
+
+            result_items_podg.append({
+                'discpl': item['discpl'],
+                'grup': item['grup'],
+                'kurs': item['kurs'],
+                'sem': item['sem'],
+                'items': podg_items,
+            })
+
+        return {
+            'uch_nagr': result_items_uch_nagr,
+            'podg': result_items_podg,
+        }
