@@ -481,7 +481,7 @@ class AISServices(object):
         return data
 
     @staticmethod
-    def get_indPlan_by_person(person_id):
+    def get_uch_nagr_by_person(person_id):
         q = f"""
             declare @person_id INT;
             SET @person_id = %s;

@@ -3,10 +3,11 @@ import {computed, onBeforeMount, ref, watch} from "vue";
 import {api} from "boot/axios";
 import LayoutHCF from "components/LayoutHCF.vue";
 import IndPlanUchNagrView from "pages/indPlan/components/IndPlanUchNagrView.vue";
-import IndPlanPodgView from "pages/indPlan/components/IndPlanPodgView.vue";
-import IndPlanUchMetWorkView from "pages/indPlan/components/IndPlanUchMetWorkView.vue";
+
 import IndPLanOtherWorksView from "pages/indPlan/components/IndPLanOtherWorksView.vue";
 import IndPlanWorkWithStudentsView from "pages/indPlan/components/IndPlanWorkWithStudentsView.vue";
+import IndPlanPreparingView from "pages/indPlan/components/IndPlanPreparingView.vue";
+import IndPlanEducMethodWorkView from "pages/indPlan/components/IndPlanEducMethodWorkView.vue";
 
 const tab = ref('uchNagr');
 
@@ -30,8 +31,8 @@ onBeforeMount(async() => {
         class="text-teal"
       >
         <q-tab name="uchNagr" label="Учебная нагрузка" />
-        <q-tab name="podg" label="Подготовка к учебным занятиям" />
-        <q-tab name="uchMetWork" label="Учебно-методическая работа" />
+        <q-tab name="preparing" label="Подготовка к учебным занятиям" />
+        <q-tab name="educMethodWork" label="Учебно-методическая работа" />
         <q-tab name="otherWorks" label="Иные виды работ" />
         <q-tab name="workWithStudents" label="Работа с обучающимися и абитуриентами" />
       </q-tabs>
@@ -39,8 +40,8 @@ onBeforeMount(async() => {
 
     <template #content>
       <ind-plan-uch-nagr-view v-if="tab === 'uchNagr'" :rows="indPlan.uch_nagr"/>
-      <ind-plan-podg-view v-if="tab === 'podg'" :rows="indPlan.podg"/>
-      <ind-plan-uch-met-work-view v-if="tab === 'uchMetWork'"/>
+      <ind-plan-preparing-view v-if="tab === 'preparing'" :rows="indPlan.preparing"/>
+      <ind-plan-educ-method-work-view v-if="tab === 'educMethodWork'"/>
       <ind-p-lan-other-works-view v-if="tab === 'otherWorks'"/>
       <ind-plan-work-with-students-view v-if ="tab === 'workWithStudents'"/>
     </template>

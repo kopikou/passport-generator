@@ -1,12 +1,14 @@
+from datetime import datetime
+
 from arim.services import AISServices
+from ind_plan.models import IndPlan
 
 
 class IndPlanService(object):
     @classmethod
-    def get_indPlan(cls, user_mira_id):
-        data = AISServices.get_indPlan_by_person(user_mira_id)
+    def get_indPlan(cls, user):
+        data = AISServices.get_uch_nagr_by_person(user.userprofile.mira_id)
         discpl_list = list(set(i['discpl'] for i in data))
-        groups_list = list(set(i['grup'] for i in data))
 
         categories = {
             'Лек': 'лекции',
@@ -28,10 +30,12 @@ class IndPlanService(object):
         }
 
         result_items_uch_nagr = []
-        result_items_podg = []
-        result_items_uch_met_rab = []
-        result_items_others = []
-        result_items_ob_rab = []
+        result_items_preparing = []
+        result_items_educ_method_work = []
+        result_items_other_works = []
+        result_items_work_with_students = []
+
+        ind_plan, created = IndPlan.objects.get_or_create(year=int(data[0]['ddat'].year), user_created=user)
 
         for discpl in discpl_list:
             uch_nagr_items = []
@@ -53,28 +57,28 @@ class IndPlanService(object):
             })
 
         for item in data:
-            podg_items = {
+            preparing_items = {
                 'labs': 0,  # Проверка отчетов по лабам
                 'labs_and_practices': 0,  # Подготовка к лабам и практикам
                 'lectures': 0,  # Подготовка к лекциям
             }
 
             if item['formcntr'] in ['Лаб', 'Прак']:
-                podg_items['labs_and_practices'] += item['hours_count']
+                preparing_items['labs_and_practices'] += item['hours_count']
                 if item['formcntr'] == 'Лаб':
-                    podg_items['labs'] += item['hours_count']
+                    preparing_items['labs'] += item['hours_count']
             elif item['formcntr'] == 'Лек':
-                podg_items['lectures'] += item['hours_count']
+                preparing_items['lectures'] += item['hours_count']
 
-            result_items_podg.append({
+            result_items_preparing.append({
                 'discpl': item['discpl'],
                 'grup': item['grup'],
                 'kurs': item['kurs'],
                 'sem': item['sem'],
-                'items': podg_items,
+                'items': preparing_items,
             })
 
         return {
             'uch_nagr': result_items_uch_nagr,
-            'podg': result_items_podg,
+            'preparing': result_items_preparing,
         }
