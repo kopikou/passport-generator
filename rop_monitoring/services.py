@@ -5,8 +5,7 @@ import pandas as pd
 import pendulum
 from app.utils import Mira, SOP
 from rop_monitoring.models import Indicators, MiraAdmissionKinds, AdmissionKinds, Indicator
-from rop_monitoring.sql_queries import MARKS_QUERY, STUDENTS_QUERY, ORDERS_QUERY, ADMISSIONS_QUERY, NPR_QUERY, \
-    STUD_SOP_SUMM_QUERY, STUD_SOP_RES_QUERY
+from rop_monitoring.sql_queries import MARKS_QUERY, STUDENTS_QUERY, ORDERS_QUERY, ADMISSIONS_QUERY
 
 
 def safe_int(value):
@@ -814,7 +813,8 @@ class RopMonitor:
         return admission_rows_by_id
 
     def get_npr_indicator(self):
-        person_cadmission = Mira.fetch(NPR_QUERY, [])
+        person_cadmission = self.get_person_uchnagr('09/10/2024', '09/10/2025')
+        # person_cadmission = Mira.fetch(NPR_QUERY, [])
         csv_path = os.path.join("templates", "prepod_who_go_survey_in_bitrix.csv")
         df = pd.read_csv(csv_path)
         data_dict = df.to_dict('records')
@@ -867,10 +867,8 @@ class RopMonitor:
         return admission_rows_by_id
 
     def get_stud_sop_indicator(self):
-        # student_count_data = Mira.fetch(STUD_SOP_SUMM_QUERY, [])
         student_count_data = self.get_cadmission_student_count('01/01/2025', '07/01/2025')
-        student_results_data = SOP.fetch(STUD_SOP_RES_QUERY, [])
-        # student_results_data = self.get_student_results_count(2025)
+        student_results_data = self.get_student_results_count(2025)
         student_count = {item['cnewgrup']: item['summa'] for item in student_count_data}
         student_result = {item['client_group']: item['summa'] for item in student_results_data}
         admissions_rows_by_id = {}
@@ -917,23 +915,15 @@ left join sop_surveydisciplineresult on sop_surveyresult.id = sop_surveydiscipli
 where survey_id in (select id from sop_survey where (year=%s and semestr=2) or (year=(select %s - 1) and semestr=1))
 group by cadmission, LEFT(client_group, LENGTH(client_group) - 2)
                 """)
-        r = SOP.fetch(query, [year])
+        r = SOP.fetch(query, [year, year, year, year])
         return r
 
     @classmethod
     def get_person_uchnagr(cls, start_date, start_end):
-        query = (f"""SELECT LEFT(lg1.cnewgrup, LEN(lg1.cnewgrup) - 2) AS cnewgrup,
-        COUNT(DISTINCT CASE WHEN %s BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) +
-        COUNT(DISTINCT CASE WHEN %s BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) AS summa
-    FROM dbo.[log$studgrup] lg1
-    LEFT JOIN dbo.[log$studgrup] lg2 ON lg1.cnewgrup = lg2.coldgrup AND lg1.cstud = lg2.cstud
-    LEFT JOIN dbo.catstud cs ON cs.id = lg1.cstud
-    WHERE lg1.cnewgrup IS NOT NULL AND lg1.cnewgrup <> ''
-    GROUP BY LEFT(lg1.cnewgrup, LEN(lg1.cnewgrup) - 2)
-    HAVING COUNT(DISTINCT CASE WHEN '%s' BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) +
-        COUNT(DISTINCT CASE WHEN '%s' BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) > 0
+        query = (f"""SELECT cadmission,cperson FROM dbo.person2uchnagr
+    WHERE ddat BETWEEN %s AND %s
                 """)
-        r = Mira.fetch(query, [start_date, start_end, start_date, start_end])
+        r = Mira.fetch(query, [start_date, start_end])
         return r
 
     def get_admissions(self):
