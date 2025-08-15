@@ -135,6 +135,7 @@ class IndicatorsCalculator:
 
         return indicator
 
+
 class RopMonitor:
     def __init__(self) -> None:
         super().__init__()
@@ -866,8 +867,10 @@ class RopMonitor:
         return admission_rows_by_id
 
     def get_stud_sop_indicator(self):
-        student_count_data = Mira.fetch(STUD_SOP_SUMM_QUERY, [])
+        # student_count_data = Mira.fetch(STUD_SOP_SUMM_QUERY, [])
+        student_count_data = self.get_cadmission_student_count('01/01/2025', '07/01/2025')
         student_results_data = SOP.fetch(STUD_SOP_RES_QUERY, [])
+        # student_results_data = self.get_student_results_count(2025)
         student_count = {item['cnewgrup']: item['summa'] for item in student_count_data}
         student_result = {item['client_group']: item['summa'] for item in student_results_data}
         admissions_rows_by_id = {}
@@ -886,6 +889,52 @@ class RopMonitor:
             }
         return admissions_rows_by_id
 
+    @classmethod
+    def get_cadmission_student_count(cls, start_date, start_end):
+        query = (f"""SELECT LEFT(lg1.cnewgrup, LEN(lg1.cnewgrup) - 2) AS cnewgrup,
+    COUNT(DISTINCT CASE WHEN %s BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) +
+    COUNT(DISTINCT CASE WHEN %s BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) AS summa
+FROM dbo.[log$studgrup] lg1
+LEFT JOIN dbo.[log$studgrup] lg2 ON lg1.cnewgrup = lg2.coldgrup AND lg1.cstud = lg2.cstud
+LEFT JOIN dbo.catstud cs ON cs.id = lg1.cstud
+WHERE lg1.cnewgrup IS NOT NULL AND lg1.cnewgrup <> ''
+AND cs.cstudstate IN (1,5,6,10,11,12,13,15,20,24,31,32,33,34)
+GROUP BY LEFT(lg1.cnewgrup, LEN(lg1.cnewgrup) - 2)
+HAVING COUNT(DISTINCT CASE WHEN %s BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) +
+    COUNT(DISTINCT CASE WHEN %s BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) > 0
+            """)
+        r = Mira.fetch(query, [start_date, start_end,start_date, start_end])
+        return r
+
+    @classmethod
+    def get_student_results_count(cls, year):
+        query = (f"""select cadmission, LEFT(client_group, LENGTH(client_group) - 2) AS client_group,
+        (COUNT(DISTINCT CASE WHEN s.year = %s AND s.semestr = 2 THEN mira_id END)  +
+        COUNT(DISTINCT CASE WHEN s.year = %s - 1 AND s.semestr = 1 THEN mira_id END)) as summa
+ from sop_surveyresult
+left join sop_surveydisciplineresult on sop_surveyresult.id = sop_surveydisciplineresult.survey_result_id
+ left join sop_survey s on sop_surveyresult.survey_id = s.id
+where survey_id in (select id from sop_survey where (year=%s and semestr=2) or (year=(select %s - 1) and semestr=1))
+group by cadmission, LEFT(client_group, LENGTH(client_group) - 2)
+                """)
+        r = SOP.fetch(query, [year])
+        return r
+
+    @classmethod
+    def get_person_uchnagr(cls, start_date, start_end):
+        query = (f"""SELECT LEFT(lg1.cnewgrup, LEN(lg1.cnewgrup) - 2) AS cnewgrup,
+        COUNT(DISTINCT CASE WHEN %s BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) +
+        COUNT(DISTINCT CASE WHEN %s BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) AS summa
+    FROM dbo.[log$studgrup] lg1
+    LEFT JOIN dbo.[log$studgrup] lg2 ON lg1.cnewgrup = lg2.coldgrup AND lg1.cstud = lg2.cstud
+    LEFT JOIN dbo.catstud cs ON cs.id = lg1.cstud
+    WHERE lg1.cnewgrup IS NOT NULL AND lg1.cnewgrup <> ''
+    GROUP BY LEFT(lg1.cnewgrup, LEN(lg1.cnewgrup) - 2)
+    HAVING COUNT(DISTINCT CASE WHEN '%s' BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) +
+        COUNT(DISTINCT CASE WHEN '%s' BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) > 0
+                """)
+        r = Mira.fetch(query, [start_date, start_end, start_date, start_end])
+        return r
 
     def get_admissions(self):
         return self.admissions

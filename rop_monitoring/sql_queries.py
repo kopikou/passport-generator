@@ -228,14 +228,16 @@ NPR_QUERY = """
 
 STUD_SOP_SUMM_QUERY = """
  SELECT LEFT(lg1.cnewgrup, LEN(lg1.cnewgrup) - 2) AS cnewgrup,
-    COUNT(DISTINCT CASE WHEN '01/01/2025' BETWEEN lg1.ddate AND COALESCE(lg2.ddate, cs.dateend,'01/01/3001') THEN lg1.cstud END) +
-    COUNT(DISTINCT CASE WHEN '01/07/2025' BETWEEN lg1.ddate AND COALESCE(lg2.ddate, cs.dateend,'01/01/3001') THEN lg1.cstud END) AS summa
+    COUNT(DISTINCT CASE WHEN '01/01/2025' BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) +
+    COUNT(DISTINCT CASE WHEN '01/07/2025' BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) AS summa
 FROM dbo.[log$studgrup] lg1
 LEFT JOIN dbo.[log$studgrup] lg2 ON lg1.cnewgrup = lg2.coldgrup AND lg1.cstud = lg2.cstud
 LEFT JOIN dbo.catstud cs ON cs.id = lg1.cstud
-WHERE lg1.cnewgrup IS NOT NULL AND lg1.cnewgrup <> ''
-AND '01/01/2025' BETWEEN lg1.ddate AND COALESCE(lg2.ddate, cs.dateend,'01/01/3001')
+WHERE lg1.cnewgrup IS NOT NULL AND lg1.cnewgrup <> '' 
+--AND '01/01/2025' BETWEEN lg1.ddate AND COALESCE(lg2.ddate, cs.dateend,'01/01/3001')
 GROUP BY LEFT(lg1.cnewgrup, LEN(lg1.cnewgrup) - 2)
+HAVING COUNT(DISTINCT CASE WHEN '01/01/2025' BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) +
+    COUNT(DISTINCT CASE WHEN '01/07/2025' BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) > 0
 """
 
 STUD_SOP_RES_QUERY = """
