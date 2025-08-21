@@ -41,9 +41,9 @@ onBeforeMount(async() => {
     <template #content>
       <ind-plan-uch-nagr-view v-if="tab === 'uchNagr'" :rows="indPlan.uch_nagr"/>
       <ind-plan-preparing-view v-if="tab === 'preparing'" :rows="indPlan.preparing"/>
-      <ind-plan-educ-method-work-view v-if="tab === 'educMethodWork'"/>
-      <ind-p-lan-other-works-view v-if="tab === 'otherWorks'"/>
-      <ind-plan-work-with-students-view v-if ="tab === 'workWithStudents'"/>
+      <ind-plan-educ-method-work-view v-if="tab === 'educMethodWork'" :rows="indPlan.preparing"/>
+      <ind-p-lan-other-works-view v-if="tab === 'otherWorks'" :rows="indPlan.preparing"/>
+      <ind-plan-work-with-students-view v-if ="tab === 'workWithStudents'" :rows="indPlan.work_with_students"/>
     </template>
   </layout-h-c-f>
 </template>

@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from arim.services import AISServices
-from ind_plan.models import IndPlan
+from ind_plan.models import IndPlan, PlanWork, PlanWorkType
 
 
 class IndPlanService(object):
@@ -29,13 +29,13 @@ class IndPlanService(object):
             'Маг': 'Маг',
         }
 
-        result_items_uch_nagr = []
-        result_items_preparing = []
-        result_items_educ_method_work = []
-        result_items_other_works = []
-        result_items_work_with_students = []
-
         ind_plan, created = IndPlan.objects.get_or_create(year=int(data[0]['ddat'].year), user_created=user)
+
+        result_items_uch_nagr = []
+        result_items_preparing = PlanWork.objects.all().filter(plan=ind_plan, type=PlanWorkType.preparing)
+        result_items_educ_method_work = PlanWork.objects.all().filter(plan=ind_plan, type=PlanWorkType.educ_method)
+        result_items_other_works = []
+        result_items_work_with_students = PlanWork.objects.all().filter(plan=ind_plan, type=PlanWorkType.work_with_students)
 
         for discpl in discpl_list:
             uch_nagr_items = []
@@ -56,29 +56,32 @@ class IndPlanService(object):
                 'items': uch_nagr_items,
             })
 
-        for item in data:
-            preparing_items = {
-                'labs': 0,  # Проверка отчетов по лабам
-                'labs_and_practices': 0,  # Подготовка к лабам и практикам
-                'lectures': 0,  # Подготовка к лекциям
-            }
-
-            if item['formcntr'] in ['Лаб', 'Прак']:
-                preparing_items['labs_and_practices'] += item['hours_count']
-                if item['formcntr'] == 'Лаб':
-                    preparing_items['labs'] += item['hours_count']
-            elif item['formcntr'] == 'Лек':
-                preparing_items['lectures'] += item['hours_count']
-
-            result_items_preparing.append({
-                'discpl': item['discpl'],
-                'grup': item['grup'],
-                'kurs': item['kurs'],
-                'sem': item['sem'],
-                'items': preparing_items,
-            })
+        # for item in data:
+        #     preparing_items = {
+        #         'labs': 0,  # Проверка отчетов по лабам
+        #         'labs_and_practices': 0,  # Подготовка к лабам и практикам
+        #         'lectures': 0,  # Подготовка к лекциям
+        #     }
+        #
+        #     if item['formcntr'] in ['Лаб', 'Прак']:
+        #         preparing_items['labs_and_practices'] += item['hours_count']
+        #         if item['formcntr'] == 'Лаб':
+        #             preparing_items['labs'] += item['hours_count']
+        #     elif item['formcntr'] == 'Лек':
+        #         preparing_items['lectures'] += item['hours_count']
+        #
+        #     result_items_preparing.append({
+        #         'discpl': item['discpl'],
+        #         'grup': item['grup'],
+        #         'kurs': item['kurs'],
+        #         'sem': item['sem'],
+        #         'items': preparing_items,
+        #     })
 
         return {
             'uch_nagr': result_items_uch_nagr,
             'preparing': result_items_preparing,
+            'educ_method': result_items_educ_method_work,
+            'other_works': result_items_other_works,
+            'work_with_students': result_items_work_with_students,
         }

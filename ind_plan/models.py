@@ -5,13 +5,13 @@ from django.contrib.auth.models import User
 # Create your models here.
 
 class PlanWorkType(models.TextChoices):
-    educ_method = 'Учебно-методическая работа'
-    preparing = 'Подготовка к учебным занятиям'
-    scientific_search = 'Учебно-исследовательская работа'
-    organization = 'Организационная работа'
-    upbringing = 'Работа по воспитанию обучающихся'
-    qualification = 'Повышение квалификации'
-    work_with_students = 'Работа с обучающимися и абитуриентами'
+    educ_method = 'Учебно-методическая работа', 'educ_method'
+    preparing = 'Подготовка к учебным занятиям', 'preparing'
+    scientific_research = 'Учебно-исследовательская работа', 'scientific_research'
+    organization = 'Организационная работа', 'organization'
+    upbringing = 'Работа по воспитанию обучающихся', 'upbringing'
+    qualification = 'Повышение квалификации', 'qualification'
+    work_with_students = 'Работа с обучающимися и абитуриентами', 'work_with_students'
 
 class IndPlan(models.Model):
     year = models.IntegerField()

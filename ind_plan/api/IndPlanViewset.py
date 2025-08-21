@@ -4,8 +4,10 @@ from rest_framework.viewsets import GenericViewSet
 
 from rest_framework.decorators import action
 
+import ind_plan
 from arim.models import UchNagr
-from ind_plan.models import Work
+from ind_plan.models import Work, PlanWorkType
+from ind_plan.serializers import WorkSerializer
 from ind_plan.services.indPlan_service import IndPlanService
 
 
@@ -14,6 +16,7 @@ class IndPlanViewSet(
     GenericViewSet,
 ):
     queryset = UchNagr.objects.all()
+    serializer_class = WorkSerializer
 
     @action(detail=False, methods=['get'], url_path='self')
     def get_indPlan(self, request, *args, **kwargs):
@@ -42,9 +45,18 @@ class IndPlanViewSet(
             'general_coefficients': general_coefficients,
         })
 
-    @action(detail=False, methods=['get'], url_path='get_works')
+    @action(detail=False, methods=['get'], url_path='get-works')
     def get_works(self, request, *args, **kwargs):
         work_type = self.request.GET.get('type')
         works = Work.objects.all().filter(type=work_type)
 
-        return Response(works)
+        data = []
+        for work in works:
+            data.append({
+                'id': work.id,
+                'name': work.name,
+                'hours_count': work.hours_count,
+                'type': PlanWorkType[work.type],
+            })
+
+        return Response(data = data)
