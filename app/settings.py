@@ -197,7 +197,7 @@ DONT_SAVE_RPD_FILES = False
 
 pendulum.set_locale("ru")
 
-ESSION_COOKIE_NAME = 'surp_session'
+SESSION_COOKIE_NAME = 'oop_session'
 
 CLIENT_ID = ''
 CLIENT_SECRET = ''
