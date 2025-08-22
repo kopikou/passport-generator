@@ -20,6 +20,7 @@ const useMainStore = defineStore("MainStore", () => {
 
   const rop = ref(false)
   const can_upload = ref(false)
+  const loginSite = ref()
 
   const router = useRouter();
 
@@ -42,7 +43,7 @@ const useMainStore = defineStore("MainStore", () => {
     csrf.value = r.data.csrf
     can_upload.value = r.data.can_upload
     rop.value = r.data.rop
-
+    loginSite.value = r.data.login_site
 
     api.defaults.headers.common['X-CSRFToken'] = r.data.csrf
 
@@ -56,6 +57,11 @@ const useMainStore = defineStore("MainStore", () => {
     }
   }
 
+  async function logout() {
+    let r = await api.get('/api/user/logout/')
+
+    location.href = `${loginSite.value}/api/user/logout/`
+  }
 
   return {
     username,
@@ -73,7 +79,10 @@ const useMainStore = defineStore("MainStore", () => {
     can_upload,
     rop,
     permissions,
+    loginSite,
+
     checkLogin,
+    logout,
   }
 })
 
