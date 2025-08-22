@@ -58,7 +58,7 @@ const useMainStore = defineStore("MainStore", () => {
   }
 
   async function logout() {
-    let r = await api.get('/api/user/logout/')
+    let r = await api.get('/api/accounts/logout/')
 
     location.href = `${loginSite.value}/api/user/logout/`
   }
