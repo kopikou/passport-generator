@@ -36,6 +36,7 @@ def user_logged_in_callback(sender, request, user, **kwargs):
               user.userprofile.middle_name = ' '.join(name[2:])
               user.userprofile.mira_id = mira_data.id
 
+              user.userprofile.is_student = False
               if 'teacher' in user.esiauser.types:
                      user.is_teacher = True
 
