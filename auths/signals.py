@@ -8,7 +8,6 @@ from auths.models import Permissions
 @receiver(user_logged_in)
 def user_logged_in_callback(sender, request, user, **kwargs):
 
-       mira_data = CatPerson.objects.get(id=user.esiauser.mira_id)
 
        if 'student' in user.esiauser.types:
               mira_data = CatStud.objects.get(id=user.esiauser.mira_id)
@@ -22,6 +21,8 @@ def user_logged_in_callback(sender, request, user, **kwargs):
               user.userprofile.save()
 
        elif 'employee' in user.esiauser.types:
+              mira_data = CatPerson.objects.get(id=user.esiauser.mira_id)
+
               name = mira_data.name.split(' ')
 
               user.userprofile.name = mira_data.name
