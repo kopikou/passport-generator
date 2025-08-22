@@ -11,6 +11,10 @@ def user_logged_in_callback(sender, request, user, **kwargs):
 
        if 'student' in user.esiauser.types:
               mira_data = CatStud.objects.get(id=user.esiauser.mira_id)
+
+              if not mira_data:
+                     return
+
               name = mira_data.name.split(' ')
 
               user.userprofile.name = mira_data.name
@@ -22,6 +26,9 @@ def user_logged_in_callback(sender, request, user, **kwargs):
 
        elif 'employee' in user.esiauser.types:
               mira_data = CatPerson.objects.get(id=user.esiauser.mira_id)
+
+              if not mira_data:
+                     return
 
               name = mira_data.name.split(' ')
 
