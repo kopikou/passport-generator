@@ -30,7 +30,7 @@ class Indicators(models.IntegerChoices):
 
 class RopMonitoring(TimestampsModel):
     name = models.TextField(verbose_name="Название мониторинга")
-    year = models.IntegerField(verbose_name="Год")
+    year = models.IntegerField(verbose_name="Год",null=True, blank=True)
 
     def __str__(self):
         return self.name
