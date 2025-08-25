@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'constance',
+    'esia_login',
 
     'rest_framework',
     'loginas',
@@ -196,6 +197,12 @@ SITE_URL = "https://app.istu.edu/oop"
 DONT_SAVE_RPD_FILES = False
 
 pendulum.set_locale("ru")
+
+SESSION_COOKIE_NAME = 'oop_session'
+
+CLIENT_ID = ''
+CLIENT_SECRET = ''
+LOGIN_SITE = ''
 
 from .local import *
 

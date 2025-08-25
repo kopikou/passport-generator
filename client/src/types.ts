@@ -171,6 +171,15 @@ export interface GeneratorListData {
   razrab_name: string
 }
 
+export interface GeneratorGroupsList {
+  abbr: string,
+  yr: number,
+  type: Array<number>,
+  plan_id: number,
+  plx_file: string,
+  statuses: {[key:string]: number};
+}
+
 export interface GeneratorPlanLineData {
   id: number,
   plan_id: number,

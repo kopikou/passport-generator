@@ -4,7 +4,7 @@ import useGeneratorViewStore from "stores/generatorViewStore";
 import {computed, onBeforeMount, ref, watch} from "vue";
 import {api} from "boot/axios";
 import {LocalStorage, SessionStorage, useQuasar} from "quasar";
-import {GeneratorListData} from "src/types";
+import {GeneratorListData, GeneratorGroupsList} from "src/types";
 import {storeToRefs} from "pinia";
 import _ from "lodash";
 import useMainStore from "stores/mainStore";
@@ -17,19 +17,14 @@ const {
 } = storeToRefs(mainStore)
 
 const $q = useQuasar()
-const listData = ref<GeneratorListData[]>([])
+// const listData = ref<GeneratorListData[]>([])
 
-const currentData = ref(null);
+const groupsList = ref<GeneratorGroupsList[]>([]);
 
-// const buttonsLoading = ref([
-//   false,
-//   false
-// ]);
-//
-// const filesLink = ref([
-//   'api/generator/get-rpd-done-info/',
-//   'api/generator/get-oop-done-info/'
-// ]);
+const currentProgram = ref([]);
+const currentPlan = ref<number>(0);
+
+const tableLoading = ref(false);
 
 const filesButtons = ref({
   rpd: {
@@ -105,82 +100,129 @@ const STATUSES = {
   },
 }
 
-const statusFilter = ref();
+const statusFilter = ref<string>('');
 const groupFilter = ref($q.localStorage.getItem("surp_groupfilter") ? $q.localStorage.getItem("surp_groupfilter") : '')
 const discplFilter = ref($q.localStorage.getItem("surp_discplfilter") ? $q.localStorage.getItem("surp_discplfilter") : '')
 const myFilter = ref(LocalStorage.getItem('surp_myfilter') || 0)
 const textFilter = ref<String>(LocalStorage.getItem('surp_rpdfilter') || '')
 
-const filteredListData = computed(() => {
+// const filteredListData = computed(() => {
+  // let txtFilter = textFilter.value.trim().toLowerCase();
+  // let data = _(groupsList.value)
+    // .filter(x => {
+    //   return (myFilter.value == 0 || x.type.includes('person'))
+    //     && ((txtFilter == '' || x.abbr.toLowerCase().includes(txtFilter))
+    //       || (txtFilter == '' || x.discode.toLowerCase().includes(txtFilter))
+    //       || (txtFilter == '' || x.discpl.toLowerCase().includes(txtFilter)))
+    //     && (!statusFilter.value || x.status_verbose == statusFilter.value)
+    // })
+    // .orderBy(x => [x.abbr, x.yr, x.discode], 'asc')
+    // .groupBy(x => `${x.abbr}-${x.yr.toString().slice(-2)}`)
+    // .toPairs()
+    // .map((item) => {
+    //   let items = item[1];
+    //   // items.forEach(x => x.status = STATUSES[x["status_verbose"]].index);
+    //   console.log(items)
+    //   return [
+    //     item[0],
+    //     {
+    //       abbr: item[0],
+    //       plx_file: items[0].plx_file,
+    //       // items: items,
+    //       types: _(items).map(x => x.type).flatten().uniq().value(),
+    //       statuses: _(items).orderBy(x => STATUSES[x["status_verbose"]].index).groupBy('status_verbose').value(),
+    //       plan_id: items[0].planid,
+    //     }
+    //   ]
+    // })
+    // .fromPairs()
+    // .value()
 
+  // if (txtFilter !== '' && currentData.value === null) {
+  //   const firstKey = Object.keys(data)[0];
+  //   currentData.value = data[firstKey];
+  // } else if (currentData.value && data[currentData.value.abbr]) {
+  //   currentData.value.items = data[currentData.value.abbr].items;
+  // } else if (currentData.value && !data[currentData.value.abbr]) {
+  //   currentData.value.items = [];
+  // }
+
+//   return groupsList
+// })
+
+const filteredProgramData = computed(() => {
   let txtFilter = textFilter.value.trim().toLowerCase();
-  let data = _(listData.value)
+  let data = _(currentProgram.value)
     .filter(x => {
       return (myFilter.value == 0 || x.type.includes('person'))
-        && ((txtFilter == '' || (x.razrab_name || '').toLowerCase().includes(txtFilter))
-          || (txtFilter == '' || x.abbr.toLowerCase().includes(txtFilter))
-          || (txtFilter == '' || x.discode.toLowerCase().includes(txtFilter))
-          || (txtFilter == '' || x.discpl.toLowerCase().includes(txtFilter)))
+        && ((txtFilter == '' || x.discode.toLowerCase().includes(txtFilter))
+          || (txtFilter == '' || x.discpl.toLowerCase().includes(txtFilter))
+          || (txtFilter == '' || x.razrab_name.toLowerCase().includes(txtFilter)))
         && (!statusFilter.value || x.status_verbose == statusFilter.value)
     })
-    .orderBy(x => [x.abbr, x.yr, x.discode], 'asc')
-    .groupBy(x => `${x.abbr}-${x.yr.toString().slice(-2)}`)
-    .toPairs()
-    .map((item) => {
-      let items = item[1];
-      items.forEach(x => x.status = STATUSES[x["status_verbose"]].index);
-      return [
-        item[0],
-        {
-          abbr: item[0],
-          plx_file: items[0].plx_file,
-          items: items,
-          types: _(items).map(x => x.type).flatten().uniq().value(),
-          statuses: _(items).orderBy(x => STATUSES[x["status_verbose"]].index).groupBy('status_verbose').value(),
-        }
-      ]
-    })
-    .fromPairs()
-    .value()
+    .value();
 
-  if (txtFilter !== '' && currentData.value === null) {
-    const firstKey = Object.keys(data)[0];
-    currentData.value = data[firstKey];
-  } else if (currentData.value && data[currentData.value.abbr]) {
-    currentData.value.items = data[currentData.value.abbr].items;
-  } else if (currentData.value && !data[currentData.value.abbr]) {
-    currentData.value.items = [];
-  }
+    data.forEach(x => x.status = STATUSES[x.status_verbose].index)
 
-  return data
-})
+    return data
+});
 
 function clearFilter() {
   textFilter.value = ''
 }
 
 
-async function getProgramData() {
+// async function getProgramData() {
+//   const loadProgram = $q.loading.show({
+//     group: 'programs',
+//     message: 'Обновление списка дисциплин',
+//   })
+
+async function getGroupsList() {
   const loadProgram = $q.loading.show({
     group: 'programs',
     message: 'Обновление списка дисциплин',
-  })
+  });
 
-  let r = await api.get("/api/generator/get-program-list/")
-  listData.value = r.data
+  let r = await api.get("/api/generator/get-group-list/", {
+    params: {
+      text: textFilter.value,
+      status: statusFilter.value,
+      my: myFilter.value,
+    },
+  });
+  groupsList.value = r.data;
 
-  loadProgram()
+  loadProgram();
 }
 
-watch([discplFilter, groupFilter, myFilter, textFilter], () => {
+async function getGroupProgram(planId: number) {
+  currentPlan.value = planId;
+
+  tableLoading.value = true;
+
+  const r = await api.get(`/api/generator/${planId}/get-group-program/`);
+  currentProgram.value = r.data;
+
+  tableLoading.value = false;
+}
+
+const updateDataFunction = _.debounce(async () => {
   $q.localStorage.setItem("surp_discplfilter", discplFilter.value)
   $q.localStorage.setItem("surp_groupfilter", groupFilter.value)
   $q.localStorage.setItem("surp_myfilter", myFilter.value)
   $q.localStorage.setItem("surp_rpdfilter", textFilter.value)
-})
+
+  await getGroupsList();
+
+  if (!currentPlan.value)
+    await getGroupProgram(groupsList.value[0].plan_id);
+}, 300)
+
+watch([discplFilter, groupFilter, myFilter, textFilter, statusFilter], updateDataFunction)
 
 onBeforeMount(async () => {
-  await getProgramData()
+  await getGroupsList()
   textFilter.value = ''
 })
 
@@ -237,7 +279,7 @@ const columns = [
 ];
 
 function rowClassFn (row) {
-  return `rpd-row status-${row.status}`;
+  return `rpd-row status-${STATUSES[row.status_verbose].index}`;
 }
 
 </script>
@@ -297,7 +339,7 @@ function rowClassFn (row) {
       </div>
     </template>
     <template #content>
-         <div v-if="_.size(filteredListData) > 0"
+         <div v-if="_.size(groupsList) > 0"
            style="display: grid; grid-template-columns: 300px 1fr; overflow: hidden;height: 100%"
       >
         <q-list
@@ -305,16 +347,16 @@ function rowClassFn (row) {
           separator
         >
           <q-item
-            v-for="(value, key) in filteredListData"
+            v-for="value in groupsList"
             style="display: grid; gap: 8px;"
             clickable
-            :active="currentData && currentData.abbr === key"
-            @click="currentData = value"
+            :active="currentPlan === value.plan_id"
+            @click="getGroupProgram(value.plan_id)"
             active-class="my-active-item"
           >
             <div style="display: grid; grid-template-columns: 1fr auto">
               <div style="display: flex; justify-content: left; font-size: 1.25rem;">
-                {{ key }}
+                {{ `${value.abbr}-${value.yr.toString().slice(-2)}` }}
               </div>
 
               <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: right; align-items: center">
@@ -329,20 +371,22 @@ function rowClassFn (row) {
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr auto">
-              <div>
-                <q-badge
-                  :text-color="STATUSES[status].textColor"
-                  :color="STATUSES[status].color"
-                  v-for="(status_items, status) in value.statuses"
-                  style="margin-right: 4px;"
-                >
-                  {{ status_items.length }}
-                  <q-tooltip
-                    style="font-size: 12px; background-color: white; color: black"
+              <div class="row">
+                <div v-for="(status_value, status) in value.statuses">
+                  <q-badge
+                    :text-color="STATUSES[status].textColor"
+                    :color="STATUSES[status].color"
+                    v-if="status_value > 0"
+                    style="margin-right: 4px;"
                   >
-                    {{ status }}: {{ status_items.length }}
-                  </q-tooltip>
-                </q-badge>
+                    {{ status_value }}
+                    <q-tooltip
+                      style="font-size: 12px; background-color: white; color: black"
+                    >
+                      {{ status }}: {{ status_value }}
+                    </q-tooltip>
+                  </q-badge>
+                </div>
               </div>
 
               <a :href="value.plx_file">*.plx</a>
@@ -352,29 +396,35 @@ function rowClassFn (row) {
         </q-list>
 
            <q-table
-             v-if="currentData && currentData.items !== []"
-            :rows="currentData.items"
-            :columns="columns"
-            virtual-scroll
-            style="overflow-y: auto; height: 100%;"
-            wrap-cells
-            row-key="discode"
-            flat
-            bordered
-            separator="cell"
-            :rows-per-page-options="[0]"
-            :table-row-class-fn="rowClassFn"
-            table-header-class="table-header"
+              v-if="currentPlan !== 0"
+              :rows="filteredProgramData"
+              :columns="columns"
+              virtual-scroll
+              style="overflow-y: auto; height: 100%;"
+              wrap-cells
+              row-key="discode"
+              flat
+              bordered
+              separator="cell"
+              :rows-per-page-options="[0]"
+              :table-row-class-fn="rowClassFn"
+              table-header-class="table-header"
+              :loading="tableLoading"
+              loading-label="Загрузка"
           >
             <template  v-slot:body="props">
               <q-tr :props="props">
-                <generator-list-view-item @data-updated="getProgramData" :item="props.row"/>
+                <generator-list-view-item @data-updated="getGroupProgram" :item="props.row"/>
               </q-tr>
             </template>
+
+             <template v-slot:loading>
+                <q-inner-loading showing color="primary" />
+              </template>
           </q-table>
 
         <span
-          v-if="!currentData"
+          v-else
           style="align-content: center; text-align: center; font-size: 20px; font-weight: bold"
         >
           Выберите нужный раздел слева

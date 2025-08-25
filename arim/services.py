@@ -261,6 +261,105 @@ class AISServices(object):
         return data
 
     @staticmethod
+    # @cache_function(timeout=10 * 1)
+    def get_groups_by_person(id, year, txt_filter = '', my_filter = 0):
+        q = f"""
+                declare @id INT;
+                declare @year INT;
+                declare @txt_filter VARCHAR(50);
+                declare @my_filter INT;
+                declare @cfacADM int;
+                DECLARE @adm varchar;
+                SET @id = %s;
+                SET @year = %s;
+                SET @txt_filter = %s;
+                SET @my_filter = %s;
+                (SELECT @cfacADM = cfac, @adm = isadmin from rpdusers where cperson = @id)
+
+                SELECT
+                DISTINCT
+				p.abbrprofile as abbr
+				, u.id AS planlin 
+				, COUNT(CASE WHEN u.cperson = @id THEN 1 END) AS person_type
+				, COUNT(CASE WHEN ck.czav = @id THEN 1 END) AS zav_type
+				, COUNT(CASE WHEN p.cperson = @id THEN 1 END) AS rop_type
+				, COUNT(CASE WHEN f.cdean = @id THEN 1 END) AS fac_type
+				, MIN(u.planid) as plan_id
+                FROM uchplan_lines u
+                    LEFT JOIN uchplan_discpl d ON u.disid = d.id
+                    LEFT JOIN uchplan_plan p ON p.id = u.planid
+                    LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
+                    LEFT JOIN dbo.catkaf ck ON  ck.id = u.ckaf
+                    LEFT JOIN dbo.catfaculty f ON f.id = a.cfac
+                    LEFT JOIN dbo.catperson cp1 ON cp1.id = u.cperson
+                WHERE 
+                    u.cperson IS NOT NULL 
+                    AND p.fordel = 'f' 
+                    AND u.fordel = 'f' 
+					AND (
+					    ( @my_filter = 0 
+                            AND (
+                            u.cperson = @id
+                            OR ck.czav = @id
+                            OR f.cdean = @id
+                            OR p.cperson = @id
+                            OR ((@cfacADM is not null and a.cfac = @cfacADM) OR @adm = 't')
+                            )
+                        )
+                        OR u.cperson = @id
+                    )
+                    AND p.startyear = @year
+                    AND ( 
+                        p.abbrprofile LIKE @txt_filter
+                        OR d.name LIKE @txt_filter
+                        OR cp1.name LIKE @txt_filter
+                        OR u.newdisid LIKE @txt_filter
+                    )
+				GROUP BY p.abbrprofile, u.id
+                """
+
+        data = Mira.fetch(q, [int(id), int(year), str('%' + txt_filter + '%'), int(my_filter)])
+
+        return data
+
+    @staticmethod
+    # @cache_function(timeout=10 * 1)
+    def get_programs_by_plan(plan_id):
+        q = f"""
+                declare @plan_id INT;
+                SET @plan_id = %s;
+                
+                SELECT
+                DISTINCT
+                d.name as discpl
+                , u.id as planlin
+                , d.id as id_discpl
+                , u.newdisid
+                , u.cperson AS razrab
+                , ck.czav AS zavkaf
+                , p.cperson AS rop
+                , f.cdean AS fac
+    			, ck.zav AS zavkaf_name
+    			, f.dean AS fac_name
+    			, cp1.name AS razrab_name
+    			, cp2.name AS rop_name
+                FROM uchplan_lines u
+                    LEFT JOIN uchplan_discpl d ON u.disid = d.id
+                    LEFT JOIN uchplan_plan p ON p.id = u.planid
+                    LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
+                    LEFT JOIN dbo.catkaf ck ON  ck.id = u.ckaf
+                    LEFT JOIN dbo.catfaculty f ON f.id = a.cfac
+                    LEFT JOIN dbo.catperson cp1 ON cp1.id = u.cperson
+                    LEFT JOIN dbo.catperson cp2 ON cp2.id = p.cperson
+                WHERE 
+                    u.planid = @plan_id
+                    AND u.cperson IS NOT NULL 
+                """
+        data = Mira.fetch(q, [int(plan_id)])
+
+        return data
+
+    @staticmethod
     def get_asp_old_plans(id):
 
         query = f"""

@@ -21,6 +21,7 @@ const {
   can_upload,
   rop,
   FORCE_SCRIPT_NAME,
+  loginSite,
 } = storeToRefs(mainStore)
 
 
@@ -102,10 +103,10 @@ onBeforeMount(async () => {
               <q-item clickable :href="`${FORCE_SCRIPT_NAME}/admin/`" v-if="isStaff">
                 <q-item-section>Админка</q-item-section>
               </q-item>
-              <q-item clickable href="https://int.istu.edu/">
-                <q-item-section>Назад в кампус</q-item-section>
+              <q-item clickable :href="loginSite">
+                <q-item-section>Назад к выбору сервиса</q-item-section>
               </q-item>
-              <q-item clickable :href="`${FORCE_SCRIPT_NAME}/api/accounts/logout/`">
+              <q-item clickable @click="mainStore.logout">
                 <q-item-section>Выйти</q-item-section>
               </q-item>
               <q-separator></q-separator>

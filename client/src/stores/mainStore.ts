@@ -20,6 +20,7 @@ const useMainStore = defineStore("MainStore", () => {
 
   const rop = ref(false)
   const can_upload = ref(false)
+  const loginSite = ref()
 
   const router = useRouter();
 
@@ -42,7 +43,7 @@ const useMainStore = defineStore("MainStore", () => {
     csrf.value = r.data.csrf
     can_upload.value = r.data.can_upload
     rop.value = r.data.rop
-
+    loginSite.value = r.data.login_site
 
     api.defaults.headers.common['X-CSRFToken'] = r.data.csrf
 
@@ -51,10 +52,16 @@ const useMainStore = defineStore("MainStore", () => {
       baseTag.href = FORCE_SCRIPT_NAME.value;
 
     if (!isAuthenticated.value) {
-      document.location.href = `https://int.istu.edu/oauth/authorize/?client_id=${BITRIX_CLIENT_ID.value}&state=next:${encodeURIComponent(window.location.href.toString())}`;
+      // document.location.href = `https://int.istu.edu/oauth/authorize/?client_id=${BITRIX_CLIENT_ID.value}&state=next:${encodeURIComponent(window.location.href.toString())}`;
+      document.location.href = `${FORCE_SCRIPT_NAME.value}/api/esia/login/`
     }
   }
 
+  async function logout() {
+    let r = await api.get('/api/accounts/logout/')
+
+    location.href = `${loginSite.value}/api/user/logout/`
+  }
 
   return {
     username,
@@ -72,7 +79,10 @@ const useMainStore = defineStore("MainStore", () => {
     can_upload,
     rop,
     permissions,
+    loginSite,
+
     checkLogin,
+    logout,
   }
 })
 

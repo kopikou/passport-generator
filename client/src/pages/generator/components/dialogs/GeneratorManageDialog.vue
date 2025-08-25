@@ -62,7 +62,7 @@ watch([meeting, protocolNumber, protocolDate], () => {
 })
 
 const canSendToRefill = computed(() => {
-    return props.data.status == 4 &&
+    return props.data.status == 3 &&
       (
         (props.data.type.includes('rop') && !props.data.user_confirmed)
         || (props.data.type.includes('zav') && !props.data.user_accepted)
@@ -205,7 +205,7 @@ function getStatusColor(status) {
       </q-card-section>
 
       <q-card-section style="display: flex; gap: 8px; justify-content: space-between">
-        <template v-if="data.status == 4 || data.status == 6">
+        <template v-if="data.status == 3 || data.status == 6">
           <q-btn v-if="data.type.includes('rop') && data.type.includes('zav')" flat class="bg-light-green-1"
                  color="light-green-8"
                  @click="onAcceptConfirmButtonClick" :disable="!!data.user_accepted">
