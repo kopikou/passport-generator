@@ -38,7 +38,7 @@ import GeneratorMainView from "pages/generator/components/GeneratorMainView.vue"
 import ProfActivityView from "pages/activity/ProfActivityView.vue";
 import ProfActivityItem from "pages/activity/components/ProfActivityItem.vue";
 import RopMonitorView from "pages/rop/RopMonitorView.vue";
-import IndPlanView from "pages/indPlan/IndPlanView.vue";
+import IndPlanListView from "pages/indPlan/IndPlanListView.vue";
 import IndPlanViewItem from "pages/indPlan/IndPlanViewItem.vue";
 
 const routes: RouteRecordRaw[] = [
@@ -289,14 +289,23 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: "/ind_plan",
-    name: "IndPlanViewItem",
-    component: IndPlanViewItem,
+    name: "IndPlanView",
     // meta: {
     //   permissions: [rop],
     // },
-    // children: [
-    //
-    // ]
+    children: [
+      {
+        path: '',
+        name: "IndPlanListView",
+        component: IndPlanListView,
+      },
+      {
+        path: ':id',
+        name: "IndPlanViewItem",
+        component: IndPlanViewItem,
+        props: true,
+      },
+    ],
   },
   {
     path: "/plx",

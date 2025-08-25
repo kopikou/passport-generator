@@ -9,12 +9,18 @@ import IndPlanWorkWithStudentsView from "pages/indPlan/components/IndPlanWorkWit
 import IndPlanPreparingView from "pages/indPlan/components/IndPlanPreparingView.vue";
 import IndPlanEducMethodWorkView from "pages/indPlan/components/IndPlanEducMethodWorkView.vue";
 
+const props = defineProps({
+  id: {
+    required: true,
+  }
+})
+
 const tab = ref('uchNagr');
 
 const indPlan = ref([]);
 
 async function getIndPlan(){
-  let r = await api.get(`/api/indplan/self/`);
+  let r = await api.get(`/api/indplan/${props.id}/`);
   indPlan.value = r.data;
 }
 

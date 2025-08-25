@@ -35,13 +35,18 @@ onBeforeMount(async() => {
 })
 
 async function addWork() {
-  props.rows.push(workToAdd.value);
+  props.rows.push({
+    name: workToAdd.value,
+    type: 'workWithStudents',
+  });
   workToAdd.value = null;
 }
 </script>
 
 <template>
-<div style="display:grid; grid-template-columns: 2fr 2fr 1fr; gap: 12px; padding: 12px">
+<div style="display:grid; grid-template-columns: 5fr 1fr; gap: 12px; padding: 12px">
+    <q-input outlined label="Наименогвание работы" v-model="workToAdd"
+         clearable @clear="clearFilter"/>
 
      <q-btn
        label="Добавить"

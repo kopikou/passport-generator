@@ -1,11 +1,110 @@
 <script setup lang="ts">
+import {computed, onBeforeMount, ref, watch} from "vue";
+import {api} from "boot/axios";
+import {LocalStorage, SessionStorage, useQuasar} from "quasar";
+import {storeToRefs} from "pinia";
+import _ from "lodash";
+import useMainStore from "stores/mainStore";
+
+const planType = ref('myPlans');
+const typeOptions = [
+  {
+    label: 'Мои планы',
+    value: 'myPlans',
+  },
+  {
+    label: 'Все планы',
+    value: 'allPlans',
+  },
+];
+
+const planCategory = ref('currentPlans');
+const categoryOptions = [
+  {
+    label: 'Текущие',
+    value: 'currentPlans',
+  },
+  {
+    label: 'Архив',
+    value: 'oldPlans',
+  },
+];
+
+const indPlanList = ref([]);
+
+async function getIndPlans(){
+  let r = await api.get(`/api/indplan/`);
+  indPlanList.value = r.data;
+}
+
+onBeforeMount(async() => {
+  await getIndPlans();
+});
+
+const columns = [
+  { name: 'author', align: 'center', label: 'Автор', field: 'author', sortable: true },
+  { name: 'year', align: 'center', label: 'Год', field: 'year', sortable: true },
+  { name: 'status', align: 'center', label: 'Статус', field: 'status', sortable: true },
+];
 
 </script>
 
 <template>
+  <div style="display: grid; grid-template-columns: auto auto; gap: 8px">
+    <q-select
+      v-model="planType"
+      :options="typeOptions"
+      label="Тип планов"
+      emit-value
+      map-options
+    />
+
+    <q-select
+      v-model="planCategory"
+      :options="categoryOptions"
+      label="Категория планов"
+      emit-value
+      map-options
+    />
+  </div>
+
+  <q-table
+    :rows="indPlanList"
+    :columns="columns"
+    virtual-scroll
+    style="overflow-y: auto; height: 100%;"
+    wrap-cells
+    flat
+    bordered
+    separator="cell"
+    :rows-per-page-options="[0]"
+    table-header-class="table-header"
+  >
+    <template v-slot:body="props">
+      <q-tr :props="props">
+        <q-td key="author">
+           <router-link :to="`/ind_plan/${props.row.id}/`">{{ props.row.user_created.last_name }} {{ props.row.user_created.first_name }} {{ props.row.user_created.middle_name }}</router-link>
+        </q-td>
+
+        <q-td key="year">
+           {{ props.row.year }}
+        </q-td>
+
+        <q-td key="status">
+          1
+        </q-td>
+      </q-tr>
+    </template>
+  </q-table>
+
 
 </template>
 
-<style scoped>
-
+<style scoped lang="scss">
+  :deep(.table-header) {
+    position: sticky;
+    z-index: 1;
+    top: 0;
+    background: $blue-grey-2;
+  }
 </style>

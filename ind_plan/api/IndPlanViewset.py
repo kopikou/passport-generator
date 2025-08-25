@@ -1,4 +1,4 @@
-from rest_framework.mixins import RetrieveModelMixin
+from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, ListModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
@@ -6,21 +6,30 @@ from rest_framework.decorators import action
 
 import ind_plan
 from arim.models import UchNagr
-from ind_plan.models import Work, PlanWorkType
-from ind_plan.serializers import WorkSerializer
+from ind_plan.models import Work, PlanWorkType, IndPlan
+from ind_plan.serializers import WorkSerializer, IndPlanSerializer, IndPlanListSerializer
 from ind_plan.services.indPlan_service import IndPlanService
 
 
 class IndPlanViewSet(
     RetrieveModelMixin,
+    UpdateModelMixin,
+    ListModelMixin,
     GenericViewSet,
 ):
-    queryset = UchNagr.objects.all()
-    serializer_class = WorkSerializer
+    queryset = IndPlan.objects.all()
 
-    @action(detail=False, methods=['get'], url_path='self')
-    def get_indPlan(self, request, *args, **kwargs):
-        data = IndPlanService.get_indPlan(self.request.user)
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return IndPlanSerializer
+        elif self.action == "get_works":
+            return WorkSerializer
+        else:
+            return IndPlanListSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        data = IndPlanService.get_indPlan(pk)
         return Response(data)
 
     @action(detail=False, methods=['get'], url_path='preparing_coefficients')
