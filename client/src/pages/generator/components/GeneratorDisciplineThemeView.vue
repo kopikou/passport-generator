@@ -99,7 +99,7 @@ async function prepareOrderBySemester(semester: number) {
 }
 
 async function fieldUp(item) {
-  let dontChange =  disciplineThemes.value.filter(x => x.semester != item.semester);
+  let dontChange =  disciplineThemes.value.filter(x => x.semester != item.semester) || [];
 
   let currentSemester = disciplineThemes.value.filter(x => x.semester == item.semester);
   let newData = currentSemester.filter(x => x.num < item.num - 1 && x != item).concat(
@@ -109,13 +109,14 @@ async function fieldUp(item) {
 
   disciplineThemes.value = dontChange.concat(newData);
 
+
   await api.post(`/api/generator/${activeRpdId.value}/set-themes-order/`, {
-    order: newData.map(x => x.id)
+    order: _.orderBy(newData.map(x => x.id), 'num')
   })
 }
 
 async function fieldDown(item) {
-  let dontChange =  disciplineThemes.value.filter(x => x.semester != item.semester);
+  let dontChange =  disciplineThemes.value.filter(x => x.semester != item.semester) || [];
 
   let currentSemester = disciplineThemes.value.filter(x => x.semester == item.semester);
   let newData = currentSemester.filter(x => x.num <= item.num + 1 && x != item).concat(
@@ -125,8 +126,9 @@ async function fieldDown(item) {
 
   disciplineThemes.value = dontChange.concat(newData);
 
+
   await api.post(`/api/generator/${activeRpdId.value}/set-themes-order/`, {
-    order: newData.map(x => x.id)
+    order: _.orderBy(newData.map(x => x.id), 'num')
   })
 }
 
@@ -196,7 +198,7 @@ watchEffect(() => {
                  class="theme-container__body__cell text-subtitle1 text-center items-center"
                  :class="getRowColor(item.num)">
               <div>
-                {{ item.num }}
+                {{ item.num }} {{item.id}}
               </div>
               <div>
                 {{ item.name }}
