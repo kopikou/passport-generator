@@ -52,15 +52,15 @@ const useMainStore = defineStore("MainStore", () => {
       baseTag.href = FORCE_SCRIPT_NAME.value;
 
     if (!isAuthenticated.value) {
-      // document.location.href = `https://int.istu.edu/oauth/authorize/?client_id=${BITRIX_CLIENT_ID.value}&state=next:${encodeURIComponent(window.location.href.toString())}`;
-      document.location.href = `${FORCE_SCRIPT_NAME.value}/api/esia/login/`
+      document.location.href = `https://int.istu.edu/oauth/authorize/?client_id=${BITRIX_CLIENT_ID.value}&state=next:${encodeURIComponent(window.location.href.toString())}`;
+      // document.location.href = `${FORCE_SCRIPT_NAME.value}/api/esia/login/`
     }
   }
 
   async function logout() {
     let r = await api.get('/api/accounts/logout/')
 
-    location.href = `${loginSite.value}/api/user/logout/`
+    // location.href = `${loginSite.value}/api/user/logout/`
   }
 
   return {
