@@ -111,7 +111,7 @@ async function fieldUp(item) {
 
 
   await api.post(`/api/generator/${activeRpdId.value}/set-themes-order/`, {
-    order: _.orderBy(newData.map(x => x.id), 'num')
+    order: _(newData).orderBy(x => x.num).map(x => x.id)
   })
 }
 
@@ -128,7 +128,7 @@ async function fieldDown(item) {
 
 
   await api.post(`/api/generator/${activeRpdId.value}/set-themes-order/`, {
-    order: _.orderBy(newData.map(x => x.id), 'num')
+    order: _(newData).orderBy(x => x.num).map(x => x.id)
   })
 }
 
