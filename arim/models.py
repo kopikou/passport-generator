@@ -9,6 +9,15 @@ class BoolChoice(TextChoices):
     t = 't', "True"
     f = 'f', "False"
 
+class CatStud(models.Model):
+    class Meta:
+        db_table = "catstud"
+        managed = False
+
+    name = models.CharField(max_length=128)
+    ckaf = models.ForeignKey("CatKaf", on_delete=models.CASCADE, db_column="ckaf")
+
+
 class CatPerson(models.Model):
     class Meta:
         db_table = "catperson"

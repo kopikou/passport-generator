@@ -5,20 +5,23 @@ from django.conf import settings
 from django.core.cache import cache
 
 from app.utils import cache_function
-from arim.models import CatPerson, RpdUsers
+from arim.models import CatPerson, RpdUsers, Catadmission
 from arim.services import AISServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, DefaultsResources, PlanLinesLinkComments, DisciplineThemes, \
     DisciplineWorkHours, AdditionalInfo, DisciplineIndicators, ScientificPlanData
 from generator.serializer import PlanLinesLinkSerializer
-from rpd.models import LinesData, LinesIndicators, SemesterData
+from rpd.models import LinesData, LinesIndicators, SemesterData, PlanData, PlanDocuments
+from uplfile.models import UploadFiles
 
 
 class GeneratorService(object):
 
     @classmethod
     def reset_program_list_cache(cls, user_mira_id):
-        key = f"rpd_get_program_list_{user_mira_id}"
+        key = f"rpd_get_program_list_{user_mira_id}_v1"
+        cache.delete(key)
+        key = f"rpd_get_group_list_{user_mira_id}_v1"
         cache.delete(key)
 
     @classmethod
@@ -29,7 +32,7 @@ class GeneratorService(object):
     @classmethod
     # @cache_function(timeout=60 * 1)
     def get_program_list(cls, user_mira_id, year=2025):
-        cache_key = f"rpd_get_program_list_{user_mira_id}"
+        cache_key = f"rpd_get_program_list_{user_mira_id}_v1"
         if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
             result = cache.get(cache_key)
             if result:
@@ -157,12 +160,6 @@ class GeneratorService(object):
     @classmethod
     # @cache_function(timeout=60 * 1)
     def get_group_list(cls, user_mira_id, year=2025, txt_filter = '', status_filter = '', my_filter = 0):
-        cache_key = f"rpd_get_program_list_{user_mira_id}"
-        if settings.ENABLE_CACHE_FUNCTION_DECORATOR:
-            result = cache.get(cache_key)
-            if result:
-                return result
-
         data = AISServices.get_groups_by_person(user_mira_id, year, txt_filter, my_filter)
 
         planlin_list = list(set(i['planlin'] for i in data))
@@ -243,7 +240,6 @@ class GeneratorService(object):
                     break
 
         result = sorted(result, key=lambda x: (x['abbr'].lower()))
-        cache.set(cache_key, result, 60)
 
         return result
 
@@ -561,3 +557,92 @@ class GeneratorService(object):
             ai.id = None
             ai.save()
 
+    @classmethod
+    def get_info_about_oop(cls, serializer):
+        data = []
+
+        query = PlanData.objects.filter(is_deleted=False).all()
+        if 'startyear' in serializer.validated_data:
+            query = query.filter(startyear=serializer.validated_data['startyear'])
+
+        if 'level' in serializer.validated_data:
+            studylevel = {
+                1: 'ВПО-Специалисты',  # специалисты
+                2: 'ВПО-Бакалавры',  # бакалавры
+                3: 'ВПО-Магистры',  # магистры
+                4: 'СПО-Базовый уровень (на базе 11 кл)',  # СПО
+                5: 'Аспирантура',  # аспирантура
+            }.get(serializer.validated_data['level'])
+            if studylevel:
+                query = query.filter(studylevel=studylevel)
+
+        query = list(query)
+
+        for plan in query:
+            admission_info = Catadmission.objects.filter(
+                cuchplan_id=plan.mira_id
+            ).values(
+                'id',
+                'cfob_id',
+                'cfob__name',
+                'cadmkind_id',
+                'cadmkind__name_ak',
+                'spec_name',
+                'cspec__name',
+                'cprofili__name',
+                'direct_name',
+                'abbr',
+            ).first()
+
+            if not admission_info:
+                continue
+
+            rpds = list(PlanLinesLink.objects.filter(
+                planlines__plan_id=plan.id,
+                last_accepted_file__isnull=False
+            ).exclude(last_accepted_file=''))
+
+            files = UploadFiles.objects.filter(rpd=plan.id)
+            files_by_type = {i.type_id: i for i in files}
+            documents = PlanDocuments.objects.filter(plan_id=plan.id)
+
+            data.append({
+                # "species": plan.species,
+                "cfob": admission_info['cfob_id'],
+                "cfob__name": admission_info['cfob__name'],
+                "level": admission_info['cadmkind_id'],
+                "level__name": admission_info['cadmkind__name_ak'],
+                "napr": plan.napr_t,
+                "species": admission_info['cprofili__name'] or admission_info['cspec__name'],
+                "plan_id": plan.mira_id,
+                "cadmission_id": admission_info['id'],
+                "year": plan.startyear,
+                "abbr": admission_info['abbr'],
+                "needed_docs_count": len(documents),
+                "documents": [
+                    {
+                        "title": d.name,
+                        "type": d.new_type_id,
+                        "url": settings.SITE_URL + files_by_type.get(d.new_type_id).file.url
+                    } for d in documents if d.new_type_id in files_by_type
+                ],
+                "rpds": [
+                    {
+                        'url': settings.SITE_URL + i.last_accepted_file.url,
+                        'name': i.planlines.dis,
+                        'id': i.id,
+                        "status": i.status,
+                        "confirmed": (i.user_accepted is not None and i.user_confirmed is not None),
+                    } for i in rpds if i.planlines.viewpract is None
+                ],
+                "practices": [
+                    {
+                        'url': settings.SITE_URL + i.last_accepted_file.url,
+                        'name': i.planlines.dis,
+                        'id': i.id,
+                        "status": i.status,
+                        "confirmed": (i.user_accepted is not None and i.user_confirmed is not None),
+                    } for i in rpds if i.planlines.viewpract is not None
+                ]
+            })
+        return data

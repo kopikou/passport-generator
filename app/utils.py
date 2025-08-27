@@ -157,6 +157,10 @@ class Mira(DB):
     key = 'mira'
 
 
+class SOP(DB):
+    key = 'sop'
+
+
 class DBRepository(object):
     db_conf_key = ""
     db_driver = ""

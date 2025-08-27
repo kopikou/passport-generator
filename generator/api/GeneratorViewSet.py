@@ -859,92 +859,10 @@ class GeneratorViewSet(
 
     @action(methods=['GET'], url_path="get-admissions-for-site-info", detail=False, permission_classes=[], serializer_class=GetAdmissionsForSiteInfoSerializer)
     def get_admissions_for_site_info(self, request, *args, **kwargs):
-        data = []
-
         serializer = GetAdmissionsForSiteInfoSerializer(data=self.request.query_params)
         serializer.is_valid()
 
-        query = PlanData.objects.filter(is_deleted=False).all()
-        if 'startyear' in serializer.validated_data:
-            query = query.filter(startyear=serializer.validated_data['startyear'])
-
-        if 'level' in serializer.validated_data:
-            studylevel = {
-                1: 'ВПО-Специалисты', #	специалисты
-                2: 'ВПО-Бакалавры', #	бакалавры
-                3: 'ВПО-Магистры', #	магистры
-                4: 'СПО-Базовый уровень (на базе 11 кл)', #	СПО
-                5: 'Аспирантура', #	аспирантура
-            }.get(serializer.validated_data['level'])
-            if studylevel:
-                query = query.filter(studylevel=studylevel)
-
-        query = list(query)
-
-        for plan in query:
-            admission_info = Catadmission.objects.filter(
-                cuchplan_id=plan.mira_id
-            ).values(
-                'id',
-                'cfob_id',
-                'cfob__name',
-                'cadmkind_id',
-                'cadmkind__name_ak',
-                'spec_name',
-                'cspec__name',
-                'cprofili__name',
-                'direct_name',
-            ).first()
-
-            if not admission_info:
-                continue
-
-            rpds = list(PlanLinesLink.objects.filter(
-                planlines__plan_id=plan.id,
-                last_accepted_file__isnull=False
-            ).exclude(last_accepted_file=''))
-
-            files = UploadFiles.objects.filter(rpd=plan.id)
-            files_by_type = {i.type_id: i for i in files}
-            documents = PlanDocuments.objects.filter(plan_id=plan.id)
-
-
-            data.append({
-                # "species": plan.species,
-                "cfob": admission_info['cfob_id'],
-                "cfob__name": admission_info['cfob__name'],
-                "level": admission_info['cadmkind_id'],
-                "level__name": admission_info['cadmkind__name_ak'],
-                "napr": plan.napr_t,
-                "species": admission_info['cprofili__name'] or admission_info['cspec__name'],
-                "plan_id": plan.mira_id,
-                "cadmission_id": admission_info['id'],
-                "year": plan.startyear,
-                "documents": [
-                    {
-                        "title": d.name,
-                        "type": d.new_type_id,
-                        "url": settings.SITE_URL + files_by_type.get(d.new_type_id).file.url
-                    } for d in documents if d.new_type_id in files_by_type
-                ],
-                "rpds": [
-                    {
-                        'url': settings.SITE_URL + i.last_accepted_file.url,
-                        'name': i.planlines.dis,
-                        'id': i.id,
-                    } for i in rpds if i.planlines.viewpract is None
-                ],
-                "practices": [
-                    {
-                        'url': settings.SITE_URL + i.last_accepted_file.url,
-                        'name': i.planlines.dis,
-                        'id': i.id,
-                    } for i in rpds if i.planlines.viewpract is not None
-                ]
-            })
-
-        # plan.studylevel
-        # plan.studylevel
+        data = GeneratorService.get_info_about_oop(serializer)
 
         return Response(
             data=data,
@@ -952,90 +870,74 @@ class GeneratorViewSet(
 
     @action(methods=['GET'], url_path="get-rpd-done-info", detail=False, permission_classes=[])
     def get_rpd_done_info(self, request, *args, **kwargs):
-        data = []
+        serializer = GetAdmissionsForSiteInfoSerializer(data=self.request.query_params)
+        serializer.is_valid()
 
-        query = PlanData.objects.filter(is_deleted=False).all()
+        data = GeneratorService.get_info_about_oop(serializer)
 
-        query = list(query)
+        result = []
+        for item in data:
+            status_items = [0, 0, 0, 0, 0, 0]
+            for rpd in item['rpds']:
+                if not rpd['confirmed']:
+                    status_items[rpd['status']] += 1
+                else:
+                    status_items[5] += 1
 
-        for plan in query:
-            admission_info = Catadmission.objects.filter(
-                cuchplan_id=plan.mira_id
-            ).values(
-                'abbr',
-            ).first()
+            for practice in item['practices']:
+                if not practice['confirmed']:
+                    status_items[practice['status']] += 1
+                else:
+                    status_items[5] += 1
 
-            if not admission_info:
-                continue
+            result.append({
+                'abbr': item['abbr'],
+                'all_rpds': len(item['rpds']) + len(item['practices']),
+                'appointed': status_items[0],
+                'is_filled': status_items[1],
+                'on_review': status_items[2],
+                'accepted': status_items[3],
+                'on_refile': status_items[4],
+                'confirmed': status_items[5],
+                'result': 'Выполнено' if status_items[5] == len(item['rpds']) + len(item['practices']) else 'Не выполнено',
+            })
 
-            rpds = list(PlanLinesLink.objects.filter(
-                planlines__plan_id=plan.id,
-                # last_accepted_file__isnull=False
-            ).exclude(last_accepted_file=''))
-
-            for rpd in rpds:
-                data.append({
-                    'Абревиатура': admission_info['abbr'],
-                    'Группа': plan.startyear,
-                    'Дисциплина': rpd.planlines.dis,
-                    'newdisid': rpd.planlines.newdisid,
-                    'Статус': rpd.status_verbose,
-                    'Дата загрузки программы': rpd.created_at.strftime("%Y-%m-%d"),
-                })
-
-        df = pd.DataFrame(data)
-
-        response = HttpResponse(content_type='application/vnd.ms-excel')
-        response['Content-Disposition'] = f'attachment; filename=rpd_info.xlsx'
-
-        df.to_excel(response, index=False)
-
-        return response
+        return Response(result)
 
     @action(methods=['GET'], url_path="get-oop-done-info", detail=False, permission_classes=[])
     def get_oop_done_info(self, request, *args, **kwargs):
-        data = []
+        serializer = GetAdmissionsForSiteInfoSerializer(data=self.request.query_params)
+        serializer.is_valid()
 
-        query = PlanData.objects.filter(is_deleted=False).all()
+        data = GeneratorService.get_info_about_oop(serializer)
 
-        query = list(query)
+        result = []
 
-        for plan in query:
-            admission_info = Catadmission.objects.filter(
-                cuchplan_id=plan.mira_id
-            ).values(
-                'name',
-            ).first()
+        needed_types = [9, 15, 13, 10, 16, 2, 3, 11]
 
-            if not admission_info:
-                continue
+        for item in data:
+            done_docs_types = [doc['type'] for doc in item['documents']]
 
-            files = UploadFiles.objects.filter(rpd=plan.id)
-            files_by_type = {i.type_id: i for i in files}
-            documents = PlanDocuments.objects.filter(plan_id=plan.id)
+            needed_docs_done_count = 0
+            for type in needed_types:
+                if type in done_docs_types:
+                    needed_docs_done_count += 1
 
-            upload_docs = [d for d in documents if d.new_type_id in files_by_type]
-            all_upload_docs_titles = [d.name for d in upload_docs]
-
-            data.append({
-                'Группа': admission_info['name'],
-                'Доков надо': len(documents),
-                'Доков сделано': len(upload_docs),
-                'ООП': '+' if 'ООП' in all_upload_docs_titles else '-',
-                'АОП': '+' if 'АОП' in all_upload_docs_titles else '-',
-                'Программа ГИА': '+' if 'Программа ГИА' in all_upload_docs_titles else '-',
-                'ФОС ГИА': '+' if 'ФОС ГИА' in all_upload_docs_titles else '-',
-                'Рабочая программа воспитания': '+' if 'Рабочая программа воспитания' in all_upload_docs_titles else '-',
-                'Схема компетенций': '',
-                'Матрица компетенций':'',
-                'Все документы': all_upload_docs_titles,
+            result.append({
+                'group': item['abbr'] + '-' + str(item['year'])[2:4],
+                'level': item['level__name'],
+                'needed_docs': item['needed_docs_count'],
+                'done_docs': len(item['documents']),
+                'uch_plan': '+' if 9 in done_docs_types else '-',
+                'calend_uch_graph': '+' if 15 in done_docs_types else '-',
+                'adap_uch_plan': '+' if 13 in done_docs_types else '-',
+                'oop': '+' if 10 in done_docs_types else '-',
+                'aop': '+' if 16 in done_docs_types else '-',
+                'pr_gia': '+' if 2 in done_docs_types else '-',
+                'fos_gia': '+' if 3 in done_docs_types else '-',
+                'rpv': '+' if 11 in done_docs_types else '-',
+                'all_docs': str([doc['title'] for doc in item['documents']]),
+                'result': 'Выполнено' if ((item['level'] not in [3, 5] and needed_docs_done_count == 8) or (item['level'] in [3, 5] and needed_docs_done_count == 7)) else 'Не выполнено',
             })
 
-        df = pd.DataFrame(data)
-
-        response = HttpResponse(content_type='application/vnd.ms-excel')
-        response['Content-Disposition'] = f'attachment; filename=oop_info.xlsx'
-
-        df.to_excel(response, index=False)
-
-        return response
+        return Response(result)

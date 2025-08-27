@@ -48,7 +48,7 @@ async function fieldUp(item) {
 
   disciplineWorkHour.value = dontChange.concat(newData);
   await api.post(`/api/generator/${activeRpdId.value}/set-work-hours-order/`, {
-    order: newData.map(x => x.id)
+    order: _.orderBy(newData.map(x => x.id), 'num')
   })
 }
 
@@ -64,7 +64,7 @@ async function fieldDown(item) {
   disciplineWorkHour.value = dontChange.concat(newData);
 
   await api.post(`/api/generator/${activeRpdId.value}/set-work-hours-order/`, {
-    order: newData.map(x => x.id)
+    order: _.orderBy(newData.map(x => x.id), 'num')
   })
 }
 
