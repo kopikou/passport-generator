@@ -4,8 +4,6 @@ from rest_framework.viewsets import GenericViewSet
 
 from rest_framework.decorators import action
 
-import ind_plan
-from arim.models import UchNagr
 from ind_plan.models import Work, PlanWorkType, IndPlan
 from ind_plan.serializers import WorkSerializer, IndPlanSerializer, IndPlanListSerializer
 from ind_plan.services.indPlan_service import IndPlanService

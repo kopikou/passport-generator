@@ -3,7 +3,8 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 
 from auths.serializer import UserSerializer
-from ind_plan.models import Work, IndPlan
+from ind_plan.models import Work, IndPlan, PlanWork
+
 
 class IndPlanListSerializer(serializers.ModelSerializer):
     user_created = UserSerializer(source="user_created.userprofile")
@@ -11,6 +12,11 @@ class IndPlanListSerializer(serializers.ModelSerializer):
     class Meta:
         model = IndPlan
         fields = ['id', 'year', 'user_created', 'user_confirmed', 'created_at', 'confirmed_at']
+
+class PlanWorkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlanWork
+        fields = ['id', 'name', 'hours_count', 'max_hours_count', 'is_new']
 
 class IndPlanSerializer(serializers.Serializer):
     uch_nagr = serializers.ListField()

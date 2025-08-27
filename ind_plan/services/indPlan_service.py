@@ -2,6 +2,7 @@ from datetime import datetime
 
 from arim.services import AISServices
 from ind_plan.models import IndPlan, PlanWork, PlanWorkType
+from ind_plan.serializers import PlanWorkSerializer
 
 
 class IndPlanService(object):
@@ -57,6 +58,62 @@ class IndPlanService(object):
                     'items': uch_nagr_items,
                 })
 
+            preparing_items = {}
+            for item in data:
+                if item['formcntr'] in ['Лек', 'Лаб', 'Прак'] and item['discpl'] in preparing_items.keys():
+                    if  item['formcntr'] in preparing_items[item['discpl']].keys():
+                        preparing_items[item['discpl']][item['formcntr']] += item['hours_count']
+                    else:
+                        preparing_items[item['discpl']][item['formcntr']] = item['hours_count']
+                elif item['formcntr'] in ['Лек', 'Лаб', 'Прак'] and item['discpl'] not in preparing_items.keys():
+                    preparing_items[item['discpl']] = {
+                        item['formcntr']: item['hours_count']
+                    }
+
+            coefficients_for_new = {
+                'labs_and_practices': 2,
+                'lectures': 3,
+            }
+
+            coefficients_for_old = {
+                'labs_and_practices': 0.5,
+                'lectures': 1,
+            }
+
+            general_coefficients = {
+                'check_labs': 0.2,
+            }
+
+            for key in preparing_items:
+                if 'Лек' in preparing_items[key].keys():
+                    item_preparing = result_items_preparing.filter(name = key + ': Подготовка к лекциям')
+
+                    if len(item_preparing) == 0:
+                        new_item = PlanWork.objects.create(
+                            plan=ind_plan,
+                            type=PlanWorkType.preparing,
+                            name=key + ': Подготовка к лекциям',
+                            hours_count=preparing_items[key]['Лек'] * coefficients_for_old['lectures'],
+                            max_hours_count = preparing_items[key]['Лек'] * coefficients_for_old['lectures'],
+                            is_new=False
+                        )
+
+                        new_item.save()
+                    else:
+                        if ((not item_preparing[0].is_new
+                             and item_preparing[0].max_hours_count != preparing_items[key]['Лек'] * coefficients_for_old['lectures'])
+                                or (item_preparing[0].is_new
+                                    and item_preparing[0].max_hours_count != preparing_items[key]['Лек'] * coefficients_for_new['lectures'])):
+                            if not item_preparing[0].is_new:
+                                item_preparing[0].max_hours_count = preparing_items[key]['Лек'] * coefficients_for_old['lectures']
+                                item_preparing[0].hours_count = preparing_items[key]['Лек'] * coefficients_for_old['lectures']
+                                item_preparing[0].save()
+                            else:
+                                item_preparing[0].max_hours_count = preparing_items[key]['Лек'] * coefficients_for_new['lectures']
+                                item_preparing[0].hours_count = preparing_items[key]['Лек'] * coefficients_for_new['lectures']
+                                item_preparing[0].save()
+
+            result_items_preparing = PlanWork.objects.all().filter(plan=ind_plan, type=PlanWorkType.preparing)
             # for item in data:
             #     preparing_items = {
             #         'labs': 0,  # Проверка отчетов по лабам
@@ -79,9 +136,11 @@ class IndPlanService(object):
             #         'items': preparing_items,
             #     })
 
+            serializer = PlanWorkSerializer(result_items_preparing, many=True)
+
             return {
                 'uch_nagr': result_items_uch_nagr,
-                'preparing': result_items_preparing,
+                'preparing': serializer.data,
                 'educ_method': result_items_educ_method_work,
                 'other_works': result_items_other_works,
                 'work_with_students': result_items_work_with_students,
