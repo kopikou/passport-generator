@@ -198,7 +198,7 @@ watchEffect(() => {
                  class="theme-container__body__cell text-subtitle1 text-center items-center"
                  :class="getRowColor(item.num)">
               <div>
-                {{ item.num }} {{item.id}}
+                {{ item.num }}
               </div>
               <div>
                 {{ item.name }}
