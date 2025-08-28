@@ -632,7 +632,6 @@ class GeneratorService(object):
                         'name': i.planlines.dis,
                         'id': i.id,
                         "status": i.status,
-                        "confirmed": (i.user_accepted is not None and i.user_confirmed is not None),
                     } for i in rpds if i.planlines.viewpract is None
                 ],
                 "practices": [
@@ -641,7 +640,6 @@ class GeneratorService(object):
                         'name': i.planlines.dis,
                         'id': i.id,
                         "status": i.status,
-                        "confirmed": (i.user_accepted is not None and i.user_confirmed is not None),
                     } for i in rpds if i.planlines.viewpract is not None
                 ]
             })
