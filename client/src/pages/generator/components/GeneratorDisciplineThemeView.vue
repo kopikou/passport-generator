@@ -111,7 +111,7 @@ async function fieldUp(item) {
 
 
   await api.post(`/api/generator/${activeRpdId.value}/set-themes-order/`, {
-    order: _.orderBy(newData.map(x => x.id), 'num')
+    order: _(newData).orderBy(x => x.num).map(x => x.id)
   })
 }
 
@@ -128,7 +128,7 @@ async function fieldDown(item) {
 
 
   await api.post(`/api/generator/${activeRpdId.value}/set-themes-order/`, {
-    order: _.orderBy(newData.map(x => x.id), 'num')
+    order: _(newData).orderBy(x => x.num).map(x => x.id)
   })
 }
 
@@ -198,7 +198,7 @@ watchEffect(() => {
                  class="theme-container__body__cell text-subtitle1 text-center items-center"
                  :class="getRowColor(item.num)">
               <div>
-                {{ item.num }} {{item.id}}
+                {{ item.num }}
               </div>
               <div>
                 {{ item.name }}
