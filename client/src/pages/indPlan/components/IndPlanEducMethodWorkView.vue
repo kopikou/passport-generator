@@ -23,12 +23,20 @@ async function getWorks(){
   works.value = r.data;
 }
 
+const rowsIdList = computed(() => {
+  return _(props.rows)
+    .map((row) =>{
+    return row.id;
+  })
+    .values();
+})
+
 const worksList = computed(() =>{
-  return _(works.value)
-    .filter(x => {
-      return !(props.rows.includes(x));
-    })
-    .value();
+    return _(works.value)
+      .filter(x => {
+        return !(rowsIdList.value.includes(x.id));
+      })
+      .value();
 });
 
 onBeforeMount(async() => {

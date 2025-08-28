@@ -18,21 +18,13 @@ const works = ref();
 const workToAdd = ref();
 
 async function getWorks(){
-  let r = await api.get(`/api/indplan/get-works/?type=other`);
+  let r = await api.get(`/api/indplan/get-works/?type=work_with_students`);
   works.value = r.data;
 }
 
-const worksList = computed(() =>{
-  return _(works.value)
-    .filter(x => {
-      return !(props.rows.includes(x));
-    })
-    .value();
-});
-
 onBeforeMount(async() => {
   await getWorks();
-})
+});
 
 async function addWork() {
   props.rows.push({

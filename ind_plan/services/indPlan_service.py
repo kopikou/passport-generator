@@ -62,22 +62,22 @@ class IndPlanService(object):
             for item in data:
                 if item['formcntr'] in ['Лек', 'Лаб', 'Прак'] and item['discpl'] in preparing_items.keys():
                     if  item['formcntr'] in preparing_items[item['discpl']].keys():
-                        preparing_items[item['discpl']][item['formcntr']] += item['hours_count']
+                        preparing_items[item['discpl']][item['formcntr']] += float(item['hours_count'])
                     else:
-                        preparing_items[item['discpl']][item['formcntr']] = item['hours_count']
+                        preparing_items[item['discpl']][item['formcntr']] = float(item['hours_count'])
                 elif item['formcntr'] in ['Лек', 'Лаб', 'Прак'] and item['discpl'] not in preparing_items.keys():
                     preparing_items[item['discpl']] = {
-                        item['formcntr']: item['hours_count']
+                        item['formcntr']: float(item['hours_count'])
                     }
 
             coefficients_for_new = {
-                'labs_and_practices': 2,
-                'lectures': 3,
+                'labs_and_practices': 2.0,
+                'lectures': 3.0,
             }
 
             coefficients_for_old = {
                 'labs_and_practices': 0.5,
-                'lectures': 1,
+                'lectures': 1.0,
             }
 
             general_coefficients = {
@@ -111,6 +111,56 @@ class IndPlanService(object):
                             else:
                                 item_preparing[0].max_hours_count = preparing_items[key]['Лек'] * coefficients_for_new['lectures']
                                 item_preparing[0].hours_count = preparing_items[key]['Лек'] * coefficients_for_new['lectures']
+                                item_preparing[0].save()
+
+                if 'Лаб' in preparing_items[key].keys():
+                    item_preparing = result_items_preparing.filter(name = key + ': Проверка отчетов по лабораторным работам')
+
+                    if len(item_preparing) == 0:
+                        new_item = PlanWork.objects.create(
+                            plan=ind_plan,
+                            type=PlanWorkType.preparing,
+                            name=key + ': Проверка отчетов по лабораторным работам',
+                            hours_count=preparing_items[key]['Лаб'] * general_coefficients['check_labs'],
+                            max_hours_count = preparing_items[key]['Лаб'] * general_coefficients['check_labs'],
+                            is_new=False
+                        )
+
+                        new_item.save()
+                    else:
+                        if item_preparing[0].max_hours_count != preparing_items[key]['Лаб'] * general_coefficients['check_labs']:
+                            item_preparing[0].max_hours_count = preparing_items[key]['Лаб'] * general_coefficients['check_labs']
+                            item_preparing[0].hours_count = preparing_items[key]['Лаб'] * general_coefficients['check_labs']
+                            item_preparing[0].save()
+
+                if 'Лаб' in preparing_items[key].keys() or 'Прак' in preparing_items[key].keys():
+                    item_preparing = result_items_preparing.filter(name = key + ': Подготовка к лабораторным, практическим, семинарским занятиям')
+
+                    sum_hours = (preparing_items[key]['Лаб'] if 'Лаб' in preparing_items[key].keys() else 0)  + (preparing_items[key]['Прак'] if 'Прак' in preparing_items[key].keys() else 0)
+
+                    if len(item_preparing) == 0:
+                        new_item = PlanWork.objects.create(
+                            plan=ind_plan,
+                            type=PlanWorkType.preparing,
+                            name=key + ': Подготовка к лабораторным, практическим, семинарским занятиям',
+                            hours_count=sum_hours * coefficients_for_old['labs_and_practices'],
+                            max_hours_count = sum_hours * coefficients_for_old['labs_and_practices'],
+                            is_new=False
+                        )
+
+                        new_item.save()
+                    else:
+                        if ((not item_preparing[0].is_new
+                             and item_preparing[0].max_hours_count != sum_hours * coefficients_for_old['labs_and_practices'])
+                                or (item_preparing[0].is_new
+                                    and item_preparing[0].max_hours_count != sum_hours * coefficients_for_new['labs_and_practices'])):
+                            if not item_preparing[0].is_new:
+                                item_preparing[0].max_hours_count = sum_hours * coefficients_for_old['labs_and_practices']
+                                item_preparing[0].hours_count = sum_hours * coefficients_for_old['labs_and_practices']
+                                item_preparing[0].save()
+                            else:
+                                item_preparing[0].max_hours_count = sum_hours * coefficients_for_new['labs_and_practices']
+                                item_preparing[0].hours_count = sum_hours * coefficients_for_new['labs_and_practices']
                                 item_preparing[0].save()
 
             result_items_preparing = PlanWork.objects.all().filter(plan=ind_plan, type=PlanWorkType.preparing)
