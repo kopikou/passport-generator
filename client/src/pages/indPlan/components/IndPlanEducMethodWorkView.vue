@@ -7,6 +7,9 @@ const props = defineProps({
   rows: {
     required: true,
   },
+  plan_id: {
+    required: true,
+  },
 });
 
 const columns = [
@@ -23,10 +26,10 @@ async function getWorks(){
   works.value = r.data;
 }
 
-const rowsIdList = computed(() => {
+const rowsNamesList = computed(() => {
   return _(props.rows)
     .map((row) =>{
-    return row.id;
+    return row.name;
   })
     .values();
 })
@@ -34,7 +37,7 @@ const rowsIdList = computed(() => {
 const worksList = computed(() =>{
     return _(works.value)
       .filter(x => {
-        return !(rowsIdList.value.includes(x.id));
+        return !(rowsNamesList.value.includes(x.name));
       })
       .value();
 });
@@ -44,8 +47,22 @@ onBeforeMount(async() => {
 })
 
 async function addWork() {
+  const formData = new FormData();
+  formData.append('type', workToAdd.value.type);
+  formData.append('hours_count', workToAdd.value.hours_count.toString());
+  formData.append('plan_id', props.plan_id.toString());
+  formData.append('name', workToAdd.value.name);
+
+  const r = await api.post(`/api/planwork/`, formData);
+
   props.rows.push(workToAdd.value);
   workToAdd.value = null;
+}
+
+async function deleteWork(id: Number) {
+  const r = await api.delete(`/api/planwork/${id}/`);
+
+  props.rows.pop(id);
 }
 
 </script>
@@ -80,7 +97,17 @@ async function addWork() {
     separator="cell"
     :rows-per-page-options="[0]"
     table-header-class="table-header"
-  />
+  >
+   <template v-slot:body-cell-control="props">
+     <q-td style="display: flex; justify-content: center" :props="props">
+      <q-btn
+        icon="mdi-delete-forever"
+        color="red"
+        @click="deleteWork(props.row.id)"
+      />
+     </q-td>
+   </template>
+ </q-table>
 </template>
 
 <style scoped>

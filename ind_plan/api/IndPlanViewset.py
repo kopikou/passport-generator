@@ -1,17 +1,18 @@
-from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, ListModelMixin
+from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, ListModelMixin, CreateModelMixin, \
+    DestroyModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from rest_framework.decorators import action
 
-from ind_plan.models import Work, PlanWorkType, IndPlan
-from ind_plan.serializers import WorkSerializer, IndPlanSerializer, IndPlanListSerializer
+from ind_plan.models import Work, PlanWorkType, IndPlan, PlanWork
+from ind_plan.serializers import WorkSerializer, IndPlanSerializer, IndPlanListSerializer, PlanWorkSerializer, \
+    PlanWorkAddUpdateSerializer
 from ind_plan.services.indPlan_service import IndPlanService
 
 
 class IndPlanViewSet(
     RetrieveModelMixin,
-    UpdateModelMixin,
     ListModelMixin,
     GenericViewSet,
 ):
@@ -28,29 +29,8 @@ class IndPlanViewSet(
     def retrieve(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
         data = IndPlanService.get_indPlan(pk)
-        return Response(data)
-
-    @action(detail=False, methods=['get'], url_path='preparing_coefficients')
-    def get_preparing_coefficients(self, request, *args, **kwargs):
-        coefficients_for_new = {
-            'labs_and_practices': 2,
-            'lectures': 3,
-        }
-
-        coefficients_for_old = {
-            'labs_and_practices': 0.5,
-            'lectures': 1,
-        }
-
-        general_coefficients = {
-            'check_labs': 0.2,
-        }
-
-        return Response(data = {
-            'coefficients_for_new': coefficients_for_new,
-            'coefficients_for_old': coefficients_for_old,
-            'general_coefficients': general_coefficients,
-        })
+        serializer = IndPlanSerializer(data)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='get-works')
     def get_works(self, request, *args, **kwargs):
@@ -67,3 +47,17 @@ class IndPlanViewSet(
             })
 
         return Response(data = data)
+
+class PlanWorkViewSet(
+    UpdateModelMixin,
+    CreateModelMixin,
+    DestroyModelMixin,
+    GenericViewSet,
+):
+    queryset = PlanWork.objects.all()
+
+    def get_serializer_class(self):
+        if self.action in ["create", "update"]:
+            return PlanWorkAddUpdateSerializer
+        else:
+            return PlanWorkSerializer

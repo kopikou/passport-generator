@@ -32,3 +32,11 @@ class PlanWork(models.Model):
     hours_count = models.FloatField(null=True, blank=True)
     max_hours_count = models.FloatField(null=True, blank=True)
     is_new = models.BooleanField(null=True, blank=True)
+
+class PreparingCoefficient(models.Choices):
+    new_lectures = 3.0
+    new_labs_and_practices = 2.0
+    old_lectures = 1.0
+    old_labs_and_practices = 0.5
+    check_labs = 0.2
+

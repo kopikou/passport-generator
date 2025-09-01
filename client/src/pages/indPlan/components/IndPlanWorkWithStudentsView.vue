@@ -7,6 +7,9 @@ const props = defineProps({
   rows: {
     required: true,
   },
+  plan_id: {
+    required: true,
+  },
 });
 
 const columns = [
@@ -27,11 +30,30 @@ onBeforeMount(async() => {
 });
 
 async function addWork() {
+  const formData = new FormData();
+  formData.append('type', 'Работа с обучающимися и абитуриентами');
+  formData.append('plan_id', props.plan_id.toString());
+  formData.append('name', workToAdd.value);
+
+  const r = await api.post(`/api/planwork/`, formData);
+
   props.rows.push({
     name: workToAdd.value,
-    type: 'workWithStudents',
   });
   workToAdd.value = null;
+}
+
+async function deleteWork(id: Number) {
+  const r = await api.delete(`/api/planwork/${id}/`);
+
+  props.rows.pop(id);
+}
+
+async function updateWork(id: Number, name: String) {
+  const formData = new FormData();
+  formData.append('name', name);
+
+  const r  = await api.put(`/api/planwork/${id}/`, formData);
 }
 </script>
 
@@ -59,7 +81,25 @@ async function addWork() {
     separator="cell"
     :rows-per-page-options="[0]"
     table-header-class="table-header"
-  />
+  >
+   <template v-slot:body="props">
+     <q-tr :props="props">
+       <q-td  key="name">
+         {{props.row.name}}
+          <q-popup-edit v-model="props.row.name" v-slot="scope" buttons persistent @before-hide="updateWork(props.row.id, props.row.name)">
+            <q-input v-model="scope.value" dense autofocus counter @keyup.enter="scope.set" />
+          </q-popup-edit>
+       </q-td>
+       <q-td key="control" style="display: flex; justify-content: center; gap: 8px">
+         <q-btn
+          icon="mdi-delete-forever"
+          color="red"
+          @click="deleteWork(props.row.id)"
+        />
+       </q-td>
+     </q-tr>
+   </template>
+ </q-table>
 
 </template>
 

@@ -8,7 +8,7 @@ from arim.api import ArimViewSet
 from auths.views import LoginView, LogoutView, BitrixAuthView
 from auths.api import UserApiViewSet
 from generator.api.GeneratorViewSet import GeneratorViewSet
-from ind_plan.api.IndPlanViewset import IndPlanViewSet
+from ind_plan.api.IndPlanViewset import IndPlanViewSet, PlanWorkViewSet
 from prof_activity.api import ProfActivityViewSet
 from rop_monitoring.api import RopMonitoringViewSet, RopMonitoringScoreViewSet
 from rpd.api.AccreditationInfoViewSet import AccreditationInfoViewSet
@@ -28,6 +28,7 @@ router.register(r'activity', ProfActivityViewSet, basename="activity")
 router.register(r'rop-monitoring', RopMonitoringViewSet, basename="rop-monitoring")
 router.register(r'rop-monitoring-score', RopMonitoringScoreViewSet, basename="rop-monitoring-score")
 router.register(r'indplan', IndPlanViewSet, basename="indplan")
+router.register(r'planwork', PlanWorkViewSet, basename="planwork")
 
 # router_old = routers.DefaultRouter()
 # router_old.register(r'asp', AspPlanViewSet, basename="asp")

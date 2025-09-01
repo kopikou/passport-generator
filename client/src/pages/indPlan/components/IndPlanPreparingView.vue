@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {computed, ref, watch} from "vue";
+import {api} from "boot/axios";
 
 const props = defineProps({
   rows: {
@@ -12,6 +13,22 @@ const columns = [
   { name: 'hours_count', align: 'center', label: 'Часы', field: 'hours_count', sortable: true },
   { name: 'is_new', align: 'center', label: 'Впервые', field: 'is_new', sortable: true },
 ];
+
+async function updateNewField(id: Number, is_new: Boolean) {
+  const formData = new FormData();
+  formData.append('is_new', is_new.toString());
+  const r = await api.put(`/api/planwork/${id}/`, formData);
+  props.rows[id-1].is_new = is_new;
+  props.rows[id-1].hours_count = r.data.hours_count;
+  props.rows[id-1].max_hours_count = r.data.max_hours_count;
+}
+
+async function updateHoursCount(id: Number, hours_count: Number) {
+  console.log(hours_count);
+  const formData = new FormData();
+  formData.append('hours_count', hours_count.toString());
+  const r = await api.put(`/api/planwork/${id}/`, formData);
+}
 
 </script>
 
@@ -43,11 +60,12 @@ const columns = [
             :max="props.row.max_hours_count"
             dense
             borderless
+            @update:model-value="updateHoursCount(props.row.id, props.row.hours_count)"
           />
         </q-td>
 
         <q-td key="is_new">
-           <q-checkbox v-model="props.row.is_new" />
+           <q-checkbox v-if="props.row.is_new !== null" v-model="props.row.is_new" @click="updateNewField(props.row.id, props.row.is_new)" />
         </q-td>
       </q-tr>
     </template>
