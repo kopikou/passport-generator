@@ -38,7 +38,7 @@ def get_monitoring_scores(monitoring_id):
                 admission_kind = AdmissionKinds.MAG.value
 
         if admission_kind is not None:
-            indicators = list(Indicator.objects.filter(admission_kinds__contains=[admission_kind]).values())
+            indicators = list(Indicator.objects.filter(admission_kinds__overlap=[admission_kind]).values())
 
             for indicator in indicators:
                 value, score = calculator.get_indicator_value_score(admission_id, indicator['id'])

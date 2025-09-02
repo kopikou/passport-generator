@@ -224,7 +224,8 @@ watch([admissionTextFilter, monitoringTextFilter], () => {
 
 watch(selectedRopMonitoringId, async () => {
   admissionTextFilter.value = '';
-  await getAdmissionList();
+  if(selectedRopMonitoringId.value > 0)
+    await getAdmissionList();
 })
 
 watch(admissionList, () => {
@@ -242,6 +243,7 @@ watch(tab, () => {
 })
 
 function groupAdmissionList() {
+  loadingAdmissionList.value = true;
   admissionList.value = _(admissionList.value)
     .groupBy('admission')
     .map((items, admission) => {
@@ -252,6 +254,7 @@ function groupAdmissionList() {
         rop_monitoring: first.rop_monitoring,
         admission: Number(admission),
         admission_name: first.admission_name,
+        admission_kind: first.admission_kind,
         person: first.person,
         person_name: first.person_name,
       }
@@ -273,6 +276,7 @@ function groupAdmissionList() {
     })
     .sortBy('admission_name')
     .value()
+  loadingAdmissionList.value = false;
 }
 
 function getEgeScoreStyle(value) {
