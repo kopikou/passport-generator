@@ -50,23 +50,23 @@ const columns = [
 </script>
 
 <template>
-  <div style="display: grid; grid-template-columns: auto auto; gap: 8px">
-    <q-select
-      v-model="planType"
-      :options="typeOptions"
-      label="Тип планов"
-      emit-value
-      map-options
-    />
+<!--  <div style="display: grid; grid-template-columns: auto auto; gap: 8px; margin: 8px;">-->
+<!--    <q-select-->
+<!--      v-model="planType"-->
+<!--      :options="typeOptions"-->
+<!--      label="Тип планов"-->
+<!--      emit-value-->
+<!--      map-options-->
+<!--    />-->
 
-    <q-select
-      v-model="planCategory"
-      :options="categoryOptions"
-      label="Категория планов"
-      emit-value
-      map-options
-    />
-  </div>
+<!--    <q-select-->
+<!--      v-model="planCategory"-->
+<!--      :options="categoryOptions"-->
+<!--      label="Категория планов"-->
+<!--      emit-value-->
+<!--      map-options-->
+<!--    />-->
+<!--  </div>-->
 
   <q-table
     :rows="indPlanList"
@@ -91,7 +91,7 @@ const columns = [
         </q-td>
 
         <q-td key="status">
-          1
+          {{ props.row.status }}
         </q-td>
       </q-tr>
     </template>

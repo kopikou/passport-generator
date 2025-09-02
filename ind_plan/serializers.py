@@ -14,7 +14,7 @@ class IndPlanListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IndPlan
-        fields = ['id', 'year', 'user_created', 'user_confirmed', 'created_at', 'confirmed_at']
+        fields = ['id', 'year', 'user_created', 'user_confirmed', 'created_at', 'confirmed_at', 'status']
 
 class PlanWorkSerializer(serializers.ModelSerializer):
     class Meta:
@@ -63,11 +63,12 @@ class PlanWorkAddUpdateSerializer(serializers.Serializer):
         return plan_work
 
 class IndPlanSerializer(serializers.Serializer):
-    uch_nagr = serializers.ListField(required=False)
-    preparing = PlanWorkSerializer(many=True, read_only=True, required=False)
-    educ_method = PlanWorkSerializer(many=True, read_only=True, required=False)
-    other_works = PlanWorkSerializer(many=True, read_only=True, required=False)
-    work_with_students = PlanWorkSerializer(many=True, read_only=True, required=False)
+    uch_nagr = serializers.ListField()
+    preparing = PlanWorkSerializer(many=True, read_only=True)
+    educ_method = PlanWorkSerializer(many=True, read_only=True)
+    other_works = PlanWorkSerializer(many=True, read_only=True)
+    work_with_students = PlanWorkSerializer(many=True, read_only=True)
+    plan = IndPlanListSerializer(read_only=True)
 
 class WorkSerializer(serializers.ModelSerializer):
     class Meta:

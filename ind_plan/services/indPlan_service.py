@@ -155,6 +155,7 @@ class IndPlanService(object):
                 'educ_method': result_items_educ_method_work,
                 'other_works': result_items_other_works,
                 'work_with_students': result_items_work_with_students,
+                'plan': ind_plan,
             }
         else:
             return {
@@ -163,4 +164,5 @@ class IndPlanService(object):
                 'educ_method': [],
                 'other_works': [],
                 'work_with_students': [],
+                'plan': ind_plan,
             }

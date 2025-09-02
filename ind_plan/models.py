@@ -14,11 +14,17 @@ class PlanWorkType(models.TextChoices):
     work_with_students = 'Работа с обучающимися и абитуриентами', 'work_with_students'
 
 class IndPlan(models.Model):
+    class IndPlanStatusChoice(models.IntegerChoices):
+        created = 0, "Создан"
+        waiting = 1, "Ожидает рассмотрения"
+        accepted = 2, "Утвержден"
+        on_refile = 3, "Требуются правки"
     year = models.IntegerField()
     user_created = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_created")
     user_confirmed = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="user_confirmed")
     created_at = models.DateTimeField(null=True, blank=True)
     confirmed_at = models.DateTimeField(null=True, blank=True)
+    status = models.IntegerField(choices=IndPlanStatusChoice.choices, default=IndPlanStatusChoice.created)
 
 class Work(models.Model):
     name = models.TextField()

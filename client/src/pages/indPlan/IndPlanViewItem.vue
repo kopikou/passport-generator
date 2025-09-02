@@ -8,16 +8,59 @@ import IndPLanOtherWorksView from "pages/indPlan/components/IndPLanOtherWorksVie
 import IndPlanWorkWithStudentsView from "pages/indPlan/components/IndPlanWorkWithStudentsView.vue";
 import IndPlanPreparingView from "pages/indPlan/components/IndPlanPreparingView.vue";
 import IndPlanEducMethodWorkView from "pages/indPlan/components/IndPlanEducMethodWorkView.vue";
+import useMainStore from "stores/mainStore";
+import {storeToRefs} from "pinia";
 
 const props = defineProps({
   id: {
     required: true,
   }
-})
+});
+
+const mainStore = useMainStore();
+const {
+  userId,
+} = storeToRefs(mainStore);
 
 const tab = ref('uchNagr');
 
-const indPlan = ref([]);
+const indPlan = ref({});
+
+const isAuthor = computed(() => {
+  return indPlan.value.plan.user_created.user_id === userId.value
+});
+
+const canAccepted = true;
+
+const controlButtons = [
+  {
+    label: "Утвердить",
+    permission: canAccepted,
+    current_statuses: [1, 3],
+    next_status: 2,
+    color: "green",
+    icon: "mdi-check",
+    text_color: "black",
+  },
+  {
+    label: "Отправить на доработку",
+    permission: canAccepted,
+    current_statuses: [1],
+    next_status: 3,
+    color: "red",
+    icon: "mdi-repeat",
+    text_color: "black",
+  },
+  {
+    label: "Отправить на проверку",
+    permission: isAuthor,
+    current_statuses: [0],
+    next_status: 1,
+    color: "yellow",
+    icon: "mdi-export-variant",
+    text_color: "black",
+  },
+];
 
 async function getIndPlan(){
   let r = await api.get(`/api/indplan/${props.id}/`);
@@ -32,6 +75,17 @@ onBeforeMount(async() => {
 <template>
   <layout-h-c-f>
     <template #header>
+      <div style="display: grid; grid-template-columns: auto auto auto; gap: 8px; margin: 8px">
+        <span>{{ indPlan.plan.user_created.last_name }} {{ indPlan.plan.user_created.first_name}} {{ indPlan.plan.user_created.middle_name }}</span>
+        <span>{{ indPlan.plan.status }}</span>
+
+        <div>
+          <div v-for="button in controlButtons">
+            <q-btn v-if="button.permission && button.current_statuses.includes(indPlan.plan.status)" :icon="button.icon" :color="button.color" :text-color="button.text_color"/>
+          </div>
+        </div>
+      </div>
+
       <q-tabs
         v-model="tab"
         class="text-teal"
