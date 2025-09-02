@@ -55,8 +55,9 @@ def get_monitoring_scores(monitoring_id):
                     rop_monitoring_scores.append({
                         "rop_monitoring": monitoring_id,
                         "admission": admission_id,
-                        "person_id": admission.get('admission_rop_id'),
                         "admission_name": admission.get('admission_name'),
+                        "admission_kind": admission.get('admission_kind'),
+                        "person_id": admission.get('admission_rop_id'),
                         "person_name": admission.get('admission_rop'),
                         "indicator_id": indicator['id'],
                         "value": value,

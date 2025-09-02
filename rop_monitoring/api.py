@@ -57,8 +57,9 @@ class RopMonitoringScoreViewSet(
                 obj, created = RopMonitoringScore.objects.update_or_create(
                     rop_monitoring=rop_monitoring,
                     admission=score_data.get('admission'),
-                    person=score_data.get('person_id'),
                     admission_name=score_data.get('admission_name'),
+                    admission_kind=score_data.get('admission_kind'),
+                    person=score_data.get('person_id'),
                     person_name=score_data.get('person_name'),
                     indicator=indicator,
                     defaults={

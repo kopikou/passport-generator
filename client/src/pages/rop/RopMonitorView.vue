@@ -27,61 +27,13 @@ try {
 
 const admissionTextFilter = ref(ropMonitoringFilters.ropTextFilter || '');
 const monitoringTextFilter = ref(ropMonitoringFilters.monitoringTextFilter || '');
+
 const loadingAdmissionList = ref(false);
 const admissionList = ref<Admission[]>([]);
 
-function groupAdmissionList() {
-  admissionList.value = _(admissionList.value)
-    .groupBy('admission')
-    .map((items, admission) => {
-      const first = items[0]
-      const indicators = items.map(({indicator, value, score}) => ({indicator, value, score}))
-      let admissionData = {
-        id: first.id,
-        rop_monitoring: first.rop_monitoring,
-        admission: Number(admission),
-        admission_name: first.admission_name,
-        person: first.person,
-        person_name: first.person_name,
-      }
-
-      const indicatorNames = Object.entries(MonitoringIndicators).reduce((acc, [key, val]) => {
-        acc[val] = key.toLowerCase();
-        return acc;
-      }, {});
-
-      indicators.forEach(({indicator, value, score}) => {
-        const name = indicatorNames[indicator];
-        if (name) {
-          admissionData[`${name}_score`] = score;
-          admissionData[`${name}_value`] = value;
-        }
-      });
-
-      return admissionData
-    })
-    .sortBy('admission_name')
-    .value()
-}
-
-const filteredMonitoringList = computed(() => {
-  const filter = monitoringTextFilter.value?.toLowerCase() || '';
-  return ropMonitoringList.value.filter(item =>
-    item.name.toLowerCase().includes(filter)
-  );
-});
-
-const filteredAdmissionList = computed(() => {
-  const filter = admissionTextFilter.value?.toLowerCase() || '';
-  return admissionList.value.filter(item =>
-    (item.admission_name && item.admission_name.toLowerCase().includes(filter)) ||
-    (item.person_name && item.person_name.toLowerCase().includes(filter))
-  );
-});
-
 const selectedRopMonitoringId = ref(0);
 
-const columns = [
+const columnsBak = [
   {name: 'name', align: 'center', label: 'Название программы', field: 'admission_name', sortable: true},
   {name: 'rop', align: 'center', label: 'РОП', field: 'person_name', sortable: true},
   {name: 'ege_value', align: 'center', label: 'Ср. балл ЕГЭ (ДВИ)', field: 'ege_value', sortable: true},
@@ -151,9 +103,117 @@ const columns = [
 
 ]
 
+const columnsMag = [
+  {name: 'name', align: 'center', label: 'Название программы', field: 'admission_name', sortable: true},
+  {name: 'rop', align: 'center', label: 'РОП', field: 'person_name', sortable: true},
+  {
+    name: 'stud_contingent_value',
+    align: 'center',
+    label: 'Доля завершивших/активных студентов',
+    field: 'stud_contingent_value',
+    sortable: true
+  },
+  {
+    name: 'stud_contingent_score',
+    align: 'center',
+    label: 'Баллы за долю завершивших/активных студентов',
+    field: 'stud_contingent_score',
+    sortable: true
+  },
+  {
+    name: 'celev_stud_contingent_value',
+    align: 'center',
+    label: 'Доля завершивших/активных студентов целевиков',
+    field: 'celev_stud_contingent_value',
+    sortable: true
+  },
+  {
+    name: 'celev_stud_contingent_score',
+    align: 'center',
+    label: 'Баллы за долю завершивших/активных студентов целевиков',
+    field: 'celev_stud_contingent_score',
+    sortable: true
+  },
+  {
+    name: 'npr_value',
+    align: 'center',
+    label: 'Доля НПР, принявших участие в опросах о кач-ве образ.',
+    field: 'npr_value',
+    sortable: true
+  },
+  {
+    name: 'npr_score',
+    align: 'center',
+    label: 'Баллы за долю НПР, принявших участие в опросах о кач-ве образ.',
+    field: 'npr_score',
+    sortable: true
+  },
+  {
+    name: 'stud_sop_value',
+    align: 'center',
+    label: 'Доля обучающихся, принявших участие в опросах о кач-ве образ.',
+    field: 'stud_sop_value',
+    sortable: true
+  },
+  {
+    name: 'stud_sop_score',
+    align: 'center',
+    label: 'Баллы за долю обучающихся, принявших участие в опросах о кач-ве образ.',
+    field: 'stud_sop_score',
+    sortable: true
+  },
+
+]
+
+const activeColumns = ref([]);
+
 const pagination = ref({
   rowsPerPage: 0,
 });
+
+const tabOptions = {
+  bak: 'bak',
+  mag: 'mag',
+}
+
+const admissionKinds = {
+  spec: 1,
+  bak: 2,
+  mag: 3,
+}
+
+const tab = ref('');
+
+onBeforeMount(async () => {
+  if (ropMonitoringList.value.length == 0) {
+    await ropMonitoringStore.getRopMonitoringList();
+  }
+})
+
+const filteredMonitoringList = computed(() => {
+  const filter = monitoringTextFilter.value?.toLowerCase() || '';
+  return ropMonitoringList.value.filter(item =>
+    item.name.toLowerCase().includes(filter)
+  );
+});
+
+const filteredAdmissionList = computed(() => {
+  const filter = admissionTextFilter.value?.toLowerCase() || '';
+  let admissionKindFilter = [];
+  if (tab.value == tabOptions.bak)
+    admissionKindFilter = [admissionKinds.bak, admissionKinds.spec]
+  else if (tab.value == tabOptions.mag)
+    admissionKindFilter = [admissionKinds.mag]
+  return admissionList.value.filter(item =>
+    admissionKindFilter.includes(item.admission_kind) &&
+    ((item.admission_name && item.admission_name.toLowerCase().includes(filter)) ||
+      (item.person_name && item.person_name.toLowerCase().includes(filter)))
+  );
+});
+
+const noAdmissionsEnabled = computed(() => {
+  return admissionList.value.length == 0
+})
 
 watch([admissionTextFilter, monitoringTextFilter], () => {
   localStorage.rop_monitoring_filters = JSON.stringify({
@@ -167,11 +227,53 @@ watch(selectedRopMonitoringId, async () => {
   await getAdmissionList();
 })
 
-onBeforeMount(async () => {
-  if (ropMonitoringList.value.length == 0) {
-    await ropMonitoringStore.getRopMonitoringList();
-  }
+watch(admissionList, () => {
+  if (noAdmissionsEnabled.value)
+    tab.value = ''
 })
+
+watch(tab, () => {
+  if (tab.value == tabOptions.bak)
+    activeColumns.value = columnsBak
+  else if (tab.value == tabOptions.mag)
+    activeColumns.value = columnsMag
+  else
+    activeColumns.value = []
+})
+
+function groupAdmissionList() {
+  admissionList.value = _(admissionList.value)
+    .groupBy('admission')
+    .map((items, admission) => {
+      const first = items[0]
+      const indicators = items.map(({indicator, value, score}) => ({indicator, value, score}))
+      let admissionData = {
+        id: first.id,
+        rop_monitoring: first.rop_monitoring,
+        admission: Number(admission),
+        admission_name: first.admission_name,
+        person: first.person,
+        person_name: first.person_name,
+      }
+
+      const indicatorNames = Object.entries(MonitoringIndicators).reduce((acc, [key, val]) => {
+        acc[val] = key.toLowerCase();
+        return acc;
+      }, {});
+
+      indicators.forEach(({indicator, value, score}) => {
+        const name = indicatorNames[indicator];
+        if (name) {
+          admissionData[`${name}_score`] = score;
+          admissionData[`${name}_value`] = value;
+        }
+      });
+
+      return admissionData
+    })
+    .sortBy('admission_name')
+    .value()
+}
 
 function getEgeScoreStyle(value) {
   if (value === 0) {
@@ -268,8 +370,8 @@ async function updateAdmissionList() {
 <template>
   <layout-m-c>
     <template #left-menu>
-      <div style="display: grid; grid-template-rows: auto 1fr; overflow: hidden; height: 100%">
-        <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 8px">
+      <div style="display: grid; grid-template-rows: auto auto 1fr; overflow: hidden; height: 100%; gap: 8px">
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px;">
           <q-input outlined bg-color="white" v-model="monitoringTextFilter" label="Поиск мониторинга"/>
           <q-btn icon="mdi-plus" color="green-5">
             <q-popup-edit
@@ -286,6 +388,14 @@ async function updateAdmissionList() {
             </q-popup-edit>
           </q-btn>
         </div>
+        <q-btn
+          icon="mdi-creation-outline"
+          color="green-7"
+          label="Обновить данные"
+          @click="updateAdmissionList"
+          :disable="!selectedRopMonitoringId"
+          style="height: 100%"
+        />
         <div style="overflow-y: auto;">
           <q-list bordered separator>
             <q-item v-for="monitoring in filteredMonitoringList" :key="monitoring.id"
@@ -309,24 +419,26 @@ async function updateAdmissionList() {
       </div>
     </template>
     <template #content>
-      <div style="height: 100%; overflow: hidden; display: grid; grid-template-rows: auto 1fr">
+      <div style="height: 100%; overflow: hidden; display: grid; grid-template-rows: auto auto 1fr">
+        <q-tabs
+          v-model="tab"
+          inline-label
+          class="text-teal"
+          align="justify"
+        >
+          <q-tab :name="tabOptions.bak" icon="mdi-school-outline" :disable="noAdmissionsEnabled" label="Бакалавриат"/>
+          <q-tab :name="tabOptions.mag" icon="mdi-flask-empty-outline" :disable="noAdmissionsEnabled"
+                 label="Магистратура"/>
+        </q-tabs>
         <div class="q-my-sm" style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;">
           <q-input outlined label="Поиск по программе или РОПу"
-                   v-model="admissionTextFilter" :disable="admissionList.length == 0" clearable/>
-          <q-btn
-            icon="mdi-creation-outline"
-            color="green-7"
-            label="Обновить данные"
-            @click="updateAdmissionList"
-            :disable="!selectedRopMonitoringId"
-            style="height: 100%"
-          />
+                   v-model="admissionTextFilter" :disable="noAdmissionsEnabled" clearable/>
         </div>
         <div style="max-height: 100%; overflow-y: auto">
           <q-table
             flat bordered
             :rows="filteredAdmissionList"
-            :columns="columns"
+            :columns="activeColumns"
             row-key="id"
             virtual-scroll
             v-model:pagination="pagination"

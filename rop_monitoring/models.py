@@ -65,8 +65,9 @@ class Indicator(TimestampsModel):
 class RopMonitoringScore(TimestampsModel):
     rop_monitoring = models.ForeignKey("RopMonitoring", on_delete=SET_NULL, verbose_name="Мониторинг", null=True)
     admission = models.IntegerField(verbose_name="Программа", null=True)
-    person = models.IntegerField(verbose_name="РОП", null=True)
     admission_name = models.TextField(verbose_name="Название ООП", null=True, blank=True)
+    admission_kind = models.IntegerField(verbose_name="Уровень ООП", null=True, blank=True)
+    person = models.IntegerField(verbose_name="РОП", null=True)
     person_name = models.TextField(verbose_name="ФИО РОПа", null=True, blank=True)
     indicator = models.ForeignKey("Indicator", verbose_name="Индикатор", on_delete=SET_NULL, null=True)
     value_numeric = models.FloatField(verbose_name="Значение показателя (численное)", null=True)

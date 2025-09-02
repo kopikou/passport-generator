@@ -117,6 +117,7 @@ ADMISSIONS_QUERY = f"""
         ca.id AS admission_id, 
         ca.abbr AS admission_abbr, 
         ca.name AS admission_name, 
+        ca.cadmkind AS admission_kind, 
         ca.yr AS admission_year, 
         convert(varchar, ca.dateend, 104) AS admission_date_end,
         cf.name AS faculty_name, 

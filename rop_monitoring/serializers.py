@@ -25,6 +25,7 @@ class RopMonitoringScoreSerializer(serializers.ModelSerializer):
             'rop_monitoring',
             'admission',
             'admission_name',
+            'admission_kind',
             'person',
             'person_name',
             'indicator',
