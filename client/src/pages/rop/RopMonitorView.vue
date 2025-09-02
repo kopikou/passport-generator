@@ -224,6 +224,7 @@ watch([admissionTextFilter, monitoringTextFilter], () => {
 
 watch(selectedRopMonitoringId, async () => {
   admissionTextFilter.value = '';
+  admissionList.value = [];
   if (selectedRopMonitoringId.value > 0)
     await getAdmissionList();
 })
