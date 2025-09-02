@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.db import transaction
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
@@ -43,6 +45,53 @@ class RopMonitoringScoreViewSet(
     filterset_class = RopMonitoringScoreFilter
     ordering_fields = ['admission_name']
     ordering = ['admission_name']
+
+    INDICATOR_NAMES = {
+        4: 'ege',
+        5: 'student_contingent',
+        6: 'celev_student_contingent',
+        7: 'npr',
+        8: 'student_sop',
+        9: 'employer',
+    }
+
+    @action(detail=False, methods=['get'], url_path='grouped')
+    def grouped_by_admission(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        rop_monitoring_id = request.query_params.get('rop_monitoring')
+        if rop_monitoring_id:
+            queryset = queryset.filter(rop_monitoring=rop_monitoring_id)
+
+        grouped_data = self._group_by_admission(queryset)
+
+        grouped_data.sort(key=lambda x: x.get('admission_name', ''))
+
+        return Response(grouped_data)
+
+    def _group_by_admission(self, queryset):
+        admission_groups = defaultdict(dict)
+
+        for item in queryset:
+            admission_id = item.admission
+
+            if not admission_groups[admission_id]:
+                admission_groups[admission_id] = {
+                    'id': item.id,
+                    'rop_monitoring': item.rop_monitoring.id,
+                    'admission': admission_id,
+                    'admission_name': item.admission_name,
+                    'admission_kind': item.admission_kind,
+                    'person': item.person,
+                    'person_name': item.person_name,
+                }
+
+            indicator_name = self.INDICATOR_NAMES.get(item.indicator_id)
+            if indicator_name:
+                admission_groups[admission_id][f'{indicator_name}_score'] = item.score
+                admission_groups[admission_id][f'{indicator_name}_value'] = item.value
+
+        return list(admission_groups.values())
 
     @action(methods=['GET'], url_path="update-monitoring-data", detail=True, permission_classes=[CanEditRopMonitoring])
     def update_monitoring_data(self, request, *args, **kwargs):

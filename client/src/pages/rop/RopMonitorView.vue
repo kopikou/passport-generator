@@ -45,31 +45,31 @@ const columnsBak = [
     sortable: true
   },
   {
-    name: 'stud_contingent_value',
+    name: 'student_contingent_value',
     align: 'center',
     label: 'Доля завершивших/активных студентов',
-    field: 'stud_contingent_value',
+    field: 'student_contingent_value',
     sortable: true
   },
   {
-    name: 'stud_contingent_score',
+    name: 'student_contingent_score',
     align: 'center',
     label: 'Баллы за долю завершивших/активных студентов',
-    field: 'stud_contingent_score',
+    field: 'student_contingent_score',
     sortable: true
   },
   {
-    name: 'celev_stud_contingent_value',
+    name: 'celev_student_contingent_value',
     align: 'center',
     label: 'Доля завершивших/активных студентов целевиков',
-    field: 'celev_stud_contingent_value',
+    field: 'celev_student_contingent_value',
     sortable: true
   },
   {
-    name: 'celev_stud_contingent_score',
+    name: 'celev_student_contingent_score',
     align: 'center',
     label: 'Баллы за долю завершивших/активных студентов целевиков',
-    field: 'celev_stud_contingent_score',
+    field: 'celev_student_contingent_score',
     sortable: true
   },
   {
@@ -87,17 +87,17 @@ const columnsBak = [
     sortable: true
   },
   {
-    name: 'stud_sop_value',
+    name: 'student_sop_value',
     align: 'center',
     label: 'Доля обучающихся, принявших участие в опросах о кач-ве образ.',
-    field: 'stud_sop_value',
+    field: 'student_sop_value',
     sortable: true
   },
   {
-    name: 'stud_sop_score',
+    name: 'student_sop_score',
     align: 'center',
     label: 'Баллы за долю обучающихся, принявших участие в опросах о кач-ве образ.',
-    field: 'stud_sop_score',
+    field: 'student_sop_score',
     sortable: true
   },
 
@@ -107,31 +107,31 @@ const columnsMag = [
   {name: 'name', align: 'center', label: 'Название программы', field: 'admission_name', sortable: true},
   {name: 'rop', align: 'center', label: 'РОП', field: 'person_name', sortable: true},
   {
-    name: 'stud_contingent_value',
+    name: 'student_contingent_value',
     align: 'center',
     label: 'Доля завершивших/активных студентов',
-    field: 'stud_contingent_value',
+    field: 'student_contingent_value',
     sortable: true
   },
   {
-    name: 'stud_contingent_score',
+    name: 'student_contingent_score',
     align: 'center',
     label: 'Баллы за долю завершивших/активных студентов',
-    field: 'stud_contingent_score',
+    field: 'student_contingent_score',
     sortable: true
   },
   {
-    name: 'celev_stud_contingent_value',
+    name: 'celev_student_contingent_value',
     align: 'center',
     label: 'Доля завершивших/активных студентов целевиков',
-    field: 'celev_stud_contingent_value',
+    field: 'celev_student_contingent_value',
     sortable: true
   },
   {
-    name: 'celev_stud_contingent_score',
+    name: 'celev_student_contingent_score',
     align: 'center',
     label: 'Баллы за долю завершивших/активных студентов целевиков',
-    field: 'celev_stud_contingent_score',
+    field: 'celev_student_contingent_score',
     sortable: true
   },
   {
@@ -149,17 +149,17 @@ const columnsMag = [
     sortable: true
   },
   {
-    name: 'stud_sop_value',
+    name: 'student_sop_value',
     align: 'center',
     label: 'Доля обучающихся, принявших участие в опросах о кач-ве образ.',
-    field: 'stud_sop_value',
+    field: 'student_sop_value',
     sortable: true
   },
   {
-    name: 'stud_sop_score',
+    name: 'student_sop_score',
     align: 'center',
     label: 'Баллы за долю обучающихся, принявших участие в опросах о кач-ве образ.',
-    field: 'stud_sop_score',
+    field: 'student_sop_score',
     sortable: true
   },
 
@@ -224,7 +224,7 @@ watch([admissionTextFilter, monitoringTextFilter], () => {
 
 watch(selectedRopMonitoringId, async () => {
   admissionTextFilter.value = '';
-  if(selectedRopMonitoringId.value > 0)
+  if (selectedRopMonitoringId.value > 0)
     await getAdmissionList();
 })
 
@@ -241,43 +241,6 @@ watch(tab, () => {
   else
     activeColumns.value = []
 })
-
-function groupAdmissionList() {
-  loadingAdmissionList.value = true;
-  admissionList.value = _(admissionList.value)
-    .groupBy('admission')
-    .map((items, admission) => {
-      const first = items[0]
-      const indicators = items.map(({indicator, value, score}) => ({indicator, value, score}))
-      let admissionData = {
-        id: first.id,
-        rop_monitoring: first.rop_monitoring,
-        admission: Number(admission),
-        admission_name: first.admission_name,
-        admission_kind: first.admission_kind,
-        person: first.person,
-        person_name: first.person_name,
-      }
-
-      const indicatorNames = Object.entries(MonitoringIndicators).reduce((acc, [key, val]) => {
-        acc[val] = key.toLowerCase();
-        return acc;
-      }, {});
-
-      indicators.forEach(({indicator, value, score}) => {
-        const name = indicatorNames[indicator];
-        if (name) {
-          admissionData[`${name}_score`] = score;
-          admissionData[`${name}_value`] = value;
-        }
-      });
-
-      return admissionData
-    })
-    .sortBy('admission_name')
-    .value()
-  loadingAdmissionList.value = false;
-}
 
 function getEgeScoreStyle(value) {
   if (value === 0) {
@@ -341,14 +304,12 @@ async function getAdmissionList() {
   loadingAdmissionList.value = true;
   admissionList.value = [];
 
-  let r = await api.get(`api/rop-monitoring-score/`, {
+  let r = await api.get(`api/rop-monitoring-score/grouped/`, {
     params: {
       rop_monitoring: selectedRopMonitoringId.value,
     },
   });
   admissionList.value = r.data
-  groupAdmissionList();
-
   loadingAdmissionList.value = false;
 }
 
@@ -358,8 +319,7 @@ async function updateAdmissionList() {
   let r = await api.get(`api/rop-monitoring-score/${selectedRopMonitoringId.value}/update-monitoring-data/`);
 
   if (r.status == 201) {
-    admissionList.value = r.data
-    groupAdmissionList()
+    await getAdmissionList();
     $q.notify({
       type: 'secondary',
       message: 'Данные обновлены!',
@@ -458,12 +418,12 @@ async function updateAdmissionList() {
                 {{ props.value }}
               </q-td>
             </template>
-            <template v-slot:body-cell-stud_contingent_score="props">
+            <template v-slot:body-cell-student_contingent_score="props">
               <q-td :props="props" :class="getContingentScoreStyle(props.value)">
                 {{ props.value }}
               </q-td>
             </template>
-            <template v-slot:body-cell-celev_stud_contingent_score="props">
+            <template v-slot:body-cell-celev_student_contingent_score="props">
               <q-td :props="props" :class="getCelevScoreStyle(props.value)">
                 {{ props.value }}
               </q-td>
@@ -473,7 +433,7 @@ async function updateAdmissionList() {
                 {{ props.value }}
               </q-td>
             </template>
-            <template v-slot:body-cell-stud_sop_score="props">
+            <template v-slot:body-cell-student_sop_score="props">
               <q-td :props="props" :class="getStudSopScoreStyle(props.value)">
                 {{ props.value }}
               </q-td>
