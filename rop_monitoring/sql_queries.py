@@ -155,7 +155,7 @@ ADMISSIONS_QUERY = f"""
             WHERE a.cadmkind < 6
         ) direction ON direction.id = ca.id
     WHERE 
-    YEAR(ca.dateend) >= ${datetime.now().year} - 1
+    ca.dateend >= ${datetime.now().date()}
     AND (ca.cspec IS NOT NULL 
     OR ca.cprofili IS NOT NULL)
     AND ca.cfob in (1, 2)
