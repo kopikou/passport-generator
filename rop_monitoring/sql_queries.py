@@ -117,7 +117,10 @@ ADMISSIONS_QUERY = f"""
         ca.id AS admission_id, 
         ca.abbr AS admission_abbr, 
         ca.name AS admission_name, 
-        ca.cadmkind AS admission_kind, 
+        ca.cadmkind AS admission_kind,
+        ca.cprofili AS admission_cprofili,
+        ca.cspec AS admission_cspec,
+        ca.cdirection AS admission_cdirection,
         ca.yr AS admission_year, 
         convert(varchar, ca.dateend, 104) AS admission_date_end,
         cf.name AS faculty_name, 
@@ -125,8 +128,7 @@ ADMISSIONS_QUERY = f"""
         direction.code AS direction_code,
         pers.name AS admission_rop,
         pers.id AS admission_rop_id,
-        ca.uchPeriod AS admission_period,
-        ca.cadmkind AS admission_kind
+        ca.uchPeriod AS admission_period
     FROM dbo.catadmission ca
     LEFT JOIN dbo.catfaculty cf ON cf.id = ca.cfac
     LEFT JOIN dbo.uchplan_plan pl ON pl.id = ca.cuchplan

@@ -99,6 +99,9 @@ class RopMonitoringScoreViewSet(
                     'admission': admission_id,
                     'admission_name': item.admission_name,
                     'admission_kind': item.admission_kind,
+                    'admission_cprofili': item.admission_cprofili,
+                    'admission_cspec': item.admission_cspec,
+                    'admission_cdirection': item.admission_cdirection,
                     'person': item.person,
                     'person_name': item.person_name,
                 }
