@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from django.db import transaction
+from rest_framework.exceptions import NotFound
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
@@ -14,7 +15,7 @@ from rop_monitoring.models import (RopMonitoring, RopMonitoringScore, Indicator,
                                    Indicators)
 from rop_monitoring.permissions import CanEditRopMonitoring
 from rop_monitoring.serializers import RopMonitoringSerializer, RopMonitoringScoreSerializer
-from rop_monitoring.services import RopMonitor, IndicatorsCalculator, get_monitoring_scores
+from rop_monitoring.services import RopMonitor, IndicatorsCalculator, get_monitoring_scores, export_answers_to_excel
 
 
 class RopMonitoringViewSet(
@@ -68,6 +69,22 @@ class RopMonitoringScoreViewSet(
         grouped_data.sort(key=lambda x: x.get('admission_name', ''))
 
         return Response(grouped_data)
+
+    @action(methods=["GET"], url_path="export", detail=False)
+    def export(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        rop_monitoring_id = request.query_params.get('rop_monitoring')
+        if rop_monitoring_id:
+            queryset = queryset.filter(rop_monitoring=rop_monitoring_id)
+
+            grouped_data = self._group_by_admission(queryset)
+
+            grouped_data.sort(key=lambda x: x.get('admission_name', ''))
+            excel_response = export_answers_to_excel(grouped_data)
+            return excel_response
+        else:
+            raise NotFound
 
     def _group_by_admission(self, queryset):
         admission_groups = defaultdict(dict)

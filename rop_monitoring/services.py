@@ -1,11 +1,18 @@
 import os
 from datetime import datetime
+from io import BytesIO
 
 import pandas as pd
 import pendulum
+from django.conf import settings
+from django.http import StreamingHttpResponse
+from django.utils.encoding import escape_uri_path
+
 from app.utils import Mira, SOP
 from rop_monitoring.models import Indicators, MiraAdmissionKinds, AdmissionKinds, Indicator
 from rop_monitoring.sql_queries import MARKS_QUERY, STUDENTS_QUERY, ORDERS_QUERY, ADMISSIONS_QUERY
+from openpyxl import Workbook
+from openpyxl.styles import Font
 
 
 def safe_int(value):
@@ -67,6 +74,76 @@ def get_monitoring_scores(monitoring_id):
                     })
 
     return rop_monitoring_scores
+
+
+def export_answers_to_excel(admissions):
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Результаты"
+
+    headers = [
+        "Название программы",
+        "РОП",
+        "Ср. балл ЕГЭ (ДВИ)",
+        "Баллы за ср. балл ЕГЭ",
+        "Доля завершивших/активных студентов",
+        "Баллы за долю завершивших/активных студентов",
+        "Доля завершивших/активных студентов целевиков",
+        "Баллы за долю завершивших/активных студентов целевиков",
+        "Доля НПР, принявших участие в опросах о кач-ве образ.",
+        "Баллы за долю НПР, принявших участие в опросах о кач-ве образ.",
+        "Доля обучающихся, принявших участие в опросах о кач-ве образ.",
+        "Баллы за долю обучающихся, принявших участие в опросах о кач-ве образ."
+    ]
+
+    sheet.append(headers)
+
+    bold_font = Font(bold=True)
+    for cell in sheet["1:1"]:
+        cell.font = bold_font
+
+    for admission in admissions:
+        row = [
+            admission.get('admission_name', ''),
+            admission.get('person_name', ''),
+            admission.get('ege_value', 0.0),
+            admission.get('ege_score', 0.0),
+            admission.get('student_contingent_value', 0.0),
+            admission.get('student_contingent_score', 0.0),
+            admission.get('celev_student_contingent_value', 0.0),
+            admission.get('celev_student_contingent_score', 0.0),
+            admission.get('npr_value', 0.0),
+            admission.get('npr_score', 0.0),
+            admission.get('student_sop_value', 0.0),
+            admission.get('student_sop_score', 0.0)
+        ]
+        sheet.append(row)
+
+    for column in sheet.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        sheet.column_dimensions[column_letter].width = adjusted_width
+
+    buffer = BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+
+    filename = escape_uri_path(pendulum.today().format("DD.MM.YYYY"))
+    response = StreamingHttpResponse(
+        streaming_content=buffer,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename={filename}.xlsx'
+    response["Content-Encoding"] = 'UTF-8'
+
+    return response
 
 
 class IndicatorsCalculator:

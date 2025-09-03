@@ -330,6 +330,41 @@ async function updateAdmissionList() {
   loadingAdmissionList.value = false;
 }
 
+async function exportResults() {
+  $q.notify({
+    message: "Выгрузка началась",
+    color: "secondary",
+    position: "bottom-right",
+    html: true,
+  })
+
+  let response = await api.get('api/rop-monitoring-score/export/', {
+    params: {
+      rop_monitoring: selectedRopMonitoringId.value,
+    },
+    responseType: 'blob'
+  })
+
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `${new Date().toLocaleDateString()}.xlsx`);
+
+  document.body.appendChild(link);
+  link.click();
+
+  link.parentNode.removeChild(link);
+
+  window.URL.revokeObjectURL(url);
+
+  $q.notify({
+    message: "Выгрузка завершена",
+    color: "secondary",
+    position: "bottom-right",
+    html: true,
+  })
+}
 </script>
 
 <template>
@@ -353,14 +388,23 @@ async function updateAdmissionList() {
             </q-popup-edit>
           </q-btn>
         </div>
-        <q-btn
-          icon="mdi-creation-outline"
-          color="green-7"
-          label="Обновить данные"
-          @click="updateAdmissionList"
-          :disable="!selectedRopMonitoringId"
-          style="height: 100%"
-        />
+        <div style="display: grid; grid-template-columns: auto auto; gap: 8px;">
+          <q-btn
+            icon="mdi-creation-outline"
+            color="green-7"
+            label="Обновить данные"
+            @click="updateAdmissionList"
+            :disable="!selectedRopMonitoringId"
+            style="height: 100%"
+          />
+          <q-btn
+            color="green-7"
+            label="Excel"
+            @click="exportResults"
+            :disable="!selectedRopMonitoringId"
+            style="height: 100%"
+          />
+        </div>
         <div style="overflow-y: auto;">
           <q-list bordered separator>
             <q-item v-for="monitoring in filteredMonitoringList" :key="monitoring.id"
