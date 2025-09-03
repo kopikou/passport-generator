@@ -399,6 +399,7 @@ async function exportResults() {
           />
           <q-btn
             color="green-7"
+            icon="mdi-file-excel-outline"
             label="Excel"
             @click="exportResults"
             :disable="!selectedRopMonitoringId"
