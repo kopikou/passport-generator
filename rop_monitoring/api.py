@@ -64,7 +64,7 @@ class RopMonitoringScoreViewSet(
         if rop_monitoring_id:
             queryset = queryset.filter(rop_monitoring=rop_monitoring_id)
 
-        grouped_data = self._group_by_admission(queryset)
+        grouped_data = self._group_by_admission(queryset, 'get_table')
 
         grouped_data.sort(key=lambda x: x.get('admission_name', ''))
 
@@ -78,7 +78,7 @@ class RopMonitoringScoreViewSet(
         if rop_monitoring_id:
             queryset = queryset.filter(rop_monitoring=rop_monitoring_id)
 
-            grouped_data = self._group_by_admission(queryset)
+            grouped_data = self._group_by_admission(queryset, 'export')
 
             grouped_data.sort(key=lambda x: x.get('admission_name', ''))
             excel_response = export_answers_to_excel(grouped_data)
@@ -86,7 +86,7 @@ class RopMonitoringScoreViewSet(
         else:
             raise NotFound
 
-    def _group_by_admission(self, queryset):
+    def _group_by_admission(self, queryset, query_type):
         admission_groups = defaultdict(dict)
 
         for item in queryset:
@@ -111,7 +111,20 @@ class RopMonitoringScoreViewSet(
                 admission_groups[admission_id][f'{indicator_name}_score'] = item.score
                 admission_groups[admission_id][f'{indicator_name}_value'] = item.value
 
-        return list(admission_groups.values())
+        if query_type == 'get_table':
+            grouped_result = defaultdict(list)
+
+            for admission_dict in admission_groups.values():
+                group_key = (
+                    admission_dict['admission_cprofili'],
+                    admission_dict['admission_cspec'],
+                    admission_dict['admission_cdirection']
+                )
+                grouped_result[group_key].append(admission_dict)
+
+            return list(grouped_result.values())
+        else:
+            return list(admission_groups.values())
 
     @action(methods=['GET'], url_path="update-monitoring-data", detail=True, permission_classes=[CanEditRopMonitoring])
     def update_monitoring_data(self, request, *args, **kwargs):
