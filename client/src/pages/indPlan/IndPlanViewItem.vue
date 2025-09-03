@@ -30,6 +30,25 @@ const isAuthor = computed(() => {
   return indPlan.value.plan.user_created.user_id === userId.value
 });
 
+const statuses = [
+  {
+    title: "Создан",
+    color: "grey"
+  },
+  {
+    title: "Ожидает рассмотрения",
+    color: "yellow"
+  },
+  {
+    title: "Утвержден",
+    color: "green"
+  },
+  {
+    title: "Требуются правки",
+    color: "red"
+  },
+];
+
 const canAccepted = true;
 
 const controlButtons = [
@@ -70,18 +89,25 @@ async function getIndPlan(){
 onBeforeMount(async() => {
   await getIndPlan();
 });
+
+async function changeStatus(nextStatus: Number) {
+  const formData = new FormData();
+  formData.append('status', nextStatus.toString());
+
+  const r  = await api.put(`/api/indplan/${props.id}/`, formData);
+}
 </script>
 
 <template>
   <layout-h-c-f>
     <template #header>
-      <div style="display: grid; grid-template-columns: auto auto auto; gap: 8px; margin: 8px">
-        <span>{{ indPlan.plan.user_created.last_name }} {{ indPlan.plan.user_created.first_name}} {{ indPlan.plan.user_created.middle_name }}</span>
-        <span>{{ indPlan.plan.status }}</span>
+      <div style="display: grid; grid-template-columns: auto auto auto; gap: 20px; margin: 8px; justify-content: center; align-items: center">
+        <span style="font-size: 20px">Автор: {{ indPlan.plan.user_created.last_name }} {{ indPlan.plan.user_created.first_name}} {{ indPlan.plan.user_created.middle_name }}</span>
+        <q-badge :color="statuses[indPlan.plan.status].color" style="height: 40px; font-size: medium">{{ statuses[indPlan.plan.status].title }}</q-badge>
 
         <div>
           <div v-for="button in controlButtons">
-            <q-btn v-if="button.permission && button.current_statuses.includes(indPlan.plan.status)" :icon="button.icon" :color="button.color" :text-color="button.text_color"/>
+            <q-btn v-if="button.permission && button.current_statuses.includes(indPlan.plan.status)" :icon="button.icon" :color="button.color" :text-color="button.text_color" @click="changeStatus(button.next_status)"/>
           </div>
         </div>
       </div>
