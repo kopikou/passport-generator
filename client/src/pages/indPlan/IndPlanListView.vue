@@ -5,6 +5,9 @@ import {LocalStorage, SessionStorage, useQuasar} from "quasar";
 import {storeToRefs} from "pinia";
 import _ from "lodash";
 import useMainStore from "stores/mainStore";
+import {useRouter} from "vue-router";
+
+const router = useRouter();
 
 const planType = ref('myPlans');
 const typeOptions = [
@@ -47,6 +50,12 @@ const columns = [
   { name: 'status', align: 'center', label: 'Статус', field: 'status', sortable: true },
 ];
 
+async function createIndPlan() {
+  const r = await api.post(`/api/indplan/`);
+
+  router.push(`/ind_plan/${r.data.id}/`)
+}
+
 </script>
 
 <template>
@@ -67,6 +76,8 @@ const columns = [
 <!--      map-options-->
 <!--    />-->
 <!--  </div>-->
+
+  <q-btn @click="createIndPlan" label="Создать план"/>
 
   <q-table
     :rows="indPlanList"

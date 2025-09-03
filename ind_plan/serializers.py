@@ -21,6 +21,14 @@ class PlanWorkSerializer(serializers.ModelSerializer):
         model = PlanWork
         fields = '__all__'
 
+class IndPlanUpdateSerializer(serializers.Serializer):
+    status = serializers.IntegerField(required=False)
+
+    def update(self, instance, validated_data):
+        instance.status = validated_data['status']
+        instance.save()
+        return instance
+
 class PlanWorkAddUpdateSerializer(serializers.Serializer):
     name = serializers.CharField(required=False)
     hours_count = serializers.FloatField(required=False)

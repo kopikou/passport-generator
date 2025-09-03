@@ -7,13 +7,15 @@ from rest_framework.decorators import action
 
 from ind_plan.models import Work, PlanWorkType, IndPlan, PlanWork
 from ind_plan.serializers import WorkSerializer, IndPlanSerializer, IndPlanListSerializer, PlanWorkSerializer, \
-    PlanWorkAddUpdateSerializer
+    PlanWorkAddUpdateSerializer, IndPlanUpdateSerializer
 from ind_plan.services.indPlan_service import IndPlanService
 
 
 class IndPlanViewSet(
     RetrieveModelMixin,
     ListModelMixin,
+    UpdateModelMixin,
+    CreateModelMixin,
     GenericViewSet,
 ):
     queryset = IndPlan.objects.all()
@@ -23,6 +25,8 @@ class IndPlanViewSet(
             return IndPlanSerializer
         elif self.action == "get_works":
             return WorkSerializer
+        elif self.action in ["update"]:
+            return IndPlanUpdateSerializer
         else:
             return IndPlanListSerializer
 
@@ -30,6 +34,15 @@ class IndPlanViewSet(
         pk = self.kwargs['pk']
         data = IndPlanService.get_indPlan(pk)
         serializer = IndPlanSerializer(data)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        ind_plan = IndPlan.objects.create(
+            user_created=self.request.user
+        )
+
+        serializer = IndPlanListSerializer(ind_plan)
+
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='get-works')
