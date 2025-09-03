@@ -111,20 +111,22 @@ class RopMonitoringScoreViewSet(
                 admission_groups[admission_id][f'{indicator_name}_score'] = item.score
                 admission_groups[admission_id][f'{indicator_name}_value'] = item.value
 
-        if query_type == 'get_table':
-            grouped_result = defaultdict(list)
+        return list(admission_groups.values())
 
-            for admission_dict in admission_groups.values():
-                group_key = (
-                    admission_dict['admission_cprofili'],
-                    admission_dict['admission_cspec'],
-                    admission_dict['admission_cdirection']
-                )
-                grouped_result[group_key].append(admission_dict)
-
-            return list(grouped_result.values())
-        else:
-            return list(admission_groups.values())
+        # if query_type == 'get_table':
+        #     grouped_result = defaultdict(list)
+        #
+        #     for admission_dict in admission_groups.values():
+        #         group_key = (
+        #             admission_dict['admission_cprofili'],
+        #             admission_dict['admission_cspec'],
+        #             admission_dict['admission_cdirection']
+        #         )
+        #         grouped_result[group_key].append(admission_dict)
+        #
+        #     return list(grouped_result.values())
+        # else:
+        #     return list(admission_groups.values())
 
     @action(methods=['GET'], url_path="update-monitoring-data", detail=True, permission_classes=[CanEditRopMonitoring])
     def update_monitoring_data(self, request, *args, **kwargs):
@@ -141,6 +143,9 @@ class RopMonitoringScoreViewSet(
                     admission=score_data.get('admission'),
                     admission_name=score_data.get('admission_name'),
                     admission_kind=score_data.get('admission_kind'),
+                    admission_cprofili=score_data.get('admission_cprofili'),
+                    admission_cspec=score_data.get('admission_cspec'),
+                    admission_cdirection=score_data.get('admission_cdirection'),
                     person=score_data.get('person_id'),
                     person_name=score_data.get('person_name'),
                     indicator=indicator,

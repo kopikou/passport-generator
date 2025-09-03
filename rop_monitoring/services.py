@@ -64,6 +64,9 @@ def get_monitoring_scores(monitoring_id):
                         "admission": admission_id,
                         "admission_name": admission.get('admission_name'),
                         "admission_kind": admission.get('admission_kind'),
+                        "admission_cprofili": admission.get('admission_cprofili'),
+                        "admission_cspec": admission.get('admission_cspec'),
+                        "admission_cdirection": admission.get('admission_cdirection'),
                         "person_id": admission.get('admission_rop_id'),
                         "person_name": admission.get('admission_rop'),
                         "indicator_id": indicator['id'],
@@ -933,7 +936,7 @@ class RopMonitor:
         for admission in sorted(admissions.values(), key=lambda d: d['admission_name']):
             total = len(admission['total_persons'])
             responded = len(admission['responded_persons'])
-            ratio = round(responded / total,2) if total > 0 else 0
+            ratio = round(responded / total, 2) if total > 0 else 0
             score = 1 if ratio >= 0.6 else 0
             admission_rows_by_id[admission['admission_id']] = {
                 'admission_name': admission['admission_name'],
@@ -979,7 +982,7 @@ GROUP BY LEFT(lg1.cnewgrup, LEN(lg1.cnewgrup) - 2)
 HAVING COUNT(DISTINCT CASE WHEN %s BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) +
     COUNT(DISTINCT CASE WHEN %s BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) > 0
             """)
-        r = Mira.fetch(query, [start_date, start_end,start_date, start_end])
+        r = Mira.fetch(query, [start_date, start_end, start_date, start_end])
         return r
 
     @classmethod
