@@ -455,7 +455,7 @@ function rowClassFn (row) {
           >
             <template  v-slot:body="props">
               <q-tr :props="props">
-                <generator-list-view-item @data-updated="getGroupProgram" :item="props.row"/>
+                <generator-list-view-item @data-updated="getGroupProgram(props.row.plan_id)" :item="props.row"/>
               </q-tr>
             </template>
 

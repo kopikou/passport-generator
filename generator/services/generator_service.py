@@ -298,6 +298,7 @@ class GeneratorService(object):
                     "confirm_date": lines_link.confirm_date,
                     "discode": lines_link.planlines.newdisid,
                     "type": result_types,
+                    "plan_id": int(plan_id),
                 })
 
         lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
