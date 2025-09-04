@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import pendulum
 from django.db import transaction
 from rest_framework.exceptions import NotFound
 from rest_framework.filters import OrderingFilter
@@ -56,20 +57,6 @@ class RopMonitoringScoreViewSet(
         9: 'employer',
     }
 
-    @action(detail=False, methods=['get'], url_path='grouped')
-    def grouped_by_admission(self, request):
-        queryset = self.filter_queryset(self.get_queryset())
-
-        rop_monitoring_id = request.query_params.get('rop_monitoring')
-        if rop_monitoring_id:
-            queryset = queryset.filter(rop_monitoring=rop_monitoring_id)
-
-        grouped_data = self._group_by_admission(queryset, 'get_table')
-
-        grouped_data.sort(key=lambda x: x.get('admission_name', ''))
-
-        return Response(grouped_data)
-
     @action(methods=["GET"], url_path="export", detail=False)
     def export(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -86,7 +73,26 @@ class RopMonitoringScoreViewSet(
         else:
             raise NotFound
 
-    def _group_by_admission(self, queryset, query_type):
+    @action(detail=False, methods=['get'], url_path='grouped')
+    def grouped_by_admission(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        rop_monitoring_id = request.query_params.get('rop_monitoring')
+        if rop_monitoring_id:
+            queryset = queryset.filter(rop_monitoring=rop_monitoring_id)
+
+        grouped_result = self.group_by_admission(queryset, 'get_table')
+
+        upper_rows, expand_rows = self.divide_groups_by_year(grouped_result)
+
+        result = {
+            'upper_rows': upper_rows,
+            'expand_rows': expand_rows,
+        }
+
+        return Response(result)
+
+    def group_by_admission(self, queryset, query_type):
         admission_groups = defaultdict(dict)
 
         for item in queryset:
@@ -98,6 +104,7 @@ class RopMonitoringScoreViewSet(
                     'rop_monitoring': item.rop_monitoring.id,
                     'admission': admission_id,
                     'admission_name': item.admission_name,
+                    'admission_year': int(f'20{item.admission_name.split("-")[-1]}'),
                     'admission_kind': item.admission_kind,
                     'admission_cprofili': item.admission_cprofili,
                     'admission_cspec': item.admission_cspec,
@@ -111,22 +118,39 @@ class RopMonitoringScoreViewSet(
                 admission_groups[admission_id][f'{indicator_name}_score'] = item.score
                 admission_groups[admission_id][f'{indicator_name}_value'] = item.value
 
-        return list(admission_groups.values())
+        # return list(admission_groups.values())
 
-        # if query_type == 'get_table':
-        #     grouped_result = defaultdict(list)
-        #
-        #     for admission_dict in admission_groups.values():
-        #         group_key = (
-        #             admission_dict['admission_cprofili'],
-        #             admission_dict['admission_cspec'],
-        #             admission_dict['admission_cdirection']
-        #         )
-        #         grouped_result[group_key].append(admission_dict)
-        #
-        #     return list(grouped_result.values())
-        # else:
-        #     return list(admission_groups.values())
+        if query_type == 'get_table':
+            grouped_result = defaultdict(list)
+            for admission_dict in admission_groups.values():
+                group_key = (
+                    admission_dict['admission_cprofili'] or admission_dict['admission_cspec'],
+                    admission_dict['admission_cdirection']
+                )
+                grouped_result[group_key].append(admission_dict)
+            return grouped_result
+        else:
+            return list(admission_groups.values())
+
+    def divide_groups_by_year(self, groups_dict):
+        upper_rows = []
+        expand_rows = {}
+        current_year = pendulum.now().year
+        for admissions_list in groups_dict.values():
+            current_year_admission = [item for item in admissions_list if item['admission_year'] == current_year]
+            filtered_admissions = [item for item in admissions_list if item['admission_year'] != current_year]
+
+            if filtered_admissions:
+                max_year_item = max(filtered_admissions, key=lambda x: x['admission_year'])
+                other_items = [item for item in filtered_admissions if item != max_year_item]
+                other_items.append(current_year_admission[0])
+
+                upper_rows.append(max_year_item)
+                expand_rows[max_year_item['admission']] = other_items
+            else:
+                max_year_item = None
+                other_items = []
+        return upper_rows, expand_rows
 
     @action(methods=['GET'], url_path="update-monitoring-data", detail=True, permission_classes=[CanEditRopMonitoring])
     def update_monitoring_data(self, request, *args, **kwargs):

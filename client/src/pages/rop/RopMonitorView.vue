@@ -34,6 +34,7 @@ const admissionList = ref<Admission[]>([]);
 const selectedRopMonitoringId = ref(0);
 
 const columnsBak = [
+
   {name: 'name', align: 'center', label: 'Название программы', field: 'admission_name', sortable: true},
   {name: 'rop', align: 'center', label: 'РОП', field: 'person_name', sortable: true},
   {name: 'ege_value', align: 'center', label: 'Ср. балл ЕГЭ (ДВИ)', field: 'ege_value', sortable: true},
@@ -104,6 +105,7 @@ const columnsBak = [
 ]
 
 const columnsMag = [
+
   {name: 'name', align: 'center', label: 'Название программы', field: 'admission_name', sortable: true},
   {name: 'rop', align: 'center', label: 'РОП', field: 'person_name', sortable: true},
   {
@@ -197,7 +199,7 @@ const filteredMonitoringList = computed(() => {
   );
 });
 
-const filteredAdmissionList = computed(() => {
+const filteredUpperRows = computed(() => {
   const filter = admissionTextFilter.value?.toLowerCase() || '';
   let admissionKindFilter = [];
   if (tab.value == tabOptions.bak)
@@ -310,7 +312,7 @@ async function getAdmissionList() {
       rop_monitoring: selectedRopMonitoringId.value,
     },
   });
-  admissionList.value = r.data
+  admissionList.value = r.data.upper_rows
   loadingAdmissionList.value = false;
 }
 
@@ -447,7 +449,7 @@ async function exportResults() {
         <div style="max-height: 100%; overflow-y: auto">
           <q-table
             flat bordered
-            :rows="filteredAdmissionList"
+            :rows="filteredUpperRows"
             :columns="activeColumns"
             row-key="id"
             virtual-scroll
