@@ -76,6 +76,8 @@ class RopMonitoringScore(TimestampsModel):
     value_numeric = models.FloatField(verbose_name="Значение показателя (численное)", null=True)
     value_boolean = models.BooleanField(verbose_name="Значение показателя (булевое)", null=True)
     score = models.FloatField(verbose_name="Кол-во баллов", null=True)
+    count = models.IntegerField(verbose_name="Кол-во студентов/сотрудников", null=True)
+    res = models.IntegerField(verbose_name="Числитель(кол-во прошедших опрос)", null=True)
 
     @property
     def value(self):

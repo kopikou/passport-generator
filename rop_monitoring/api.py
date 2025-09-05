@@ -64,9 +64,7 @@ class RopMonitoringScoreViewSet(
         rop_monitoring_id = request.query_params.get('rop_monitoring')
         if rop_monitoring_id:
             queryset = queryset.filter(rop_monitoring=rop_monitoring_id)
-
-            grouped_data = self._group_by_admission(queryset, 'export')
-
+            grouped_data = self.group_by_admission(queryset, 'export')
             grouped_data.sort(key=lambda x: x.get('admission_name', ''))
             excel_response = export_answers_to_excel(grouped_data)
             return excel_response
@@ -117,7 +115,9 @@ class RopMonitoringScoreViewSet(
             if indicator_name:
                 admission_groups[admission_id][f'{indicator_name}_score'] = item.score
                 admission_groups[admission_id][f'{indicator_name}_value'] = item.value
-
+            if item.indicator_id == 8:
+                admission_groups[admission_id][f'{indicator_name}_count'] = item.count
+                admission_groups[admission_id][f'{indicator_name}_res'] = item.res
         # return list(admission_groups.values())
 
         if query_type == 'get_table':
@@ -140,7 +140,7 @@ class RopMonitoringScoreViewSet(
             current_year_admission = [item for item in admissions_list if item['admission_year'] == current_year]
             filtered_admissions = [item for item in admissions_list if item['admission_year'] != current_year]
 
-            if filtered_admissions:
+            if filtered_admissions and current_year_admission:
                 max_year_item = max(filtered_admissions, key=lambda x: x['admission_year'])
                 other_items = [item for item in filtered_admissions if item != max_year_item]
                 other_items.append(current_year_admission[0])
@@ -173,6 +173,8 @@ class RopMonitoringScoreViewSet(
                     person=score_data.get('person_id'),
                     person_name=score_data.get('person_name'),
                     indicator=indicator,
+                    count=score_data.get('count'),
+                    res=score_data.get('res'),
                     defaults={
                         'value_numeric': score_data.get('value_numeric'),
                         'value_boolean': score_data.get('value_boolean'),

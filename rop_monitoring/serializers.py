@@ -31,6 +31,8 @@ class RopMonitoringScoreSerializer(serializers.ModelSerializer):
             'indicator',
             'value',
             'score',
+            'count',
+            'res'
         ]
 
     def get_value(self, obj):

@@ -8,7 +8,6 @@ import LayoutMC from "layouts/LayoutMC.vue";
 import RopMonitoringDialog from "components/rop_monitoring/RopMonitoringDialog.vue";
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
-import _ from "lodash";
 
 const $q = useQuasar()
 const popup = ref(null);
@@ -101,6 +100,20 @@ const columnsBak = [
     field: 'student_sop_score',
     sortable: true
   },
+    {
+    name: 'student_count_sop',
+    align: 'center',
+    label: 'Кол-во студентов',
+    field: 'student_sop_count',
+    sortable: true
+  },
+  {
+    name: 'student_res_sop',
+    align: 'center',
+    label: 'Кол-во проголосовавших студентов',
+    field: 'student_sop_res',
+    sortable: true
+  },
 
 ]
 
@@ -162,6 +175,20 @@ const columnsMag = [
     align: 'center',
     label: 'Баллы за долю обучающихся, принявших участие в опросах о кач-ве образ.',
     field: 'student_sop_score',
+    sortable: true
+  },
+      {
+    name: 'student_sop_count',
+    align: 'center',
+    label: 'Кол-во студентов',
+    field: 'student_sop_count',
+    sortable: true
+  },
+  {
+    name: 'student_sop_res',
+    align: 'center',
+    label: 'Кол-во проголосовавших студентов',
+    field: 'student_sop_res',
     sortable: true
   },
 
@@ -483,6 +510,16 @@ async function exportResults() {
             </template>
             <template v-slot:body-cell-student_sop_score="props">
               <q-td :props="props" :class="getStudSopScoreStyle(props.value)">
+                {{ props.value }}
+              </q-td>
+            </template>
+            <template v-slot:body-cell-student_sop_count="props">
+              <q-td :props="props" >
+                {{ props.value }}
+              </q-td>
+            </template>
+            <template v-slot:body-cell-student_sop_res="props">
+              <q-td :props="props" >
                 {{ props.value }}
               </q-td>
             </template>
