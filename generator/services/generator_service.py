@@ -579,6 +579,14 @@ class GeneratorService(object):
 
         query = list(query)
 
+        plan_list = [plan.mira_id for plan in query]
+
+        cadmission_list = AISServices.get_stud_states_by_uch_plan_list(plan_list)
+        print(cadmission_list)
+
+        cadmission_list = [adm['id'] for adm in cadmission_list]
+        print(cadmission_list)
+
         for plan in query:
             admission_info = Catadmission.objects.filter(
                 cuchplan_id=plan.mira_id
@@ -595,7 +603,7 @@ class GeneratorService(object):
                 'abbr',
             ).first()
 
-            if not admission_info:
+            if not admission_info or admission_info['id'] not in cadmission_list:
                 continue
 
             rpds = list(PlanLinesLink.objects.filter(

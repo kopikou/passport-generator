@@ -479,3 +479,21 @@ class AISServices(object):
         data = Mira.fetch(query, [id, id])
 
         return data
+
+    @staticmethod
+    def get_stud_states_by_uch_plan_list(uch_plan_list):
+        params = ', '.join(['%s']*len(uch_plan_list))
+        query = f"""
+            SELECT 
+            ca.id
+            FROM dbo.catstud cs
+            LEFT JOIN dbo.catadmission ca ON ca.id = cs.cadmission
+            WHERE
+                ca.cuchplan IN ({params})
+                AND cs.cstudstate IN (1, 5, 10, 21, 34)
+            GROUP BY ca.id
+        """
+
+        data = Mira.fetch(query, tuple(uch_plan_list))
+
+        return data
