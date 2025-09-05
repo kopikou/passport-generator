@@ -12,11 +12,10 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework import status
 
 from rop_monitoring.filters import RopMonitoringScoreFilter, RopMonitoringFilter
-from rop_monitoring.models import (RopMonitoring, RopMonitoringScore, Indicator, AdmissionKinds, MiraAdmissionKinds,
-                                   Indicators)
+from rop_monitoring.models import (RopMonitoring, RopMonitoringScore, Indicator)
 from rop_monitoring.permissions import CanEditRopMonitoring
 from rop_monitoring.serializers import RopMonitoringSerializer, RopMonitoringScoreSerializer
-from rop_monitoring.services import RopMonitor, IndicatorsCalculator, get_monitoring_scores, export_answers_to_excel
+from rop_monitoring.services import get_monitoring_scores, export_answers_to_excel
 
 
 class RopMonitoringViewSet(
