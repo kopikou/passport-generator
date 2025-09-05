@@ -9,6 +9,11 @@ import {useRouter} from "vue-router";
 
 const router = useRouter();
 
+const mainStore = useMainStore();
+const {
+  userId,
+} = storeToRefs(mainStore);
+
 const planType = ref('myPlans');
 const typeOptions = [
   {
@@ -33,6 +38,14 @@ const categoryOptions = [
   },
 ];
 
+const canCreatePlan = computed(() => {
+  let canCreate = true;
+
+  // TODO
+
+  return canCreate;
+});
+
 const indPlanList = ref([]);
 
 async function getIndPlans(){
@@ -47,7 +60,26 @@ onBeforeMount(async() => {
 const columns = [
   { name: 'author', align: 'center', label: 'Автор', field: 'author', sortable: true },
   { name: 'year', align: 'center', label: 'Год', field: 'year', sortable: true },
-  { name: 'status', align: 'center', label: 'Статус', field: 'status', sortable: true },
+  { name: 'status', align: 'center', label: 'Статус', field: 'status' },
+];
+
+const statuses = [
+  {
+    title: "Создан",
+    color: "grey"
+  },
+  {
+    title: "Ожидает рассмотрения",
+    color: "yellow"
+  },
+  {
+    title: "Утвержден",
+    color: "green"
+  },
+  {
+    title: "Требуются правки",
+    color: "red"
+  },
 ];
 
 async function createIndPlan() {
@@ -77,7 +109,14 @@ async function createIndPlan() {
 <!--    />-->
 <!--  </div>-->
 
-  <q-btn @click="createIndPlan" label="Создать план"/>
+  <q-btn
+    icon="mdi-plus-box"
+    color="green-6"
+    size="md"
+    style="margin: 8px"
+    @click="createIndPlan"
+    label="Создать план"
+  />
 
   <q-table
     :rows="indPlanList"
@@ -101,8 +140,8 @@ async function createIndPlan() {
            {{ props.row.year }}
         </q-td>
 
-        <q-td key="status">
-          {{ props.row.status }}
+        <q-td key="status" style="display: flex; justify-content: center; align-items: center">
+          <q-badge :color="statuses[props.row.status].color" style="height: 30px; font-size: medium">{{ statuses[props.row.status].title }}</q-badge>
         </q-td>
       </q-tr>
     </template>

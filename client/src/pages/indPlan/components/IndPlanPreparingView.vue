@@ -2,12 +2,14 @@
 import {computed, ref, watch} from "vue";
 import {api} from "boot/axios";
 
-const props = defineProps({
+const params = defineProps({
   rows: {
     required: true,
   },
+  isAuthor: {
+    required: true,
+  },
 });
-
 const columns = [
   { name: 'name', align: 'center', label: 'Наименование', field: 'name', sortable: true },
   { name: 'hours_count', align: 'center', label: 'Часы', field: 'hours_count', sortable: true },
@@ -18,9 +20,9 @@ async function updateNewField(id: Number, is_new: Boolean) {
   const formData = new FormData();
   formData.append('is_new', is_new.toString());
   const r = await api.put(`/api/planwork/${id}/`, formData);
-  props.rows[id-1].is_new = is_new;
-  props.rows[id-1].hours_count = r.data.hours_count;
-  props.rows[id-1].max_hours_count = r.data.max_hours_count;
+  params.rows[id-1].is_new = is_new;
+  params.rows[id-1].hours_count = r.data.hours_count;
+  params.rows[id-1].max_hours_count = r.data.max_hours_count;
 }
 
 async function updateHoursCount(id: Number, hours_count: Number) {
@@ -29,12 +31,11 @@ async function updateHoursCount(id: Number, hours_count: Number) {
   formData.append('hours_count', hours_count.toString());
   const r = await api.put(`/api/planwork/${id}/`, formData);
 }
-
 </script>
 
 <template>
  <q-table
-    :rows="props.rows"
+    :rows="params.rows"
     :columns="columns"
     virtual-scroll
     style="overflow-y: auto; height: 100%;"
@@ -60,12 +61,18 @@ async function updateHoursCount(id: Number, hours_count: Number) {
             :max="props.row.max_hours_count"
             dense
             borderless
+            :readonly="!params.isAuthor"
             @update:model-value="updateHoursCount(props.row.id, props.row.hours_count)"
           />
         </q-td>
 
         <q-td key="is_new">
-           <q-checkbox v-if="props.row.is_new !== null" v-model="props.row.is_new" @click="updateNewField(props.row.id, props.row.is_new)" />
+           <q-checkbox
+             v-if="props.row.is_new !== null"
+             v-model="props.row.is_new"
+             @click="updateNewField(props.row.id, props.row.is_new)"
+             :disable="!params.isAuthor"
+           />
         </q-td>
       </q-tr>
     </template>

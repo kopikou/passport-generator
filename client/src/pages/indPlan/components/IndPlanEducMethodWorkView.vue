@@ -3,11 +3,14 @@ import {computed, onBeforeMount, ref, watch} from "vue";
 import {api} from "boot/axios";
 import _ from "lodash";
 
-const props = defineProps({
+const params = defineProps({
   rows: {
     required: true,
   },
   plan_id: {
+    required: true,
+  },
+  isAuthor: {
     required: true,
   },
 });
@@ -27,7 +30,7 @@ async function getWorks(){
 }
 
 const rowsNamesList = computed(() => {
-  return _(props.rows)
+  return _(params.rows)
     .map((row) =>{
     return row.name;
   })
@@ -50,25 +53,25 @@ async function addWork() {
   const formData = new FormData();
   formData.append('type', workToAdd.value.type);
   formData.append('hours_count', workToAdd.value.hours_count.toString());
-  formData.append('plan_id', props.plan_id.toString());
+  formData.append('plan_id', params.plan_id.toString());
   formData.append('name', workToAdd.value.name);
 
   const r = await api.post(`/api/planwork/`, formData);
 
-  props.rows.push(workToAdd.value);
+  params.rows.push(workToAdd.value);
   workToAdd.value = null;
 }
 
 async function deleteWork(id: Number) {
   const r = await api.delete(`/api/planwork/${id}/`);
 
-  props.rows.pop(id);
+  params.rows.pop(id);
 }
 
 </script>
 
 <template>
-  <div style="display:grid; grid-template-columns: 5fr 1fr; gap: 12px; padding: 12px">
+  <div style="display:grid; grid-template-columns: 5fr 1fr; gap: 12px; padding: 12px" v-if="params.isAuthor">
     <q-select v-model="workToAdd"
           label="Работа"
           :options="worksList"
@@ -87,7 +90,7 @@ async function deleteWork(id: Number) {
   </div>
 
  <q-table
-    :rows="props.rows"
+    :rows="params.rows"
     :columns="columns"
     virtual-scroll
     style="overflow-y: auto; height: 100%;"
@@ -104,6 +107,7 @@ async function deleteWork(id: Number) {
         icon="mdi-delete-forever"
         color="red"
         @click="deleteWork(props.row.id)"
+        :disable="!params.isAuthor"
       />
      </q-td>
    </template>

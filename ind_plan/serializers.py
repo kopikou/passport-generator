@@ -30,6 +30,7 @@ class IndPlanUpdateSerializer(serializers.Serializer):
         return instance
 
 class PlanWorkAddUpdateSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=False)
     name = serializers.CharField(required=False)
     hours_count = serializers.FloatField(required=False)
     max_hours_count = serializers.FloatField(required=False)
