@@ -5,13 +5,14 @@ from django.conf import settings
 from django.core.cache import cache
 
 from app.utils import cache_function
-from arim.models import CatPerson, RpdUsers
+from arim.models import CatPerson, RpdUsers, Catadmission
 from arim.services import AISServices
 from auths.models import Permissions
 from generator.models import PlanLinesLink, DefaultsResources, PlanLinesLinkComments, DisciplineThemes, \
     DisciplineWorkHours, AdditionalInfo, DisciplineIndicators, ScientificPlanData
 from generator.serializer import PlanLinesLinkSerializer
-from rpd.models import LinesData, LinesIndicators, SemesterData
+from rpd.models import LinesData, LinesIndicators, SemesterData, PlanData, PlanDocuments
+from uplfile.models import UploadFiles
 
 
 class GeneratorService(object):
@@ -297,6 +298,7 @@ class GeneratorService(object):
                     "confirm_date": lines_link.confirm_date,
                     "discode": lines_link.planlines.newdisid,
                     "type": result_types,
+                    "plan_id": int(plan_id),
                 })
 
         lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
@@ -556,3 +558,98 @@ class GeneratorService(object):
             ai.id = None
             ai.save()
 
+    @classmethod
+    def get_info_about_oop(cls, serializer):
+        data = []
+
+        query = PlanData.objects.filter(is_deleted=False).all()
+        if 'startyear' in serializer.validated_data:
+            query = query.filter(startyear=serializer.validated_data['startyear'])
+
+        if 'level' in serializer.validated_data:
+            studylevel = {
+                1: 'ВПО-Специалисты',  # специалисты
+                2: 'ВПО-Бакалавры',  # бакалавры
+                3: 'ВПО-Магистры',  # магистры
+                4: 'СПО-Базовый уровень (на базе 11 кл)',  # СПО
+                5: 'Аспирантура',  # аспирантура
+            }.get(serializer.validated_data['level'])
+            if studylevel:
+                query = query.filter(studylevel=studylevel)
+
+        query = list(query)
+
+        plan_list = [plan.mira_id for plan in query]
+
+        cadmission_list = AISServices.get_stud_states_by_uch_plan_list(plan_list)
+        print(cadmission_list)
+
+        cadmission_list = [adm['id'] for adm in cadmission_list]
+        print(cadmission_list)
+
+        for plan in query:
+            admission_info = Catadmission.objects.filter(
+                cuchplan_id=plan.mira_id
+            ).values(
+                'id',
+                'cfob_id',
+                'cfob__name',
+                'cadmkind_id',
+                'cadmkind__name_ak',
+                'spec_name',
+                'cspec__name',
+                'cprofili__name',
+                'direct_name',
+                'abbr',
+            ).first()
+
+            if not admission_info or admission_info['id'] not in cadmission_list:
+                continue
+
+            rpds = list(PlanLinesLink.objects.filter(
+                planlines__plan_id=plan.id,
+                last_accepted_file__isnull=False
+            ).exclude(last_accepted_file=''))
+
+            files = UploadFiles.objects.filter(rpd=plan.id)
+            files_by_type = {i.type_id: i for i in files}
+            documents = PlanDocuments.objects.filter(plan_id=plan.id)
+
+            data.append({
+                # "species": plan.species,
+                "cfob": admission_info['cfob_id'],
+                "cfob__name": admission_info['cfob__name'],
+                "level": admission_info['cadmkind_id'],
+                "level__name": admission_info['cadmkind__name_ak'],
+                "napr": plan.napr_t,
+                "species": admission_info['cprofili__name'] or admission_info['cspec__name'],
+                "plan_id": plan.mira_id,
+                "cadmission_id": admission_info['id'],
+                "year": plan.startyear,
+                "abbr": admission_info['abbr'],
+                "needed_docs_count": len(documents),
+                "documents": [
+                    {
+                        "title": d.name,
+                        "type": d.new_type_id,
+                        "url": settings.SITE_URL + files_by_type.get(d.new_type_id).file.url
+                    } for d in documents if d.new_type_id in files_by_type
+                ],
+                "rpds": [
+                    {
+                        'url': settings.SITE_URL + i.last_accepted_file.url,
+                        'name': i.planlines.dis,
+                        'id': i.id,
+                        "status": i.status,
+                    } for i in rpds if i.planlines.viewpract is None
+                ],
+                "practices": [
+                    {
+                        'url': settings.SITE_URL + i.last_accepted_file.url,
+                        'name': i.planlines.dis,
+                        'id': i.id,
+                        "status": i.status,
+                    } for i in rpds if i.planlines.viewpract is not None
+                ]
+            })
+        return data

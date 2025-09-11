@@ -10,6 +10,7 @@ import _ from "lodash";
 import useMainStore from "stores/mainStore";
 import LayoutHCF from "components/LayoutHCF.vue";
 import GeneratorListViewItem from "pages/generator/components/GeneratorListViewItem.vue";
+import writeXlsxFile from "write-excel-file";
 
 const mainStore = useMainStore();
 const {
@@ -231,40 +232,80 @@ async function getDoneFile(key: string) {
 
   filesButtons.value[key]['isLoading'] = true;
 
-  const response = await api.get(fileUrl, {
-     responseType: 'blob',
+  const response = await api.get(fileUrl);
+
+  let dataRows = [];
+
+  if (key == 'oop') {
+
+    dataRows.push([
+      {value: 'Группа', fontWeight: 'bold'},
+      {value: 'Уровень', fontWeight: 'bold'},
+      {value: 'Доков надо', fontWeight: 'bold'},
+      {value: 'Доков сделано', fontWeight: 'bold'},
+      {value: 'Учебный план', fontWeight: 'bold'},
+      {value: 'Календарный учебный график', fontWeight: 'bold'},
+      {value: 'Адаптированный учебный план', fontWeight: 'bold'},
+      {value: 'ООП', fontWeight: 'bold'},
+      {value: 'АОП', fontWeight: 'bold'},
+      {value: 'Программа ГИА', fontWeight: 'bold'},
+      {value: 'ФОС ГИА', fontWeight: 'bold'},
+      {value: 'Рабочая программа воспитания', fontWeight: 'bold'},
+      {value: 'Все документы', fontWeight: 'bold'},
+      {value: 'Итог', fontWeight: 'bold'},
+    ]);
+
+    response.data.forEach(item => {
+      dataRows.push([
+        {type: String, value: item.group},
+        {type: String, value: item.level},
+        {type: Number, value: item.needed_docs},
+        {type: Number, value: item.done_docs},
+        {type: String, value: item.uch_plan},
+        {type: String, value: item.calend_uch_graph},
+        {type: String, value: item.adap_uch_plan},
+        {type: String, value: item.oop},
+        {type: String, value: item.aop},
+        {type: String, value: item.pr_gia},
+        {type: String, value: item.fos_gia},
+        {type: String, value: item.rpv},
+        {type: String, value: item.all_docs},
+        {type: String, value: item.result},
+      ])
+    })
+  } else if (key == 'rpd') {
+
+    dataRows.push([
+      {value: 'Абревиатура', fontWeight: 'bold'},
+      {value: 'Всего РПД', fontWeight: 'bold'},
+      {value: 'Назначены', fontWeight: 'bold'},
+      {value: 'Заполняются', fontWeight: 'bold'},
+      {value: 'Отправлены на проверку', fontWeight: 'bold'},
+      {value: 'Утверждены', fontWeight: 'bold'},
+      {value: 'Требуют правки', fontWeight: 'bold'},
+      {value: 'Итог', fontWeight: 'bold'},
+    ]);
+
+    response.data.forEach(item => {
+      dataRows.push([
+        {type: String, value: item.abbr},
+        {type: Number, value: item.all_rpds},
+        {type: Number, value: item.appointed},
+        {type: Number, value: item.is_filled},
+        {type: Number, value: item.on_review},
+        {type: Number, value: item.accepted},
+        {type: Number, value: item.on_refile},
+        {type: String, value: item.result},
+      ])
+    })
+  }
+
+
+  await writeXlsxFile(dataRows, {
+    fileName: `${key}.xlsx`,
   });
 
-  const fileName = getFileNameFromHeaders(response.headers) || 'document.xml';
-
-  const url = window.URL.createObjectURL(
-    new Blob([response.data], { type: 'application/xml' })
-  );
-
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.style.display = 'none';
-
-  document.body.appendChild(link);
-  link.click();
-
-  setTimeout(() => {
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-    filesButtons.value[key]['isLoading'] = false;
-  }, 100);
-}
-
-function getFileNameFromHeaders(headers) {
-    const contentDisposition = headers['content-disposition'];
-    if (!contentDisposition) return null;
-
-    const fileNameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-    if (fileNameMatch && fileNameMatch[1]) {
-      return fileNameMatch[1].replace(/['"]/g, '');
-    }
-    return null;
+  filesButtons.value[key]['isLoading'] = false;
 }
 
 const columns = [
@@ -414,7 +455,7 @@ function rowClassFn (row) {
           >
             <template  v-slot:body="props">
               <q-tr :props="props">
-                <generator-list-view-item @data-updated="getGroupProgram" :item="props.row"/>
+                <generator-list-view-item @data-updated="getGroupProgram(props.row.plan_id)" :item="props.row"/>
               </q-tr>
             </template>
 

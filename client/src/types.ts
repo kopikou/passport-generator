@@ -261,7 +261,7 @@ export interface GeneratorData {
     id: number;
     species: string;
   }[];
-   new: {
+  new: {
     abbrprofile: string;
     startyear: number;
     id: number;
@@ -374,4 +374,54 @@ export interface CopyOptions {
   additional_info_library: boolean,
   additional_info_tat: boolean,
   additional_info_fos: boolean,
+}
+
+export interface RopMonitoring {
+  id: number,
+  name: string,
+  year: number
+}
+
+export interface Indicator {
+  id: number,
+  name: string,
+}
+
+export interface RopMonitoringScore {
+  id: number,
+  rop_monitoring: number | RopMonitoring,
+  admission: number,
+  person: number,
+  indicator: number | Indicator,
+  score: number,
+}
+
+export interface Admission {
+  id: number,
+  name: string,
+  rop_id: number,
+  rop_name: string,
+  avg_abit_score: number,
+  ratio_CR: number,
+  ratio_celev_CR: number,
+  abit_score_points: number,
+  ratio_CR_points: number,
+  ratio_celev_CR_points: number,
+  npr_score:number,
+  npr_points: number,
+  stud_sop_score:number,
+  stud_sop_points: number,
+  employer_score: number,
+  employer_points: number
+  res: number
+  count: number
+}
+
+export enum MonitoringIndicators {
+  EGE = 4,
+  STUD_CONTINGENT = 5,
+  CELEV_STUD_CONTINGENT = 6,
+  NPR = 7,
+  STUD_SOP = 8,
+  EMPLOYER = 9,
 }

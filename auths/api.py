@@ -87,6 +87,7 @@ class UserApiViewSet(ListModelMixin, GenericViewSet):
                 'permissions': self.request.user.userprofile.permissions,
                 'can_upload': can_upload or have_files,
                 'rop': have_files,
+                'login_site': settings.LOGIN_SITE,
             })
 
         return JsonResponse(data)
