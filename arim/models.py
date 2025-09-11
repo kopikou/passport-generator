@@ -17,6 +17,7 @@ class CatPerson(models.Model):
     name = models.CharField(max_length=128)
     ckaf = models.ForeignKey("CatKaf", on_delete=models.CASCADE, db_column="ckaf")
     prepod = models.CharField(max_length=1, choices=BoolChoice, default=BoolChoice.f)
+    doljnost_nauch = models.CharField(max_length=128, null=True)
 
 
 class Catadmission(models.Model):
