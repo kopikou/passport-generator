@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from arim.services import AISServices
+from auths.models import UserProfile
 from ind_plan.models import IndPlan, PlanWork, PlanWorkType, PreparingCoefficient
 
 
@@ -8,10 +9,14 @@ class IndPlanService(object):
     @classmethod
     def get_indPlan(cls, plan_id):
         ind_plan = IndPlan.objects.get(pk=plan_id)
-        if (ind_plan is not None):
+        if ind_plan is not None:
             mira_id = ind_plan.user_created.userprofile.mira_id
             data = AISServices.get_uch_nagr_by_person(mira_id)
             discpl_list = list(set(i['discpl'] for i in data))
+
+            if ind_plan.zav is None:
+                ind_plan.zav = UserProfile.objects.get(mira_id=data[0]['zav_id']).user
+                ind_plan.save()
 
             categories = {
                 'Лек': 'лекции',

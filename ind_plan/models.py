@@ -21,12 +21,12 @@ class IndPlan(models.Model):
         waiting = 1, "Ожидает рассмотрения"
         accepted = 2, "Утвержден"
         on_refile = 3, "Требуются правки"
-    year = models.IntegerField(default=datetime.now().year)
     user_created = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_created")
     user_confirmed = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="user_confirmed")
     created_at = models.DateTimeField(null=True, blank=True, default=datetime.now)
     confirmed_at = models.DateTimeField(null=True, blank=True)
     status = models.IntegerField(choices=IndPlanStatusChoice.choices, default=IndPlanStatusChoice.created)
+    zav = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="zav")
 
 class Work(models.Model):
     name = models.TextField()

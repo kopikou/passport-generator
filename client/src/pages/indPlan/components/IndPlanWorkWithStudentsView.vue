@@ -21,7 +21,7 @@ const columns = [
 ];
 
 const works = ref();
-const workToAdd = ref();
+const workToAdd = ref(null);
 
 async function getWorks(){
   let r = await api.get(`/api/indplan/get-works/?type=work_with_students`);
@@ -68,6 +68,7 @@ async function updateWork(id: Number, name: String) {
       style="height: 100%"
       color="primary"
       @click="addWork"
+       :disable="workToAdd === null"
     />
   </div>
 
@@ -82,10 +83,10 @@ async function updateWork(id: Number, name: String) {
     separator="cell"
     :rows-per-page-options="[0]"
     table-header-class="table-header"
+    :visible-columns="isAuthor ? ['name', 'control'] : ['name']"
   >
-   <template v-slot:body="props">
-     <q-tr :props="props">
-       <q-td  key="name">
+   <template v-slot:body-cell-name="props">
+     <q-td  :props="props">
          {{props.row.name}}
           <q-popup-edit
             v-if="params.isAuthor"
@@ -98,15 +99,16 @@ async function updateWork(id: Number, name: String) {
             <q-input v-model="scope.value" dense autofocus counter @keyup.enter="scope.set" />
           </q-popup-edit>
        </q-td>
-       <q-td key="control" style="display: flex; justify-content: center; gap: 8px">
-         <q-btn
-          icon="mdi-delete-forever"
-          color="red"
-          @click="deleteWork(props.row.id)"
-          :disable="!params.isAuthor"
-        />
-       </q-td>
-     </q-tr>
+   </template>
+   <template v-slot:body-cell-control="props">
+     <q-td style="display: flex; justify-content: center" :props="props">
+      <q-btn
+        icon="mdi-delete-forever"
+        color="red"
+        @click="deleteWork(props.row.id)"
+        :disable="!params.isAuthor"
+      />
+     </q-td>
    </template>
  </q-table>
 

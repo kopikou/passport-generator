@@ -23,7 +23,7 @@ const columns = [
 ];
 
 const works = ref();
-const workToAdd = ref();
+const workToAdd = ref(null);
 
 async function getWorks(){
   let r = await api.get(`/api/indplan/get-works/?type=other`);
@@ -87,6 +87,7 @@ async function deleteWork(id: Number) {
       style="height: 100%"
       color="primary"
       @click="addWork"
+       :disable="workToAdd === null"
     />
   </div>
 
@@ -101,6 +102,7 @@ async function deleteWork(id: Number) {
     separator="cell"
     :rows-per-page-options="[0]"
     table-header-class="table-header"
+    :visible-columns="isAuthor ? ['type', 'name', 'hours_count', 'control'] : ['type', 'name', 'hours_count']"
   >
     <template v-slot:body-cell-control="props">
      <q-td style="display: flex; justify-content: center" :props="props">

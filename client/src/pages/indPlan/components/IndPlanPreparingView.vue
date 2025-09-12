@@ -20,13 +20,13 @@ async function updateNewField(id: Number, is_new: Boolean) {
   const formData = new FormData();
   formData.append('is_new', is_new.toString());
   const r = await api.put(`/api/planwork/${id}/`, formData);
-  params.rows[id-1].is_new = is_new;
-  params.rows[id-1].hours_count = r.data.hours_count;
-  params.rows[id-1].max_hours_count = r.data.max_hours_count;
+  params.rows.find(item => item.id === id).is_new = is_new;
+  params.rows.find(item => item.id === id).hours_count = r.data.hours_count;
+  params.rows.find(item => item.id === id).max_hours_count = r.data.max_hours_count;
 }
 
 async function updateHoursCount(id: Number, hours_count: Number) {
-  console.log(hours_count);
+  hours_count = parseFloat(hours_count);
   const formData = new FormData();
   formData.append('hours_count', hours_count.toString());
   const r = await api.put(`/api/planwork/${id}/`, formData);

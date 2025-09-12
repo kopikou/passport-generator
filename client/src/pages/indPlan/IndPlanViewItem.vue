@@ -27,7 +27,11 @@ const tab = ref('uchNagr');
 const indPlan = ref({});
 
 const isAuthor = computed(() => {
-  return indPlan.value.plan.user_created.user_id === userId.value
+  return indPlan.value.plan.user_created.user_id === userId.value;
+});
+
+const canAccepted = computed(() => {
+  return indPlan.value.plan.zav === userId.value;
 });
 
 const statuses = [
@@ -48,8 +52,6 @@ const statuses = [
     color: "red"
   },
 ];
-
-const canAccepted = true;
 
 const controlButtons = [
   {
@@ -84,6 +86,7 @@ const controlButtons = [
 async function getIndPlan(){
   let r = await api.get(`/api/indplan/${props.id}/`);
   indPlan.value = r.data;
+  console.log(canAccepted.value);
 }
 
 onBeforeMount(async() => {
@@ -95,20 +98,39 @@ async function changeStatus(nextStatus: Number) {
   formData.append('status', nextStatus.toString());
 
   const r  = await api.put(`/api/indplan/${props.id}/`, formData);
+
+  indPlan.value.plan.status = r.data.status;
 }
+
+const sumOfHours = computed(() =>{
+  let sum = 0;
+
+  indPlan.value.uch_nagr.forEach(item => sum += item.items.reduce((acc, val) => acc + val.hours_count, 0));
+  sum += indPlan.value.preparing.reduce((acc, val) => acc + parseFloat(val.hours_count), 0);
+  sum += indPlan.value.educ_method.reduce((acc, val) => acc + val.hours_count, 0);
+  sum += indPlan.value.other_works.reduce((acc, val) => acc + val.hours_count, 0);
+
+  return sum;
+});
 </script>
 
 <template>
   <layout-h-c-f>
     <template #header>
-      <div style="display: grid; grid-template-columns: auto auto auto; gap: 20px; margin: 8px; justify-content: center; align-items: center">
-        <span style="font-size: 20px">Автор: {{ indPlan.plan.user_created.last_name }} {{ indPlan.plan.user_created.first_name}} {{ indPlan.plan.user_created.middle_name }}</span>
-        <q-badge :color="statuses[indPlan.plan.status].color" style="height: 40px; font-size: medium">{{ statuses[indPlan.plan.status].title }}</q-badge>
+      <div style="display: grid; grid-template-columns: auto auto; gap: 8px; margin: 8px; justify-content: space-between; align-items: center">
+        <div style="display: grid; grid-template-columns: auto auto auto; gap: 8px; margin: 8px; justify-content: center; align-items: center">
+          <span style="font-size: 15px">Автор: {{ indPlan.plan.user_created.last_name }} {{ indPlan.plan.user_created.first_name}} {{ indPlan.plan.user_created.middle_name }}</span>
+          <q-badge :color="statuses[indPlan.plan.status].color" style="height: 40px; font-size: medium">{{ statuses[indPlan.plan.status].title }}</q-badge>
 
-        <div>
-          <div v-for="button in controlButtons">
-            <q-btn v-if="button.permission && button.current_statuses.includes(indPlan.plan.status)" :icon="button.icon" :color="button.color" :text-color="button.text_color" @click="changeStatus(button.next_status)"/>
+          <div style="display: grid; grid-template-columns: auto auto; gap: 8px; align-items: center; margin: 8px;">
+            <div v-for="button in controlButtons">
+              <q-btn v-if="button.permission.value && button.current_statuses.includes(indPlan.plan.status)" :icon="button.icon" :color="button.color" :text-color="button.text_color" @click="changeStatus(button.next_status)"/>
+            </div>
           </div>
+        </div>
+
+        <div style=" margin: 8px; justify-content: center; align-items: center">
+          <span style="font-size: 15px">Количество часов: {{ sumOfHours }}</span>
         </div>
       </div>
 
