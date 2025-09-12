@@ -497,3 +497,32 @@ class AISServices(object):
         data = Mira.fetch(query, tuple(uch_plan_list))
 
         return data
+
+    @staticmethod
+    def get_oop_docs():
+        query = f"""
+                    SELECT
+                    up.abbrprofile,
+                    up.startyear,
+                    uf.*
+                    FROM (
+                        SELECT 
+                        up.abbrprofile,
+                        MAX(up.startyear) AS max_year
+                        FROM dbo.uchplan_plan up
+                        LEFT JOIN dbo.catadmission ca ON ca.cuchplan = up.id
+                        LEFT JOIN dbo.catstud cs ON cs.cadmission = ca.id
+                        WHERE
+                            up.abbrprofile IN (SELECT DISTINCT abbrprofile FROM dbo.uchplan_plan)
+                            AND cs.cstudstate IN (1, 5, 10, 21, 34)
+                        GROUP BY up.abbrprofile
+                    ) AS T1
+                    LEFT JOIN dbo.uchplan_plan up ON up.abbrprofile = T1.abbrprofile AND up.startyear = T1.max_year
+                    LEFT JOIN dbo.uchplan_files uf ON uf.cplan = up.id
+                    ORDER BY up.abbrprofile
+                """
+
+        data = Mira.fetch(query)
+
+        return data
+
