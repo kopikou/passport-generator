@@ -481,33 +481,48 @@ class AISServices(object):
         return data
 
     @staticmethod
-    def get_uch_nagr_by_person(person_id):
-        q = f"""
-            declare @person_id INT;
-            SET @person_id = %s;
-    
-            SELECT
-            pun.discpl AS discpl,
-            pun.grup AS grup,
-            pun.HOUR AS hours_count,
-            pun.formcontr AS formcntr,
-            pun.direction AS direct,
-            pun.doljnost AS doljn_type,
-            pun.ddat AS ddat,
-            pun.kurs AS kurs,
-            pun.sem AS sem,
-            cp.doljnost_nauch AS doljn,
-            cp.rate AS rate,
-            ck.name AS kaf,
-            cf.name AS fac
-            FROM dbo.person2uchnagr pun
-                LEFT JOIN dbo.catperson cp ON pun.cperson = cp.id
-                LEFT JOIN dbo.catkaf ck ON ck.id = cp.ckaf
-                LEFT JOIN dbo.catfaculty cf ON cf.id = ck.cfac
-            WHERE 
-                pun.cperson = @person_id
-            ORDER BY pun.kurs, pun.sem
+    def get_stud_states_by_uch_plan_list(uch_plan_list):
+        params = ', '.join(['%s']*len(uch_plan_list))
+        query = f"""
+            SELECT 
+            ca.id
+            FROM dbo.catstud cs
+            LEFT JOIN dbo.catadmission ca ON ca.id = cs.cadmission
+            WHERE
+                ca.cuchplan IN ({params})
+                AND cs.cstudstate IN (1, 5, 10, 21, 34)
+            GROUP BY ca.id
         """
-        data = Mira.fetch(q, [int(person_id)])
+
+        data = Mira.fetch(query, tuple(uch_plan_list))
 
         return data
+
+    @staticmethod
+    def get_oop_docs():
+        query = f"""
+                    SELECT
+                    up.abbrprofile,
+                    up.startyear,
+                    uf.*
+                    FROM (
+                        SELECT 
+                        up.abbrprofile,
+                        MAX(up.startyear) AS max_year
+                        FROM dbo.uchplan_plan up
+                        LEFT JOIN dbo.catadmission ca ON ca.cuchplan = up.id
+                        LEFT JOIN dbo.catstud cs ON cs.cadmission = ca.id
+                        WHERE
+                            up.abbrprofile IN (SELECT DISTINCT abbrprofile FROM dbo.uchplan_plan)
+                            AND cs.cstudstate IN (1, 5, 10, 21, 34)
+                        GROUP BY up.abbrprofile
+                    ) AS T1
+                    LEFT JOIN dbo.uchplan_plan up ON up.abbrprofile = T1.abbrprofile AND up.startyear = T1.max_year
+                    LEFT JOIN dbo.uchplan_files uf ON uf.cplan = up.id
+                    ORDER BY up.abbrprofile
+                """
+
+        data = Mira.fetch(query)
+
+        return data
+

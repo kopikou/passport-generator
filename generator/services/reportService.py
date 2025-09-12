@@ -118,16 +118,15 @@ class ReportService(object):
                     uploaded_file = UploadedFile(file, f"{name}.pdf")
                     uploaded_file.seek(0)
 
-                    if instance.file \
-                            and (not instance.last_accepted_file or instance.file.name != instance.last_accepted_file.name):
-                        instance.file.delete()
+                    # if instance.file and (not instance.last_accepted_file or instance.file.name != instance.last_accepted_file.name):
+                    #     instance.file.delete()
 
                     instance.file = uploaded_file
                     instance.file_updated_at = datetime.datetime.now()
 
                     if  instance.status == PlanLinesLink.StatusChoices.accepted:
-                        if instance.last_accepted_file:
-                            instance.last_accepted_file.delete()
+                        # if instance.last_accepted_file:
+                        #     instance.last_accepted_file.delete()
                         instance.last_accepted_file = instance.file
                     instance.save(update_fields=['file', 'last_accepted_file', 'file_updated_at'])
                     success = True

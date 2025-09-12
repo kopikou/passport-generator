@@ -298,6 +298,7 @@ class GeneratorService(object):
                     "confirm_date": lines_link.confirm_date,
                     "discode": lines_link.planlines.newdisid,
                     "type": result_types,
+                    "plan_id": int(plan_id),
                 })
 
         lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
@@ -632,7 +633,6 @@ class GeneratorService(object):
                         'name': i.planlines.dis,
                         'id': i.id,
                         "status": i.status,
-                        "confirmed": (i.user_accepted is not None and i.user_confirmed is not None),
                     } for i in rpds if i.planlines.viewpract is None
                 ],
                 "practices": [
@@ -641,7 +641,6 @@ class GeneratorService(object):
                         'name': i.planlines.dis,
                         'id': i.id,
                         "status": i.status,
-                        "confirmed": (i.user_accepted is not None and i.user_confirmed is not None),
                     } for i in rpds if i.planlines.viewpract is not None
                 ]
             })

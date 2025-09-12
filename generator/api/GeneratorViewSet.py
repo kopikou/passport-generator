@@ -877,18 +877,12 @@ class GeneratorViewSet(
 
         result = []
         for item in data:
-            status_items = [0, 0, 0, 0, 0, 0]
+            status_items = [0, 0, 0, 0, 0]
             for rpd in item['rpds']:
-                if not rpd['confirmed']:
-                    status_items[rpd['status']] += 1
-                else:
-                    status_items[5] += 1
+                status_items[rpd['status']] += 1
 
             for practice in item['practices']:
-                if not practice['confirmed']:
-                    status_items[practice['status']] += 1
-                else:
-                    status_items[5] += 1
+                status_items[practice['status']] += 1
 
             result.append({
                 'abbr': item['abbr'],
@@ -898,8 +892,7 @@ class GeneratorViewSet(
                 'on_review': status_items[2],
                 'accepted': status_items[3],
                 'on_refile': status_items[4],
-                'confirmed': status_items[5],
-                'result': 'Выполнено' if status_items[5] == len(item['rpds']) + len(item['practices']) else 'Не выполнено',
+                'result': 'Выполнено' if status_items[3] == len(item['rpds']) + len(item['practices']) else 'Не выполнено',
             })
 
         return Response(result)
@@ -923,21 +916,30 @@ class GeneratorViewSet(
                 if type in done_docs_types:
                     needed_docs_done_count += 1
 
-            result.append({
-                'group': item['abbr'] + '-' + str(item['year'])[2:4],
-                'level': item['level__name'],
-                'needed_docs': item['needed_docs_count'],
-                'done_docs': len(item['documents']),
-                'uch_plan': '+' if 9 in done_docs_types else '-',
-                'calend_uch_graph': '+' if 15 in done_docs_types else '-',
-                'adap_uch_plan': '+' if 13 in done_docs_types else '-',
-                'oop': '+' if 10 in done_docs_types else '-',
-                'aop': '+' if 16 in done_docs_types else '-',
-                'pr_gia': '+' if 2 in done_docs_types else '-',
-                'fos_gia': '+' if 3 in done_docs_types else '-',
-                'rpv': '+' if 11 in done_docs_types else '-',
-                'all_docs': str([doc['title'] for doc in item['documents']]),
-                'result': 'Выполнено' if ((item['level'] not in [3, 5] and needed_docs_done_count == 8) or (item['level'] in [3, 5] and needed_docs_done_count == 7)) else 'Не выполнено',
-            })
+            if len(item['documents']) > 0:
+                result_item = {
+                    'group': item['abbr'] + '-' + str(item['year'])[2:4],
+                    'level': item['level__name'],
+                    'needed_docs': item['needed_docs_count'],
+                    'done_docs': len(item['documents']),
+                    'uch_plan': '+' if 9 in done_docs_types else '-',
+                    'calend_uch_graph': '+' if 15 in done_docs_types else '-',
+                    'adap_uch_plan': '+' if 13 in done_docs_types else '-',
+                    'oop': '+' if 10 in done_docs_types else '-',
+                    'aop': '+' if 16 in done_docs_types else '-',
+                    'pr_gia': '+' if 2 in done_docs_types else '-',
+                    'fos_gia': '+' if 3 in done_docs_types else '-',
+                    'rpv': '+' if 11 in done_docs_types else '-',
+                    'all_docs': str([doc['title'] for doc in item['documents']]),
+                }
+
+            if ((item['level'] not in [3, 5] and needed_docs_done_count == 8)
+                    or (item['level'] == 3 and needed_docs_done_count == 7)
+                    or (item['level'] == 5 and needed_docs_done_count == 5)):
+                result_item['result'] = 'Выполнено'
+            else:
+                result_item['result'] = 'Не выполнено'
+
+            result.append(result_item)
 
         return Response(result)

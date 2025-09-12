@@ -65,13 +65,19 @@ class Indicator(TimestampsModel):
 class RopMonitoringScore(TimestampsModel):
     rop_monitoring = models.ForeignKey("RopMonitoring", on_delete=SET_NULL, verbose_name="Мониторинг", null=True)
     admission = models.IntegerField(verbose_name="Программа", null=True)
-    person = models.IntegerField(verbose_name="РОП", null=True)
     admission_name = models.TextField(verbose_name="Название ООП", null=True, blank=True)
+    admission_kind = models.IntegerField(verbose_name="Уровень ООП", null=True, blank=True)
+    admission_cprofili = models.IntegerField(verbose_name="Профиль", null=True, blank=True)
+    admission_cspec = models.IntegerField(verbose_name="Специальность", null=True, blank=True)
+    admission_cdirection = models.IntegerField(verbose_name="Направление", null=True, blank=True)
+    person = models.IntegerField(verbose_name="РОП", null=True)
     person_name = models.TextField(verbose_name="ФИО РОПа", null=True, blank=True)
     indicator = models.ForeignKey("Indicator", verbose_name="Индикатор", on_delete=SET_NULL, null=True)
     value_numeric = models.FloatField(verbose_name="Значение показателя (численное)", null=True)
     value_boolean = models.BooleanField(verbose_name="Значение показателя (булевое)", null=True)
     score = models.FloatField(verbose_name="Кол-во баллов", null=True)
+    count = models.IntegerField(verbose_name="Кол-во студентов/сотрудников", null=True)
+    res = models.IntegerField(verbose_name="Числитель(кол-во прошедших опрос)", null=True)
 
     @property
     def value(self):

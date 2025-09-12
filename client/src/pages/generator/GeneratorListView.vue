@@ -283,7 +283,6 @@ async function getDoneFile(key: string) {
       {value: 'Отправлены на проверку', fontWeight: 'bold'},
       {value: 'Утверждены', fontWeight: 'bold'},
       {value: 'Требуют правки', fontWeight: 'bold'},
-      {value: 'Согласованы', fontWeight: 'bold'},
       {value: 'Итог', fontWeight: 'bold'},
     ]);
 
@@ -296,7 +295,6 @@ async function getDoneFile(key: string) {
         {type: Number, value: item.on_review},
         {type: Number, value: item.accepted},
         {type: Number, value: item.on_refile},
-        {type: Number, value: item.confirmed},
         {type: String, value: item.result},
       ])
     })
@@ -457,7 +455,7 @@ function rowClassFn (row) {
           >
             <template  v-slot:body="props">
               <q-tr :props="props">
-                <generator-list-view-item @data-updated="getGroupProgram" :item="props.row"/>
+                <generator-list-view-item @data-updated="getGroupProgram(props.row.plan_id)" :item="props.row"/>
               </q-tr>
             </template>
 

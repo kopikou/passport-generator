@@ -115,6 +115,12 @@ class DB:
             data = dictfetchall(cursor)
         return data
 
+    @classmethod
+    def fetch_one_or_none(cls, query, params=None):
+        data = cls.fetch(query, params)
+        if not data:
+            return None
+        return data[0]
 
 class RPGEN:
     key = 'rpgen'
@@ -187,3 +193,7 @@ class OverwriteStorage(FileSystemStorage):
         validate_file_name(file_name)
 
         return name
+
+def shortify_name(name):
+    parts = name.split(' ')
+    return f"{parts[0]} {parts[1][0]}.{parts[2][0]}."

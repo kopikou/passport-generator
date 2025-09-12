@@ -1,4 +1,4 @@
-from datetime import datetime
+import pendulum
 
 MARKS_QUERY = f"""
     SELECT 
@@ -18,7 +18,7 @@ MARKS_QUERY = f"""
         AND cs.cset IN (1, 2, 3)
         AND cs.cstudstate IN (1, 10, 21, 22, 12, 31, 5, 13, 27, 28, 32)
         AND ca.cfob IN (1, 2)
-        AND YEAR(ca.dateend) >= {datetime.now().year} - 1
+        AND ca.dateend >= '{pendulum.now().format('DD.MM.YYYY')}'
     GROUP BY
         cs.id,
         su.name, 
@@ -84,7 +84,7 @@ STUDENTS_QUERY = f"""
     ) direction ON direction.id = cs.cadmission
     WHERE 
     cs.cstudstate IN (1, 10, 21, 22, 12, 31, 5, 13, 27, 28, 32)
-    AND YEAR(ca.dateend) >= {datetime.now().year} - 1
+    AND ca.dateend >= '{pendulum.now().format('DD.MM.YYYY')}'
     AND cs.name IS NOT NULL
     AND ca.cfob IN (1, 2)
     ORDER BY 3, 5, 2
@@ -105,7 +105,7 @@ ORDERS_QUERY = f"""
     WHERE
         oi.corder_type IN (260518, 268613, 684369, 935108, 1604347, 1604347, 2082658, 2082687, 2082688, 2082688, 2082688, 2082734, 2082801, 2082861)
         AND cs.cstudstate IN (1, 5, 10, 12, 13, 21, 22, 27, 28, 31, 32)
-        AND YEAR(ca.dateend) >= {datetime.now().year} - 1
+        AND ca.dateend >= '{pendulum.now().format('DD.MM.YYYY')}'
         AND cs.name IS NOT NULL
         AND o.ddat IS NOT NULL
 	GROUP BY o.ddat, f.name, f.val, ois.cstud
@@ -117,6 +117,10 @@ ADMISSIONS_QUERY = f"""
         ca.id AS admission_id, 
         ca.abbr AS admission_abbr, 
         ca.name AS admission_name, 
+        ca.cadmkind AS admission_kind,
+        ca.cprofili AS admission_cprofili,
+        ca.cspec AS admission_cspec,
+        ca.cdirection AS admission_cdirection,
         ca.yr AS admission_year, 
         convert(varchar, ca.dateend, 104) AS admission_date_end,
         cf.name AS faculty_name, 
@@ -124,8 +128,7 @@ ADMISSIONS_QUERY = f"""
         direction.code AS direction_code,
         pers.name AS admission_rop,
         pers.id AS admission_rop_id,
-        ca.uchPeriod AS admission_period,
-        ca.cadmkind AS admission_kind
+        ca.uchPeriod AS admission_period
     FROM dbo.catadmission ca
     LEFT JOIN dbo.catfaculty cf ON cf.id = ca.cfac
     LEFT JOIN dbo.uchplan_plan pl ON pl.id = ca.cuchplan
@@ -155,7 +158,7 @@ ADMISSIONS_QUERY = f"""
             WHERE a.cadmkind < 6
         ) direction ON direction.id = ca.id
     WHERE 
-    YEAR(ca.dateend) >= ${datetime.now().year} - 1
+    ca.dateend >= '{pendulum.now().format('DD.MM.YYYY')}'
     AND (ca.cspec IS NOT NULL 
     OR ca.cprofili IS NOT NULL)
     AND ca.cfob in (1, 2)

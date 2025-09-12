@@ -1,11 +1,21 @@
+import json
 import os
 from datetime import datetime
+from io import BytesIO
 
 import pandas as pd
 import pendulum
+from django.conf import settings
+from django.http import StreamingHttpResponse
+from django.utils.encoding import escape_uri_path
+
 from app.utils import Mira, SOP
 from rop_monitoring.models import Indicators, MiraAdmissionKinds, AdmissionKinds, Indicator
 from rop_monitoring.sql_queries import MARKS_QUERY, STUDENTS_QUERY, ORDERS_QUERY, ADMISSIONS_QUERY
+import requests
+from requests.auth import HTTPBasicAuth
+from openpyxl import Workbook
+from openpyxl.styles import Font
 
 
 def safe_int(value):
@@ -38,10 +48,10 @@ def get_monitoring_scores(monitoring_id):
                 admission_kind = AdmissionKinds.MAG.value
 
         if admission_kind is not None:
-            indicators = list(Indicator.objects.filter(admission_kinds__contains=[admission_kind]).values())
+            indicators = list(Indicator.objects.filter(admission_kinds__overlap=[admission_kind]).values())
 
             for indicator in indicators:
-                value, score = calculator.get_indicator_value_score(admission_id, indicator['id'])
+                value, score, count, res = calculator.get_indicator_value_score(admission_id, indicator['id'])
 
                 if value is not None and score is not None:
                     value_numeric = None
@@ -55,17 +65,97 @@ def get_monitoring_scores(monitoring_id):
                     rop_monitoring_scores.append({
                         "rop_monitoring": monitoring_id,
                         "admission": admission_id,
-                        "person_id": admission.get('admission_rop_id'),
                         "admission_name": admission.get('admission_name'),
+                        "admission_kind": admission.get('admission_kind'),
+                        "admission_cprofili": admission.get('admission_cprofili'),
+                        "admission_cspec": admission.get('admission_cspec'),
+                        "admission_cdirection": admission.get('admission_cdirection'),
+                        "person_id": admission.get('admission_rop_id'),
                         "person_name": admission.get('admission_rop'),
                         "indicator_id": indicator['id'],
                         "value": value,
                         "value_boolean": value_boolean,
                         "value_numeric": value_numeric,
                         "score": score,
+                        "count": count,
+                        "res": res
                     })
 
     return rop_monitoring_scores
+
+
+def export_answers_to_excel(admissions):
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Результаты"
+
+    headers = [
+        "Название программы",
+        "РОП",
+        "Ср. балл ЕГЭ (ДВИ)",
+        "Баллы за ср. балл ЕГЭ",
+        "Доля завершивших/активных студентов",
+        "Баллы за долю завершивших/активных студентов",
+        "Доля завершивших/активных студентов целевиков",
+        "Баллы за долю завершивших/активных студентов целевиков",
+        "Доля НПР, принявших участие в опросах о кач-ве образ.",
+        "Баллы за долю НПР, принявших участие в опросах о кач-ве образ.",
+        "Доля обучающихся, принявших участие в опросах о кач-ве образ.",
+        "Баллы за долю обучающихся, принявших участие в опросах о кач-ве образ.",
+        "Сумма кол-ва студентов за периоды",
+        "Сумма кол-ва проголосовавших студентов за периоды"
+    ]
+
+    sheet.append(headers)
+
+    bold_font = Font(bold=True)
+    for cell in sheet["1:1"]:
+        cell.font = bold_font
+
+    for admission in admissions:
+        row = [
+            admission.get('admission_name', ''),
+            admission.get('person_name', ''),
+            admission.get('ege_value', 0.0),
+            admission.get('ege_score', 0.0),
+            admission.get('student_contingent_value', 0.0),
+            admission.get('student_contingent_score', 0.0),
+            admission.get('celev_student_contingent_value', 0.0),
+            admission.get('celev_student_contingent_score', 0.0),
+            admission.get('npr_value', 0.0),
+            admission.get('npr_score', 0.0),
+            admission.get('student_sop_value', 0.0),
+            admission.get('student_sop_score', 0.0),
+            admission.get('student_sop_count', 0.0),
+            admission.get('student_sop_res', 0.0)
+        ]
+        sheet.append(row)
+
+    for column in sheet.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        sheet.column_dimensions[column_letter].width = adjusted_width
+
+    buffer = BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+
+    filename = escape_uri_path(pendulum.today().format("DD.MM.YYYY"))
+    response = StreamingHttpResponse(
+        streaming_content=buffer,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename={filename}.xlsx'
+    response["Content-Encoding"] = 'UTF-8'
+
+    return response
 
 
 class IndicatorsCalculator:
@@ -91,13 +181,17 @@ class IndicatorsCalculator:
                 indicator_data = self.get_npr_indicator(admission_id)
             case Indicators.STUD_SOP.value:
                 indicator_data = self.get_stud_sop_indicator(admission_id)
+            # case Indicators.EMPLOYER.value:
+            #     indicator_data = self.get_stud_sop_indicator(admission_id)
             case _:
                 indicator_data = {
                     'value': None,
                     'score': None,
+                    'count': None,
+                    'res': None
                 }
 
-        return indicator_data.get('value'), indicator_data.get('score')
+        return indicator_data.get('value'), indicator_data.get('score'), indicator_data.get('count'), indicator_data.get('res')
 
     def get_ege_indicator(self, admission_id):
         if not self.ege_indicator:
@@ -131,6 +225,13 @@ class IndicatorsCalculator:
         if not self.stud_sop_indicator:
             self.stud_sop_indicator = self.monitor.get_stud_sop_indicator()
         indicator = self.stud_sop_indicator.get(admission_id, {})
+
+        return indicator
+
+    def get_employer_indicator(self, admission_id):
+        if not self.employer_indicator:
+            self.employer_indicator = self.monitor.get_rabotodatel_indicator()
+        indicator = self.employer_indicator.get(admission_id, {})
 
         return indicator
 
@@ -814,7 +915,6 @@ class RopMonitor:
 
     def get_npr_indicator(self):
         person_cadmission = self.get_person_uchnagr('09/10/2024', '09/10/2025')
-        # person_cadmission = Mira.fetch(NPR_QUERY, [])
         csv_path = os.path.join("templates", "prepod_who_go_survey_in_bitrix.csv")
         df = pd.read_csv(csv_path)
         data_dict = df.to_dict('records')
@@ -855,11 +955,13 @@ class RopMonitor:
         for admission in sorted(admissions.values(), key=lambda d: d['admission_name']):
             total = len(admission['total_persons'])
             responded = len(admission['responded_persons'])
-            ratio = round(responded / total,2) if total > 0 else 0
+            ratio = round(responded / total, 2) if total > 0 else 0
             score = 1 if ratio >= 0.6 else 0
             admission_rows_by_id[admission['admission_id']] = {
                 'admission_name': admission['admission_name'],
                 'admission_rop': admission['admission_rop'],
+                'total': total,
+                'responded': responded,
                 'value': ratio,
                 'score': score,
             }
@@ -884,7 +986,31 @@ class RopMonitor:
                 'admission_rop': admission['admission_rop'],
                 'value': ratio,
                 'score': score,
+                'count': count,
+                'res': res
+
             }
+        return admissions_rows_by_id
+
+    def get_rabotodatel_indicator(self):
+        rabotodatel_count_data = self.get_rabotodatel_count()
+        print(rabotodatel_count_data)
+        # rabotodate_count = {item['cnewgrup']: item['summa'] for item in student_count_data}
+        admissions_rows_by_id = {}
+        for admission in self.admissions.values():
+            print(admission)
+            # admission_name = admission['admission_name']
+            # count = student_count.get(admission_name, 0)
+            # res = student_result.get(admission_name, 0)
+            # ratio = round(res / count, 2) if count > 0 else 0
+            # ratio = min(ratio, 1.0)
+            # score = 1 if ratio >= 0.6 else 0
+            # admissions_rows_by_id[admission['admission_id']] = {
+            #     'admission_name': admission['admission_name'],
+            #     'admission_rop': admission['admission_rop'],
+            #     'value': ratio,
+            #     'score': score,
+            # }
         return admissions_rows_by_id
 
     @classmethod
@@ -901,7 +1027,7 @@ GROUP BY LEFT(lg1.cnewgrup, LEN(lg1.cnewgrup) - 2)
 HAVING COUNT(DISTINCT CASE WHEN %s BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) +
     COUNT(DISTINCT CASE WHEN %s BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) > 0
             """)
-        r = Mira.fetch(query, [start_date, start_end,start_date, start_end])
+        r = Mira.fetch(query, [start_date, start_end, start_date, start_end])
         return r
 
     @classmethod
@@ -925,6 +1051,20 @@ group by cadmission, LEFT(client_group, LENGTH(client_group) - 2)
                 """)
         r = Mira.fetch(query, [start_date, start_end])
         return r
+
+    @classmethod
+    def get_rabotodatel_count(cls):
+        url = "https://www.istu.edu/Sys/Module/Form/v2/form.json.php?form_id=3"
+        username = "api_user1"
+        password = "v300"
+        try:
+            response = requests.get(url, auth=HTTPBasicAuth(username, password))
+            response.raise_for_status()
+            data = response.json()
+            return data
+        except Exception as e:
+            print(f"Error: {e}")
+            return []
 
     def get_admissions(self):
         return self.admissions

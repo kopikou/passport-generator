@@ -413,6 +413,8 @@ export interface Admission {
   stud_sop_points: number,
   employer_score: number,
   employer_points: number
+  res: number
+  count: number
 }
 
 export enum MonitoringIndicators {
