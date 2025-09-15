@@ -6,7 +6,7 @@ const params = defineProps({
   rows: {
     required: true,
   },
-  isAuthor: {
+  canEdit: {
     required: true,
   },
 });
@@ -61,7 +61,7 @@ async function updateHoursCount(id: Number, hours_count: Number) {
             :max="props.row.max_hours_count"
             dense
             borderless
-            :readonly="!params.isAuthor"
+            :readonly="!params.canEdit"
             @update:model-value="updateHoursCount(props.row.id, props.row.hours_count)"
           />
         </q-td>
@@ -71,7 +71,7 @@ async function updateHoursCount(id: Number, hours_count: Number) {
              v-if="props.row.is_new !== null"
              v-model="props.row.is_new"
              @click="updateNewField(props.row.id, props.row.is_new)"
-             :disable="!params.isAuthor"
+             :disable="!params.canEdit"
            />
         </q-td>
       </q-tr>

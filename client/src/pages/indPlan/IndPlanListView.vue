@@ -70,7 +70,7 @@ const statuses = [
   },
   {
     title: "Ожидает рассмотрения",
-    color: "yellow"
+    color: "orange-5"
   },
   {
     title: "Утвержден",
@@ -78,7 +78,7 @@ const statuses = [
   },
   {
     title: "Требуются правки",
-    color: "red"
+    color: "red-5"
   },
 ];
 
@@ -137,11 +137,11 @@ async function createIndPlan() {
         </q-td>
 
         <q-td key="year">
-           {{ props.row.year }}
+           {{ props.row.created_at.slice(0, 4) }}
         </q-td>
 
         <q-td key="status" style="display: flex; justify-content: center; align-items: center">
-          <q-badge :color="statuses[props.row.status].color" style="height: 30px; font-size: medium">{{ statuses[props.row.status].title }}</q-badge>
+          <q-badge :color="statuses[props.row.status].color" style="height: 20px; font-size: medium">{{ statuses[props.row.status].title }}</q-badge>
         </q-td>
       </q-tr>
     </template>

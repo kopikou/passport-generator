@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import {computed, ref, watch} from "vue";
 
-const props = defineProps({
+const params = defineProps({
   rows: {
     required: true,
   },
 });
+
+const expanded = ref('');
 
 const columns = [
   { name: 'sem', align: 'center', label: 'Семестр', field: 'sem', sortable: true },
@@ -18,7 +20,7 @@ const columns = [
 
 <template>
   <q-table
-    :rows="props.rows"
+    :rows="params.rows"
     :columns="columns"
     virtual-scroll
     style="overflow-y: auto; height: 100%;"
@@ -34,11 +36,15 @@ const columns = [
         <q-td colspan="100%">
           <span>{{ props.row.discpl }}</span>
           <span> ({{ props.row.items.reduce((acc, val) => acc + val.hours_count, 0).toFixed(2) }} часов)</span>
-          <q-btn dense @click="props.row.expand = !props.row.expand" :icon="props.row.expand ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
+          <q-btn
+            dense
+            @click="expanded = expanded === props.row.discpl ? '' : props.row.discpl"
+            :icon="expanded === props.row.discpl ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+          />
         </q-td>
       </q-tr>
 
-      <q-tr :props="props" v-for="item in props.row.items" v-show="props.row.expand">
+      <q-tr :props="props" v-for="item in props.row.items" v-show="expanded === props.row.discpl">
         <q-td key="sem">
           {{ item.sem }} ({{ item.kurs }} курс)
         </q-td>

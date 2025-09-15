@@ -10,7 +10,7 @@ const params = defineProps({
   plan_id: {
     required: true,
   },
-  isAuthor: {
+  canEdit: {
     required: true,
   },
 });
@@ -71,7 +71,7 @@ async function deleteWork(id: Number) {
 </script>
 
 <template>
-  <div style="display:grid; grid-template-columns: 5fr 1fr; gap: 12px; padding: 12px" v-if="params.isAuthor">
+  <div style="display:grid; grid-template-columns: 5fr 1fr; gap: 12px; padding: 12px" v-if="params.canEdit">
     <q-select v-model="workToAdd"
           label="Работа"
           :options="worksList"
@@ -101,7 +101,7 @@ async function deleteWork(id: Number) {
     separator="cell"
     :rows-per-page-options="[0]"
     table-header-class="table-header"
-    :visible-columns="isAuthor ? ['name', 'hours_count', 'control'] : ['name', 'hours_count']"
+    :visible-columns="canEdit ? ['name', 'hours_count', 'control'] : ['name', 'hours_count']"
   >
    <template v-slot:body-cell-control="props">
      <q-td style="display: flex; justify-content: center" :props="props">
@@ -109,7 +109,7 @@ async function deleteWork(id: Number) {
         icon="mdi-delete-forever"
         color="red"
         @click="deleteWork(props.row.id)"
-        :disable="!params.isAuthor"
+        :disable="!params.canEdit"
       />
      </q-td>
    </template>

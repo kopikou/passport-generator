@@ -10,6 +10,7 @@ import IndPlanPreparingView from "pages/indPlan/components/IndPlanPreparingView.
 import IndPlanEducMethodWorkView from "pages/indPlan/components/IndPlanEducMethodWorkView.vue";
 import useMainStore from "stores/mainStore";
 import {storeToRefs} from "pinia";
+import {useQuasar} from "quasar";
 
 const props = defineProps({
   id: {
@@ -24,7 +25,7 @@ const {
 
 const tab = ref('uchNagr');
 
-const indPlan = ref({});
+const indPlan = ref();
 
 const isAuthor = computed(() => {
   return indPlan.value.plan.user_created.user_id === userId.value;
@@ -34,6 +35,10 @@ const canAccepted = computed(() => {
   return indPlan.value.plan.zav === userId.value;
 });
 
+const canEdit = computed(() => {
+  return isAuthor.value && indPlan.value.plan.status === 0;
+})
+
 const statuses = [
   {
     title: "Создан",
@@ -41,7 +46,7 @@ const statuses = [
   },
   {
     title: "Ожидает рассмотрения",
-    color: "yellow"
+    color: "orange-5"
   },
   {
     title: "Утвержден",
@@ -49,7 +54,7 @@ const statuses = [
   },
   {
     title: "Требуются правки",
-    color: "red"
+    color: "red-5"
   },
 ];
 
@@ -57,7 +62,7 @@ const controlButtons = [
   {
     label: "Утвердить",
     permission: canAccepted,
-    current_statuses: [1, 3],
+    current_statuses: [1],
     next_status: 2,
     color: "green",
     icon: "mdi-check",
@@ -75,18 +80,35 @@ const controlButtons = [
   {
     label: "Отправить на проверку",
     permission: isAuthor,
-    current_statuses: [0],
+    current_statuses: [0, 3],
     next_status: 1,
-    color: "yellow",
-    icon: "mdi-export-variant",
+    color: "orange-4",
+    icon: "mdi-send-check-outline",
+    text_color: "black",
+  },
+  {
+    label: "Вернуть в редактирование",
+    permission: isAuthor,
+    current_statuses: [1],
+    next_status: 0,
+    color: "grey",
+    icon: "mdi-pencil",
     text_color: "black",
   },
 ];
 
+const $q = useQuasar();
+
 async function getIndPlan(){
-  let r = await api.get(`/api/indplan/${props.id}/`);
+  const loadProgram = $q.loading.show({
+    group: 'programs',
+    message: 'Загрузка индивидуального плана',
+  });
+
+  const r = await api.get(`/api/indplan/${props.id}/`);
   indPlan.value = r.data;
-  console.log(canAccepted.value);
+
+  loadProgram();
 }
 
 onBeforeMount(async() => {
@@ -115,16 +137,28 @@ const sumOfHours = computed(() =>{
 </script>
 
 <template>
-  <layout-h-c-f>
+  <layout-h-c-f v-if="indPlan !== undefined">
     <template #header>
-      <div style="display: grid; grid-template-columns: auto auto; gap: 8px; margin: 8px; justify-content: space-between; align-items: center">
+      <div style="display: grid; grid-template-columns: auto auto auto; gap: 8px; margin: 8px; justify-content: space-between; align-items: center">
+        <q-btn label="Назад" icon="mdi-arrow-left" to="/ind_plan/"/>
+
         <div style="display: grid; grid-template-columns: auto auto auto; gap: 8px; margin: 8px; justify-content: center; align-items: center">
           <span style="font-size: 15px">Автор: {{ indPlan.plan.user_created.last_name }} {{ indPlan.plan.user_created.first_name}} {{ indPlan.plan.user_created.middle_name }}</span>
-          <q-badge :color="statuses[indPlan.plan.status].color" style="height: 40px; font-size: medium">{{ statuses[indPlan.plan.status].title }}</q-badge>
+          <q-badge :color="statuses[indPlan.plan.status].color" style="height: 20px; font-size: medium">{{ statuses[indPlan.plan.status].title }}</q-badge>
 
-          <div style="display: grid; grid-template-columns: auto auto; gap: 8px; align-items: center; margin: 8px;">
+          <div style="display: flex; gap: 8px; align-items: center; margin: 8px;">
             <div v-for="button in controlButtons">
-              <q-btn v-if="button.permission.value && button.current_statuses.includes(indPlan.plan.status)" :icon="button.icon" :color="button.color" :text-color="button.text_color" @click="changeStatus(button.next_status)"/>
+              <q-btn
+                v-if="button.permission.value && button.current_statuses.includes(indPlan.plan.status)"
+                :icon="button.icon"
+                :color="button.color"
+                :text-color="button.text_color"
+                @click="changeStatus(button.next_status)"
+              >
+                <q-tooltip style="font-size: 12px; background-color: white; color: black">
+                  {{ button.label }}
+                </q-tooltip>
+              </q-btn>
             </div>
           </div>
         </div>
@@ -148,10 +182,10 @@ const sumOfHours = computed(() =>{
 
     <template #content>
       <ind-plan-uch-nagr-view v-if="tab === 'uchNagr'" :rows="indPlan.uch_nagr"/>
-      <ind-plan-preparing-view v-if="tab === 'preparing'" :rows="indPlan.preparing" :isAuthor="isAuthor"/>
-      <ind-plan-educ-method-work-view v-if="tab === 'educMethodWork'" :rows="indPlan.educ_method" :plan_id="props.id" :isAuthor="isAuthor"/>
-      <ind-p-lan-other-works-view v-if="tab === 'otherWorks'" :rows="indPlan.other_works" :plan_id="props.id" :isAuthor="isAuthor"/>
-      <ind-plan-work-with-students-view v-if ="tab === 'workWithStudents'" :rows="indPlan.work_with_students" :plan_id="props.id" :isAuthor="isAuthor"/>
+      <ind-plan-preparing-view v-if="tab === 'preparing'" :rows="indPlan.preparing" :canEdit="canEdit"/>
+      <ind-plan-educ-method-work-view v-if="tab === 'educMethodWork'" :rows="indPlan.educ_method" :plan_id="props.id" :canEdit="canEdit"/>
+      <ind-p-lan-other-works-view v-if="tab === 'otherWorks'" :rows="indPlan.other_works" :plan_id="props.id" :canEdit="canEdit"/>
+      <ind-plan-work-with-students-view v-if ="tab === 'workWithStudents'" :rows="indPlan.work_with_students" :plan_id="props.id" :canEdit="canEdit"/>
     </template>
   </layout-h-c-f>
 </template>
