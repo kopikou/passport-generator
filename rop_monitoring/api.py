@@ -114,6 +114,9 @@ class RopMonitoringScoreViewSet(
             if indicator_name:
                 admission_groups[admission_id][f'{indicator_name}_score'] = item.score
                 admission_groups[admission_id][f'{indicator_name}_value'] = item.value
+            if item.indicator_id == 7:
+                admission_groups[admission_id][f'{indicator_name}_total'] = item.total
+                admission_groups[admission_id][f'{indicator_name}_responded'] = item.responded
             if item.indicator_id == 8:
                 admission_groups[admission_id][f'{indicator_name}_count'] = item.count
                 admission_groups[admission_id][f'{indicator_name}_res'] = item.res
@@ -174,6 +177,8 @@ class RopMonitoringScoreViewSet(
                     indicator=indicator,
                     count=score_data.get('count'),
                     res=score_data.get('res'),
+                    total=score_data.get('total'),
+                    responded=score_data.get('responded'),
                     defaults={
                         'value_numeric': score_data.get('value_numeric'),
                         'value_boolean': score_data.get('value_boolean'),

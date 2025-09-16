@@ -1,7 +1,12 @@
+import itertools
 import json
+import math
 import os
 from datetime import datetime
 from io import BytesIO
+import re
+from itertools import groupby
+from statistics import median
 
 import pandas as pd
 import pendulum
@@ -51,7 +56,7 @@ def get_monitoring_scores(monitoring_id):
             indicators = list(Indicator.objects.filter(admission_kinds__overlap=[admission_kind]).values())
 
             for indicator in indicators:
-                value, score, count, res = calculator.get_indicator_value_score(admission_id, indicator['id'])
+                value, score, count, res, total, responded = calculator.get_indicator_value_score(admission_id, indicator['id'])
 
                 if value is not None and score is not None:
                     value_numeric = None
@@ -78,7 +83,9 @@ def get_monitoring_scores(monitoring_id):
                         "value_numeric": value_numeric,
                         "score": score,
                         "count": count,
-                        "res": res
+                        "res": res,
+                        "total": total,
+                        "responded": responded,
                     })
 
     return rop_monitoring_scores
@@ -100,10 +107,14 @@ def export_answers_to_excel(admissions):
         "Баллы за долю завершивших/активных студентов целевиков",
         "Доля НПР, принявших участие в опросах о кач-ве образ.",
         "Баллы за долю НПР, принявших участие в опросах о кач-ве образ.",
+        "Кол-во НПР",
+        "Ко-во проголосовавших НПР",
         "Доля обучающихся, принявших участие в опросах о кач-ве образ.",
         "Баллы за долю обучающихся, принявших участие в опросах о кач-ве образ.",
         "Сумма кол-ва студентов за периоды",
-        "Сумма кол-ва проголосовавших студентов за периоды"
+        "Сумма кол-ва проголосовавших студентов за периоды",
+        "Количество работодателей, принявших участие в опросах о кач-ве образ.",
+        "Баллы за долю работодателей, принявших участие в опросах о кач-ве образ.",
     ]
 
     sheet.append(headers)
@@ -112,22 +123,36 @@ def export_answers_to_excel(admissions):
     for cell in sheet["1:1"]:
         cell.font = bold_font
 
-    for admission in admissions:
+    admissions = sorted(admissions,  key=lambda x: (x['admission_name'].split('-')[0], x['admission_name'].split('-')[1]) )
+    admissions_grouped = groupby(admissions, key=lambda x: x['admission_name'].split('-')[0])
+
+    for name, admission_item in admissions_grouped:
+        admission_items = list(admission_item)
         row = [
-            admission.get('admission_name', ''),
-            admission.get('person_name', ''),
-            admission.get('ege_value', 0.0),
-            admission.get('ege_score', 0.0),
-            admission.get('student_contingent_value', 0.0),
-            admission.get('student_contingent_score', 0.0),
-            admission.get('celev_student_contingent_value', 0.0),
-            admission.get('celev_student_contingent_score', 0.0),
-            admission.get('npr_value', 0.0),
-            admission.get('npr_score', 0.0),
-            admission.get('student_sop_value', 0.0),
-            admission.get('student_sop_score', 0.0),
-            admission.get('student_sop_count', 0.0),
-            admission.get('student_sop_res', 0.0)
+            name,
+            admission_items[0].get('person_name', ''),
+            admission_items[-1].get('ege_value', 0.0),
+            admission_items[-1].get('ege_score', 0.0),
+            admission_items[0].get('student_contingent_value', 0.0),
+            admission_items[0].get('student_contingent_score', 0.0),
+            admission_items[0].get('celev_student_contingent_value', 0.0),
+            admission_items[0].get('celev_student_contingent_score', 0.0),
+            median(i.get('npr_value', 0.0) for i in admission_items),
+            1 if (median(i.get('npr_value', 0.0) for i in admission_items)) >= 0.6 else 0,
+            ", ".join(str(i.get('npr_total', 0.0)) for i in admission_items),
+            ", ".join(str(i.get('npr_responded', 0.0)) for i in admission_items),
+            0 if (sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]) == 0 or
+                  sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]) == 0)
+            else sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]) /
+                 sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]),
+            0 if (sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]) == 0 or
+                  sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]) == 0) else
+            (1 if sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]) /
+                        sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]) >= 0.6 else 0),
+            sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]),
+            sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]),
+            admission_items[0].get('employer_value', 0.0),
+            admission_items[0].get('employer_score', 0.0)
         ]
         sheet.append(row)
 
@@ -181,17 +206,19 @@ class IndicatorsCalculator:
                 indicator_data = self.get_npr_indicator(admission_id)
             case Indicators.STUD_SOP.value:
                 indicator_data = self.get_stud_sop_indicator(admission_id)
-            # case Indicators.EMPLOYER.value:
-            #     indicator_data = self.get_stud_sop_indicator(admission_id)
+            case Indicators.EMPLOYER.value:
+                indicator_data = self.get_employer_indicator(admission_id)
             case _:
                 indicator_data = {
                     'value': None,
                     'score': None,
                     'count': None,
-                    'res': None
+                    'res': None,
+                    'total': None,
+                    'responded': None
                 }
 
-        return indicator_data.get('value'), indicator_data.get('score'), indicator_data.get('count'), indicator_data.get('res')
+        return indicator_data.get('value'), indicator_data.get('score'), indicator_data.get('count'), indicator_data.get('res'),indicator_data.get('total'), indicator_data.get('responded')
 
     def get_ege_indicator(self, admission_id):
         if not self.ege_indicator:
@@ -992,25 +1019,123 @@ class RopMonitor:
             }
         return admissions_rows_by_id
 
+
+    # def get_stud_sop_indicator(self):
+    #     student_count_data = self.get_cadmission_student_count_v2('01/01/2025', '07/01/2025')
+    #     student_results_data = self.get_student_results_count(2025)
+    #
+    #     student_count_by_profile = {}
+    #     for item in student_count_data:
+    #         key = (item['profil'], item['cadmkind'])
+    #         student_count_by_profile[key] = item['denominator']
+    #
+    #     student_result_by_profile = {}
+    #
+    #     for item in student_results_data:
+    #         cadmission_id = item['cadmission']
+    #         # Находим admission по cadmission_id
+    #         admission = None
+    #         for adm in self.admissions.values():
+    #             if adm['admission_id'] == cadmission_id:
+    #                 admission = adm
+    #                 break
+    #
+    #         if not admission:
+    #             continue
+    #
+    #         if admission['admission_kind'] in (1, 2):
+    #             profile_key = admission['admission_cprofili']
+    #         elif admission['admission_kind'] == 3:
+    #             profile_key = admission['admission_cspec']
+    #         else:
+    #             continue
+    #
+    #         key = (profile_key, admission['admission_kind'])
+    #
+    #         student_result_by_profile[key] = student_result_by_profile.get(key, 0) + item['summa']
+    #
+    #     admissions_rows_by_id = {}
+    #
+    #     for admission in self.admissions.values():
+    #         if admission['admission_kind'] in (1, 2):
+    #             profile_key = admission['admission_cprofili']
+    #         elif admission['admission_kind'] == 3:
+    #             profile_key = admission['admission_cspec']
+    #         else:
+    #             continue
+    #
+    #         key = (profile_key, admission['admission_kind'])
+    #
+    #         count = student_count_by_profile.get(key, 0)
+    #         res = student_result_by_profile.get(key, 0)
+    #
+    #         ratio = round(res / count, 2) if count > 0 else 0
+    #         ratio = min(ratio, 1.0)
+    #         score = 1 if ratio >= 0.6 else 0
+    #
+    #         admissions_rows_by_id[admission['admission_id']] = {
+    #             'admission_name': admission['admission_name'],
+    #             'admission_rop': admission['admission_rop'],
+    #             'value': ratio,
+    #             'score': score,
+    #             'count': count,
+    #             'res': res,
+    #         }
+    #
+    #     return admissions_rows_by_id
+
     def get_rabotodatel_indicator(self):
         rabotodatel_count_data = self.get_rabotodatel_count()
-        print(rabotodatel_count_data)
-        # rabotodate_count = {item['cnewgrup']: item['summa'] for item in student_count_data}
+
+        program_employer_count = {}
+
+        for employer_data in rabotodatel_count_data:
+            vuzy_text = employer_data.get('vuzy', '')
+            response_number = employer_data.get('Номер ответа', '')
+            direction = employer_data.get('direction', '')
+
+            if vuzy_text and response_number:
+                abbr_match = re.search(r'\((.*?)\)', vuzy_text)
+                if abbr_match:
+                    abbreviation = abbr_match.group(1)
+                    program_type = None
+                    direction_lower = direction.lower() if direction else ''
+
+                    if 'бакалавриат' in direction_lower:
+                        program_type = 2
+                    elif 'специалитет' in direction_lower:
+                        program_type = 1
+                    elif 'магистратура' in direction_lower:
+                        program_type = 3
+                    elif 'среднее' in direction_lower or 'спо' in direction_lower:
+                        program_type = 4
+
+                    if abbreviation and program_type:
+                        key = (abbreviation, program_type)
+                        if key not in program_employer_count:
+                            program_employer_count[key] = set()
+                        program_employer_count[key].add(response_number)
+
+        program_employer_count = {key: len(responses) for key, responses in program_employer_count.items()}
+
         admissions_rows_by_id = {}
+
         for admission in self.admissions.values():
-            print(admission)
-            # admission_name = admission['admission_name']
-            # count = student_count.get(admission_name, 0)
-            # res = student_result.get(admission_name, 0)
-            # ratio = round(res / count, 2) if count > 0 else 0
-            # ratio = min(ratio, 1.0)
-            # score = 1 if ratio >= 0.6 else 0
-            # admissions_rows_by_id[admission['admission_id']] = {
-            #     'admission_name': admission['admission_name'],
-            #     'admission_rop': admission['admission_rop'],
-            #     'value': ratio,
-            #     'score': score,
-            # }
+            admission_abbr = admission['admission_abbr']
+            admission_kind = admission['admission_kind']
+
+            key = (admission_abbr, admission_kind)
+            count = program_employer_count.get(key, 0)
+
+            score = 1 if count >= 2 else 0
+
+            admissions_rows_by_id[admission['admission_id']] = {
+                'admission_name': admission['admission_name'],
+                'admission_rop': admission['admission_rop'],
+                'value': count,
+                'score': score,
+            }
+        print(admissions_rows_by_id)
         return admissions_rows_by_id
 
     @classmethod
@@ -1028,6 +1153,46 @@ HAVING COUNT(DISTINCT CASE WHEN %s BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01
     COUNT(DISTINCT CASE WHEN %s BETWEEN lg1.ddate AND COALESCE(cs.dateend,'01/01/3001') THEN lg1.cstud END) > 0
             """)
         r = Mira.fetch(query, [start_date, start_end, start_date, start_end])
+        return r
+
+#     @classmethod
+#     def get_cadmission_student_count_v2(cls, start_date, start_end):
+#         query = (f"""SELECT
+#     COUNT(catstud.id)*2 AS denominator,
+#     CASE
+#         WHEN cadmkind IN (1,2) THEN catadmission.cprofili
+#         WHEN cadmkind = 3 THEN cspec
+#     END AS profil,
+#     cadmkind
+# FROM dbo.catstud
+# LEFT JOIN dbo.catadmission ON catadmission.id = catstud.cadmission
+# WHERE cstudstate in (1,5,6,10,11,12,15,24,31,33,34)
+#     AND yr > 2020 AND yr <= 2024
+#     AND cadmkind IN (1,2,3)
+# GROUP BY
+#     CASE
+#         WHEN cadmkind IN (1,2) THEN catadmission.cprofili
+#         WHEN cadmkind = 3 THEN cspec
+#     END,
+#     cadmkind
+#                 """)
+#         r = Mira.fetch(query)
+#         return r
+
+    @classmethod
+    def get_cadmission_student_count_v2(cls, start_date, start_end):
+        query = (f"""
+SELECT 
+    COUNT(catstud.id)*2 as summa,
+    cadmission, catadmission.name as cnewgrup, yr
+FROM dbo.catstud
+LEFT JOIN dbo.catadmission ON catadmission.id = catstud.cadmission
+WHERE cstudstate in (1,5,6,10,11,12,15,24,31,33,34) 
+    AND yr > 2020 AND yr <= 2024 
+    AND cadmkind IN (1,2,3) 
+	GROUP BY cadmission, catadmission.name, yr
+                    """)
+        r = Mira.fetch(query)
         return r
 
     @classmethod
