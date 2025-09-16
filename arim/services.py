@@ -527,10 +527,12 @@ class AISServices(object):
         return data
 
     @staticmethod
-    def get_uch_nagr_by_person(person_id):
+    def get_uch_nagr_by_person_and_year(person_id, year):
         q = f"""
                 declare @person_id INT;
+                declare @year INT;
                 SET @person_id = %s;
+                SET @year = %s;
 
                 SELECT
                 pun.discpl AS discpl,
@@ -542,7 +544,6 @@ class AISServices(object):
                 pun.ddat AS ddat,
                 pun.kurs AS kurs,
                 pun.sem AS sem,
-                cp.doljnost_nauch AS doljn,
                 cp.rate AS rate,
                 ck.name AS kaf,
                 cf.name AS fac,
@@ -553,7 +554,26 @@ class AISServices(object):
                     LEFT JOIN dbo.catfaculty cf ON cf.id = ck.cfac
                 WHERE 
                     pun.cperson = @person_id
+                    AND pun.year = @year
                 ORDER BY pun.kurs, pun.sem
+            """
+        data = Mira.fetch(q, [int(person_id), int(year)])
+
+        return data
+
+    @staticmethod
+    def get_zav_to_plan(person_id):
+        q = f"""
+                declare @person_id INT;
+                SET @person_id = %s;
+                
+                SELECT 
+                    ck.czav
+                FROM dbo.person2uchnagr pun
+                    LEFT JOIN dbo.catperson cp ON pun.cperson = cp.id
+                    LEFT JOIN dbo.catkaf ck ON ck.id = cp.ckaf
+                WHERE cperson = @person_id
+                GROUP BY ck.czav
             """
         data = Mira.fetch(q, [int(person_id)])
 

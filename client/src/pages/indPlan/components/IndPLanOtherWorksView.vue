@@ -13,6 +13,9 @@ const params = defineProps({
   canEdit: {
     required: true,
   },
+  works: {
+    required: true
+  },
 });
 
 const columns = [
@@ -22,25 +25,15 @@ const columns = [
   { name: 'control', align: 'center', label: 'Действия', field: 'control', sortable: true },
 ];
 
-const works = ref();
 const workToAdd = ref(null);
 
-async function getWorks(){
-  let r = await api.get(`/api/indplan/get-works/?type=other`);
-  works.value = r.data;
-}
-
 const worksList = computed(() =>{
-  return _(works.value)
+  return _(params.works)
     .filter(x => {
       return !(params.rows.includes(x));
     })
     .value();
 });
-
-onBeforeMount(async() => {
-  await getWorks();
-})
 
 async function addWork() {
   const formData = new FormData();

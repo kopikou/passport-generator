@@ -50,9 +50,9 @@ class PlanWorkAddUpdateSerializer(serializers.Serializer):
                 instance.hours_count = hours_count * (PreparingCoefficient.new_labs_and_practices.value if validated_data['is_new'] else PreparingCoefficient.old_labs_and_practices.value)
                 instance.max_hours_count = instance.hours_count
                 instance.is_new = validated_data['is_new']
-        if 'hours_count' in validated_data and validated_data['hours_count'] != instance.hours_count:
+        elif 'hours_count' in validated_data and validated_data['hours_count'] != instance.hours_count:
             instance.hours_count = validated_data['hours_count']
-        if 'name' in validated_data and validated_data['name'] != instance.name:
+        elif 'name' in validated_data and validated_data['name'] != instance.name:
             instance.name = validated_data['name']
 
         instance.save()

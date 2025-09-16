@@ -113,6 +113,7 @@ async function getIndPlan(){
 
 onBeforeMount(async() => {
   await getIndPlan();
+  await getWorks();
 });
 
 async function changeStatus(nextStatus: Number) {
@@ -134,6 +135,13 @@ const sumOfHours = computed(() =>{
 
   return sum;
 });
+
+const works = ref();
+
+async function getWorks(){
+  let r = await api.get(`/api/indplan/get-works/`);
+  works.value = r.data;
+}
 </script>
 
 <template>
@@ -183,8 +191,8 @@ const sumOfHours = computed(() =>{
     <template #content>
       <ind-plan-uch-nagr-view v-if="tab === 'uchNagr'" :rows="indPlan.uch_nagr"/>
       <ind-plan-preparing-view v-if="tab === 'preparing'" :rows="indPlan.preparing" :canEdit="canEdit"/>
-      <ind-plan-educ-method-work-view v-if="tab === 'educMethodWork'" :rows="indPlan.educ_method" :plan_id="props.id" :canEdit="canEdit"/>
-      <ind-p-lan-other-works-view v-if="tab === 'otherWorks'" :rows="indPlan.other_works" :plan_id="props.id" :canEdit="canEdit"/>
+      <ind-plan-educ-method-work-view v-if="tab === 'educMethodWork'" :rows="indPlan.educ_method" :plan_id="props.id" :canEdit="canEdit" :works="works.filter(x => {return x.type_name === 'educ_method'})"/>
+      <ind-p-lan-other-works-view v-if="tab === 'otherWorks'" :rows="indPlan.other_works" :plan_id="props.id" :canEdit="canEdit" :works="works.filter(x => {return x.type_name !== 'educ_method'})"/>
       <ind-plan-work-with-students-view v-if ="tab === 'workWithStudents'" :rows="indPlan.work_with_students" :plan_id="props.id" :canEdit="canEdit"/>
     </template>
   </layout-h-c-f>

@@ -27,6 +27,7 @@ class IndPlan(models.Model):
     confirmed_at = models.DateTimeField(null=True, blank=True)
     status = models.IntegerField(choices=IndPlanStatusChoice.choices, default=IndPlanStatusChoice.created)
     zav = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="zav")
+    year = models.IntegerField(null=True, blank=True)
 
 class Work(models.Model):
     name = models.TextField()

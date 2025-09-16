@@ -11,7 +11,7 @@ const expanded = ref('');
 
 const columns = [
   { name: 'sem', align: 'center', label: 'Семестр', field: 'sem', sortable: true },
-  { name: 'grup', align: 'center', label: 'Группа', field: 'grup', sortable: true },
+  { name: 'grups', align: 'center', label: 'Группа', field: 'grups', sortable: true },
   { name: 'formcntr', align: 'center', label: 'Вид работ', field: 'formcntr', sortable: true },
   { name: 'hours_count', align: 'center', label: 'Часы', field: 'hours_count', sortable: true },
 ];

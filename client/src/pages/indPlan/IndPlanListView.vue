@@ -9,6 +9,8 @@ import {useRouter} from "vue-router";
 
 const router = useRouter();
 
+// const $q = useQuasar();
+
 const mainStore = useMainStore();
 const {
   userId,
@@ -82,23 +84,41 @@ const statuses = [
   },
 ];
 
-async function createIndPlan() {
-  const r = await api.post(`/api/indplan/`);
+const filteredIndPLanList = computed(() => {
+  let data = _(indPlanList.value)
+    .filter(x => {
+      return (planType.value === 'myPlans' && x.user_created.user_id === userId.value)
+        || (planType.value === 'allPlans' && x.zav === userId.value);
+    })
+    .value();
 
-  router.push(`/ind_plan/${r.data.id}/`)
-}
+  return data;
+})
+
+// async function createIndPlan() {
+//   const r = await api.post(`/api/indplan/`);
+//
+//   if (r.status === 400)
+//       $q.notify({
+//         message: r.data,
+//         color: 'primary',
+//         timeout: 10000
+//       });
+//   else
+//     router.push(`/ind_plan/${r.data.id}/`);
+// }
 
 </script>
 
 <template>
-<!--  <div style="display: grid; grid-template-columns: auto auto; gap: 8px; margin: 8px;">-->
-<!--    <q-select-->
-<!--      v-model="planType"-->
-<!--      :options="typeOptions"-->
-<!--      label="Тип планов"-->
-<!--      emit-value-->
-<!--      map-options-->
-<!--    />-->
+  <div style="display: grid; grid-template-columns: auto auto; gap: 8px; margin: 8px;">
+    <q-select
+      v-model="planType"
+      :options="typeOptions"
+      label="Тип планов"
+      emit-value
+      map-options
+    />
 
 <!--    <q-select-->
 <!--      v-model="planCategory"-->
@@ -107,19 +127,19 @@ async function createIndPlan() {
 <!--      emit-value-->
 <!--      map-options-->
 <!--    />-->
-<!--  </div>-->
+  </div>
 
-  <q-btn
-    icon="mdi-plus-box"
-    color="green-6"
-    size="md"
-    style="margin: 8px"
-    @click="createIndPlan"
-    label="Создать план"
-  />
+<!--  <q-btn-->
+<!--    icon="mdi-plus-box"-->
+<!--    color="green-6"-->
+<!--    size="md"-->
+<!--    style="margin: 8px"-->
+<!--    @click="createIndPlan"-->
+<!--    label="Создать план"-->
+<!--  />-->
 
   <q-table
-    :rows="indPlanList"
+    :rows="filteredIndPLanList"
     :columns="columns"
     virtual-scroll
     style="overflow-y: auto; height: 100%;"

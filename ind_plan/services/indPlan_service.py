@@ -10,8 +10,7 @@ class IndPlanService(object):
     def get_indPlan(cls, plan_id):
         ind_plan = IndPlan.objects.get(pk=plan_id)
         if ind_plan is not None:
-            mira_id = ind_plan.user_created.userprofile.mira_id
-            data = AISServices.get_uch_nagr_by_person(mira_id)
+            data = AISServices.get_uch_nagr_by_person_and_year(ind_plan.user_created.userprofile.mira_id, ind_plan.year)
             discpl_list = list(set(i['discpl'] for i in data))
 
             if ind_plan.zav is None:
@@ -51,7 +50,6 @@ class IndPlanService(object):
                             'grup': item['grup'],
                             'hours_count': item['hours_count'],
                             'formcntr': categories[item['formcntr']],
-                            'direct': item['direct'],
                             'sem': item['sem'],
                             'kurs': item['kurs'],
                             'discpl': item['discpl'],

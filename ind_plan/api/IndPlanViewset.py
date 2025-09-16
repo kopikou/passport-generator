@@ -1,3 +1,6 @@
+import datetime
+
+from psycopg.errors import RaiseException
 from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, ListModelMixin, CreateModelMixin, \
     DestroyModelMixin
 from rest_framework.response import Response
@@ -5,6 +8,8 @@ from rest_framework.viewsets import GenericViewSet
 
 from rest_framework.decorators import action
 
+from arim.services import AISServices
+from auths.models import UserProfile
 from ind_plan.models import Work, PlanWorkType, IndPlan, PlanWork
 from ind_plan.serializers import WorkSerializer, IndPlanSerializer, IndPlanListSerializer, PlanWorkSerializer, \
     PlanWorkAddUpdateSerializer, IndPlanUpdateSerializer
@@ -15,7 +20,6 @@ class IndPlanViewSet(
     RetrieveModelMixin,
     ListModelMixin,
     UpdateModelMixin,
-    CreateModelMixin,
     GenericViewSet,
 ):
     queryset = IndPlan.objects.all()
@@ -30,25 +34,27 @@ class IndPlanViewSet(
         else:
             return IndPlanListSerializer
 
+    def list(self, request, *args, **kwargs):
+        current_plan = self.get_queryset().filter(year = datetime.datetime.now().year, user_created=self.request.user).first()
+        if current_plan is None:
+            zav = AISServices.get_zav_to_plan(self.request.user.userprofile.mira_id)
+            IndPlan.objects.create(
+                user_created=self.request.user,
+                year=datetime.datetime.now().year,
+                zav=UserProfile.objects.get(mira_id=zav[0]['czav']).user
+            )
+
+        return super().list(request, *args, **kwargs)
+
     def retrieve(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
         data = IndPlanService.get_indPlan(pk)
         serializer = IndPlanSerializer(data)
         return Response(serializer.data)
 
-    def create(self, request, *args, **kwargs):
-        ind_plan = IndPlan.objects.create(
-            user_created=self.request.user
-        )
-
-        serializer = IndPlanListSerializer(ind_plan)
-
-        return Response(serializer.data)
-
     @action(detail=False, methods=['get'], url_path='get-works')
     def get_works(self, request, *args, **kwargs):
-        work_type = self.request.GET.get('type')
-        works = Work.objects.all().filter(type=work_type)
+        works = Work.objects.all()
 
         data = []
         for work in works:
@@ -57,6 +63,7 @@ class IndPlanViewSet(
                 'name': work.name,
                 'hours_count': work.hours_count,
                 'type': PlanWorkType[work.type],
+                'type_name': work.type,
             })
 
         return Response(data = data)
