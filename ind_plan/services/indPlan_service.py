@@ -169,3 +169,10 @@ class IndPlanService(object):
                 'work_with_students': [],
                 'plan': ind_plan,
             }
+    @classmethod
+    def get_current_uch_year(cls):
+        year = datetime.now().year
+        if datetime.now().month < 9:
+            year -= 1
+        # return year на время теста отключаем
+        return 2024

@@ -151,7 +151,7 @@ async function getWorks(){
         <q-btn label="Назад" icon="mdi-arrow-left" to="/ind_plan/"/>
 
         <div style="display: grid; grid-template-columns: auto auto auto; gap: 8px; margin: 8px; justify-content: center; align-items: center">
-          <span style="font-size: 15px">Автор: {{ indPlan.plan.user_created.last_name }} {{ indPlan.plan.user_created.first_name}} {{ indPlan.plan.user_created.middle_name }}</span>
+          <span style="font-size: 15px">{{ indPlan.plan.user_created.last_name }} {{ indPlan.plan.user_created.first_name}} {{ indPlan.plan.user_created.middle_name }}, {{indPlan.plan.year}} год</span>
           <q-badge :color="statuses[indPlan.plan.status].color" style="height: 20px; font-size: medium">{{ statuses[indPlan.plan.status].title }}</q-badge>
 
           <div style="display: flex; gap: 8px; align-items: center; margin: 8px;">

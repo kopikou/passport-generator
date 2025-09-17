@@ -14,7 +14,7 @@ class IndPlanListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IndPlan
-        fields = ['id', 'user_created', 'user_confirmed', 'created_at', 'confirmed_at', 'status', 'zav']
+        fields = ['id', 'user_created', 'user_confirmed', 'created_at', 'confirmed_at', 'status', 'zav', 'year']
 
 class PlanWorkSerializer(serializers.ModelSerializer):
     class Meta:

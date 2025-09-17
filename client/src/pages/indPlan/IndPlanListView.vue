@@ -16,6 +16,8 @@ const {
   userId,
 } = storeToRefs(mainStore);
 
+const yearFilter = ref(null);
+
 const planType = ref('myPlans');
 const typeOptions = [
   {
@@ -40,12 +42,15 @@ const categoryOptions = [
   },
 ];
 
-const canCreatePlan = computed(() => {
-  let canCreate = true;
+const yearsList = computed(() => {
+  let data = _(indPlanList.value)
+      .map(item => {
+        return item.year;
+      })
+      .value();
 
-  // TODO
-
-  return canCreate;
+  data = [...new Set(data)]
+  return data
 });
 
 const indPlanList = ref([]);
@@ -87,8 +92,9 @@ const statuses = [
 const filteredIndPLanList = computed(() => {
   let data = _(indPlanList.value)
     .filter(x => {
-      return (planType.value === 'myPlans' && x.user_created.user_id === userId.value)
-        || (planType.value === 'allPlans' && x.zav === userId.value);
+      return ((planType.value === 'myPlans' && x.user_created.user_id === userId.value)
+        || (planType.value === 'allPlans' && x.zav === userId.value))
+          && (yearFilter.value === null || x.year === yearFilter.value);
     })
     .value();
 
@@ -116,6 +122,15 @@ const filteredIndPLanList = computed(() => {
       v-model="planType"
       :options="typeOptions"
       label="Тип планов"
+      emit-value
+      map-options
+    />
+
+    <q-select
+      v-model="yearFilter"
+      :options="yearsList"
+      clearable
+      label="Год"
       emit-value
       map-options
     />
@@ -157,7 +172,7 @@ const filteredIndPLanList = computed(() => {
         </q-td>
 
         <q-td key="year">
-           {{ props.row.created_at.slice(0, 4) }}
+           {{ props.row.year }}
         </q-td>
 
         <q-td key="status" style="display: flex; justify-content: center; align-items: center">

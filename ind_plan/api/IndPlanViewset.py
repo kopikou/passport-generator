@@ -35,12 +35,16 @@ class IndPlanViewSet(
             return IndPlanListSerializer
 
     def list(self, request, *args, **kwargs):
-        current_plan = self.get_queryset().filter(year = datetime.datetime.now().year, user_created=self.request.user).first()
+        current_year = IndPlanService.get_current_uch_year()
+
+        current_plan = self.get_queryset().filter(year=current_year,
+                                                  user_created=self.request.user).first()
+
         if current_plan is None:
             zav = AISServices.get_zav_to_plan(self.request.user.userprofile.mira_id)
             IndPlan.objects.create(
                 user_created=self.request.user,
-                year=datetime.datetime.now().year,
+                year=current_year,
                 zav=UserProfile.objects.get(mira_id=zav[0]['czav']).user
             )
 

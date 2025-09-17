@@ -20,13 +20,7 @@ const columns = [
   { name: 'control', align: 'center', label: 'Действия', field: 'control', sortable: true },
 ];
 
-const works = ref();
 const workToAdd = ref(null);
-
-async function getWorks(){
-  let r = await api.get(`/api/indplan/get-works/?type=work_with_students`);
-  works.value = r.data;
-}
 
 onBeforeMount(async() => {
   await getWorks();
