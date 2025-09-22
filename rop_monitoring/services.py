@@ -98,6 +98,7 @@ def export_answers_to_excel(admissions):
 
     headers = [
         "Название программы",
+        "Год набора",
         "РОП",
         "Ср. балл ЕГЭ (ДВИ)",
         "Баллы за ср. балл ЕГЭ",
@@ -130,6 +131,7 @@ def export_answers_to_excel(admissions):
         admission_items = list(admission_item)
         row = [
             name,
+            admission_items[0].get('admission_year', '-'),
             admission_items[0].get('person_name', ''),
             admission_items[-1].get('ege_value', 0.0),
             admission_items[-1].get('ege_score', 0.0),
@@ -1135,7 +1137,7 @@ class RopMonitor:
                 'value': count,
                 'score': score,
             }
-        print(admissions_rows_by_id)
+        # print(admissions_rows_by_id)
         return admissions_rows_by_id
 
     @classmethod

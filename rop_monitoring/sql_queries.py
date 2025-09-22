@@ -18,7 +18,8 @@ MARKS_QUERY = f"""
         AND cs.cset IN (1, 2, 3)
         AND cs.cstudstate IN (1, 10, 21, 22, 12, 31, 5, 13, 27, 28, 32)
         AND ca.cfob IN (1, 2)
-        AND ca.dateend >= '{pendulum.now().format('DD.MM.YYYY')}'
+        --AND ca.dateend >= '{pendulum.now().format('DD/MM/YYYY')}'
+        AND ca.dateend >= '01/01/2025'
     GROUP BY
         cs.id,
         su.name, 
@@ -84,7 +85,8 @@ STUDENTS_QUERY = f"""
     ) direction ON direction.id = cs.cadmission
     WHERE 
     cs.cstudstate IN (1, 10, 21, 22, 12, 31, 5, 13, 27, 28, 32)
-    AND ca.dateend >= '{pendulum.now().format('DD.MM.YYYY')}'
+    --AND ca.dateend >= '{pendulum.now().format('DD/MM/YYYY')}'
+    AND ca.dateend >= '01/01/2025'
     AND cs.name IS NOT NULL
     AND ca.cfob IN (1, 2)
     ORDER BY 3, 5, 2
