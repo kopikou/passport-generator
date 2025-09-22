@@ -916,21 +916,22 @@ class GeneratorViewSet(
                 if type in done_docs_types:
                     needed_docs_done_count += 1
 
-            result_item = {
-                'group': item['abbr'] + '-' + str(item['year'])[2:4],
-                'level': item['level__name'],
-                'needed_docs': item['needed_docs_count'],
-                'done_docs': len(item['documents']),
-                'uch_plan': '+' if 9 in done_docs_types else '-',
-                'calend_uch_graph': '+' if 15 in done_docs_types else '-',
-                'adap_uch_plan': '+' if 13 in done_docs_types else '-',
-                'oop': '+' if 10 in done_docs_types else '-',
-                'aop': '+' if 16 in done_docs_types else '-',
-                'pr_gia': '+' if 2 in done_docs_types else '-',
-                'fos_gia': '+' if 3 in done_docs_types else '-',
-                'rpv': '+' if 11 in done_docs_types else '-',
-                'all_docs': str([doc['title'] for doc in item['documents']]),
-            }
+            if len(item['documents']) > 0:
+                result_item = {
+                    'group': item['abbr'] + '-' + str(item['year'])[2:4],
+                    'level': item['level__name'],
+                    'needed_docs': item['needed_docs_count'],
+                    'done_docs': len(item['documents']),
+                    'uch_plan': '+' if 9 in done_docs_types else '-',
+                    'calend_uch_graph': '+' if 15 in done_docs_types else '-',
+                    'adap_uch_plan': '+' if 13 in done_docs_types else '-',
+                    'oop': '+' if 10 in done_docs_types else '-',
+                    'aop': '+' if 16 in done_docs_types else '-',
+                    'pr_gia': '+' if 2 in done_docs_types else '-',
+                    'fos_gia': '+' if 3 in done_docs_types else '-',
+                    'rpv': '+' if 11 in done_docs_types else '-',
+                    'all_docs': str([doc['title'] for doc in item['documents']]),
+                }
 
             if ((item['level'] not in [3, 5] and needed_docs_done_count == 8)
                     or (item['level'] == 3 and needed_docs_done_count == 7)
