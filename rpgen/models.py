@@ -112,9 +112,9 @@ class Plan(models.Model):
 
 
 class Planlines(models.Model):
-    planid = models.ForeignKey(Plan, on_delete=models.PROTECT, null=False, db_constraint=False)
+    planid = models.ForeignKey(Plan, on_delete=models.PROTECT, null=False, db_constraint=False, db_column='planid')
     dis = models.CharField(max_length=1024)
-    disid = models.ForeignKey(Discipline, on_delete=models.PROTECT, null=False, db_constraint=False)
+    disid = models.ForeignKey(Discipline, on_delete=models.PROTECT, null=False, db_constraint=False, db_column='disid')
     newcycle = models.CharField(max_length=32)
     newdisid = models.CharField(max_length=32)
     cycle = models.CharField(max_length=32)
@@ -167,7 +167,7 @@ class PlanIndikator(models.Model):
         managed = False
 
 class Semestr(models.Model):
-    planlineid = models.ForeignKey(Planlines, on_delete=models.PROTECT, null=False, db_constraint=False)
+    planlineid = models.ForeignKey(Planlines, on_delete=models.PROTECT, null=False, db_constraint=False, db_column='planlineid')
     num = models.IntegerField()
     lekc = models.IntegerField()
     lab = models.IntegerField()
