@@ -86,7 +86,7 @@ const columnsBak = [
     field: 'npr_score',
     sortable: true
   },
-      {
+  {
     name: 'npr_total',
     align: 'center',
     label: 'Кол-во НПР по учебному плану',
@@ -114,7 +114,7 @@ const columnsBak = [
     field: 'student_sop_score',
     sortable: true
   },
-    {
+  {
     name: 'student_sop_count',
     align: 'center',
     label: 'Кол-во студентов',
@@ -128,7 +128,7 @@ const columnsBak = [
     field: 'student_sop_res',
     sortable: true
   },
-    {
+  {
     name: 'employer_value',
     align: 'center',
     label: 'Прошедшие опрос работодатели',
@@ -190,14 +190,14 @@ const columnsMag = [
     field: 'npr_score',
     sortable: true
   },
-    {
+  {
     name: 'npr_total',
     align: 'center',
     label: 'Баллы за долю НПР, принявших участие в опросах о кач-ве образ.',
     field: 'npr_total',
     sortable: true
   },
-      {
+  {
     name: 'npr_responded',
     align: 'center',
     label: 'Кол-во НПР по учебному плану',
@@ -218,7 +218,7 @@ const columnsMag = [
     field: 'student_sop_score',
     sortable: true
   },
-      {
+  {
     name: 'student_sop_count',
     align: 'center',
     label: 'Кол-во студентов',
@@ -423,7 +423,7 @@ async function updateAdmissionList() {
   loadingAdmissionList.value = false;
 }
 
-async function exportResults() {
+async function exportResults(detailedExport = false) {
   $q.notify({
     message: "Выгрузка началась",
     color: "secondary",
@@ -434,6 +434,7 @@ async function exportResults() {
   let response = await api.get('api/rop-monitoring-score/export/', {
     params: {
       rop_monitoring: selectedRopMonitoringId.value,
+      detailed_export: detailedExport
     },
     responseType: 'blob'
   })
@@ -481,23 +482,33 @@ async function exportResults() {
             </q-popup-edit>
           </q-btn>
         </div>
-        <div style="display: grid; grid-template-columns: auto auto; gap: 8px;">
+        <div style="display: grid; grid-template-rows: auto auto; gap: 8px;">
           <q-btn
+            color="blue-7"
             icon="mdi-creation-outline"
-            color="green-7"
             label="Обновить данные"
             @click="updateAdmissionList"
             :disable="!selectedRopMonitoringId"
             style="height: 100%"
           />
-          <q-btn
-            color="green-7"
-            icon="mdi-file-excel-outline"
-            label="Excel"
-            @click="exportResults"
-            :disable="!selectedRopMonitoringId"
-            style="height: 100%"
-          />
+          <div style="display: grid; grid-template-columns: auto auto; gap: 8px;">
+            <q-btn
+              color="green-7"
+              icon="mdi-file-excel-outline"
+              label="Excel"
+              @click="exportResults"
+              :disable="!selectedRopMonitoringId"
+              style="height: 100%"
+            />
+            <q-btn
+              color="green-7"
+              icon="mdi-file-excel-outline"
+              label="Excel 2.0"
+              @click="exportResults(true)"
+              :disable="!selectedRopMonitoringId"
+              style="height: 100%"
+            />
+          </div>
         </div>
         <div style="overflow-y: auto;">
           <q-list bordered separator>
@@ -578,12 +589,12 @@ async function exportResults() {
               </q-td>
             </template>
             <template v-slot:body-cell-student_sop_count="props">
-              <q-td :props="props" >
+              <q-td :props="props">
                 {{ props.value }}
               </q-td>
             </template>
             <template v-slot:body-cell-student_sop_res="props">
-              <q-td :props="props" >
+              <q-td :props="props">
                 {{ props.value }}
               </q-td>
             </template>
