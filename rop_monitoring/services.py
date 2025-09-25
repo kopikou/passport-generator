@@ -1097,7 +1097,7 @@ class RopMonitor:
             direction = employer_data.get('direction', '')
 
             if vuzy_text and response_number:
-                abbr_match = re.search(r'\((.*?)\)', vuzy_text)
+                abbr_match = re.search(r'\(([^)]+)\)\s*$', vuzy_text.strip())
                 if abbr_match:
                     abbreviation = abbr_match.group(1)
                     program_type = None
@@ -1118,6 +1118,13 @@ class RopMonitor:
                             program_employer_count[key] = set()
                         program_employer_count[key].add(response_number)
 
+        # df = pd.read_excel('vigruzka_yandex_rabotod.xlsx')
+        #
+        # for index, row in df.iterrows():
+        #     c2_value = row.get('C2', '')
+        #
+        #     if pd.notna(c2_value) and c2_value != '':
+        #         abbreviation = str(c2_value).strip()
         program_employer_count = {key: len(responses) for key, responses in program_employer_count.items()}
 
         admissions_rows_by_id = {}
