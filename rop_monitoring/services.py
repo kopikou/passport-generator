@@ -95,6 +95,7 @@ def get_detailed_indicators_excel(admissions):
     headers = [
         "Название программы",
         "Год набора",
+        "Год ЕГЭ",
         "РОП",
         "Ср. балл ЕГЭ (ДВИ)",
         "Баллы за ср. балл ЕГЭ",
@@ -124,6 +125,7 @@ def get_detailed_indicators_excel(admissions):
         row = [
             name,
             admission_items[0].get('admission_year', '-'),
+            admission_items[-1].get('admission_year', '-'),
             admission_items[0].get('person_name', ''),
             admission_items[-1].get('ege_value', 0.0),
             admission_items[-1].get('ege_score', 0.0),
