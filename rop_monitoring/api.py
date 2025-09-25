@@ -15,7 +15,7 @@ from rop_monitoring.filters import RopMonitoringScoreFilter, RopMonitoringFilter
 from rop_monitoring.models import (RopMonitoring, RopMonitoringScore, Indicator)
 from rop_monitoring.permissions import CanEditRopMonitoring
 from rop_monitoring.serializers import RopMonitoringSerializer, RopMonitoringScoreSerializer
-from rop_monitoring.services import get_monitoring_scores, export_answers_to_excel
+from rop_monitoring.services import get_monitoring_scores, get_indicators_excel, get_detailed_indicators_excel
 
 
 class RopMonitoringViewSet(
@@ -61,12 +61,20 @@ class RopMonitoringScoreViewSet(
         queryset = self.filter_queryset(self.get_queryset())
 
         rop_monitoring_id = request.query_params.get('rop_monitoring')
+        detailed_export = request.query_params.get('detailed_export')
+
         if rop_monitoring_id:
             queryset = queryset.filter(rop_monitoring=rop_monitoring_id)
-            grouped_data = self.group_by_admission(queryset, 'export')
-            grouped_data.sort(key=lambda x: x.get('admission_name', ''))
-            excel_response = export_answers_to_excel(grouped_data)
-            return excel_response
+            if detailed_export:
+                grouped_data = self.group_by_admission(queryset, 'export')
+                grouped_data.sort(key=lambda x: x.get('admission_name', ''))
+                excel_response = get_detailed_indicators_excel(grouped_data)
+                return excel_response
+            else:
+                grouped_data = self.group_by_admission(queryset, 'export')
+                grouped_data.sort(key=lambda x: x.get('admission_name', ''))
+                excel_response = get_indicators_excel(grouped_data)
+                return excel_response
         else:
             raise NotFound
 

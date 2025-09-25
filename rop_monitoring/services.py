@@ -91,11 +91,7 @@ def get_monitoring_scores(monitoring_id):
     return rop_monitoring_scores
 
 
-def export_answers_to_excel(admissions):
-    workbook = Workbook()
-    sheet = workbook.active
-    sheet.title = "Результаты"
-
+def get_detailed_indicators_excel(admissions):
     headers = [
         "Название программы",
         "Год набора",
@@ -118,15 +114,71 @@ def export_answers_to_excel(admissions):
         "Баллы за долю работодателей, принявших участие в опросах о кач-ве образ.",
     ]
 
-    sheet.append(headers)
+    admissions = sorted(admissions,
+                        key=lambda x: (x['admission_name'].split('-')[0], x['admission_name'].split('-')[1]))
+    admissions_grouped = groupby(admissions, key=lambda x: x['admission_name'].split('-')[0])
 
-    bold_font = Font(bold=True)
-    for cell in sheet["1:1"]:
-        cell.font = bold_font
+    rows = []
+    for name, admission_item in admissions_grouped:
+        admission_items = list(admission_item)
+        row = [
+            name,
+            admission_items[0].get('admission_year', '-'),
+            admission_items[0].get('person_name', ''),
+            admission_items[-1].get('ege_value', 0.0),
+            admission_items[-1].get('ege_score', 0.0),
+            admission_items[0].get('student_contingent_value', 0.0),
+            admission_items[0].get('student_contingent_score', 0.0),
+            admission_items[0].get('celev_student_contingent_value', 0.0),
+            admission_items[0].get('celev_student_contingent_score', 0.0),
+            median(i.get('npr_value', 0.0) for i in admission_items),
+            1 if (median(i.get('npr_value', 0.0) for i in admission_items)) >= 0.6 else 0,
+            ", ".join(str(i.get('npr_total', 0.0)) for i in admission_items),
+            ", ".join(str(i.get('npr_responded', 0.0)) for i in admission_items),
+            0 if (sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]) == 0 or
+                  sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]) == 0)
+            else sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]) /
+                 sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]),
+            0 if (sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]) == 0 or
+                  sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]) == 0) else
+            (1 if sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]) /
+                  sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]) >= 0.6 else 0),
+            sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]),
+            sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]),
+            admission_items[0].get('employer_value', 0.0),
+            admission_items[0].get('employer_score', 0.0)
+        ]
+        rows.append(row)
+
+    return create_excel_file(headers, rows)
+
+def get_indicators_excel(admissions):
+    headers = [
+        "Название программы",
+        "Год набора",
+        "РОП",
+        "Ср. балл ЕГЭ (ДВИ)",
+        "Баллы за ср. балл ЕГЭ",
+        "Доля завершивших/активных студентов",
+        "Баллы за долю завершивших/активных студентов",
+        "Доля завершивших/активных студентов целевиков",
+        "Баллы за долю завершивших/активных студентов целевиков",
+        "Доля НПР, принявших участие в опросах о кач-ве образ.",
+        "Баллы за долю НПР, принявших участие в опросах о кач-ве образ.",
+        "Кол-во НПР",
+        "Ко-во проголосовавших НПР",
+        "Доля обучающихся, принявших участие в опросах о кач-ве образ.",
+        "Баллы за долю обучающихся, принявших участие в опросах о кач-ве образ.",
+        "Сумма кол-ва студентов за периоды",
+        "Сумма кол-ва проголосовавших студентов за периоды",
+        "Количество работодателей, принявших участие в опросах о кач-ве образ.",
+        "Баллы за долю работодателей, принявших участие в опросах о кач-ве образ.",
+    ]
 
     admissions = sorted(admissions,  key=lambda x: (x['admission_name'].split('-')[0], x['admission_name'].split('-')[1]) )
     admissions_grouped = groupby(admissions, key=lambda x: x['admission_name'].split('-')[0])
 
+    rows = []
     for name, admission_item in admissions_grouped:
         admission_items = list(admission_item)
         row = [
@@ -156,6 +208,21 @@ def export_answers_to_excel(admissions):
             admission_items[0].get('employer_value', 0.0),
             admission_items[0].get('employer_score', 0.0)
         ]
+        rows.append(row)
+
+    return create_excel_file(headers, rows)
+
+def create_excel_file(headers, rows):
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Результаты"
+
+    sheet.append(headers)
+    bold_font = Font(bold=True)
+    for cell in sheet["1:1"]:
+        cell.font = bold_font
+
+    for row in rows:
         sheet.append(row)
 
     for column in sheet.columns:
@@ -183,7 +250,6 @@ def export_answers_to_excel(admissions):
     response["Content-Encoding"] = 'UTF-8'
 
     return response
-
 
 class IndicatorsCalculator:
     def __init__(self):
