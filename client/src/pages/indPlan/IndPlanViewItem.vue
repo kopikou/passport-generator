@@ -133,7 +133,7 @@ const sumOfHours = computed(() =>{
   sum += indPlan.value.educ_method.reduce((acc, val) => acc + val.hours_count, 0);
   sum += indPlan.value.other_works.reduce((acc, val) => acc + val.hours_count, 0);
 
-  return sum;
+  return sum.toFixed(2);
 });
 
 const works = ref();
@@ -171,29 +171,35 @@ async function getWorks(){
           </div>
         </div>
 
-        <div style=" margin: 8px; justify-content: center; align-items: center">
-          <span style="font-size: 15px">Количество часов: {{ sumOfHours }}</span>
-        </div>
+<!--        <div style=" margin: 8px; justify-content: center; align-items: center">-->
+<!--          <span style="font-size: 15px">Количество часов: {{ sumOfHours }}</span>-->
+<!--        </div>-->
       </div>
 
-      <q-tabs
-        v-model="tab"
-        class="text-teal"
-      >
-        <q-tab name="uchNagr" label="Учебная нагрузка" />
-        <q-tab name="preparing" label="Подготовка к учебным занятиям" />
-        <q-tab name="educMethodWork" label="Учебно-методическая работа" />
-        <q-tab name="otherWorks" label="Иные виды работ" />
-        <q-tab name="workWithStudents" label="Работа с обучающимися и абитуриентами" />
-      </q-tabs>
+<!--      <q-tabs-->
+<!--        v-model="tab"-->
+<!--        class="text-teal"-->
+<!--      >-->
+<!--        <q-tab name="uchNagr" label="Учебная нагрузка" />-->
+<!--        <q-tab name="preparing" label="Подготовка к учебным занятиям" />-->
+<!--        <q-tab name="educMethodWork" label="Учебно-методическая работа" />-->
+<!--        <q-tab name="otherWorks" label="Иные виды работ" />-->
+<!--        <q-tab name="workWithStudents" label="Работа с обучающимися и абитуриентами" />-->
+<!--      </q-tabs>-->
     </template>
 
     <template #content>
-      <ind-plan-uch-nagr-view v-if="tab === 'uchNagr'" :rows="indPlan.uch_nagr"/>
-      <ind-plan-preparing-view v-if="tab === 'preparing'" :rows="indPlan.preparing" :canEdit="canEdit"/>
-      <ind-plan-educ-method-work-view v-if="tab === 'educMethodWork'" :rows="indPlan.educ_method" :plan_id="props.id" :canEdit="canEdit" :works="works.filter(x => {return x.type_name === 'educ_method'})"/>
-      <ind-p-lan-other-works-view v-if="tab === 'otherWorks'" :rows="indPlan.other_works" :plan_id="props.id" :canEdit="canEdit" :works="works.filter(x => {return x.type_name !== 'educ_method'})"/>
-      <ind-plan-work-with-students-view v-if ="tab === 'workWithStudents'" :rows="indPlan.work_with_students" :plan_id="props.id" :canEdit="canEdit"/>
+<!--      <ind-plan-uch-nagr-view v-if="tab === 'uchNagr'" :rows="indPlan.uch_nagr"/>-->
+<!--      <ind-plan-preparing-view v-if="tab === 'preparing'" :rows="indPlan.preparing" :canEdit="canEdit"/>-->
+<!--      <ind-plan-educ-method-work-view v-if="tab === 'educMethodWork'" :rows="indPlan.educ_method" :plan_id="props.id" :canEdit="canEdit" :works="works.filter(x => {return x.type_name === 'educ_method'})"/>-->
+<!--      <ind-p-lan-other-works-view v-if="tab === 'otherWorks'" :rows="indPlan.other_works" :plan_id="props.id" :canEdit="canEdit" :works="works.filter(x => {return x.type_name !== 'educ_method'})"/>-->
+<!--      <ind-plan-work-with-students-view v-if ="tab === 'workWithStudents'" :rows="indPlan.work_with_students" :plan_id="props.id" :canEdit="canEdit"/>-->
+
+      <div style="display: grid; grid-template-columns: auto 1em; gap: 8px">
+        <div>
+
+        </div>
+      </div>
     </template>
   </layout-h-c-f>
 </template>

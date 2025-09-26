@@ -22,10 +22,6 @@ const columns = [
 
 const workToAdd = ref(null);
 
-onBeforeMount(async() => {
-  await getWorks();
-});
-
 async function addWork() {
   const formData = new FormData();
   formData.append('type', 'Работа с обучающимися и абитуриентами');

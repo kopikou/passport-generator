@@ -11,7 +11,7 @@ from rest_framework.decorators import action
 from arim.services import AISServices
 from auths.models import UserProfile
 from ind_plan.models import Work, PlanWorkType, IndPlan, PlanWork
-from ind_plan.serializers import WorkSerializer, IndPlanSerializer, IndPlanListSerializer, PlanWorkSerializer, \
+from ind_plan.serializers import WorkSerializer, IndPlanListSerializer, PlanWorkSerializer, \
     PlanWorkAddUpdateSerializer, IndPlanUpdateSerializer
 from ind_plan.services.indPlan_service import IndPlanService
 
@@ -26,7 +26,7 @@ class IndPlanViewSet(
 
     def get_serializer_class(self):
         if self.action == "retrieve":
-            return IndPlanSerializer
+            return True
         elif self.action == "get_works":
             return WorkSerializer
         elif self.action in ["update"]:
@@ -52,9 +52,7 @@ class IndPlanViewSet(
 
     def retrieve(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
-        data = IndPlanService.get_indPlan(pk)
-        serializer = IndPlanSerializer(data)
-        return Response(serializer.data)
+        return Response()
 
     @action(detail=False, methods=['get'], url_path='get-works')
     def get_works(self, request, *args, **kwargs):

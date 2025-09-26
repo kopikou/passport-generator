@@ -27,12 +27,25 @@ const columns = [
 
 const workToAdd = ref(null);
 
+const typeFilter = ref(null);
+
 const worksList = computed(() =>{
   return _(params.works)
     .filter(x => {
-      return !(params.rows.includes(x));
+      return !(params.rows.includes(x)) && x.type === typeFilter.value;
     })
     .value();
+});
+
+const typesList = computed(() => {
+  let data = _(params.works)
+      .map(item => {
+        return item.type;
+      })
+      .value();
+
+  data = [...new Set(data)]
+  return data
 });
 
 async function addWork() {
@@ -46,6 +59,7 @@ async function addWork() {
 
   params.rows.push(workToAdd.value);
   workToAdd.value = null;
+  typeFilter.value = null;
 }
 
 async function deleteWork(id: Number) {
@@ -57,17 +71,16 @@ async function deleteWork(id: Number) {
 
 <template>
 <div style="display:grid; grid-template-columns: 2fr 2fr 1fr; gap: 12px; padding: 12px" v-if="params.canEdit">
-  <q-select v-model="workToAdd"
-          label="Тип работы"
-          :options="worksList"
-          option-label="type"
+    <q-select v-model="typeFilter"
+          label="Работа"
+          :options="typesList"
           emit-value
           map-options
           clearable
     />
 
     <q-select v-model="workToAdd"
-          label="Работа"
+          label="Тип работы"
           :options="worksList"
           option-label="name"
           emit-value

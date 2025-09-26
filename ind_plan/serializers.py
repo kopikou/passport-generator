@@ -5,8 +5,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 
 from auths.serializer import UserSerializer
-from ind_plan.models import Work, IndPlan, PlanWork, PreparingCoefficient, PlanWorkType
-from ind_plan.services.indPlan_service import IndPlanService
+from ind_plan.models import Work, IndPlan, PlanWork, PlanWorkType
 
 
 class IndPlanListSerializer(serializers.ModelSerializer):
@@ -32,29 +31,13 @@ class IndPlanUpdateSerializer(serializers.Serializer):
 class PlanWorkAddUpdateSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False)
     name = serializers.CharField(required=False)
-    hours_count = serializers.FloatField(required=False)
-    max_hours_count = serializers.FloatField(required=False)
-    is_new = serializers.BooleanField(required=False)
     plan_id = serializers.IntegerField(required=False)
+    work_id = serializers.IntegerField(required=False)
     type = serializers.CharField(required=False)
+    count_required = serializers.IntegerField(required=False)
 
     def update(self, instance, validated_data):
-        if 'is_new' in validated_data and validated_data['is_new'] != instance.is_new:
-            if 'Подготовка к лекциям' in instance.name:
-                hours_count = instance.max_hours_count / (PreparingCoefficient.old_lectures.value if validated_data['is_new'] else PreparingCoefficient.new_lectures.value)
-                instance.hours_count = hours_count * (PreparingCoefficient.new_lectures.value if validated_data['is_new'] else PreparingCoefficient.old_lectures.value)
-                instance.max_hours_count = instance.hours_count
-                instance.is_new = validated_data['is_new']
-            elif 'Подготовка к лабораторным, практическим, семинарским занятиям' in instance.name:
-                hours_count = instance.max_hours_count / (PreparingCoefficient.old_labs_and_practices.value if validated_data['is_new'] else PreparingCoefficient.new_labs_and_practices.value)
-                instance.hours_count = hours_count * (PreparingCoefficient.new_labs_and_practices.value if validated_data['is_new'] else PreparingCoefficient.old_labs_and_practices.value)
-                instance.max_hours_count = instance.hours_count
-                instance.is_new = validated_data['is_new']
-        elif 'hours_count' in validated_data and validated_data['hours_count'] != instance.hours_count:
-            instance.hours_count = validated_data['hours_count']
-        elif 'name' in validated_data and validated_data['name'] != instance.name:
-            instance.name = validated_data['name']
-
+        #TODO
         instance.save()
         return instance
 
@@ -63,11 +46,9 @@ class PlanWorkAddUpdateSerializer(serializers.Serializer):
             name=validated_data['name'],
             type=validated_data['type'],
             plan=IndPlan.objects.get(id=validated_data['plan_id']),
+            work=Work.objects.get(id=validated_data['work_id']) if 'work_id' in validated_data else None,
+            count_required=validated_data['count_required'],
         )
-
-        if validated_data['type'] != PlanWorkType.work_with_students:
-            plan_work.hours_count = validated_data['hours_count']
-            plan_work.save()
 
         return plan_work
 
@@ -81,5 +62,5 @@ class IndPlanSerializer(serializers.Serializer):
 
 class WorkSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ['name', 'type', 'hours_count']
+        fields = ['name', 'type', 'is_multiple']
         model = Work

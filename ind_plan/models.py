@@ -7,10 +7,8 @@ from django.contrib.auth.models import User
 # Create your models here.
 
 class PlanWorkType(models.TextChoices):
-    educ_method = 'Учебно-методическая работа', 'educ_method'
-    preparing = 'Подготовка к учебным занятиям', 'preparing'
-    scientific_research = 'Учебно-исследовательская работа', 'scientific_research'
-    organization = 'Организационная работа', 'organization'
+    scientific_research = 'Научно-исследовательская работа', 'scientific_research'
+    organization = 'Организационно-методическая работа', 'organization'
     upbringing = 'Работа по воспитанию обучающихся', 'upbringing'
     qualification = 'Повышение квалификации', 'qualification'
     work_with_students = 'Работа с обучающимися и абитуриентами', 'work_with_students'
@@ -32,20 +30,14 @@ class IndPlan(models.Model):
 class Work(models.Model):
     name = models.TextField()
     type = models.TextField(choices=PlanWorkType.choices)
-    hours_count = models.IntegerField()
+    is_multiple = models.BooleanField(default=False)
 
 class PlanWork(models.Model):
     plan = models.ForeignKey(IndPlan, on_delete=models.CASCADE, related_name="plan")
-    name = models.TextField()
-    type = models.TextField(choices=PlanWorkType.choices)
-    hours_count = models.FloatField(null=True, blank=True)
-    max_hours_count = models.FloatField(null=True, blank=True)
-    is_new = models.BooleanField(null=True, blank=True)
-
-class PreparingCoefficient(models.Choices):
-    new_lectures = 3.0
-    new_labs_and_practices = 2.0
-    old_lectures = 1.0
-    old_labs_and_practices = 0.5
-    check_labs = 0.2
+    work = models.ForeignKey(Work, on_delete=models.CASCADE, related_name="work", null=True, blank=True)
+    count_required = models.IntegerField(null=True, blank=True)
+    is_done = models.BooleanField(null=True, blank=True)
+    count_done = models.IntegerField(null=True, blank=True)
+    type = models.TextField(choices=PlanWorkType.choices, null=True, blank=True)
+    name = models.TextField(null=True, blank=True)
 

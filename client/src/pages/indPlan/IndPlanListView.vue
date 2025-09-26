@@ -18,6 +18,8 @@ const {
 
 const yearFilter = ref(null);
 
+const textFilter = ref('');
+
 const planType = ref('myPlans');
 const typeOptions = [
   {
@@ -90,11 +92,16 @@ const statuses = [
 ];
 
 const filteredIndPLanList = computed(() => {
+  let txtFilter = textFilter.value.trim().toLowerCase();
   let data = _(indPlanList.value)
     .filter(x => {
       return ((planType.value === 'myPlans' && x.user_created.user_id === userId.value)
         || (planType.value === 'allPlans' && x.zav === userId.value))
-          && (yearFilter.value === null || x.year === yearFilter.value);
+          && (yearFilter.value === null || x.year === yearFilter.value)
+          && (textFilter.value === ''
+            || x.user_created.last_name.toLowerCase().includes(txtFilter)
+            || x.user_created.first_name.toLowerCase().includes(txtFilter)
+            || x.user_created.middle_name.toLowerCase().includes(txtFilter));
     })
     .value();
 
@@ -117,7 +124,10 @@ const filteredIndPLanList = computed(() => {
 </script>
 
 <template>
-  <div style="display: grid; grid-template-columns: auto auto; gap: 8px; margin: 8px;">
+  <div style="display: grid; grid-template-columns: 5fr 2fr 2fr; gap: 8px; margin: 8px;">
+    <q-input outlined label="Поиск по разработчику плана" v-model="textFilter"
+                   clearable @clear="textFilter = ''"/>
+
     <q-select
       v-model="planType"
       :options="typeOptions"
