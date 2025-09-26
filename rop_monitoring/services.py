@@ -95,7 +95,6 @@ def get_detailed_indicators_excel(admissions):
     headers = [
         "Название программы",
         "Год набора",
-        "Год ЕГЭ",
         "РОП",
         "Ср. балл ЕГЭ (ДВИ)",
         "Баллы за ср. балл ЕГЭ",
@@ -117,38 +116,36 @@ def get_detailed_indicators_excel(admissions):
 
     admissions = sorted(admissions,
                         key=lambda x: (x['admission_name'].split('-')[0], x['admission_name'].split('-')[1]))
-    admissions_grouped = groupby(admissions, key=lambda x: x['admission_name'].split('-')[0])
+    # admissions_grouped = groupby(admissions, key=lambda x: x['admission_name'].split('-')[0])
 
     rows = []
-    for name, admission_item in admissions_grouped:
-        admission_items = list(admission_item)
+    for admission in admissions:
         row = [
-            name,
-            admission_items[0].get('admission_year', '-'),
-            admission_items[-1].get('admission_year', '-'),
-            admission_items[0].get('person_name', ''),
-            admission_items[-1].get('ege_value', 0.0),
-            admission_items[-1].get('ege_score', 0.0),
-            admission_items[0].get('student_contingent_value', 0.0),
-            admission_items[0].get('student_contingent_score', 0.0),
-            admission_items[0].get('celev_student_contingent_value', 0.0),
-            admission_items[0].get('celev_student_contingent_score', 0.0),
-            median(i.get('npr_value', 0.0) for i in admission_items),
-            1 if (median(i.get('npr_value', 0.0) for i in admission_items)) >= 0.6 else 0,
-            ", ".join(str(i.get('npr_total', 0.0)) for i in admission_items),
-            ", ".join(str(i.get('npr_responded', 0.0)) for i in admission_items),
-            0 if (sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]) == 0 or
-                  sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]) == 0)
-            else sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]) /
-                 sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]),
-            0 if (sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]) == 0 or
-                  sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]) == 0) else
-            (1 if sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]) /
-                  sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]) >= 0.6 else 0),
-            sum(i.get('student_sop_count', 0.0) for i in admission_items[:-1]),
-            sum(i.get('student_sop_res', 0.0) for i in admission_items[:-1]),
-            admission_items[0].get('employer_value', 0.0),
-            admission_items[0].get('employer_score', 0.0)
+            admission.get('admission_name'),
+            admission.get('admission_year', '-'),
+            admission.get('person_name', ''),
+            admission.get('ege_value', 0.0),
+            admission.get('ege_score', 0.0),
+            admission.get('student_contingent_value', 0.0),
+            admission.get('student_contingent_score', 0.0),
+            admission.get('celev_student_contingent_value', 0.0),
+            admission.get('celev_student_contingent_score', 0.0),
+            admission.get('npr_value', 0.0),
+            1 if admission.get('npr_value', 0.0) >= 0.6 else 0,
+            admission.get('npr_total', 0.0),
+            admission.get('npr_responded', 0.0),
+            0 if (admission.get('student_sop_count', 0.0) == 0 or
+                  admission.get('student_sop_res', 0.0) == 0)
+            else admission.get('student_sop_res', 0.0) /
+                 admission.get('student_sop_count', 0.0),
+            0 if (admission.get('student_sop_count', 0.0) == 0 or
+                  admission.get('student_sop_res', 0.0) == 0) else
+            (1 if admission.get('student_sop_res', 0.0) /
+                  admission.get('student_sop_count', 0.0) >= 0.6 else 0),
+            admission.get('student_sop_count', 0.0),
+            admission.get('student_sop_res', 0.0),
+            admission.get('employer_value', 0.0),
+            admission.get('employer_score', 0.0)
         ]
         rows.append(row)
 
