@@ -733,3 +733,62 @@ class GeneratorService(object):
                 ]
             })
         return data
+
+    @classmethod
+    def get_info_about_rpd(cls, serializer):
+        data = []
+
+        query = PlanData.objects.filter(is_deleted=False).all()
+        if 'startyear' in serializer.validated_data:
+            query = query.filter(startyear=serializer.validated_data['startyear'])
+
+        if 'level' in serializer.validated_data:
+            studylevel = {
+                1: 'ВПО-Специалисты',  # специалисты
+                2: 'ВПО-Бакалавры',  # бакалавры
+                3: 'ВПО-Магистры',  # магистры
+                4: 'СПО-Базовый уровень (на базе 11 кл)',  # СПО
+                5: 'Аспирантура',  # аспирантура
+            }.get(serializer.validated_data['level'])
+            if studylevel:
+                query = query.filter(studylevel=studylevel)
+
+        query = list(query)
+
+        for plan in query:
+            admission_info = Catadmission.objects.filter(
+                cuchplan_id=plan.mira_id
+            ).values(
+                'id',
+                'cfob_id',
+                'cfob__name',
+                'cadmkind_id',
+                'cadmkind__name_ak',
+                'spec_name',
+                'cspec__name',
+                'cprofili__name',
+                'direct_name',
+                'abbr',
+            ).first()
+
+            if not admission_info:
+                continue
+
+            plan_lines_list = AISServices.get_real_planlines_by_plan(PlanData.objects.filter(id=plan.id).first().mira_id)
+
+            plan_lines_list = list(i['id'] for i in plan_lines_list)
+
+            rpds = list(PlanLinesLink.objects.filter(
+                planlines__plan_id=plan.id,
+                mira_id__in=plan_lines_list
+            ))
+
+            data.append({
+                "abbr": admission_info['abbr'],
+                "rpds": [
+                    {
+                        "status": i.status,
+                    } for i in rpds
+                ]
+            })
+        return data

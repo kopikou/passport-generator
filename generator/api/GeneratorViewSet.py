@@ -874,7 +874,7 @@ class GeneratorViewSet(
         serializer = GetAdmissionsForSiteInfoSerializer(data=self.request.query_params)
         serializer.is_valid()
 
-        data = GeneratorService.get_info_about_oop(serializer)
+        data = GeneratorService.get_info_about_rpd(serializer)
 
         result = []
         for item in data:
@@ -882,18 +882,15 @@ class GeneratorViewSet(
             for rpd in item['rpds']:
                 status_items[rpd['status']] += 1
 
-            for practice in item['practices']:
-                status_items[practice['status']] += 1
-
             result.append({
                 'abbr': item['abbr'],
-                'all_rpds': len(item['rpds']) + len(item['practices']),
+                'all_rpds': len(item['rpds']),
                 'appointed': status_items[0],
                 'is_filled': status_items[1],
                 'on_review': status_items[2],
                 'accepted': status_items[3],
                 'on_refile': status_items[4],
-                'result': 'Выполнено' if status_items[3] == len(item['rpds']) + len(item['practices']) else 'Не выполнено',
+                'result': 'Выполнено' if status_items[3] == len(item['rpds']) else 'Не выполнено',
             })
 
         return Response(result)

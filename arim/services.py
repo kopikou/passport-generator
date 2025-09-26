@@ -529,3 +529,16 @@ class AISServices(object):
 
         return data
 
+    @staticmethod
+    def get_real_planlines_by_plan(plan_id):
+        query = f"""
+                        SELECT id
+                        FROM uchplan_lines
+                        WHERE planid = %s
+                            AND cperson is not NULL
+                    """
+
+        data = Mira.fetch(query, [plan_id])
+
+        return data
+
