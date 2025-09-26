@@ -3,6 +3,7 @@ import json
 import os
 from itertools import groupby
 from urllib.parse import quote
+from urllib.response import addinfo
 
 import pendulum
 import requests
@@ -74,8 +75,7 @@ class GeneratorService(object):
                 res = lineslink_by_id.get(item['planlin'], [])
 
                 if not res:
-                    res, created = PlanLinesLink.objects.select_related("user_accepted__userprofile",
-                                                                        "user_confirmed__userprofile").get_or_create(
+                    res, created = PlanLinesLink.objects.select_related("user_accepted__userprofile", "user_confirmed__userprofile").get_or_create(
                         cadmission=item['id_admission'],
                         mira_id=item['planlin'],
                         person=item['mira_id'],
@@ -166,8 +166,8 @@ class GeneratorService(object):
 
     @classmethod
     # @cache_function(timeout=60 * 1)
-    def get_group_list(cls, user_mira_id, year=2025, txt_filter='', status_filter='', my_filter=0):
-        data = AISServices.get_groups_by_person(user_mira_id, year, txt_filter, my_filter)
+    def get_group_list(cls, user_mira_id, year=2025, txt_filter='', group_txt_filter = '', status_filter='', my_filter=0):
+        data = AISServices.get_groups_by_person(user_mira_id, year, txt_filter, group_txt_filter, my_filter)
 
         planlin_list = list(set(i['planlin'] for i in data))
         abbr_list = list(set(i['abbr'] for i in data))

@@ -106,50 +106,7 @@ const groupFilter = ref($q.localStorage.getItem("surp_groupfilter") ? $q.localSt
 const discplFilter = ref($q.localStorage.getItem("surp_discplfilter") ? $q.localStorage.getItem("surp_discplfilter") : '')
 const myFilter = ref(LocalStorage.getItem('surp_myfilter') || 0)
 const textFilter = ref<String>(LocalStorage.getItem('surp_rpdfilter') || '')
-
-// const filteredListData = computed(() => {
-  // let txtFilter = textFilter.value.trim().toLowerCase();
-  // let data = _(groupsList.value)
-    // .filter(x => {
-    //   return (myFilter.value == 0 || x.type.includes('person'))
-    //     && ((txtFilter == '' || x.abbr.toLowerCase().includes(txtFilter))
-    //       || (txtFilter == '' || x.discode.toLowerCase().includes(txtFilter))
-    //       || (txtFilter == '' || x.discpl.toLowerCase().includes(txtFilter)))
-    //     && (!statusFilter.value || x.status_verbose == statusFilter.value)
-    // })
-    // .orderBy(x => [x.abbr, x.yr, x.discode], 'asc')
-    // .groupBy(x => `${x.abbr}-${x.yr.toString().slice(-2)}`)
-    // .toPairs()
-    // .map((item) => {
-    //   let items = item[1];
-    //   // items.forEach(x => x.status = STATUSES[x["status_verbose"]].index);
-    //   console.log(items)
-    //   return [
-    //     item[0],
-    //     {
-    //       abbr: item[0],
-    //       plx_file: items[0].plx_file,
-    //       // items: items,
-    //       types: _(items).map(x => x.type).flatten().uniq().value(),
-    //       statuses: _(items).orderBy(x => STATUSES[x["status_verbose"]].index).groupBy('status_verbose').value(),
-    //       plan_id: items[0].planid,
-    //     }
-    //   ]
-    // })
-    // .fromPairs()
-    // .value()
-
-  // if (txtFilter !== '' && currentData.value === null) {
-  //   const firstKey = Object.keys(data)[0];
-  //   currentData.value = data[firstKey];
-  // } else if (currentData.value && data[currentData.value.abbr]) {
-  //   currentData.value.items = data[currentData.value.abbr].items;
-  // } else if (currentData.value && !data[currentData.value.abbr]) {
-  //   currentData.value.items = [];
-  // }
-
-//   return groupsList
-// })
+const groupTextFilter = ref<String>(LocalStorage.getItem('surp_rpdgroupfilter') || '')
 
 const filteredProgramData = computed(() => {
   let txtFilter = textFilter.value.trim().toLowerCase();
@@ -168,10 +125,6 @@ const filteredProgramData = computed(() => {
     return data
 });
 
-function clearFilter() {
-  textFilter.value = ''
-}
-
 
 // async function getProgramData() {
 //   const loadProgram = $q.loading.show({
@@ -188,6 +141,7 @@ async function getGroupsList() {
   let r = await api.get("/api/generator/get-group-list/", {
     params: {
       text: textFilter.value,
+      groupText: groupTextFilter.value,
       status: statusFilter.value,
       my: myFilter.value,
     },
@@ -213,6 +167,7 @@ const updateDataFunction = _.debounce(async () => {
   $q.localStorage.setItem("surp_groupfilter", groupFilter.value)
   $q.localStorage.setItem("surp_myfilter", myFilter.value)
   $q.localStorage.setItem("surp_rpdfilter", textFilter.value)
+  $q.localStorage.setItem("surp_rpdgroupfilter", textFilter.value)
 
   await getGroupsList();
 
@@ -220,7 +175,7 @@ const updateDataFunction = _.debounce(async () => {
     await getGroupProgram(groupsList.value[0].plan_id);
 }, 300)
 
-watch([discplFilter, groupFilter, myFilter, textFilter, statusFilter], updateDataFunction)
+watch([discplFilter, groupFilter, myFilter, textFilter, statusFilter, groupTextFilter], updateDataFunction)
 
 onBeforeMount(async () => {
   await getGroupsList()
@@ -330,10 +285,11 @@ function rowClassFn (row) {
     <template #header>
       <div class="q-px-sm q-pb-sm">
         <div class="flex justify-between q-my-sm q-px-sm"
-             style="display: grid; grid-template-columns: 1fr 220px auto auto auto; gap: 8px; align-items: center;">
-          <q-input outlined label="Поиск по аббревиатуре, дисциплине, разработчику программы" v-model="textFilter"
-                   clearable @clear="clearFilter"/>
-          <!--        <q-input outlined label="Дисциплина" v-model="discplFilter"/>-->
+             style="display: grid; grid-template-columns: 1fr 1fr 220px auto auto auto; gap: 8px; align-items: center;">
+          <q-input outlined label="Поиск по направлению, аббревиатуре, специальности, коду и т.д." v-model="groupTextFilter"
+                   clearable @clear="groupTextFilter.value = ''"/>
+           <q-input outlined label="Поиск по дисциплине, разработчику программы и т.д." v-model="textFilter"
+                   clearable @clear="textFilter.value = ''"/>
           <q-select v-model="statusFilter"
                     label="Статус"
                     :options="_.map(STATUSES)"

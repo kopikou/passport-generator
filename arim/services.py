@@ -262,17 +262,19 @@ class AISServices(object):
 
     @staticmethod
     # @cache_function(timeout=10 * 1)
-    def get_groups_by_person(id, year, txt_filter = '', my_filter = 0):
+    def get_groups_by_person(id, year, txt_filter = '', group_txt_filter = '', my_filter = 0):
         q = f"""
                 declare @id INT;
                 declare @year INT;
                 declare @txt_filter VARCHAR(50);
+                declare @group_txt_filter VARCHAR(50);
                 declare @my_filter INT;
                 declare @cfacADM int;
                 DECLARE @adm varchar;
                 SET @id = %s;
                 SET @year = %s;
                 SET @txt_filter = %s;
+                SET @group_txt_filter = %s;
                 SET @my_filter = %s;
                 (SELECT @cfacADM = cfac, @adm = isadmin from rpdusers where cperson = @id)
 
@@ -310,15 +312,16 @@ class AISServices(object):
                     )
                     AND p.startyear = @year
                     AND ( 
-                        p.abbrprofile LIKE @txt_filter
-                        OR d.name LIKE @txt_filter
+                        (p.abbrprofile LIKE @group_txt_filter
+                        OR p.species LIKE @group_txt_filter)
+                        AND (d.name LIKE @txt_filter
                         OR cp1.name LIKE @txt_filter
-                        OR u.newdisid LIKE @txt_filter
+                        OR u.newdisid LIKE @txt_filter)
                     )
 				GROUP BY p.abbrprofile, u.id
                 """
 
-        data = Mira.fetch(q, [int(id), int(year), str('%' + txt_filter + '%'), int(my_filter)])
+        data = Mira.fetch(q, [int(id), int(year), str('%' + txt_filter + '%'), str('%' + group_txt_filter + '%'), int(my_filter)])
 
         return data
 

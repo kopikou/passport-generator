@@ -230,10 +230,11 @@ class GeneratorViewSet(
     def get_group_list(self, request, *args, **kwargs):
 
         txt_filter = self.request.query_params.get('text')
+        group_txt_filter = self.request.query_params.get('groupText')
         status = self.request.query_params.get('status')
         my_filter = self.request.query_params.get('my')
 
-        res = GeneratorService.get_group_list(self.request.user.userprofile.mira_id, datetime.datetime.now().year, txt_filter, status, my_filter)
+        res = GeneratorService.get_group_list(self.request.user.userprofile.mira_id, datetime.datetime.now().year, txt_filter, group_txt_filter, status, my_filter)
 
         return Response(
             data=res,
