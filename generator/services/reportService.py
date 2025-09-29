@@ -132,10 +132,11 @@ class ReportService(object):
 
                     sig_id, sig_string = GeneratorService.get_sig_id_string(instance)
 
-                    instance.last_accepted_sig_id = sig_id
-                    instance.last_accepted_sig = sig_string
+                    if sig_id and sig_string:
+                        instance.last_accepted_sig_id = sig_id
+                        instance.last_accepted_sig = sig_string
 
-                    instance.save(update_fields=['last_accepted_sig_id', 'last_accepted_sig'])
+                        instance.save(update_fields=['last_accepted_sig_id', 'last_accepted_sig'])
 
                     success = True
             except FileNotFoundError:

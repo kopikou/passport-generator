@@ -126,7 +126,7 @@ class GeneratorService(object):
                     "is_spo": item['ckaf'] in (1988516, 1988517),
                     "can_upload_file_directly": res.can_upload_file_directly,
                     "last_accepted_file_url": (
-                                                          settings.FORCE_SCRIPT_NAME or "") + res.last_accepted_file.url if res.last_accepted_file else None,
+                                                      settings.FORCE_SCRIPT_NAME or "") + res.last_accepted_file.url if res.last_accepted_file else None,
                     "user_confirmed": res.user_confirmed_id,
                     "can_be_copied_by_anyone": res.can_be_copied_by_anyone,
                     "user_confirmed_name": f'{res.user_confirmed.last_name} {res.user_confirmed.first_name} {res.user_confirmed.userprofile.middle_name}' if res.user_confirmed else None,
@@ -300,7 +300,7 @@ class GeneratorService(object):
                     "kafcode": lines_link.planlines.caf,
                     "can_upload_file_directly": lines_link.can_upload_file_directly,
                     "last_accepted_file_url": (
-                                                          settings.FORCE_SCRIPT_NAME or "") + lines_link.last_accepted_file.url if lines_link.last_accepted_file else None,
+                                                      settings.FORCE_SCRIPT_NAME or "") + lines_link.last_accepted_file.url if lines_link.last_accepted_file else None,
                     "user_confirmed": lines_link.user_confirmed_id,
                     "can_be_copied_by_anyone": lines_link.can_be_copied_by_anyone,
                     "user_confirmed_name": lines_link.user_confirmed.userprofile.fio if lines_link.user_confirmed else None,
@@ -578,9 +578,13 @@ class GeneratorService(object):
 
     @classmethod
     def get_sig_id_string(cls, plan_lines_link_instance):
-        plan_id = plan_lines_link_instance.planlines.plan.mira_id
-        faculty_director = AISServices.get_fac_director_by_plan(plan_id)
-        return cls.create_sig(faculty_director, plan_lines_link_instance.last_accepted_file.path)
+        last_accepted_file = plan_lines_link_instance.last_accepted_file
+        if last_accepted_file:
+            plan_id = plan_lines_link_instance.planlines.plan.mira_id
+            faculty_director = AISServices.get_fac_director_by_plan(plan_id)
+            return cls.create_sig(faculty_director, last_accepted_file.path)
+        else:
+            return None, None
 
     @classmethod
     def get_file_hash(cls, filename, algorithm='sha1'):
@@ -644,7 +648,7 @@ class GeneratorService(object):
             sig_string = sig_data.get("file")
 
             return sig_id, sig_string
-        return None
+        return None, None
 
     @classmethod
     def get_info_about_oop(cls, serializer):
