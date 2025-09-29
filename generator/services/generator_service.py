@@ -572,7 +572,14 @@ class GeneratorService(object):
             ai.save()
 
     @classmethod
+    def get_sig_id_string(cls, plan_lines_link_instance):
+        plan_id = plan_lines_link_instance.planlines.plan.mira_id
+        faculty_director = AISServices.get_fac_director_by_plan(plan_id)
+        return cls.create_sig(faculty_director, plan_lines_link_instance.last_accepted_file.path)
+
+    @classmethod
     def get_file_hash(cls, filename, algorithm='sha1'):
+        filename = os.path.normpath(filename)
         hash_func = hashlib.new(algorithm)
 
         with open(filename, 'rb') as f:
@@ -598,19 +605,17 @@ class GeneratorService(object):
 
         response = requests.get(get_file_sig_url, timeout=30)
 
-        keys = response.content.get("data")
+        keys = json.loads(response.content).get("data")
 
-        if keys:
-            return keys[0].get("id")
-        else:
-            return None
+        return max((key for key in keys if pendulum.parse(key["date_end"]) >= pendulum.now()),
+                   key=lambda x: pendulum.parse(x["date_start"])) if keys else None
 
     @classmethod
-    def get_sig_file_for_oop_file(cls, user_mira_id, file_path):
+    def create_sig(cls, user_mira_id, file_path):
         file_hash = cls.get_file_hash(file_path)
         base_url = "https://www.istu.edu/ecp/"
 
-        key_id = cls.get_user_key(user_mira_id)
+        key_id = cls.get_user_key(user_mira_id).get('id')
 
         if key_id:
             get_file_sig_params = {
@@ -619,7 +624,8 @@ class GeneratorService(object):
                 "params": {
                     "key_id": key_id,
                     "file_hash": file_hash,
-                    "time": pendulum.now().format("DD.MM.YYYY%20HH:mm:ss")
+                    "time": pendulum.now().format("DD.MM.YYYY%20HH:mm:ss"),
+                    "result":"json",
                 }
             }
 
@@ -628,21 +634,11 @@ class GeneratorService(object):
 
             response = requests.get(get_file_sig_url, timeout=30)
 
-            oop_signs_dir = os.path.join(settings.MEDIA_ROOT, 'oop_signs')
+            sig_data = json.loads(response.content).get("data")
+            sig_id = sig_data.get("id")
+            sig_string = sig_data.get("file")
 
-            if not os.path.exists(oop_signs_dir):
-                os.makedirs(oop_signs_dir)
-
-            sig_filename = f"{file_hash}.sig"
-            sig_file_path = os.path.join(oop_signs_dir, sig_filename)
-
-            with open(sig_file_path, 'wb') as sig_file:
-                sig_file.write(response.content)
-
-            file_url = os.path.join(settings.MEDIA_URL, 'oop_signs', sig_filename)
-            file_url = file_url.replace('//', '/')
-
-            return file_url
+            return sig_id, sig_string
         return None
 
     @classmethod

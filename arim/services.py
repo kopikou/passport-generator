@@ -327,6 +327,28 @@ class AISServices(object):
 
     @staticmethod
     # @cache_function(timeout=10 * 1)
+    def get_fac_director_by_plan(plan_id):
+        q = f"""
+            declare @plan_id INT;
+            SET @plan_id = %s;
+            
+            SELECT
+            DISTINCT
+            f.cdean AS fac
+            FROM uchplan_lines u
+                LEFT JOIN uchplan_plan p ON p.id = u.planid
+                LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
+                LEFT JOIN dbo.catfaculty f ON f.id = a.cfac
+            WHERE 
+                u.planid = @plan_id
+                AND u.cperson IS NOT NULL
+        """
+        data = Mira.fetch(q, [int(plan_id)])
+
+        return data[0].get("fac", None)
+
+    @staticmethod
+    # @cache_function(timeout=10 * 1)
     def get_programs_by_plan(plan_id):
         q = f"""
                 declare @plan_id INT;
