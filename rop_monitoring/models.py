@@ -78,6 +78,8 @@ class RopMonitoringScore(TimestampsModel):
     score = models.FloatField(verbose_name="Кол-во баллов", null=True)
     count = models.IntegerField(verbose_name="Кол-во студентов/сотрудников", null=True)
     res = models.IntegerField(verbose_name="Числитель(кол-во прошедших опрос)", null=True)
+    total = models.IntegerField(verbose_name="Числитель(кол-во прошедших опрос)", null=True)
+    responded = models.IntegerField(verbose_name="Кол-во сотрудников", null=True)
 
     @property
     def value(self):

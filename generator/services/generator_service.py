@@ -1,5 +1,12 @@
+import hashlib
+import json
+import os
 from itertools import groupby
+from urllib.parse import quote
+from urllib.response import addinfo
 
+import pendulum
+import requests
 from constance import config
 from django.conf import settings
 from django.core.cache import cache
@@ -145,7 +152,7 @@ class GeneratorService(object):
         lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
         for item in result:
             item['only_zav_required'] = item['discpl'] in lst \
-                                        or item['kafcode'] in (208,) # кафедра физры
+                                        or item['kafcode'] in (208,)  # кафедра физры
             if item['status'] == PlanLinesLink.StatusChoices.on_review:
                 require_my_accept = 'zav' in item['type'] and not item['user_accepted']
                 require_my_confirm = not item['only_zav_required'] \
@@ -159,8 +166,8 @@ class GeneratorService(object):
 
     @classmethod
     # @cache_function(timeout=60 * 1)
-    def get_group_list(cls, user_mira_id, year=2025, txt_filter = '', status_filter = '', my_filter = 0):
-        data = AISServices.get_groups_by_person(user_mira_id, year, txt_filter, my_filter)
+    def get_group_list(cls, user_mira_id, year=2025, txt_filter='', group_txt_filter = '', status_filter='', my_filter=0):
+        data = AISServices.get_groups_by_person(user_mira_id, year, txt_filter, group_txt_filter, my_filter)
 
         planlin_list = list(set(i['planlin'] for i in data))
         abbr_list = list(set(i['abbr'] for i in data))
@@ -218,14 +225,14 @@ class GeneratorService(object):
 
                     if (res.status == PlanLinesLink.StatusChoices.on_review
                             and (('zav' in types and not res.user_accepted)
-                                 or ('rop' in types and not res.user_confirmed and not (res.planlines.caf in (208,) or line.dis in lst)))
+                                 or ('rop' in types and not res.user_confirmed and not (
+                                            res.planlines.caf in (208,) or line.dis in lst)))
                             and (status_filter == '' or status_filter == 'Требует моего согласования/утверждения')):
                         statuses['Требует моего согласования/утверждения'] += 1
                     elif status_filter == '' or status_filter == res.status_verbose:
                         statuses[res.status_verbose] += 1
 
                     plx_file = settings.SITE_URL + line.plan.file.file.url if line.plan.file else '',
-
 
             for key in statuses:
                 if statuses[key] > 0:
@@ -252,7 +259,7 @@ class GeneratorService(object):
 
         result = []
         for item in data:
-            lines_link = PlanLinesLink.objects.filter(mira_id = item['planlin']).select_related(
+            lines_link = PlanLinesLink.objects.filter(mira_id=item['planlin']).select_related(
                 "planlines",
                 "user_confirmed",
                 "user_accepted",
@@ -418,10 +425,11 @@ class GeneratorService(object):
     @classmethod
     def get_rpd_data(cls, plan_lines_link_id, user_mira_id=None):
         instance: PlanLinesLink = (PlanLinesLink.objects.filter(id=plan_lines_link_id)
-                    .select_related("planlines", "planlines__plan", "user_accepted__userprofile", "user_confirmed__userprofile")
-                    .prefetch_related("planlines__semesters", "planlines__indicators",
-                                      "planlines__indicators__discipline_indicator", "discipline_themes",
-                                      "discipline_work_hour").first())
+                                   .select_related("planlines", "planlines__plan", "user_accepted__userprofile",
+                                                   "user_confirmed__userprofile")
+                                   .prefetch_related("planlines__semesters", "planlines__indicators",
+                                                     "planlines__indicators__discipline_indicator", "discipline_themes",
+                                                     "discipline_work_hour").first())
 
         if instance.status == PlanLinesLink.StatusChoices.appointed:
             instance.status = PlanLinesLink.StatusChoices.is_filled
@@ -440,12 +448,11 @@ class GeneratorService(object):
         admission_info = AISServices.get_admissionn_info(serializer.data['cadmission'])
 
         other_discipline = list(LinesData.objects.filter(plan_id=serializer.data['planlines']['plan_id'],
-                                                    synchronize=True).values("disid", "dis", "id"))
-
+                                                         synchronize=True).values("disid", "dis", "id"))
 
         # инфа по семестрам в которых идут дисциплины
-        other_discipline_semesters = SemesterData.objects\
-            .filter(planlineid__in=[i['id'] for i in other_discipline])\
+        other_discipline_semesters = SemesterData.objects \
+            .filter(planlineid__in=[i['id'] for i in other_discipline]) \
             .values("planlineid_id", "num").order_by("planlineid_id", "num")
         other_discipline_semesters = {
             key: list([i['num'] for i in items])
@@ -469,9 +476,9 @@ class GeneratorService(object):
         if user_mira_id:
             programs = cls.get_program_list(user_mira_id)
 
-        common_links = PlanLinesLink\
-            .objects\
-            .filter(can_be_copied_by_anyone=True)\
+        common_links = PlanLinesLink \
+            .objects \
+            .filter(can_be_copied_by_anyone=True) \
             .select_related("planlines", "planlines__plan")
 
         result = {
@@ -482,9 +489,13 @@ class GeneratorService(object):
             "resources": [i for i in resources],
             "comment": comment,
             "users": {
-                "accepted": getattr(users.get(instance.user_accepted.userprofile.mira_id if instance.user_accepted else None), 'name', None),
+                "accepted": getattr(
+                    users.get(instance.user_accepted.userprofile.mira_id if instance.user_accepted else None), 'name',
+                    None),
                 "developer": getattr(users.get(instance.person if instance.person else None), 'name', None),
-                "confirmed": getattr(users.get(instance.user_confirmed.userprofile.mira_id if instance.user_confirmed else None), 'name', None),
+                "confirmed": getattr(
+                    users.get(instance.user_confirmed.userprofile.mira_id if instance.user_confirmed else None), 'name',
+                    None),
             },
             "old": [i for i in old_rpd],
             "new": [{
@@ -515,15 +526,17 @@ class GeneratorService(object):
         to_line_link = PlanLinesLink.objects.filter(id=to_planlineslink_id).first()
 
         from_indicators = {
-            (i.indicator.indicator or "").replace(" ", "").replace(".",""): i
-            for i in DisciplineIndicators.objects.filter(planlineid=from_line_link.planlines_id).select_related("indicator")
+            (i.indicator.indicator or "").replace(" ", "").replace(".", ""): i
+            for i in
+            DisciplineIndicators.objects.filter(planlineid=from_line_link.planlines_id).select_related("indicator")
         }
 
         DisciplineIndicators.objects.filter(planlineid=to_line_link.planlines_id).delete()
         indicators = LinesIndicators.objects.filter(planlineid=to_line_link.planlines_id)
 
         for ind in indicators:
-            indicator: DisciplineIndicators = from_indicators.get((ind.indicator or "").replace(" ", "").replace(".",""))
+            indicator: DisciplineIndicators = from_indicators.get(
+                (ind.indicator or "").replace(" ", "").replace(".", ""))
             if indicator:
                 indicator.id = None
                 indicator.planlineid_id = to_line_link.planlines_id
@@ -557,6 +570,80 @@ class GeneratorService(object):
             ai.planlineslink_id = to_planlineslink_id
             ai.id = None
             ai.save()
+
+    @classmethod
+    def get_file_hash(cls, filename, algorithm='sha1'):
+        hash_func = hashlib.new(algorithm)
+
+        with open(filename, 'rb') as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_func.update(chunk)
+
+        return hash_func.hexdigest()
+
+    @classmethod
+    def get_user_key(cls, user_mira_id):
+        base_url = "https://www.istu.edu/ecp/"
+
+        get_user_key_params = {
+            "version": "0.9",
+            "action": "getUserKeys",
+            "params": {
+                "user_id": user_mira_id,
+            }
+        }
+
+        get_user_key_encoded_params = quote(json.dumps(get_user_key_params))
+        get_file_sig_url = f"{base_url}?data={get_user_key_encoded_params}"
+
+        response = requests.get(get_file_sig_url, timeout=30)
+
+        keys = response.content.get("data")
+
+        if keys:
+            return keys[0].get("id")
+        else:
+            return None
+
+    @classmethod
+    def get_sig_file_for_oop_file(cls, user_mira_id, file_path):
+        file_hash = cls.get_file_hash(file_path)
+        base_url = "https://www.istu.edu/ecp/"
+
+        key_id = cls.get_user_key(user_mira_id)
+
+        if key_id:
+            get_file_sig_params = {
+                "version": "0.9",
+                "action": "signing",
+                "params": {
+                    "key_id": key_id,
+                    "file_hash": file_hash,
+                    "time": pendulum.now().format("DD.MM.YYYY%20HH:mm:ss")
+                }
+            }
+
+            encoded_params = quote(json.dumps(get_file_sig_params))
+            get_file_sig_url = f"{base_url}?data={encoded_params}"
+
+            response = requests.get(get_file_sig_url, timeout=30)
+
+            oop_signs_dir = os.path.join(settings.MEDIA_ROOT, 'oop_signs')
+
+            if not os.path.exists(oop_signs_dir):
+                os.makedirs(oop_signs_dir)
+
+            sig_filename = f"{file_hash}.sig"
+            sig_file_path = os.path.join(oop_signs_dir, sig_filename)
+
+            with open(sig_file_path, 'wb') as sig_file:
+                sig_file.write(response.content)
+
+            file_url = os.path.join(settings.MEDIA_URL, 'oop_signs', sig_filename)
+            file_url = file_url.replace('//', '/')
+
+            return file_url
+        return None
 
     @classmethod
     def get_info_about_oop(cls, serializer):
@@ -624,7 +711,8 @@ class GeneratorService(object):
                     {
                         "title": d.name,
                         "type": d.new_type_id,
-                        "url": settings.SITE_URL + files_by_type.get(d.new_type_id).file.url
+                        "url": settings.SITE_URL + files_by_type.get(d.new_type_id).file.url,
+                        "sig": d.sig,
                     } for d in documents if d.new_type_id in files_by_type
                 ],
                 "rpds": [
@@ -642,6 +730,65 @@ class GeneratorService(object):
                         'id': i.id,
                         "status": i.status,
                     } for i in rpds if i.planlines.viewpract is not None
+                ]
+            })
+        return data
+
+    @classmethod
+    def get_info_about_rpd(cls, serializer):
+        data = []
+
+        query = PlanData.objects.filter(is_deleted=False).all()
+        if 'startyear' in serializer.validated_data:
+            query = query.filter(startyear=serializer.validated_data['startyear'])
+
+        if 'level' in serializer.validated_data:
+            studylevel = {
+                1: 'ВПО-Специалисты',  # специалисты
+                2: 'ВПО-Бакалавры',  # бакалавры
+                3: 'ВПО-Магистры',  # магистры
+                4: 'СПО-Базовый уровень (на базе 11 кл)',  # СПО
+                5: 'Аспирантура',  # аспирантура
+            }.get(serializer.validated_data['level'])
+            if studylevel:
+                query = query.filter(studylevel=studylevel)
+
+        query = list(query)
+
+        for plan in query:
+            admission_info = Catadmission.objects.filter(
+                cuchplan_id=plan.mira_id
+            ).values(
+                'id',
+                'cfob_id',
+                'cfob__name',
+                'cadmkind_id',
+                'cadmkind__name_ak',
+                'spec_name',
+                'cspec__name',
+                'cprofili__name',
+                'direct_name',
+                'abbr',
+            ).first()
+
+            if not admission_info:
+                continue
+
+            plan_lines_list = AISServices.get_real_planlines_by_plan(PlanData.objects.filter(id=plan.id).first().mira_id)
+
+            plan_lines_list = list(i['id'] for i in plan_lines_list)
+
+            rpds = list(PlanLinesLink.objects.filter(
+                planlines__plan_id=plan.id,
+                mira_id__in=plan_lines_list
+            ))
+
+            data.append({
+                "abbr": admission_info['abbr'],
+                "rpds": [
+                    {
+                        "status": i.status,
+                    } for i in rpds
                 ]
             })
         return data

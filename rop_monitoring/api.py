@@ -12,11 +12,10 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework import status
 
 from rop_monitoring.filters import RopMonitoringScoreFilter, RopMonitoringFilter
-from rop_monitoring.models import (RopMonitoring, RopMonitoringScore, Indicator, AdmissionKinds, MiraAdmissionKinds,
-                                   Indicators)
+from rop_monitoring.models import (RopMonitoring, RopMonitoringScore, Indicator)
 from rop_monitoring.permissions import CanEditRopMonitoring
 from rop_monitoring.serializers import RopMonitoringSerializer, RopMonitoringScoreSerializer
-from rop_monitoring.services import RopMonitor, IndicatorsCalculator, get_monitoring_scores, export_answers_to_excel
+from rop_monitoring.services import get_monitoring_scores, get_indicators_excel, get_detailed_indicators_excel
 
 
 class RopMonitoringViewSet(
@@ -62,12 +61,20 @@ class RopMonitoringScoreViewSet(
         queryset = self.filter_queryset(self.get_queryset())
 
         rop_monitoring_id = request.query_params.get('rop_monitoring')
+        detailed_export = request.query_params.get('detailed_export')
+
         if rop_monitoring_id:
             queryset = queryset.filter(rop_monitoring=rop_monitoring_id)
-            grouped_data = self.group_by_admission(queryset, 'export')
-            grouped_data.sort(key=lambda x: x.get('admission_name', ''))
-            excel_response = export_answers_to_excel(grouped_data)
-            return excel_response
+            if detailed_export:
+                grouped_data = self.group_by_admission(queryset, 'export')
+                grouped_data.sort(key=lambda x: x.get('admission_name', ''))
+                excel_response = get_detailed_indicators_excel(grouped_data)
+                return excel_response
+            else:
+                grouped_data = self.group_by_admission(queryset, 'export')
+                grouped_data.sort(key=lambda x: x.get('admission_name', ''))
+                excel_response = get_indicators_excel(grouped_data)
+                return excel_response
         else:
             raise NotFound
 
@@ -115,6 +122,9 @@ class RopMonitoringScoreViewSet(
             if indicator_name:
                 admission_groups[admission_id][f'{indicator_name}_score'] = item.score
                 admission_groups[admission_id][f'{indicator_name}_value'] = item.value
+            if item.indicator_id == 7:
+                admission_groups[admission_id][f'{indicator_name}_total'] = item.total
+                admission_groups[admission_id][f'{indicator_name}_responded'] = item.responded
             if item.indicator_id == 8:
                 admission_groups[admission_id][f'{indicator_name}_count'] = item.count
                 admission_groups[admission_id][f'{indicator_name}_res'] = item.res
@@ -175,6 +185,8 @@ class RopMonitoringScoreViewSet(
                     indicator=indicator,
                     count=score_data.get('count'),
                     res=score_data.get('res'),
+                    total=score_data.get('total'),
+                    responded=score_data.get('responded'),
                     defaults={
                         'value_numeric': score_data.get('value_numeric'),
                         'value_boolean': score_data.get('value_boolean'),

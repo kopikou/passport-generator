@@ -87,6 +87,20 @@ const columnsBak = [
     sortable: true
   },
   {
+    name: 'npr_total',
+    align: 'center',
+    label: 'Кол-во НПР по учебному плану',
+    field: 'npr_total',
+    sortable: true
+  },
+  {
+    name: 'npr_responded',
+    align: 'center',
+    label: 'Кол-во проголосовавших НПР',
+    field: 'npr_responded',
+    sortable: true
+  },
+  {
     name: 'student_sop_value',
     align: 'center',
     label: 'Доля обучающихся, принявших участие в опросах о кач-ве образ.',
@@ -100,21 +114,34 @@ const columnsBak = [
     field: 'student_sop_score',
     sortable: true
   },
-    {
-    name: 'student_count_sop',
+  {
+    name: 'student_sop_count',
     align: 'center',
     label: 'Кол-во студентов',
     field: 'student_sop_count',
     sortable: true
   },
   {
-    name: 'student_res_sop',
+    name: 'student_sop_res',
     align: 'center',
     label: 'Кол-во проголосовавших студентов',
     field: 'student_sop_res',
     sortable: true
   },
-
+  {
+    name: 'employer_value',
+    align: 'center',
+    label: 'Прошедшие опрос работодатели',
+    field: 'employer_value',
+    sortable: true
+  },
+  {
+    name: 'employer_score',
+    align: 'center',
+    label: 'Баллы за участие работодателей',
+    field: 'employer_score',
+    sortable: true
+  },
 ]
 
 const columnsMag = [
@@ -164,6 +191,20 @@ const columnsMag = [
     sortable: true
   },
   {
+    name: 'npr_total',
+    align: 'center',
+    label: 'Баллы за долю НПР, принявших участие в опросах о кач-ве образ.',
+    field: 'npr_total',
+    sortable: true
+  },
+  {
+    name: 'npr_responded',
+    align: 'center',
+    label: 'Кол-во НПР по учебному плану',
+    field: 'npr_responded',
+    sortable: true
+  },
+  {
     name: 'student_sop_value',
     align: 'center',
     label: 'Доля обучающихся, принявших участие в опросах о кач-ве образ.',
@@ -177,7 +218,7 @@ const columnsMag = [
     field: 'student_sop_score',
     sortable: true
   },
-      {
+  {
     name: 'student_sop_count',
     align: 'center',
     label: 'Кол-во студентов',
@@ -191,7 +232,20 @@ const columnsMag = [
     field: 'student_sop_res',
     sortable: true
   },
-
+  {
+    name: 'employer_value',
+    align: 'center',
+    label: 'Доля обучающихся, принявших участие в опросах о кач-ве образ.',
+    field: 'employer_value',
+    sortable: true
+  },
+  {
+    name: 'employer_score',
+    align: 'center',
+    label: 'Баллы за долю обучающихся, принявших участие в опросах о кач-ве образ.',
+    field: 'employer_score',
+    sortable: true
+  },
 ]
 
 const activeColumns = ref([]);
@@ -323,6 +377,16 @@ function getStudSopScoreStyle(value) {
   return ''
 }
 
+
+function getRabotodScoreStyle(value) {
+  if (value === 1) {
+    return 'bg-light-green-14 text-white'
+  } else {
+    return 'bg-pink-11 text-white'
+  }
+  return ''
+}
+
 function setSelectedMonitoring(monitoringId: number) {
   if (selectedRopMonitoringId.value != monitoringId)
     selectedRopMonitoringId.value = monitoringId
@@ -359,7 +423,7 @@ async function updateAdmissionList() {
   loadingAdmissionList.value = false;
 }
 
-async function exportResults() {
+async function exportResults(detailedExport = false) {
   $q.notify({
     message: "Выгрузка началась",
     color: "secondary",
@@ -370,6 +434,7 @@ async function exportResults() {
   let response = await api.get('api/rop-monitoring-score/export/', {
     params: {
       rop_monitoring: selectedRopMonitoringId.value,
+      detailed_export: detailedExport
     },
     responseType: 'blob'
   })
@@ -417,23 +482,33 @@ async function exportResults() {
             </q-popup-edit>
           </q-btn>
         </div>
-        <div style="display: grid; grid-template-columns: auto auto; gap: 8px;">
+        <div style="display: grid; grid-template-rows: auto auto; gap: 8px;">
           <q-btn
+            color="blue-7"
             icon="mdi-creation-outline"
-            color="green-7"
             label="Обновить данные"
             @click="updateAdmissionList"
             :disable="!selectedRopMonitoringId"
             style="height: 100%"
           />
-          <q-btn
-            color="green-7"
-            icon="mdi-file-excel-outline"
-            label="Excel"
-            @click="exportResults"
-            :disable="!selectedRopMonitoringId"
-            style="height: 100%"
-          />
+          <div style="display: grid; grid-template-columns: auto auto; gap: 8px;">
+            <q-btn
+              color="green-7"
+              icon="mdi-file-excel-outline"
+              label="Excel"
+              @click="exportResults"
+              :disable="!selectedRopMonitoringId"
+              style="height: 100%"
+            />
+            <q-btn
+              color="green-7"
+              icon="mdi-file-excel-outline"
+              label="Excel 2.0"
+              @click="exportResults(true)"
+              :disable="!selectedRopMonitoringId"
+              style="height: 100%"
+            />
+          </div>
         </div>
         <div style="overflow-y: auto;">
           <q-list bordered separator>
@@ -514,12 +589,17 @@ async function exportResults() {
               </q-td>
             </template>
             <template v-slot:body-cell-student_sop_count="props">
-              <q-td :props="props" >
+              <q-td :props="props">
                 {{ props.value }}
               </q-td>
             </template>
             <template v-slot:body-cell-student_sop_res="props">
-              <q-td :props="props" >
+              <q-td :props="props">
+                {{ props.value }}
+              </q-td>
+            </template>
+            <template v-slot:body-cell-employer_score="props">
+              <q-td :props="props" :class="getRabotodScoreStyle(props.value)">
                 {{ props.value }}
               </q-td>
             </template>
