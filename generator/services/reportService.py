@@ -132,10 +132,6 @@ class ReportService(object):
 
                     sig_id, sig_string = GeneratorService.get_sig_id_string(instance)
 
-                    if instance.last_accepted_sig:
-                        instance.last_accepted_sig_id = None
-                        instance.last_accepted_sig = None
-
                     instance.last_accepted_sig_id = sig_id
                     instance.last_accepted_sig = sig_string
 
