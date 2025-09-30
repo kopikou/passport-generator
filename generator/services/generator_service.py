@@ -624,7 +624,8 @@ class GeneratorService(object):
         file_hash = cls.get_file_hash(file_path)
         base_url = "https://www.istu.edu/ecp/"
 
-        key_id = cls.get_user_key(user_mira_id).get('id')
+        key = cls.get_user_key(user_mira_id)
+        key_id = key.get('id') if key else None
 
         if key_id:
             get_file_sig_params = {

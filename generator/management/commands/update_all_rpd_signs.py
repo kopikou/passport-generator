@@ -1,4 +1,5 @@
 from django.core.management import BaseCommand
+from tqdm import tqdm
 
 from generator.models import PlanLinesLink
 from generator.services.generator_service import GeneratorService
@@ -13,7 +14,7 @@ class Command(BaseCommand):
 
         print(f"Найдено {total_count} записей PlanLinesLink")
 
-        for index, planline_instance in enumerate(planlines, 1):
+        for index, planline_instance in enumerate(tqdm(planlines, total=total_count, desc="Обновление подписей РПД"), 1):
             sig_id, sig_string = GeneratorService.get_sig_id_string(planline_instance)
 
             if sig_id and sig_string:
@@ -21,4 +22,4 @@ class Command(BaseCommand):
                 planline_instance.last_accepted_sig = sig_string
                 planline_instance.save(update_fields=['last_accepted_sig_id', 'last_accepted_sig'])
 
-            print(f'Обновлено {index}/{total_count}: planlinelink <{planline_instance.id}>')
+            tqdm.write(f'Обработан planlinelink <{planline_instance.id}>')
