@@ -21,5 +21,3 @@ class Command(BaseCommand):
                 planline_instance.last_accepted_sig_id = sig_id
                 planline_instance.last_accepted_sig = sig_string
                 planline_instance.save(update_fields=['last_accepted_sig_id', 'last_accepted_sig'])
-
-            tqdm.write(f'Обработан planlinelink <{planline_instance.id}>')
