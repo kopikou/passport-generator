@@ -9,11 +9,16 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         planlines = PlanLinesLink.objects.all()
-        for planline_instance in planlines:
+        total_count = planlines.count()
+
+        print(f"Найдено {total_count} записей PlanLinesLink")
+
+        for index, planline_instance in enumerate(planlines, 1):
             sig_id, sig_string = GeneratorService.get_sig_id_string(planline_instance)
 
             if sig_id and sig_string:
                 planline_instance.last_accepted_sig_id = sig_id
                 planline_instance.last_accepted_sig = sig_string
-
                 planline_instance.save(update_fields=['last_accepted_sig_id', 'last_accepted_sig'])
+
+            print(f'Обновлено {index}/{total_count}: planlinelink <{planline_instance.id}>')
