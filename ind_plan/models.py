@@ -34,7 +34,7 @@ class Work(models.Model):
 
 class PlanWork(models.Model):
     plan = models.ForeignKey(IndPlan, on_delete=models.CASCADE, related_name="plan")
-    work = models.ForeignKey(Work, on_delete=models.CASCADE, related_name="work", null=True, blank=True)
+    work_id = models.IntegerField(null=True, blank=True)
     count_required = models.IntegerField(null=True, blank=True)
     is_done = models.BooleanField(null=True, blank=True)
     count_done = models.IntegerField(null=True, blank=True)

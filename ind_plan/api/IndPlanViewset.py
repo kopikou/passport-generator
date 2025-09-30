@@ -26,7 +26,7 @@ class IndPlanViewSet(
 
     def get_serializer_class(self):
         if self.action == "retrieve":
-            return True
+            return PlanWorkSerializer
         elif self.action == "get_works":
             return WorkSerializer
         elif self.action in ["update"]:
@@ -52,7 +52,11 @@ class IndPlanViewSet(
 
     def retrieve(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
-        return Response()
+        ind_plan = self.get_queryset().get(pk=pk)
+        data = []
+        if ind_plan is not None:
+            data = PlanWork.objects.filter(plan=ind_plan.id).all()
+        return Response(data)
 
     @action(detail=False, methods=['get'], url_path='get-works')
     def get_works(self, request, *args, **kwargs):

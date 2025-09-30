@@ -18,7 +18,7 @@ class IndPlanListSerializer(serializers.ModelSerializer):
 class PlanWorkSerializer(serializers.ModelSerializer):
     class Meta:
         model = PlanWork
-        fields = '__all__'
+        fields = ['id', 'name', 'type', 'work_id', 'count_required', 'is_done', 'count_done']
 
 class IndPlanUpdateSerializer(serializers.Serializer):
     status = serializers.IntegerField(required=False)
@@ -43,22 +43,18 @@ class PlanWorkAddUpdateSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         plan_work = PlanWork.objects.create(
-            name=validated_data['name'],
-            type=validated_data['type'],
+            name=validated_data['name'] if 'name' in validated_data else None,
+            type=validated_data['type']  if 'work_id' in validated_data else None,
             plan=IndPlan.objects.get(id=validated_data['plan_id']),
-            work=Work.objects.get(id=validated_data['work_id']) if 'work_id' in validated_data else None,
+            work_id=validated_data['work_id'] if 'work_id' in validated_data else None,
             count_required=validated_data['count_required'],
         )
 
         return plan_work
 
 class IndPlanSerializer(serializers.Serializer):
-    uch_nagr = serializers.ListField()
-    preparing = PlanWorkSerializer(many=True, read_only=True)
-    educ_method = PlanWorkSerializer(many=True, read_only=True)
-    other_works = PlanWorkSerializer(many=True, read_only=True)
-    work_with_students = PlanWorkSerializer(many=True, read_only=True)
-    plan = IndPlanListSerializer(read_only=True)
+    plan = IndPlanListSerializer()
+    works = PlanWorkSerializer(many=True)
 
 class WorkSerializer(serializers.ModelSerializer):
     class Meta:
