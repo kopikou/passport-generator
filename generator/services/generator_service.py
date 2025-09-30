@@ -580,18 +580,18 @@ class GeneratorService(object):
     def get_sig_id_string(cls, plan_lines_link_instance):
         last_accepted_file = plan_lines_link_instance.last_accepted_file
         if last_accepted_file:
-            plan_id = plan_lines_link_instance.planlines.plan.mira_id
-            faculty_director = AISServices.get_fac_director_by_plan(plan_id)
-            return cls.create_sig(faculty_director, last_accepted_file.path)
-        else:
-            return None, None
+            if os.path.exists(last_accepted_file.path):
+                plan_id = plan_lines_link_instance.planlines.plan.mira_id
+                faculty_director = AISServices.get_fac_director_by_plan(plan_id)
+                return cls.create_sig(faculty_director, last_accepted_file.path)
+        return None, None
 
     @classmethod
-    def get_file_hash(cls, filename, algorithm='sha1'):
-        filename = os.path.normpath(filename)
+    def get_file_hash(cls, file_path, algorithm='sha1'):
+        file_path = os.path.normpath(file_path)
         hash_func = hashlib.new(algorithm)
 
-        with open(filename, 'rb') as f:
+        with open(file_path, 'rb') as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hash_func.update(chunk)
 

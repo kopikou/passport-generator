@@ -29,7 +29,7 @@ const $q = useQuasar()
 
 api.interceptors.response.use((response) => response, (error) => {
   $q.loading.hide()
-   if (error.response?.status == 403) {
+  if (error.response?.status == 403) {
     $q.notify({
       color: 'negative',
       message: 'Произошел разлогин, перезагрузите страницу',
@@ -74,7 +74,7 @@ onBeforeMount(async () => {
         </q-toolbar-title>
         <q-tabs inline-label dense shrink stretch v-if="isAuthenticated">
           <q-route-tab icon="mdi-account-hard-hat" label="Проф. деятельность" to="/activity"
-                       v-show="rop"          ></q-route-tab>
+                       v-show="rop"></q-route-tab>
           <q-route-tab icon="mdi-upload-box" label="Файлы программ" to="/upload"
                        v-show="can_upload"
           />
@@ -95,9 +95,9 @@ onBeforeMount(async () => {
           <q-route-tab icon="mdi-format-list-checks" label="PLX файлы" to="/plx"
                        v-permissions-required="Permissions.can_upload_plx_files"
           />
-<!--          <q-route-tab icon="mdi-file-excel" label="РОП" to="/rop"-->
-<!--                       v-if="rop"-->
-<!--          />-->
+          <!--          <q-route-tab icon="mdi-file-excel" label="РОП" to="/rop"-->
+          <!--                       v-if="rop"-->
+          <!--          />-->
           <q-btn-dropdown auto-close stretch flat :label="`${lastName} ${firstName}`">
             <q-list>
               <q-item clickable :href="`${FORCE_SCRIPT_NAME}/admin/`" v-if="isStaff">
@@ -110,8 +110,9 @@ onBeforeMount(async () => {
                 <q-item-section>Выйти</q-item-section>
               </q-item>
               <q-separator></q-separator>
-              <q-item >
-                <q-item-section>Написать в техподдержку <br><a href="mailto:ais_support@ex.istu.edu">ais_support@ex.istu.edu</a></q-item-section>
+              <q-item>
+                <q-item-section>Написать в техподдержку <br><a href="mailto:ais_support@ex.istu.edu">ais_support@ex.istu.edu</a>
+                </q-item-section>
               </q-item>
             </q-list>
           </q-btn-dropdown>
