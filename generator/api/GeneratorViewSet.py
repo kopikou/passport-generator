@@ -547,6 +547,7 @@ class GeneratorViewSet(
             instance.status = PlanLinesLink.StatusChoices.accepted
         elif instance.planlines.caf == 208: # кафедра физкультуры требует утверждение только Демидова (зав кафедры)
             instance.status = PlanLinesLink.StatusChoices.accepted
+
         instance.save()
 
         if instance.status == PlanLinesLink.StatusChoices.accepted:
@@ -565,6 +566,7 @@ class GeneratorViewSet(
 
         if instance.user_confirmed and instance.user_accepted:
             instance.status = PlanLinesLink.StatusChoices.accepted
+
         instance.save()
 
         if instance.status == PlanLinesLink.StatusChoices.accepted:

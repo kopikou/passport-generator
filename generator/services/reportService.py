@@ -129,6 +129,15 @@ class ReportService(object):
                         #     instance.last_accepted_file.delete()
                         instance.last_accepted_file = instance.file
                     instance.save(update_fields=['file', 'last_accepted_file', 'file_updated_at'])
+
+                    sig_id, sig_string = GeneratorService.get_sig_id_string(instance)
+
+                    if sig_id and sig_string:
+                        instance.last_accepted_sig_id = sig_id
+                        instance.last_accepted_sig = sig_string
+
+                        instance.save(update_fields=['last_accepted_sig_id', 'last_accepted_sig'])
+
                     success = True
             except FileNotFoundError:
                 sleep(0.5)

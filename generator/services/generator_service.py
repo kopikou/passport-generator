@@ -50,7 +50,8 @@ class GeneratorService(object):
         planlin_list = list(set(i['planlin'] for i in data))
 
         filtered_data = list(LinesData.objects.filter(mira_id__in=planlin_list,
-                                                 plan__file__status=4, synchronize=True).select_related("plan", "plan__file"))
+                                                      plan__file__status=4, synchronize=True).select_related("plan",
+                                                                                                             "plan__file"))
 
         filtered_data_sorted = {f"{i.mira_id}": i for i in filtered_data}
 
@@ -75,7 +76,8 @@ class GeneratorService(object):
                 res = lineslink_by_id.get(item['planlin'], [])
 
                 if not res:
-                    res, created = PlanLinesLink.objects.select_related("user_accepted__userprofile", "user_confirmed__userprofile").get_or_create(
+                    res, created = PlanLinesLink.objects.select_related("user_accepted__userprofile",
+                                                                        "user_confirmed__userprofile").get_or_create(
                         cadmission=item['id_admission'],
                         mira_id=item['planlin'],
                         person=item['mira_id'],
@@ -123,7 +125,8 @@ class GeneratorService(object):
                     "kafcode": res.planlines.caf,
                     "is_spo": item['ckaf'] in (1988516, 1988517),
                     "can_upload_file_directly": res.can_upload_file_directly,
-                    "last_accepted_file_url": (settings.FORCE_SCRIPT_NAME or "") + res.last_accepted_file.url if res.last_accepted_file else None,
+                    "last_accepted_file_url": (
+                                                      settings.FORCE_SCRIPT_NAME or "") + res.last_accepted_file.url if res.last_accepted_file else None,
                     "user_confirmed": res.user_confirmed_id,
                     "can_be_copied_by_anyone": res.can_be_copied_by_anyone,
                     "user_confirmed_name": f'{res.user_confirmed.last_name} {res.user_confirmed.first_name} {res.user_confirmed.userprofile.middle_name}' if res.user_confirmed else None,
@@ -166,14 +169,15 @@ class GeneratorService(object):
 
     @classmethod
     # @cache_function(timeout=60 * 1)
-    def get_group_list(cls, user_mira_id, year=2025, txt_filter='', group_txt_filter = '', status_filter='', my_filter=0):
+    def get_group_list(cls, user_mira_id, year=2025, txt_filter='', group_txt_filter='', status_filter='', my_filter=0):
         data = AISServices.get_groups_by_person(user_mira_id, year, txt_filter, group_txt_filter, my_filter)
 
         planlin_list = list(set(i['planlin'] for i in data))
         abbr_list = list(set(i['abbr'] for i in data))
 
         filtered_data = list(LinesData.objects.filter(mira_id__in=planlin_list,
-                                                      plan__file__status=4, synchronize=True).select_related("plan__file"))
+                                                      plan__file__status=4, synchronize=True).select_related(
+            "plan__file"))
 
         filtered_data_sorted = {f"{i.mira_id}": i for i in filtered_data}
 
@@ -295,7 +299,8 @@ class GeneratorService(object):
                     "status_verbose": lines_link.status_verbose,
                     "kafcode": lines_link.planlines.caf,
                     "can_upload_file_directly": lines_link.can_upload_file_directly,
-                    "last_accepted_file_url": (settings.FORCE_SCRIPT_NAME or "") + lines_link.last_accepted_file.url if lines_link.last_accepted_file else None,
+                    "last_accepted_file_url": (
+                                                      settings.FORCE_SCRIPT_NAME or "") + lines_link.last_accepted_file.url if lines_link.last_accepted_file else None,
                     "user_confirmed": lines_link.user_confirmed_id,
                     "can_be_copied_by_anyone": lines_link.can_be_copied_by_anyone,
                     "user_confirmed_name": lines_link.user_confirmed.userprofile.fio if lines_link.user_confirmed else None,
@@ -572,10 +577,21 @@ class GeneratorService(object):
             ai.save()
 
     @classmethod
-    def get_file_hash(cls, filename, algorithm='sha1'):
+    def get_sig_id_string(cls, plan_lines_link_instance):
+        last_accepted_file = plan_lines_link_instance.last_accepted_file
+        if last_accepted_file:
+            if os.path.exists(last_accepted_file.path):
+                plan_id = plan_lines_link_instance.planlines.plan.mira_id
+                faculty_director = AISServices.get_fac_director_by_plan(plan_id)
+                return cls.create_sig(faculty_director, last_accepted_file.path)
+        return None, None
+
+    @classmethod
+    def get_file_hash(cls, file_path, algorithm='sha1'):
+        file_path = os.path.normpath(file_path)
         hash_func = hashlib.new(algorithm)
 
-        with open(filename, 'rb') as f:
+        with open(file_path, 'rb') as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hash_func.update(chunk)
 
@@ -598,19 +614,18 @@ class GeneratorService(object):
 
         response = requests.get(get_file_sig_url, timeout=30)
 
-        keys = response.content.get("data")
+        keys = json.loads(response.content).get("data")
 
-        if keys:
-            return keys[0].get("id")
-        else:
-            return None
+        return max((key for key in keys if pendulum.parse(key["date_end"]) >= pendulum.now()),
+                   key=lambda x: pendulum.parse(x["date_start"])) if keys else None
 
     @classmethod
-    def get_sig_file_for_oop_file(cls, user_mira_id, file_path):
+    def create_sig(cls, user_mira_id, file_path):
         file_hash = cls.get_file_hash(file_path)
         base_url = "https://www.istu.edu/ecp/"
 
-        key_id = cls.get_user_key(user_mira_id)
+        key = cls.get_user_key(user_mira_id)
+        key_id = key.get('id') if key else None
 
         if key_id:
             get_file_sig_params = {
@@ -619,7 +634,8 @@ class GeneratorService(object):
                 "params": {
                     "key_id": key_id,
                     "file_hash": file_hash,
-                    "time": pendulum.now().format("DD.MM.YYYY%20HH:mm:ss")
+                    "time": pendulum.now().format("DD.MM.YYYY%20HH:mm:ss"),
+                    "result": "json",
                 }
             }
 
@@ -628,22 +644,12 @@ class GeneratorService(object):
 
             response = requests.get(get_file_sig_url, timeout=30)
 
-            oop_signs_dir = os.path.join(settings.MEDIA_ROOT, 'oop_signs')
+            sig_data = json.loads(response.content).get("data")
+            sig_id = sig_data.get("id")
+            sig_string = sig_data.get("file")
 
-            if not os.path.exists(oop_signs_dir):
-                os.makedirs(oop_signs_dir)
-
-            sig_filename = f"{file_hash}.sig"
-            sig_file_path = os.path.join(oop_signs_dir, sig_filename)
-
-            with open(sig_file_path, 'wb') as sig_file:
-                sig_file.write(response.content)
-
-            file_url = os.path.join(settings.MEDIA_URL, 'oop_signs', sig_filename)
-            file_url = file_url.replace('//', '/')
-
-            return file_url
-        return None
+            return sig_id, sig_string
+        return None, None
 
     @classmethod
     def get_info_about_oop(cls, serializer):
@@ -712,7 +718,6 @@ class GeneratorService(object):
                         "title": d.name,
                         "type": d.new_type_id,
                         "url": settings.SITE_URL + files_by_type.get(d.new_type_id).file.url,
-                        "sig": d.sig,
                     } for d in documents if d.new_type_id in files_by_type
                 ],
                 "rpds": [
@@ -721,6 +726,8 @@ class GeneratorService(object):
                         'name': i.planlines.dis,
                         'id': i.id,
                         "status": i.status,
+                        "sig": i.last_accepted_sig,
+                        "sig_id": i.last_accepted_sig_id,
                     } for i in rpds if i.planlines.viewpract is None
                 ],
                 "practices": [
@@ -774,7 +781,8 @@ class GeneratorService(object):
             if not admission_info:
                 continue
 
-            plan_lines_list = AISServices.get_real_planlines_by_plan(PlanData.objects.filter(id=plan.id).first().mira_id)
+            plan_lines_list = AISServices.get_real_planlines_by_plan(
+                PlanData.objects.filter(id=plan.id).first().mira_id)
 
             plan_lines_list = list(i['id'] for i in plan_lines_list)
 
