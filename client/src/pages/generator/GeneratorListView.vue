@@ -167,7 +167,7 @@ const updateDataFunction = _.debounce(async () => {
   $q.localStorage.setItem("surp_groupfilter", groupFilter.value)
   $q.localStorage.setItem("surp_myfilter", myFilter.value)
   $q.localStorage.setItem("surp_rpdfilter", textFilter.value)
-  $q.localStorage.setItem("surp_rpdgroupfilter", textFilter.value)
+  $q.localStorage.setItem("surp_rpdgroupfilter", groupTextFilter.value)
 
   await getGroupsList();
 
