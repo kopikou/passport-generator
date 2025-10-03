@@ -85,6 +85,6 @@ class Command(BaseCommand):
             })
 
         df = pd.DataFrame(data)
-        df.to_excel("test.xlsx", index=False)
+        df.to_excel("licensed_spec_used.xlsx", index=False)
 
         print(data)
