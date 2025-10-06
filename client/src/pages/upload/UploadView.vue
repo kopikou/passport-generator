@@ -18,7 +18,7 @@ const $q = useQuasar()
 const mainStore = useMainStore();
 const textFilter = ref("");
 const {FORCE_SCRIPT_NAME} = storeToRefs(mainStore);
-
+const maxFileSize = ref(5 * 1024 * 1024); // 5 MB
 
 const uploadFileViewStore = useUploadFileViewStore();
 
@@ -227,7 +227,12 @@ function viewProgram(planId) {
                 </div>
                 <div class="flex items-center" style="display: grid; grid-template-columns: 1fr auto">
                   <div v-if="!checkFile(item, i.type_id)">
-                    <file-uploader :title="i.type__name" :file-id="i.id" :plan-id="item.plan_id" :disable="!getRules(item, i)"/>
+                    <file-uploader :title="i.type__name"
+                                   :file-id="i.id"
+                                   :plan-id="item.plan_id"
+                                   :disable="!getRules(item, i)"
+                                   :max-file-size="maxFileSize"
+                    />
                   </div>
                   <div v-else>
                     <q-field
