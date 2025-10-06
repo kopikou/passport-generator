@@ -9,8 +9,6 @@ import {useRouter} from "vue-router";
 
 const router = useRouter();
 
-// const $q = useQuasar();
-
 const mainStore = useMainStore();
 const {
   userId,
@@ -96,7 +94,7 @@ const filteredIndPLanList = computed(() => {
   let data = _(indPlanList.value)
     .filter(x => {
       return ((planType.value === 'myPlans' && x.user_created.user_id === userId.value)
-        || (planType.value === 'allPlans' && x.zav === userId.value))
+        || (planType.value === 'allPlans' && (x.zav === userId.value || x.user_created.user_id === userId.value)))
           && (yearFilter.value === null || x.year === yearFilter.value)
           && (textFilter.value === ''
             || x.user_created.last_name.toLowerCase().includes(txtFilter)
@@ -106,20 +104,7 @@ const filteredIndPLanList = computed(() => {
     .value();
 
   return data;
-})
-
-// async function createIndPlan() {
-//   const r = await api.post(`/api/indplan/`);
-//
-//   if (r.status === 400)
-//       $q.notify({
-//         message: r.data,
-//         color: 'primary',
-//         timeout: 10000
-//       });
-//   else
-//     router.push(`/ind_plan/${r.data.id}/`);
-// }
+});
 
 </script>
 
@@ -144,24 +129,7 @@ const filteredIndPLanList = computed(() => {
       emit-value
       map-options
     />
-
-<!--    <q-select-->
-<!--      v-model="planCategory"-->
-<!--      :options="categoryOptions"-->
-<!--      label="Категория планов"-->
-<!--      emit-value-->
-<!--      map-options-->
-<!--    />-->
   </div>
-
-<!--  <q-btn-->
-<!--    icon="mdi-plus-box"-->
-<!--    color="green-6"-->
-<!--    size="md"-->
-<!--    style="margin: 8px"-->
-<!--    @click="createIndPlan"-->
-<!--    label="Создать план"-->
-<!--  />-->
 
   <q-table
     :rows="filteredIndPLanList"

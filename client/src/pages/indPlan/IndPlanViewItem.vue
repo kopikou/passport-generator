@@ -1,13 +1,8 @@
 <script setup lang="ts">
 import {computed, onBeforeMount, ref, watch} from "vue";
 import {api} from "boot/axios";
+import _ from "lodash";
 import LayoutHCF from "components/LayoutHCF.vue";
-import IndPlanUchNagrView from "pages/indPlan/components/IndPlanUchNagrView.vue";
-
-import IndPLanOtherWorksView from "pages/indPlan/components/IndPLanOtherWorksView.vue";
-import IndPlanWorkWithStudentsView from "pages/indPlan/components/IndPlanWorkWithStudentsView.vue";
-import IndPlanPreparingView from "pages/indPlan/components/IndPlanPreparingView.vue";
-import IndPlanEducMethodWorkView from "pages/indPlan/components/IndPlanEducMethodWorkView.vue";
 import useMainStore from "stores/mainStore";
 import {storeToRefs} from "pinia";
 import {useQuasar} from "quasar";
@@ -22,8 +17,6 @@ const mainStore = useMainStore();
 const {
   userId,
 } = storeToRefs(mainStore);
-
-const tab = ref('uchNagr');
 
 const indPlan = ref();
 
@@ -125,27 +118,99 @@ async function changeStatus(nextStatus: Number) {
   indPlan.value.plan.status = r.data.status;
 }
 
-const sumOfHours = computed(() =>{
-  let sum = 0;
-
-  indPlan.value.uch_nagr.forEach(item => sum += item.items.reduce((acc, val) => acc + val.hours_count, 0));
-  sum += indPlan.value.preparing.reduce((acc, val) => acc + parseFloat(val.hours_count), 0);
-  sum += indPlan.value.educ_method.reduce((acc, val) => acc + val.hours_count, 0);
-  sum += indPlan.value.other_works.reduce((acc, val) => acc + val.hours_count, 0);
-
-  return sum.toFixed(2);
-});
-
 const works = ref();
 
 async function getWorks(){
   let r = await api.get(`/api/indplan/get-works/`);
   works.value = r.data;
 }
+
+const rows = computed(() =>{
+  const typesList = [...new Set(works.value.map(item => item.type))];
+  let data = _(typesList)
+      .map(item => {
+        return {
+          type: item,
+          works: _(works.value)
+              .filter(x => {
+                return x.type === item;
+              })
+              .map(x => {
+                const work = _(indPlan.value.works).filter(y => { return y.work !== null && y.work.id === x.id }).value();
+                if (x.is_multiple) {
+                  if (work.length > 0) {
+                    x['count_required'] = work[0].count_required;
+                    x['plan_work'] = work[0].id;
+                  } else {
+                    x['count_required'] = 0;
+                    x['plan_work'] = -1;
+                  }
+                } else {
+                  if (work.length > 0) {
+                    x['plan_work'] = work[0].id;
+                    x['to_done'] = true;
+                  } else {
+                    x['plan_work'] = -1;
+                    x['to_done'] = false;
+                  }
+                }
+
+                return x;
+              })
+              .value()
+        };
+      })
+      .value();
+  console.log(data)
+  console.log(typesList)
+  return data
+});
+
+const workToAdd = ref(null);
+
+async function addUpdateWork(id: number = -1, count_required: number = -1, work_id: number = -1){
+  const formData = new FormData();
+
+  console.log(count_required)
+
+  if (work_id > -1) {
+    formData.append('work_id', work_id.toString());
+  }
+
+  if (workToAdd.value !== null) {
+    formData.append('name', workToAdd.value);
+    workToAdd.value = null;
+  }
+
+  if (count_required > -1) {
+    formData.append('count_required', count_required.toString());
+  }
+
+  if (id === -1) {
+    formData.append('plan_id', indPlan.value.plan.id.toString());
+    const r = await api.post(`/api/planwork/`, formData);
+
+  } else if (id > -1 && count_required > 0) {
+    console.log('---------');
+    const r = await api.put(`/api/planwork/${id}/`, formData);
+  } else if (id > -1 && count_required <= 0) {
+    await deleteWork(id)
+  }
+
+  await getIndPlan();
+}
+
+async function deleteWork(id: number){
+   await api.delete(`/api/planwork/${id}/`);
+
+   await getIndPlan();
+}
+
+
 </script>
 
 <template>
-  <layout-h-c-f v-if="indPlan !== undefined">
+  <layout-h-c-f v-if="indPlan !== undefined && works !== undefined">
     <template #header>
       <div style="display: grid; grid-template-columns: auto auto auto; gap: 8px; margin: 8px; justify-content: space-between; align-items: center">
         <q-btn label="Назад" icon="mdi-arrow-left" to="/ind_plan/"/>
@@ -170,35 +235,91 @@ async function getWorks(){
             </div>
           </div>
         </div>
-
-<!--        <div style=" margin: 8px; justify-content: center; align-items: center">-->
-<!--          <span style="font-size: 15px">Количество часов: {{ sumOfHours }}</span>-->
-<!--        </div>-->
       </div>
-
-<!--      <q-tabs-->
-<!--        v-model="tab"-->
-<!--        class="text-teal"-->
-<!--      >-->
-<!--        <q-tab name="uchNagr" label="Учебная нагрузка" />-->
-<!--        <q-tab name="preparing" label="Подготовка к учебным занятиям" />-->
-<!--        <q-tab name="educMethodWork" label="Учебно-методическая работа" />-->
-<!--        <q-tab name="otherWorks" label="Иные виды работ" />-->
-<!--        <q-tab name="workWithStudents" label="Работа с обучающимися и абитуриентами" />-->
-<!--      </q-tabs>-->
     </template>
 
     <template #content>
-<!--      <ind-plan-uch-nagr-view v-if="tab === 'uchNagr'" :rows="indPlan.uch_nagr"/>-->
-<!--      <ind-plan-preparing-view v-if="tab === 'preparing'" :rows="indPlan.preparing" :canEdit="canEdit"/>-->
-<!--      <ind-plan-educ-method-work-view v-if="tab === 'educMethodWork'" :rows="indPlan.educ_method" :plan_id="props.id" :canEdit="canEdit" :works="works.filter(x => {return x.type_name === 'educ_method'})"/>-->
-<!--      <ind-p-lan-other-works-view v-if="tab === 'otherWorks'" :rows="indPlan.other_works" :plan_id="props.id" :canEdit="canEdit" :works="works.filter(x => {return x.type_name !== 'educ_method'})"/>-->
-<!--      <ind-plan-work-with-students-view v-if ="tab === 'workWithStudents'" :rows="indPlan.work_with_students" :plan_id="props.id" :canEdit="canEdit"/>-->
+      <div style="display:grid; grid-template-columns: 5fr 1fr; gap: 12px; padding: 12px" v-if="canEdit">
+        <q-input outlined label="Наименогвание работы" v-model="workToAdd"
+             clearable @clear="clearFilter"/>
 
-      <div style="display: grid; grid-template-columns: auto 1em; gap: 8px">
-        <div>
+         <q-btn
+            label="Добавить"
+            style="height: 100%"
+            color="primary"
+            @click="addUpdateWork()"
+           :disable="workToAdd === null"
+         />
+      </div>
 
-        </div>
+      <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 8px">
+        <q-list>
+          <q-expansion-item
+              group="somegroup"
+              v-for="row in rows"
+              :label="row.type"
+          >
+            <q-list style="margin-left: 15px">
+              <q-item v-for="work in row.works" >
+                <q-item-section style="display: grid; grid-template-columns: 5fr 2fr; gap: 8px; align-items: center; justify-content: space-between;">
+                  <span>{{ work.name }}</span>
+                  <div>
+                    <div v-if="work.is_multiple" style="display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; justify-content: end;">
+                      <span>Количество на исполнение</span>
+                      <q-input
+                        v-model="work.count_required"
+                        input-class="text-right"
+                        type="number"
+                        dense
+                        borderless
+                        min="0"
+                        :readonly="!canEdit"
+                        @update:model-value="addUpdateWork(work.plan_work, work.count_required, work.id)"
+                      />
+                    </div>
+                    <div v-else style="display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; justify-content: end;">
+                      <span>На исполнение</span>
+
+                      <q-checkbox
+                          :disable="!canEdit"
+                          v-model="work.to_done"
+                          @click="addUpdateWork(work.plan_work, 0, work.id)"
+                      />
+                    </div>
+                  </div>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-expansion-item>
+        </q-list>
+
+        <q-list>
+          <q-item v-for="work in indPlan.works">
+            <q-item-section style="display: grid; grid-template-columns: auto 4fr 1fr; gap: 8px; align-items: center; justify-content: space-between;">
+              <q-btn
+                  icon="mdi-trash-can-outline"
+                  color="red-4"
+                  size="10px"
+                  @click="deleteWork(work.id)"
+              />
+
+              <span v-if="work.name !== null">{{ work.name }}</span>
+              <span v-else>{{ work.work.name }}</span>
+
+              <q-input
+                  v-if="work.work !== null && work.work.is_multiple"
+                  v-model="work.count_required"
+                  input-class="text-right"
+                  type="number"
+                  dense
+                  borderless
+                  min="0"
+                  :readonly="!canEdit"
+                  @update:model-value="addUpdateWork(work.count_required, work.id)"
+              />
+            </q-item-section>
+          </q-item>
+        </q-list>
       </div>
     </template>
   </layout-h-c-f>

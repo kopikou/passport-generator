@@ -12,6 +12,7 @@ class PlanWorkType(models.TextChoices):
     upbringing = 'Работа по воспитанию обучающихся', 'upbringing'
     qualification = 'Повышение квалификации', 'qualification'
     work_with_students = 'Работа с обучающимися и абитуриентами', 'work_with_students'
+    educ_method = 'Учебно-методическая работа', 'educ_method'
 
 class IndPlan(models.Model):
     class IndPlanStatusChoice(models.IntegerChoices):
@@ -34,7 +35,7 @@ class Work(models.Model):
 
 class PlanWork(models.Model):
     plan = models.ForeignKey(IndPlan, on_delete=models.CASCADE, related_name="plan")
-    work_id = models.IntegerField(null=True, blank=True)
+    work = models.ForeignKey(Work, on_delete=models.CASCADE, related_name="work",null=True, blank=True)
     count_required = models.IntegerField(null=True, blank=True)
     is_done = models.BooleanField(null=True, blank=True)
     count_done = models.IntegerField(null=True, blank=True)

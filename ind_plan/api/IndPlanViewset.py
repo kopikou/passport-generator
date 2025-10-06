@@ -1,5 +1,7 @@
 import datetime
 
+from django.core.serializers import serialize
+from django.db.models import Q
 from psycopg.errors import RaiseException
 from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, ListModelMixin, CreateModelMixin, \
     DestroyModelMixin
@@ -12,7 +14,7 @@ from arim.services import AISServices
 from auths.models import UserProfile
 from ind_plan.models import Work, PlanWorkType, IndPlan, PlanWork
 from ind_plan.serializers import WorkSerializer, IndPlanListSerializer, PlanWorkSerializer, \
-    PlanWorkAddUpdateSerializer, IndPlanUpdateSerializer
+    PlanWorkAddUpdateSerializer, IndPlanUpdateSerializer, IndPlanSerializer
 from ind_plan.services.indPlan_service import IndPlanService
 
 
@@ -26,7 +28,7 @@ class IndPlanViewSet(
 
     def get_serializer_class(self):
         if self.action == "retrieve":
-            return PlanWorkSerializer
+            return IndPlanSerializer
         elif self.action == "get_works":
             return WorkSerializer
         elif self.action in ["update"]:
@@ -48,7 +50,8 @@ class IndPlanViewSet(
                 zav=UserProfile.objects.get(mira_id=zav[0]['czav']).user
             )
 
-        return super().list(request, *args, **kwargs)
+        serializer = self.get_serializer(IndPlan.objects.filter(Q(user_created=self.request.user) | Q(zav=self.request.user)).all(), many=True)
+        return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
@@ -56,23 +59,19 @@ class IndPlanViewSet(
         data = []
         if ind_plan is not None:
             data = PlanWork.objects.filter(plan=ind_plan.id).all()
-        return Response(data)
+
+        serializer = self.get_serializer({
+            "plan": ind_plan,
+            "works": data
+        })
+        return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='get-works')
     def get_works(self, request, *args, **kwargs):
         works = Work.objects.all()
 
-        data = []
-        for work in works:
-            data.append({
-                'id': work.id,
-                'name': work.name,
-                'hours_count': work.hours_count,
-                'type': PlanWorkType[work.type],
-                'type_name': work.type,
-            })
-
-        return Response(data = data)
+        serializer = self.get_serializer(works, many=True)
+        return Response(serializer.data)
 
 class PlanWorkViewSet(
     UpdateModelMixin,
