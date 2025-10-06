@@ -727,7 +727,7 @@ class GeneratorService(object):
                         'name': i.planlines.dis,
                         'id': i.id,
                         "status": i.status,
-                        "sig": settings.SITE_URL + f'/generator/{i.id}/get-oop-sig-file/',
+                        "sig": settings.SITE_URL + f'/api/generator/{i.id}/get-oop-sig-file/',
                         "sig_id": i.last_accepted_sig_id,
                     } for i in rpds if i.planlines.viewpract is None
                 ],
