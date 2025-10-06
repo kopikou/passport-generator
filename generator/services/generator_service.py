@@ -10,6 +10,7 @@ import requests
 from constance import config
 from django.conf import settings
 from django.core.cache import cache
+from django.urls import reverse
 
 from app.utils import cache_function
 from arim.models import CatPerson, RpdUsers, Catadmission
@@ -726,7 +727,7 @@ class GeneratorService(object):
                         'name': i.planlines.dis,
                         'id': i.id,
                         "status": i.status,
-                        "sig": i.last_accepted_sig,
+                        "sig": settings.SITE_URL + f'/generator/{i.id}/get-oop-sig-file/',
                         "sig_id": i.last_accepted_sig_id,
                     } for i in rpds if i.planlines.viewpract is None
                 ],
