@@ -18,7 +18,8 @@ class Command(BaseCommand):
         for index, planline_instance in enumerate(tqdm(planlines, total=total_count, desc="Обновление подписей РПД"), 1):
             current_sig = planline_instance.last_accepted_sig
             current_sig_id = planline_instance.last_accepted_sig_id
-            if not current_sig or not current_sig_id:
+            current_sig_date = planline_instance.last_accepted_sig_date
+            if not current_sig or not current_sig_id or not current_sig_date:
                 sig_id, sig_string = GeneratorService.get_sig_id_string(planline_instance)
 
                 if sig_id and sig_string:
