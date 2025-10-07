@@ -635,7 +635,7 @@ class GeneratorService(object):
                 "params": {
                     "key_id": key_id,
                     "file_hash": file_hash,
-                    "time": pendulum.now().format("DD.MM.YYYY%20HH:mm:ss"),
+                    "time": pendulum.now().in_tz('Asia/Irkutsk').format("DD.MM.YYYY%20HH:mm:ss"),
                     "result": "json",
                 }
             }
