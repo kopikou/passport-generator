@@ -42,6 +42,7 @@ class PlanWorkAddUpdateSerializer(serializers.Serializer):
     work_id = serializers.IntegerField(required=False)
     type = serializers.CharField(required=False)
     count_required = serializers.IntegerField(required=False)
+    work = WorkSerializer(read_only=True, required=False)
 
     def update(self, instance, validated_data):
         if 'count_required' in validated_data:
@@ -52,7 +53,7 @@ class PlanWorkAddUpdateSerializer(serializers.Serializer):
     def create(self, validated_data):
         plan_work = PlanWork.objects.create(
             name=validated_data['name'] if 'name' in validated_data else None,
-            type=validated_data['type']  if 'type' in validated_data else None,
+            type=PlanWorkType.work_with_students if 'name' in validated_data else None,
             plan=IndPlan.objects.get(id=validated_data['plan_id']),
             work=Work.objects.get(pk=validated_data['work_id']) if 'work_id' in validated_data else None,
             count_required=validated_data['count_required'] if 'count_required' in validated_data else None,

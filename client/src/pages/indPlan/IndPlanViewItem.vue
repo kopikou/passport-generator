@@ -141,17 +141,21 @@ const rows = computed(() =>{
                   if (work.length > 0) {
                     x['count_required'] = work[0].count_required;
                     x['plan_work'] = work[0].id;
+                    x['color'] = 'lightgreen';
                   } else {
                     x['count_required'] = 0;
                     x['plan_work'] = -1;
+                    x['color'] = '';
                   }
                 } else {
                   if (work.length > 0) {
                     x['plan_work'] = work[0].id;
                     x['to_done'] = true;
+                    x['color'] = 'lightgreen';
                   } else {
                     x['plan_work'] = -1;
                     x['to_done'] = false;
+                    x['color'] = '';
                   }
                 }
 
@@ -161,17 +165,16 @@ const rows = computed(() =>{
         };
       })
       .value();
-  console.log(data)
-  console.log(typesList)
-  return data
+  return data;
 });
 
 const workToAdd = ref(null);
+const inputIsActive = ref(true);
 
 async function addUpdateWork(id: number = -1, count_required: number = -1, work_id: number = -1){
-  const formData = new FormData();
+  inputIsActive.value = false;
 
-  console.log(count_required)
+  const formData = new FormData();
 
   if (work_id > -1) {
     formData.append('work_id', work_id.toString());
@@ -182,28 +185,28 @@ async function addUpdateWork(id: number = -1, count_required: number = -1, work_
     workToAdd.value = null;
   }
 
-  if (count_required > -1) {
+  if (count_required > -1 && count_required != '') {
     formData.append('count_required', count_required.toString());
   }
 
-  if (id === -1) {
+  if (id === -1 && count_required != '') {
     formData.append('plan_id', indPlan.value.plan.id.toString());
     const r = await api.post(`/api/planwork/`, formData);
-
+    indPlan.value.works.push(r.data);
   } else if (id > -1 && count_required > 0) {
-    console.log('---------');
     const r = await api.put(`/api/planwork/${id}/`, formData);
+    indPlan.value.works.find((item) => item.id === id).count_required = r.data.count_required;
   } else if (id > -1 && count_required <= 0) {
-    await deleteWork(id)
+    await deleteWork(id);
   }
 
-  await getIndPlan();
+    inputIsActive.value = true;
 }
 
 async function deleteWork(id: number){
    await api.delete(`/api/planwork/${id}/`);
-
-   await getIndPlan();
+   const index = indPlan.value.works.findIndex((item) => item.id === id);
+   indPlan.value.works.splice(index, 1);
 }
 
 
@@ -252,40 +255,39 @@ async function deleteWork(id: number){
          />
       </div>
 
-      <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 8px">
-        <q-list>
+      <div style="display: grid; grid-template-columns: 3fr auto 2fr; gap: 8px">
+        <q-list separator>
           <q-expansion-item
               group="somegroup"
               v-for="row in rows"
               :label="row.type"
           >
-            <q-list style="margin-left: 15px">
-              <q-item v-for="work in row.works" >
-                <q-item-section style="display: grid; grid-template-columns: 5fr 2fr; gap: 8px; align-items: center; justify-content: space-between;">
+            <q-separator />
+            <q-list style="margin-left: 15px" separator>
+              <q-item v-for="work in row.works" :style="'background-color:' + work.color">
+                <q-item-section style="display: grid; grid-template-columns: 6fr 3fr; gap: 8px; align-items: center; justify-content: space-between;">
                   <span>{{ work.name }}</span>
-                  <div>
-                    <div v-if="work.is_multiple" style="display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; justify-content: end;">
-                      <span>Количество на исполнение</span>
-                      <q-input
-                        v-model="work.count_required"
-                        input-class="text-right"
-                        type="number"
-                        dense
-                        borderless
-                        min="0"
-                        :readonly="!canEdit"
-                        @update:model-value="addUpdateWork(work.plan_work, work.count_required, work.id)"
-                      />
-                    </div>
-                    <div v-else style="display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; justify-content: end;">
-                      <span>На исполнение</span>
+                  <div v-if="work.is_multiple" style="display: grid; grid-template-columns: 6fr 1fr; gap: 10px; align-items: center;">
+                    <span class="text-right">Количество на исполнение</span>
+                    <q-input
+                      v-model="work.count_required"
+                      type="number"
+                      input-class="text-right"
+                      dense
+                      borderless
+                      min="0"
+                      :readonly="!canEdit || !inputIsActive"
+                      @update:model-value="addUpdateWork(work.plan_work, work.count_required, work.id)"
+                    />
+                  </div>
+                  <div v-else style="display: grid; grid-template-columns: auto auto; gap: 12px; align-items: center; justify-content: end">
+                    <span>На исполнение</span>
 
-                      <q-checkbox
-                          :disable="!canEdit"
-                          v-model="work.to_done"
-                          @click="addUpdateWork(work.plan_work, 0, work.id)"
-                      />
-                    </div>
+                    <q-checkbox
+                        :disable="!canEdit"
+                        v-model="work.to_done"
+                        @click="addUpdateWork(work.plan_work, 0, work.id)"
+                    />
                   </div>
                 </q-item-section>
               </q-item>
@@ -293,9 +295,12 @@ async function deleteWork(id: number){
           </q-expansion-item>
         </q-list>
 
-        <q-list>
+        <q-separator vertical inset />
+
+        <q-list style="display: flex; flex-direction: column; justify-content: start;" separator>
+          <span class="text-center">Взятые на исполнение</span>
           <q-item v-for="work in indPlan.works">
-            <q-item-section style="display: grid; grid-template-columns: auto 4fr 1fr; gap: 8px; align-items: center; justify-content: space-between;">
+            <q-item-section style="display: grid; grid-template-columns: auto 4fr 1fr; gap: 8px; align-items: center; justify-content: space-between">
               <q-btn
                   icon="mdi-trash-can-outline"
                   color="red-4"
@@ -315,7 +320,8 @@ async function deleteWork(id: number){
                   borderless
                   min="0"
                   :readonly="!canEdit"
-                  @update:model-value="addUpdateWork(work.count_required, work.id)"
+                  @update:model-value="addUpdateWork(work.id, work.count_required)"
+                  :debounce="1000"
               />
             </q-item-section>
           </q-item>
@@ -326,10 +332,4 @@ async function deleteWork(id: number){
 </template>
 
 <style scoped lang="scss">
-  :deep(.table-header) {
-    position: sticky;
-    z-index: 1;
-    top: 0;
-    background: $blue-grey-2;
-  }
 </style>
