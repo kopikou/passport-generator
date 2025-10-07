@@ -135,8 +135,10 @@ class ReportService(object):
                     if sig_id and sig_string:
                         instance.last_accepted_sig_id = sig_id
                         instance.last_accepted_sig = sig_string
-
-                        instance.save(update_fields=['last_accepted_sig_id', 'last_accepted_sig'])
+                        instance.last_accepted_sig_date = pendulum.now().in_tz('Asia/Irkutsk')
+                        instance.save(update_fields=['last_accepted_sig_id',
+                                                     'last_accepted_sig',
+                                                     'last_accepted_sig_date'])
 
                     success = True
             except FileNotFoundError:
