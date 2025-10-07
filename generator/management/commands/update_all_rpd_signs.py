@@ -12,6 +12,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         planlines = PlanLinesLink.objects.all()
         total_count = planlines.count()
+        current_datetime = pendulum.now().in_tz('Asia/Irkutsk')
 
         print(f"Найдено {total_count} записей PlanLinesLink")
 
@@ -25,7 +26,7 @@ class Command(BaseCommand):
                 if sig_id and sig_string:
                     planline_instance.last_accepted_sig_id = sig_id
                     planline_instance.last_accepted_sig = sig_string
-                    planline_instance.last_accepted_sig_date = pendulum.now().in_tz('Asia/Irkutsk')
+                    planline_instance.last_accepted_sig_date = current_datetime
                     planline_instance.save(update_fields=['last_accepted_sig_id',
                                                           'last_accepted_sig',
                                                           'last_accepted_sig_date'])
