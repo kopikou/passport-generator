@@ -1,3 +1,4 @@
+import pendulum
 from django.core.management import BaseCommand
 from tqdm import tqdm
 
@@ -23,4 +24,7 @@ class Command(BaseCommand):
                 if sig_id and sig_string:
                     planline_instance.last_accepted_sig_id = sig_id
                     planline_instance.last_accepted_sig = sig_string
-                    planline_instance.save(update_fields=['last_accepted_sig_id', 'last_accepted_sig'])
+                    planline_instance.last_accepted_sig_date = pendulum.now().in_tz('Asia/Irkutsk')
+                    planline_instance.save(update_fields=['last_accepted_sig_id',
+                                                          'last_accepted_sig',
+                                                          'last_accepted_sig_date'])

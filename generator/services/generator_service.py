@@ -729,6 +729,7 @@ class GeneratorService(object):
                         "status": i.status,
                         "sig": settings.SITE_URL + f'/api/generator/{i.id}/get-oop-sig-file/',
                         "sig_id": i.last_accepted_sig_id,
+                        "sig_date": i.last_accepted_sig_date,
                     } for i in rpds if i.planlines.viewpract is None
                 ],
                 "practices": [

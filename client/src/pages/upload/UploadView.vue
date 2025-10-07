@@ -18,7 +18,7 @@ const $q = useQuasar()
 const mainStore = useMainStore();
 const textFilter = ref("");
 const {FORCE_SCRIPT_NAME} = storeToRefs(mainStore);
-const maxFileSize = ref(5 * 1024 * 1024); // 5 MB
+const maxFileSize = ref(10 * 1024 * 1024); // 10 MB
 
 const uploadFileViewStore = useUploadFileViewStore();
 
