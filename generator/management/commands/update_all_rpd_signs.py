@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
         print(f"Найдено {total_count} записей PlanLinesLink")
 
-        for index, planline_instance in enumerate(tqdm(planlines, total=total_count, desc="Обновление подписей РПД"), 1):
+        for planline_instance in tqdm(planlines, total=total_count, desc="Обновление подписей РПД"):
             current_sig = planline_instance.last_accepted_sig
             current_sig_id = planline_instance.last_accepted_sig_id
             current_sig_date = planline_instance.last_accepted_sig_date
