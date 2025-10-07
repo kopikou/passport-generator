@@ -1,8 +1,4 @@
-from typing import Required
-
-from django.db import transaction
 from rest_framework import serializers
-from django.contrib.auth.models import User
 
 from auths.serializer import UserSerializer
 from ind_plan.models import Work, IndPlan, PlanWork, PlanWorkType
