@@ -27,6 +27,9 @@ const props = defineProps({
   },
   url: {
     type: String
+  },
+  maxFileSize: {
+    type: Number
   }
 })
 const $q = useQuasar()
@@ -35,8 +38,25 @@ const file = ref()
 const emit = defineEmits(['file-uploaded'])
 
 function fileFilter(files) {
-  return files.filter(file => file.type === 'application/pdf')
+  return files.filter(file => {
+    if (file.type !== 'application/pdf') {
+      $q.notify({
+        message: "Файл должен быть в формате PDF",
+        color: "negative",
+      });
+      return false;
+    }
+    if (file.size > props.maxFileSize) {
+      $q.notify({
+        message: `Размер файла превышает допустимый лимит (${props.maxFileSize / 1024 / 1024} Мегабайт)`,
+        color: "negative",
+      });
+      return false;
+    }
+    return true;
+  });
 }
+
 
 watch(file, async () => {
   const loadingHelpers = $q.loading.show({
@@ -69,7 +89,6 @@ watch(file, async () => {
       dense
       accept=".pdf"
       :filter="fileFilter"
-      @rejected="$q.notify({type: 'info', message: 'Можно загрузить только файлы формата pdf'})"
       style="width: 100%;"
   >
   </q-file>

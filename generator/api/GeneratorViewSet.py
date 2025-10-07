@@ -1,6 +1,7 @@
 import datetime
 import os
 import platform
+from io import BytesIO
 from itertools import groupby
 from subprocess import run
 from time import sleep
@@ -943,3 +944,18 @@ class GeneratorViewSet(
             result.append(result_item)
 
         return Response(result)
+
+    @action(methods=['GET'], url_path="get-oop-sig-file", detail=True, permission_classes=[])
+    def get_oop_sig_file(self, request, *args, **kwargs):
+        planlineslink_instance = self.get_object()
+        sig_id = planlineslink_instance.last_accepted_sig_id
+        sig_string = planlineslink_instance.last_accepted_sig
+        if sig_id and sig_string:
+            file_content = sig_string.encode('utf-8')
+            file_like = BytesIO(file_content)
+            filename = f"{sig_id}.sig"
+
+            response = HttpResponse(file_like, content_type='application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+        return None
