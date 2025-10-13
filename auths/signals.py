@@ -40,6 +40,7 @@ def user_logged_in_callback(sender, request, user, **kwargs):
               if 'teacher' in user.esiauser.types:
                      user.is_teacher = True
 
-              user.userprofile.permissions = [Permissions.can_edit_rpd, Permissions.can_use_generator]
+              if not user.userprofile.permissions:
+                     user.userprofile.permissions = [Permissions.can_edit_rpd, Permissions.can_use_generator]
 
               user.userprofile.save()
