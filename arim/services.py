@@ -617,4 +617,20 @@ class AISServices(object):
 
         return data
 
+    @staticmethod
+    def get_doljn_and_rate(person_id):
+        q = f"""
+            declare @person_id INT;
+            SET @person_id = %s;
+            
+            SELECT 
+                cd.name as doljn, 
+                cp.rate as rate 
+            FROM dbo.catperson cp
+                LEFT JOIN dbo.[cl$doljnost] cd ON cd.id = cp.cdoljnost
+            WHERE cp.id = @person_id
+        """
 
+        data = Mira.fetch(q, [int(person_id)])
+
+        return data

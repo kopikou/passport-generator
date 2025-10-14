@@ -18,29 +18,7 @@ const yearFilter = ref(null);
 
 const textFilter = ref('');
 
-const planType = ref('myPlans');
-const typeOptions = [
-  {
-    label: 'Мои планы',
-    value: 'myPlans',
-  },
-  {
-    label: 'Все планы',
-    value: 'allPlans',
-  },
-];
-
-const planCategory = ref('currentPlans');
-const categoryOptions = [
-  {
-    label: 'Текущие',
-    value: 'currentPlans',
-  },
-  {
-    label: 'Архив',
-    value: 'oldPlans',
-  },
-];
+const onlyMyPlans = ref(true);
 
 const yearsList = computed(() => {
   let data = _(indPlanList.value)
@@ -93,8 +71,8 @@ const filteredIndPLanList = computed(() => {
   let txtFilter = textFilter.value.trim().toLowerCase();
   let data = _(indPlanList.value)
     .filter(x => {
-      return ((planType.value === 'myPlans' && x.user_created.user_id === userId.value)
-        || (planType.value === 'allPlans' && (x.zav === userId.value || x.user_created.user_id === userId.value)))
+      return ((onlyMyPlans.value && x.user_created.user_id === userId.value)
+        || (!onlyMyPlans.value && (x.zav === userId.value || x.user_created.user_id === userId.value)))
           && (yearFilter.value === null || x.year === yearFilter.value)
           && (textFilter.value === ''
             || x.user_created.last_name.toLowerCase().includes(txtFilter)
@@ -109,16 +87,13 @@ const filteredIndPLanList = computed(() => {
 </script>
 
 <template>
-  <div style="display: grid; grid-template-columns: 5fr 2fr 2fr; gap: 8px; margin: 8px;">
+  <div style="display: grid; grid-template-columns: 5fr 1fr 2fr; gap: 8px; margin: 8px;">
     <q-input outlined label="Поиск по разработчику плана" v-model="textFilter"
                    clearable @clear="textFilter = ''"/>
 
-    <q-select
-      v-model="planType"
-      :options="typeOptions"
-      label="Тип планов"
-      emit-value
-      map-options
+    <q-toggle
+      v-model="onlyMyPlans"
+      label="Только мои"
     />
 
     <q-select
@@ -144,9 +119,9 @@ const filteredIndPLanList = computed(() => {
     table-header-class="table-header"
   >
     <template v-slot:body="props">
-      <q-tr :props="props">
+      <q-tr :props="props" @click="router.push(`/ind_plan/${props.row.id}/`)">
         <q-td key="author">
-           <router-link :to="`/ind_plan/${props.row.id}/`">{{ props.row.user_created.last_name }} {{ props.row.user_created.first_name }} {{ props.row.user_created.middle_name }}</router-link>
+           {{ props.row.user_created.last_name }} {{ props.row.user_created.first_name }} {{ props.row.user_created.middle_name }}
         </q-td>
 
         <q-td key="year">

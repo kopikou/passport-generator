@@ -1,15 +1,32 @@
 from rest_framework import serializers
 
+from arim.services import AISServices
 from auths.serializer import UserSerializer
-from ind_plan.models import Work, IndPlan, PlanWork, PlanWorkType
+from ind_plan.models import Work, IndPlan, PlanWork, PlanWorkType, PlanComment
 
 
 class IndPlanListSerializer(serializers.ModelSerializer):
     user_created = UserSerializer(source="user_created.userprofile")
+    comment = serializers.SerializerMethodField()
+    additional_info = serializers.SerializerMethodField()
 
     class Meta:
         model = IndPlan
-        fields = ['id', 'user_created', 'user_confirmed', 'created_at', 'confirmed_at', 'status', 'zav', 'year']
+        fields = ['id', 'user_created', 'user_confirmed', 'created_at', 'confirmed_at', 'status', 'zav', 'year', 'comment', 'additional_info']
+
+    def get_comment(self, obj):
+        plan_comment = PlanComment.objects.filter(plan=obj).last()
+        if plan_comment:
+            return plan_comment.comment
+        else:
+            return None
+
+    def get_additional_info(self, obj):
+        data = AISServices.get_doljn_and_rate(obj.user_created.userprofile.mira_id)
+        return {
+            'doljn': data[0]['doljn'],
+            'rate': data[0]['rate'],
+        }
 
 class WorkSerializer(serializers.ModelSerializer):
     class Meta:
@@ -25,11 +42,23 @@ class PlanWorkSerializer(serializers.ModelSerializer):
 
 class IndPlanUpdateSerializer(serializers.Serializer):
     status = serializers.IntegerField(required=False)
+    comment = serializers.CharField(required=False)
 
     def update(self, instance, validated_data):
         instance.status = validated_data['status']
         instance.save()
-        return instance
+
+        if 'comment' in validated_data:
+            comment = PlanComment.objects.create(plan=instance, status=instance.status, comment=validated_data['comment'])
+            return {
+                'status': instance.status,
+                'comment': comment.comment,
+            }
+        else:
+            return {
+                'status': instance.status,
+                'comment': '',
+            }
 
 class PlanWorkAddUpdateSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False)

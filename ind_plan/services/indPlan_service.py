@@ -7,5 +7,4 @@ class IndPlanService(object):
         year = datetime.now().year
         if datetime.now().month < 9:
             year -= 1
-        # return year на время теста отключаем
-        return 2024
+        return year

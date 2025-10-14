@@ -42,3 +42,8 @@ class PlanWork(models.Model):
     type = models.TextField(choices=PlanWorkType.choices, null=True, blank=True)
     name = models.TextField(null=True, blank=True)
 
+class PlanComment(models.Model):
+    plan = models.ForeignKey(IndPlan, on_delete=models.CASCADE, related_name="ind_plan")
+    status = models.IntegerField()
+    comment = models.TextField()
+

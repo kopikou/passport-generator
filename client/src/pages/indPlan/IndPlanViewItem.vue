@@ -29,7 +29,7 @@ const canAccepted = computed(() => {
 });
 
 const canEdit = computed(() => {
-  return isAuthor.value && indPlan.value.plan.status === 0;
+  return isAuthor.value && (indPlan.value.plan.status === 0 || indPlan.value.plan.status === 3);
 })
 
 const statuses = [
@@ -109,13 +109,26 @@ onBeforeMount(async() => {
   await getWorks();
 });
 
-async function changeStatus(nextStatus: Number) {
+const statusToNext = ref();
+const newComment = ref('');
+
+async function changeStatus() {
   const formData = new FormData();
-  formData.append('status', nextStatus.toString());
+  formData.append('status', statusToNext.value.toString());
+  if (newComment.value !== '') {
+    formData.append('comment', newComment.value);
+  }
 
   const r  = await api.put(`/api/indplan/${props.id}/`, formData);
 
   indPlan.value.plan.status = r.data.status;
+  if (r.data.comment !== '') {
+  indPlan.value.plan.comment = r.data.comment;
+  }
+
+  statusToNext.value = 0;
+
+  newComment.value = '';
 }
 
 const works = ref();
@@ -125,15 +138,17 @@ async function getWorks(){
   works.value = r.data;
 }
 
+const workFilter= ref('');
+
 const rows = computed(() =>{
+  let filter = workFilter.value.trim().toLowerCase();
   const typesList = [...new Set(works.value.map(item => item.type))];
   let data = _(typesList)
       .map(item => {
-        return {
-          type: item,
-          works: _(works.value)
+        let hasSelectedWorks = false;
+        const itemWorks = _(works.value)
               .filter(x => {
-                return x.type === item;
+                return x.type === item && x.name.toLowerCase().includes(filter);
               })
               .map(x => {
                 const work = _(indPlan.value.works).filter(y => { return y.work !== null && y.work.id === x.id }).value();
@@ -142,34 +157,45 @@ const rows = computed(() =>{
                     x['count_required'] = work[0].count_required;
                     x['plan_work'] = work[0].id;
                     x['color'] = 'lightgreen';
+                    hasSelectedWorks = true;
                   } else {
                     x['count_required'] = 0;
                     x['plan_work'] = -1;
-                    x['color'] = '';
+                    x['color'] = 'white';
                   }
                 } else {
                   if (work.length > 0) {
                     x['plan_work'] = work[0].id;
                     x['to_done'] = true;
                     x['color'] = 'lightgreen';
+                    hasSelectedWorks = true;
                   } else {
                     x['plan_work'] = -1;
                     x['to_done'] = false;
-                    x['color'] = '';
+                    x['color'] = 'white';
                   }
                 }
 
                 return x;
               })
-              .value()
+              .value();
+        return {
+          type: item,
+          works: itemWorks,
+          color: hasSelectedWorks ? 'lightgreen' : 'white'
         };
       })
       .value();
+  data = data.filter(item => {return item.works.length > 0});
   return data;
 });
 
 const workToAdd = ref(null);
 const inputIsActive = ref(true);
+
+const addWorkDialog = ref(false);
+const changeStatusDialog = ref(false);
+const viewCommentDialog = ref(false);
 
 async function addUpdateWork(id: number = -1, count_required: number = -1, work_id: number = -1){
   inputIsActive.value = false;
@@ -218,9 +244,20 @@ async function deleteWork(id: number){
       <div style="display: grid; grid-template-columns: auto auto auto; gap: 8px; margin: 8px; justify-content: space-between; align-items: center">
         <q-btn label="Назад" icon="mdi-arrow-left" to="/ind_plan/"/>
 
-        <div style="display: grid; grid-template-columns: auto auto auto; gap: 8px; margin: 8px; justify-content: center; align-items: center">
-          <span style="font-size: 15px">{{ indPlan.plan.user_created.last_name }} {{ indPlan.plan.user_created.first_name}} {{ indPlan.plan.user_created.middle_name }}, {{indPlan.plan.year}} год</span>
+        <div style="display: grid; grid-template-columns: auto auto auto auto; gap: 8px; margin: 8px; justify-content: center; align-items: center">
+          <span style="font-size: 15px">{{ indPlan.plan.user_created.last_name }} {{ indPlan.plan.user_created.first_name}} {{ indPlan.plan.user_created.middle_name }}, {{ indPlan.plan.additional_info.doljn }}, ставка {{ indPlan.plan.additional_info.rate }}, {{indPlan.plan.year}} год</span>
           <q-badge :color="statuses[indPlan.plan.status].color" style="height: 20px; font-size: medium">{{ statuses[indPlan.plan.status].title }}</q-badge>
+
+          <q-btn
+            v-if="indPlan.plan.comment !== null"
+            icon="mdi-message-text-outline"
+            color="primary"
+            @click="viewCommentDialog = true"
+          >
+            <q-tooltip style="font-size: 12px; background-color: white; color: black">
+              Посмотреть комментарий
+            </q-tooltip>
+          </q-btn>
 
           <div style="display: flex; gap: 8px; align-items: center; margin: 8px;">
             <div v-for="button in controlButtons">
@@ -229,7 +266,7 @@ async function deleteWork(id: number){
                 :icon="button.icon"
                 :color="button.color"
                 :text-color="button.text_color"
-                @click="changeStatus(button.next_status)"
+                @click="statusToNext = button.next_status; (button.next_status === 1 || button.next_status === 3) ? changeStatusDialog = true : changeStatus()"
               >
                 <q-tooltip style="font-size: 12px; background-color: white; color: black">
                   {{ button.label }}
@@ -242,25 +279,32 @@ async function deleteWork(id: number){
     </template>
 
     <template #content>
-      <div style="display:grid; grid-template-columns: 5fr 1fr; gap: 12px; padding: 12px" v-if="canEdit">
-        <q-input outlined label="Наименогвание работы" v-model="workToAdd"
-             clearable @clear="clearFilter"/>
 
-         <q-btn
-            label="Добавить"
-            style="height: 100%"
-            color="primary"
-            @click="addUpdateWork()"
-           :disable="workToAdd === null"
-         />
+      <div style="display: grid; grid-template-columns: 5fr 1fr; gap: 8px; margin: 8px">
+        <q-input
+          outlined
+          label="Наименогвание работы"
+          v-model="workFilter"
+          clearable
+          @clear="workFilter = ''"
+        />
+
+        <q-btn
+          label="Добавить работу"
+          style="height: 100%"
+          color="primary"
+          @click="addWorkDialog = true"
+        />
       </div>
 
-      <div style="display: grid; grid-template-columns: 3fr auto 2fr; gap: 8px">
+      <div style="display: grid; grid-template-columns: 3fr auto 2fr; gap: 8px; margin: 10px">
         <q-list separator>
           <q-expansion-item
               group="somegroup"
-              v-for="row in rows"
+              v-for="(row, index) in rows"
               :label="row.type"
+              :default-opened="index === 0"
+              :style="'background-color:' + row.color"
           >
             <q-separator />
             <q-list style="margin-left: 15px" separator>
@@ -286,7 +330,7 @@ async function deleteWork(id: number){
                     <q-checkbox
                         :disable="!canEdit"
                         v-model="work.to_done"
-                        @click="addUpdateWork(work.plan_work, 0, work.id)"
+                        @click="addUpdateWork(work.plan_work, -1, work.id)"
                     />
                   </div>
                 </q-item-section>
@@ -299,7 +343,7 @@ async function deleteWork(id: number){
 
         <q-list style="display: flex; flex-direction: column; justify-content: start;" separator>
           <span class="text-center">Взятые на исполнение</span>
-          <q-item v-for="work in indPlan.works">
+          <q-item v-for="(work, index) in indPlan.works">
             <q-item-section style="display: grid; grid-template-columns: auto 4fr 1fr; gap: 8px; align-items: center; justify-content: space-between">
               <q-btn
                   icon="mdi-trash-can-outline"
@@ -308,8 +352,8 @@ async function deleteWork(id: number){
                   @click="deleteWork(work.id)"
               />
 
-              <span v-if="work.name !== null">{{ work.name }}</span>
-              <span v-else>{{ work.work.name }}</span>
+              <span v-if="work.name !== null">{{ index + 1 }}) {{ work.name }}</span>
+              <span v-else>{{ index + 1 }}) {{ work.work.name }}</span>
 
               <q-input
                   v-if="work.work !== null && work.work.is_multiple"
@@ -327,6 +371,117 @@ async function deleteWork(id: number){
           </q-item>
         </q-list>
       </div>
+
+      <q-dialog v-model="addWorkDialog" persistent>
+        <q-card style="min-width: 500px">
+          <q-card-section>
+            <div class="text-h6">Добавление работы</div>
+          </q-card-section>
+
+          <q-card-section class="q-pt-none">
+            <q-input
+              outlined
+              type="text"
+              label="Наименование работы"
+              v-model="workToAdd"
+              autofocus
+              @keyup.enter="addWorkDialog = false"
+
+            />
+          </q-card-section>
+
+          <q-card-actions align="right" class="text-primary">
+            <q-btn
+              color="red-5"
+              label="Отмена"
+              v-close-popup
+              @click="workToAdd = null"
+            />
+            <q-btn
+              color="primary"
+              label="Добавить"
+              v-close-popup
+              @click="addUpdateWork()"
+              :disable="workToAdd === null"
+            />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
+      <q-dialog v-model="changeStatusDialog" persistent>
+        <q-card style="min-width: 500px">
+          <q-card-section>
+            <div class="text-h6">Смена статуса</div>
+          </q-card-section>
+
+          <q-card-section
+            class="q-pt-none"
+            v-if="indPlan.plan.comment"
+          >
+            Предыдущий комментарий:<br>
+            {{ indPlan.plan.comment }}
+          </q-card-section>
+
+          <q-card-section
+            class="q-pt-none"
+            v-if="indPlan.plan.comment"
+            style="display: flex; justify-content: center"
+          >
+            <q-btn
+              color="primary"
+              icon="mdi-arrow-down-bold-box-outline"
+              @click="newComment = indPlan.plan.comment"
+            >
+              <q-tooltip style="font-size: 12px; background-color: white; color: black">
+                Вставить прошлый комментарий
+              </q-tooltip>
+            </q-btn>
+          </q-card-section>
+
+          <q-card-section class="q-pt-none">
+            <q-input
+              outlined
+              type="textarea"
+              label="Комментарий"
+              v-model="newComment"
+              autofocus
+            />
+          </q-card-section>
+
+          <q-card-actions align="right" class="text-primary">
+            <q-btn
+              color="red-5"
+              label="Отмена"
+              v-close-popup
+              @click="newComment = ''"
+            />
+            <q-btn
+              color="primary"
+              label="Отправить"
+              v-close-popup
+              @click="changeStatus()"
+              :disable="newComment === ''"
+            />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
+      <q-dialog v-model="viewCommentDialog">
+        <q-card style="min-width: 500px">
+          <q-card-section>
+            <div class="text-h6">Последний комментарий</div>
+          </q-card-section>
+
+          <q-card-section class="q-pt-none">
+            {{ indPlan.plan.comment }}
+          </q-card-section>
+
+          <q-card-actions align="right">
+            <q-btn flat label="OK" color="primary" v-close-popup />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
     </template>
   </layout-h-c-f>
 </template>
