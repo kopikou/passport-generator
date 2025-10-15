@@ -119,7 +119,7 @@ const filteredIndPLanList = computed(() => {
     table-header-class="table-header"
   >
     <template v-slot:body="props">
-      <q-tr :props="props" @click="router.push(`/ind_plan/${props.row.id}/`)">
+      <q-tr :props="props" class="cursor-pointer" @click="router.push(`/ind_plan/${props.row.id}/`)">
         <q-td key="author">
            {{ props.row.user_created.last_name }} {{ props.row.user_created.first_name }} {{ props.row.user_created.middle_name }}
         </q-td>

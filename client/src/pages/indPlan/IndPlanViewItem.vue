@@ -123,8 +123,8 @@ async function changeStatus() {
   const r  = await api.put(`/api/indplan/${props.id}/`, formData);
 
   indPlan.value.plan.status = r.data.status;
-  if (r.data.comment !== '') {
-  indPlan.value.plan.comments.push(r.data.comment);
+  if (r.data.plan_comment !== null) {
+    indPlan.value.plan.comments.push(r.data.plan_comment);
   }
 
   statusToNext.value = 0;
@@ -226,9 +226,8 @@ const typesList = [
   'Учебно-методическая работа'
 ];
 
-const workToAdd = ref(null);
+const workToAdd = ref('');
 const typeToAdd = ref(null);
-const inputIsActive = ref(true);
 
 const addWorkDialog = ref(false);
 const changeStatusDialog = ref(false);
@@ -238,7 +237,6 @@ const addCommentToWorkDialog = ref(false);
 const currentWork = ref(null);
 
 async function addUpdateWork(id: number = -1, count_required: number = -1, work_id: number = -1){
-  inputIsActive.value = false;
   const formData = new FormData();
 
   if (currentWork.value === null) {
@@ -246,9 +244,9 @@ async function addUpdateWork(id: number = -1, count_required: number = -1, work_
       formData.append('work_id', work_id.toString());
     }
 
-    if (workToAdd.value !== null) {
+    if (workToAdd.value !== '') {
       formData.append('name', workToAdd.value);
-      workToAdd.value = null;
+      workToAdd.value = '';
     }
 
     if (count_required > -1 && count_required != '') {
@@ -257,6 +255,7 @@ async function addUpdateWork(id: number = -1, count_required: number = -1, work_
 
     if (typeToAdd.value !== null) {
       formData.append('type', typeToAdd.value.toString());
+      typeToAdd.value = null;
     }
 
     if (id === -1 && count_required != '') {
@@ -275,18 +274,16 @@ async function addUpdateWork(id: number = -1, count_required: number = -1, work_
     indPlan.value.works.find((item) => item.id === currentWork.value.id).count_required = r.data.count_required;
   }
 
-  inputIsActive.value = true;
-  typeToAdd.value = null;
   currentWork.value = null;
 }
 
 async function deleteWork(id: number){
+  $q.loading.show();
    await api.delete(`/api/planwork/${id}/`);
    const index = indPlan.value.works.findIndex((item) => item.id === id);
    indPlan.value.works.splice(index, 1);
+   $q.loading.hide()
 }
-
-
 </script>
 
 <template>
@@ -375,8 +372,9 @@ async function deleteWork(id: number){
                       dense
                       borderless
                       min="0"
-                      :readonly="!canEdit || !inputIsActive"
+                      :readonly="!canEdit"
                       @update:model-value="addUpdateWork(work.plan_work, work.count_required, work.id)"
+                      :debounce="1000"
                     />
                   </div>
                   <div v-else style="display: grid; grid-template-columns: auto auto; gap: 12px; align-items: center; justify-content: end">
@@ -402,15 +400,8 @@ async function deleteWork(id: number){
             <span class="text-center">{{ type.type }}</span>
             <q-item-section
               v-for="(work, index) in type.works"
-              style="display: grid; grid-template-columns: auto 4fr auto 1fr; gap: 8px; align-items: center; justify-content: space-between; margin-left: 0; margin-bottom: 12px"
+              style="display: grid; grid-template-columns:10fr 2fr 1fr; gap: 8px; align-items: center; justify-content: space-between; margin-left: 0; margin-bottom: 12px"
             >
-              <q-btn
-                  icon="mdi-trash-can-outline"
-                  color="red-4"
-                  size="10px"
-                  @click="deleteWork(work.id)"
-              />
-
               <div style="display: flex; flex-direction: column; gap: 6px">
                 <span v-if="work.name !== null">{{ index + 1 }}) {{ work.name }}</span>
                 <span v-else>{{ index + 1 }}) {{ work.work.name }}</span>
@@ -418,17 +409,27 @@ async function deleteWork(id: number){
                 <span style="color: dimgrey; font-size: small; white-space: pre-wrap">{{work.additional_info}}</span>
               </div>
 
-              <q-btn
-                icon="mdi-message-text-outline"
-                color="secondary"
-                size="10px"
-                @click="currentWork = work; addCommentToWorkDialog = true"
-                v-show="canEdit"
-              />
+              <div v-show="canEdit">
+                <q-btn
+                  icon="mdi-message-text-outline"
+                  color="secondary"
+                  size="10px"
+                  @click="currentWork = work; addCommentToWorkDialog = true"
+                  style="margin-inline: 8px"
+                />
+                <q-btn
+                    icon="mdi-trash-can-outline"
+                    color="red-4"
+                    size="10px"
+                    @click="deleteWork(work.id)"
+                    style="margin-inline: 8px"
+                />
+              </div>
 
               <q-input
                   v-if="work.work !== null && work.work.is_multiple"
                   v-model="work.count_required"
+                  style="margin-right: 10px"
                   input-class="text-right"
                   type="number"
                   dense
@@ -479,7 +480,7 @@ async function deleteWork(id: number){
               label="Добавить"
               v-close-popup
               @click="addUpdateWork()"
-              :disable="workToAdd === null && typeToAdd === null"
+              :disable="workToAdd === '' || typeToAdd === null"
             />
           </q-card-actions>
         </q-card>
@@ -499,7 +500,7 @@ async function deleteWork(id: number){
             Предыдущие комментарии:
             <div v-for="comment in indPlan.plan.comments" style="display: flex; flex-direction: column">
               <span style="align-self: start;">{{ comment.comment }}</span>
-              <span style="align-self: end; color: dimgrey" > - {{ comment.author.last_name }} {{ comment.author.first_name.substring(0, 1) }}.{{ comment.author.middle_name.substring(0, 1) }}., {{ (moment(comment.date)).format('DD-MM-YYYY, HH:mm') }}</span>
+              <span style="align-self: end; color: dimgrey" v-if="comment.author !== null && comment.date !== null"> - {{ comment.author.last_name }} {{ comment.author.first_name.substring(0, 1) }}.{{ comment.author.middle_name.substring(0, 1) }}., {{ (moment(comment.date)).format('DD-MM-YYYY, HH:mm') }}</span>
               <q-separator/>
             </div>
           </q-card-section>

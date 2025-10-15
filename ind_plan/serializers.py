@@ -48,6 +48,7 @@ class PlanWorkSerializer(serializers.ModelSerializer):
 class IndPlanUpdateSerializer(serializers.Serializer):
     status = serializers.IntegerField(required=False)
     comment = serializers.CharField(required=False)
+    plan_comment = PlanCommentSerializer(required=False)
 
     def update(self, instance, validated_data):
         instance.status = validated_data['status']
@@ -59,14 +60,15 @@ class IndPlanUpdateSerializer(serializers.Serializer):
 
         if 'comment' in validated_data:
             comment = PlanComment.objects.create(plan=instance, comment=validated_data['comment'], author=self.context['request'].user)
+            plan_comment = PlanCommentSerializer(comment).data
             return {
                 'status': instance.status,
-                'comment': comment.comment,
+                'plan_comment': plan_comment,
             }
         else:
             return {
                 'status': instance.status,
-                'comment': '',
+                'plan_comment': None,
             }
 
 class PlanWorkAddUpdateSerializer(serializers.Serializer):
