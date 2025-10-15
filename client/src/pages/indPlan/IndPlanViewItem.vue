@@ -6,6 +6,7 @@ import LayoutHCF from "components/LayoutHCF.vue";
 import useMainStore from "stores/mainStore";
 import {storeToRefs} from "pinia";
 import {useQuasar} from "quasar";
+import * as moment from 'moment';
 
 const props = defineProps({
   id: {
@@ -123,7 +124,7 @@ async function changeStatus() {
 
   indPlan.value.plan.status = r.data.status;
   if (r.data.comment !== '') {
-  indPlan.value.plan.comment = r.data.comment;
+  indPlan.value.plan.comments.push(r.data.comment);
   }
 
   statusToNext.value = 0;
@@ -190,43 +191,93 @@ const rows = computed(() =>{
   return data;
 });
 
+const indPlanWorks = computed(() => {
+  const typesList = [...new Set(indPlan.value.works.map(item => {
+    if (item.work !== null)
+      return item.work.type
+    else
+      return item.type
+  }))];
+  let data = _(typesList)
+    .map(item => {
+      return {
+        type: item,
+        works: _(indPlan.value.works)
+          .filter(work => {
+            if (work.work !== null)
+              return work.work.type === item
+            else
+              return work.type === item
+          })
+          .value()
+      }
+    })
+    .value();
+
+  return data;
+});
+
+const typesList = [
+  'Научно-исследовательская работа',
+  'Организационно-методическая работа',
+  'Работа по воспитанию обучающихся',
+  'Повышение квалификации',
+  'Работа с обучающимися и абитуриентами',
+  'Учебно-методическая работа'
+];
+
 const workToAdd = ref(null);
+const typeToAdd = ref(null);
 const inputIsActive = ref(true);
 
 const addWorkDialog = ref(false);
 const changeStatusDialog = ref(false);
 const viewCommentDialog = ref(false);
+const addCommentToWorkDialog = ref(false);
+
+const currentWork = ref(null);
 
 async function addUpdateWork(id: number = -1, count_required: number = -1, work_id: number = -1){
   inputIsActive.value = false;
-
   const formData = new FormData();
 
-  if (work_id > -1) {
-    formData.append('work_id', work_id.toString());
+  if (currentWork.value === null) {
+    if (work_id > -1) {
+      formData.append('work_id', work_id.toString());
+    }
+
+    if (workToAdd.value !== null) {
+      formData.append('name', workToAdd.value);
+      workToAdd.value = null;
+    }
+
+    if (count_required > -1 && count_required != '') {
+      formData.append('count_required', count_required.toString());
+    }
+
+    if (typeToAdd) {
+      formData.append('type', typeToAdd.value.toString());
+    }
+
+    if (id === -1 && count_required != '') {
+      formData.append('plan_id', indPlan.value.plan.id.toString());
+      const r = await api.post(`/api/planwork/`, formData);
+      indPlan.value.works.push(r.data);
+    } else if (id > -1 && count_required > 0) {
+      const r = await api.put(`/api/planwork/${id}/`, formData);
+      indPlan.value.works.find((item) => item.id === id).count_required = r.data.count_required;
+    } else if (id > -1 && count_required <= 0) {
+      await deleteWork(id);
+    }
+  } else {
+    formData.append('additional_info', currentWork.value.additional_info.toString());
+    const r = await api.put(`/api/planwork/${currentWork.value.id}/`, formData);
+    indPlan.value.works.find((item) => item.id === currentWork.value.id).count_required = r.data.count_required;
   }
 
-  if (workToAdd.value !== null) {
-    formData.append('name', workToAdd.value);
-    workToAdd.value = null;
-  }
-
-  if (count_required > -1 && count_required != '') {
-    formData.append('count_required', count_required.toString());
-  }
-
-  if (id === -1 && count_required != '') {
-    formData.append('plan_id', indPlan.value.plan.id.toString());
-    const r = await api.post(`/api/planwork/`, formData);
-    indPlan.value.works.push(r.data);
-  } else if (id > -1 && count_required > 0) {
-    const r = await api.put(`/api/planwork/${id}/`, formData);
-    indPlan.value.works.find((item) => item.id === id).count_required = r.data.count_required;
-  } else if (id > -1 && count_required <= 0) {
-    await deleteWork(id);
-  }
-
-    inputIsActive.value = true;
+  inputIsActive.value = true;
+  typeToAdd.value = null;
+  currentWork.value = null;
 }
 
 async function deleteWork(id: number){
@@ -246,16 +297,20 @@ async function deleteWork(id: number){
 
         <div style="display: grid; grid-template-columns: auto auto auto auto; gap: 8px; margin: 8px; justify-content: center; align-items: center">
           <span style="font-size: 15px">{{ indPlan.plan.user_created.last_name }} {{ indPlan.plan.user_created.first_name}} {{ indPlan.plan.user_created.middle_name }}, {{ indPlan.plan.additional_info.doljn }}, ставка {{ indPlan.plan.additional_info.rate }}, {{indPlan.plan.year}} год</span>
-          <q-badge :color="statuses[indPlan.plan.status].color" style="height: 20px; font-size: medium">{{ statuses[indPlan.plan.status].title }}</q-badge>
+          <q-badge
+            :color="statuses[indPlan.plan.status].color"
+            style="height: 20px; font-size: medium">
+            {{ statuses[indPlan.plan.status].title }}
+          </q-badge>
 
           <q-btn
-            v-if="indPlan.plan.comment !== null"
+            v-if="indPlan.plan.comments.length > 0"
             icon="mdi-message-text-outline"
             color="primary"
             @click="viewCommentDialog = true"
           >
             <q-tooltip style="font-size: 12px; background-color: white; color: black">
-              Посмотреть комментарий
+              Посмотреть комментарии
             </q-tooltip>
           </q-btn>
 
@@ -297,7 +352,7 @@ async function deleteWork(id: number){
         />
       </div>
 
-      <div style="display: grid; grid-template-columns: 3fr auto 2fr; gap: 8px; margin: 10px">
+      <div style="display: grid; grid-template-columns: 4fr auto 4fr; gap: 8px; margin: 10px">
         <q-list separator>
           <q-expansion-item
               group="somegroup"
@@ -343,8 +398,12 @@ async function deleteWork(id: number){
 
         <q-list style="display: flex; flex-direction: column; justify-content: start;" separator>
           <span class="text-center">Взятые на исполнение</span>
-          <q-item v-for="(work, index) in indPlan.works">
-            <q-item-section style="display: grid; grid-template-columns: auto 4fr 1fr; gap: 8px; align-items: center; justify-content: space-between">
+          <q-item v-for="(type, typeIndex) in indPlanWorks" style="display: flex; flex-direction: column">
+            <span class="text-center">{{ type.type }}</span>
+            <q-item-section
+              v-for="(work, index) in type.works"
+              style="display: grid; grid-template-columns: auto 4fr auto 1fr; gap: 8px; align-items: center; justify-content: space-between; margin-left: 0; margin-bottom: 12px"
+            >
               <q-btn
                   icon="mdi-trash-can-outline"
                   color="red-4"
@@ -352,8 +411,20 @@ async function deleteWork(id: number){
                   @click="deleteWork(work.id)"
               />
 
-              <span v-if="work.name !== null">{{ index + 1 }}) {{ work.name }}</span>
-              <span v-else>{{ index + 1 }}) {{ work.work.name }}</span>
+              <div style="display: flex; flex-direction: column; gap: 6px">
+                <span v-if="work.name !== null">{{ index + 1 }}) {{ work.name }}</span>
+                <span v-else>{{ index + 1 }}) {{ work.work.name }}</span>
+
+                <span style="color: dimgrey; font-size: small; white-space: pre-wrap">{{work.additional_info}}</span>
+              </div>
+
+              <q-btn
+                icon="mdi-message-text-outline"
+                color="secondary"
+                size="10px"
+                @click="currentWork = work; addCommentToWorkDialog = true"
+                v-show="canEdit"
+              />
 
               <q-input
                   v-if="work.work !== null && work.work.is_multiple"
@@ -385,8 +456,14 @@ async function deleteWork(id: number){
               label="Наименование работы"
               v-model="workToAdd"
               autofocus
-              @keyup.enter="addWorkDialog = false"
+            />
 
+            <q-select v-model="typeToAdd"
+              label="Тип работы"
+              :options="typesList"
+              emit-value
+              map-options
+              clearable
             />
           </q-card-section>
 
@@ -402,7 +479,7 @@ async function deleteWork(id: number){
               label="Добавить"
               v-close-popup
               @click="addUpdateWork()"
-              :disable="workToAdd === null"
+              :disable="workToAdd === null && typeToAdd === null"
             />
           </q-card-actions>
         </q-card>
@@ -416,26 +493,15 @@ async function deleteWork(id: number){
 
           <q-card-section
             class="q-pt-none"
-            v-if="indPlan.plan.comment"
+            v-if="indPlan.plan.comments.length > 0"
+            style="display: flex; flex-direction: column;"
           >
-            Предыдущий комментарий:<br>
-            {{ indPlan.plan.comment }}
-          </q-card-section>
-
-          <q-card-section
-            class="q-pt-none"
-            v-if="indPlan.plan.comment"
-            style="display: flex; justify-content: center"
-          >
-            <q-btn
-              color="primary"
-              icon="mdi-arrow-down-bold-box-outline"
-              @click="newComment = indPlan.plan.comment"
-            >
-              <q-tooltip style="font-size: 12px; background-color: white; color: black">
-                Вставить прошлый комментарий
-              </q-tooltip>
-            </q-btn>
+            Предыдущие комментарии:
+            <div v-for="comment in indPlan.plan.comments" style="display: flex; flex-direction: column">
+              <span style="align-self: start;">{{ comment.comment }}</span>
+              <span style="align-self: end; color: dimgrey" > - {{ comment.author.last_name }} {{ comment.author.first_name.substring(0, 1) }}.{{ comment.author.middle_name.substring(0, 1) }}., {{ (moment(comment.date)).format('DD-MM-YYYY, HH:mm') }}</span>
+              <q-separator/>
+            </div>
           </q-card-section>
 
           <q-card-section class="q-pt-none">
@@ -469,15 +535,53 @@ async function deleteWork(id: number){
       <q-dialog v-model="viewCommentDialog">
         <q-card style="min-width: 500px">
           <q-card-section>
-            <div class="text-h6">Последний комментарий</div>
+            <div class="text-h6">Комментарии</div>
           </q-card-section>
 
           <q-card-section class="q-pt-none">
-            {{ indPlan.plan.comment }}
+            <div v-for="comment in indPlan.plan.comments" style="display: flex; flex-direction: column">
+              <span style="align-self: start;">{{ comment.comment }}</span>
+              <span style="align-self: end; color: dimgrey" v-if="comment.author !== null && comment.date !== null"> - {{ comment.author.last_name }} {{ comment.author.first_name.substring(0, 1) }}.{{ comment.author.middle_name.substring(0, 1) }}., {{ (moment(comment.date)).format('DD-MM-YYYY, HH:mm') }}</span>
+              <q-separator/>
+            </div>
           </q-card-section>
 
           <q-card-actions align="right">
             <q-btn flat label="OK" color="primary" v-close-popup />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
+      <q-dialog v-model="addCommentToWorkDialog" persistent>
+        <q-card style="min-width: 500px">
+          <q-card-section>
+            <div class="text-h6">Примечание к работе</div>
+          </q-card-section>
+
+          <q-card-section class="q-pt-none">
+            <q-input
+              outlined
+              type="textarea"
+              label="Примечание"
+              v-model="currentWork.additional_info"
+              autofocus
+            />
+          </q-card-section>
+
+          <q-card-actions align="right" class="text-primary">
+            <q-btn
+              color="red-5"
+              label="Отмена"
+              v-close-popup
+              @click="currentWork = null; addCommentToWorkDialog = false"
+            />
+            <q-btn
+              color="primary"
+              label="Добавить"
+              v-close-popup
+              @click="addUpdateWork()"
+              :disable="currentWork.additional_info === null"
+            />
           </q-card-actions>
         </q-card>
       </q-dialog>

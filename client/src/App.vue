@@ -100,7 +100,7 @@ onBeforeMount(async () => {
           <!--                       v-if="rop"-->
           <!--          />-->
           <q-route-tab icon="mdi-file" label="Инд План" to="/ind_plan"
-                       v-if="userId === 102 || isStaff"
+                       v-if="userId === 102 || userId === 654 || isStaff"
           />
           <q-btn-dropdown auto-close stretch flat :label="`${lastName} ${firstName}`">
             <q-list>

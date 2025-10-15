@@ -21,9 +21,9 @@ class IndPlan(models.Model):
         accepted = 2, "Утвержден"
         on_refile = 3, "Требуются правки"
     user_created = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_created")
-    user_confirmed = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="user_confirmed")
+    user_accepted = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="user_accepted")
     created_at = models.DateTimeField(null=True, blank=True, default=datetime.now)
-    confirmed_at = models.DateTimeField(null=True, blank=True)
+    accepted_at = models.DateTimeField(null=True, blank=True)
     status = models.IntegerField(choices=IndPlanStatusChoice.choices, default=IndPlanStatusChoice.created)
     zav = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="zav")
     year = models.IntegerField(null=True, blank=True)
@@ -41,9 +41,11 @@ class PlanWork(models.Model):
     count_done = models.IntegerField(null=True, blank=True)
     type = models.TextField(choices=PlanWorkType.choices, null=True, blank=True)
     name = models.TextField(null=True, blank=True)
+    additional_info = models.TextField(null=True, blank=True)
 
 class PlanComment(models.Model):
     plan = models.ForeignKey(IndPlan, on_delete=models.CASCADE, related_name="ind_plan")
-    status = models.IntegerField()
     comment = models.TextField()
+    date = models.DateTimeField(null=True, blank=True, default=datetime.now)
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="author")
 
