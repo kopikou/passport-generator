@@ -255,7 +255,7 @@ async function addUpdateWork(id: number = -1, count_required: number = -1, work_
       formData.append('count_required', count_required.toString());
     }
 
-    if (typeToAdd) {
+    if (typeToAdd.value !== null) {
       formData.append('type', typeToAdd.value.toString());
     }
 
