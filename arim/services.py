@@ -71,6 +71,10 @@ class AISServices(object):
         # })
         #
         # data = r.json()['RecordSet']
+        data = [{
+            **i,
+            'label': f"{i['label']} ({i['value']})"
+        } for i in data]
 
         return data
 
