@@ -105,6 +105,8 @@ class PlanDataSerializer(serializers.ModelSerializer):
     head = serializers.CharField(allow_null=True, allow_blank=True)
     faculty = serializers.CharField(allow_null=True, allow_blank=True)
 
+    mira_id = serializers.IntegerField(required=False)
+
     class Meta:
         model = PlanData
         fields = [
@@ -135,6 +137,7 @@ class PlanDataSerializer(serializers.ModelSerializer):
             'vuzname',
             'head',
             'faculty',
+            'mira_id',
         ]
 
 
