@@ -368,6 +368,7 @@ class AISServices(object):
     			, f.dean AS fac_name
     			, cp1.name AS razrab_name
     			, cp2.name AS rop_name
+    			, p.cadmission as id_admission
                 FROM uchplan_lines u
                     LEFT JOIN uchplan_discpl d ON u.disid = d.id
                     LEFT JOIN uchplan_plan p ON p.id = u.planid

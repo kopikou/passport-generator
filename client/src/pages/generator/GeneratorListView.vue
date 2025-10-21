@@ -11,6 +11,7 @@ import useMainStore from "stores/mainStore";
 import LayoutHCF from "components/LayoutHCF.vue";
 import GeneratorListViewItem from "pages/generator/components/GeneratorListViewItem.vue";
 import writeXlsxFile from "write-excel-file";
+import dayjs from "dayjs";
 
 const mainStore = useMainStore();
 const {
@@ -107,6 +108,18 @@ const discplFilter = ref($q.localStorage.getItem("surp_discplfilter") ? $q.local
 const myFilter = ref(LocalStorage.getItem('surp_myfilter') || 0)
 const textFilter = ref<String>(LocalStorage.getItem('surp_rpdfilter') || '')
 const groupTextFilter = ref<String>(LocalStorage.getItem('surp_rpdgroupfilter') || '')
+const yearFilter = ref<number>(LocalStorage.getItem('surp_yearfilter') || dayjs().year())
+
+const yearsList = computed(() => {
+  let year = 2025;
+  let list = []
+  while (year <= dayjs().year() + 1) {
+    list.push(year);
+    year += 1;
+  }
+
+  return list;
+});
 
 const filteredProgramData = computed(() => {
   let txtFilter = textFilter.value.trim().toLowerCase();
@@ -125,13 +138,6 @@ const filteredProgramData = computed(() => {
     return data
 });
 
-
-// async function getProgramData() {
-//   const loadProgram = $q.loading.show({
-//     group: 'programs',
-//     message: 'Обновление списка дисциплин',
-//   })
-
 async function getGroupsList() {
   const loadProgram = $q.loading.show({
     group: 'programs',
@@ -144,6 +150,7 @@ async function getGroupsList() {
       groupText: groupTextFilter.value,
       status: statusFilter.value,
       my: myFilter.value,
+      year: yearFilter.value,
     },
   });
   groupsList.value = r.data;
@@ -175,7 +182,7 @@ const updateDataFunction = _.debounce(async () => {
     await getGroupProgram(groupsList.value[0].plan_id);
 }, 300)
 
-watch([discplFilter, groupFilter, myFilter, textFilter, statusFilter, groupTextFilter], updateDataFunction)
+watch([discplFilter, groupFilter, myFilter, textFilter, statusFilter, groupTextFilter, yearFilter], updateDataFunction)
 
 onBeforeMount(async () => {
   await getGroupsList()
@@ -285,7 +292,7 @@ function rowClassFn (row) {
     <template #header>
       <div class="q-px-sm q-pb-sm">
         <div class="flex justify-between q-my-sm q-px-sm"
-             style="display: grid; grid-template-columns: 1fr 1fr 220px auto auto auto; gap: 8px; align-items: center;">
+             style="display: grid; grid-template-columns: 1fr 1fr 220px auto auto auto auto; gap: 8px; align-items: center;">
           <q-input outlined label="Поиск по направлению, аббревиатуре, специальности, коду и т.д." v-model="groupTextFilter"
                    clearable @clear="groupTextFilter.value = ''"/>
            <q-input outlined label="Поиск по дисциплине, разработчику программы и т.д." v-model="textFilter"
@@ -299,6 +306,13 @@ function rowClassFn (row) {
                     map-options
                     clearable
           />
+
+          <q-select
+            v-model="yearFilter"
+            label="Год"
+            :options="yearsList"
+          />
+
           <q-toggle outlined label="Только мои" v-model="myFilter" :true-value="1" :false-value="0"/>
 
           <q-btn

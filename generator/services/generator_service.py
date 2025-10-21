@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import json
 import os
@@ -170,7 +171,7 @@ class GeneratorService(object):
 
     @classmethod
     # @cache_function(timeout=60 * 1)
-    def get_group_list(cls, user_mira_id, year=2025, txt_filter='', group_txt_filter='', status_filter='', my_filter=0):
+    def get_group_list(cls, user_mira_id, year=datetime.datetime.now().year, txt_filter='', group_txt_filter='', status_filter='', my_filter=0):
         data = AISServices.get_groups_by_person(user_mira_id, year, txt_filter, group_txt_filter, my_filter)
 
         planlin_list = list(set(i['planlin'] for i in data))
@@ -196,6 +197,7 @@ class GeneratorService(object):
         result = []
 
         lst = config.RPD_DISCIPLINES_ONLY_ZAV_CONFIRM_REQUIRED.split("\n")
+
         for abbr in abbr_list:
             types = []
             plx_file = ''
@@ -221,23 +223,29 @@ class GeneratorService(object):
             for planline in planlin_list:
                 line = filtered_data_sorted.get(f"{planline['planlin']}")
 
+                print(line)
+                print(planline)
+
                 if line:
 
                     res = lineslink_by_id.get(planline['planlin'], [])
 
-                    if res.is_deleted:
-                        continue
+                    if not res:
+                        statuses['Назначен'] += 1
+                    else:
+                        if res.is_deleted:
+                            continue
 
-                    if (res.status == PlanLinesLink.StatusChoices.on_review
-                            and (('zav' in types and not res.user_accepted)
-                                 or ('rop' in types and not res.user_confirmed and not (
-                                            res.planlines.caf in (208,) or line.dis in lst)))
-                            and (status_filter == '' or status_filter == 'Требует моего согласования/утверждения')):
-                        statuses['Требует моего согласования/утверждения'] += 1
-                    elif status_filter == '' or status_filter == res.status_verbose:
-                        statuses[res.status_verbose] += 1
+                        if (res.status == PlanLinesLink.StatusChoices.on_review
+                                and (('zav' in types and not res.user_accepted)
+                                     or ('rop' in types and not res.user_confirmed and not (
+                                                res.planlines.caf in (208,) or line.dis in lst)))
+                                and (status_filter == '' or status_filter == 'Требует моего согласования/утверждения')):
+                            statuses['Требует моего согласования/утверждения'] += 1
+                        elif status_filter == '' or status_filter == res.status_verbose:
+                            statuses[res.status_verbose] += 1
 
-                    plx_file = settings.SITE_URL + line.plan.file.file.url if line.plan.file else '',
+                        plx_file = settings.SITE_URL + line.plan.file.file.url if line.plan.file else '',
 
             for key in statuses:
                 if statuses[key] > 0:
@@ -269,6 +277,28 @@ class GeneratorService(object):
                 "user_confirmed",
                 "user_accepted",
             ).first()
+
+            print(lines_link)
+
+            if not lines_link:
+                line = LinesData.objects.get(mira_id=item['planlin'])
+
+                print(line)
+
+                lines_link, created = PlanLinesLink.objects.select_related("user_accepted__userprofile",
+                                                                    "user_confirmed__userprofile").get_or_create(
+                    cadmission=item['id_admission'],
+                    mira_id=item['planlin'],
+                    person=item['razrab'],
+                    defaults={
+                        "cadmission": item['id_admission'],
+                        "mira_id": item['planlin'],
+                        "person": item['razrab'],
+                        "status": PlanLinesLink.StatusChoices.appointed,
+                        "planlines_id": line.id,
+                        "can_be_copied_by_anyone": False,
+                    }
+                )
 
             types = [
                 {

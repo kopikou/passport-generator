@@ -234,8 +234,9 @@ class GeneratorViewSet(
         group_txt_filter = self.request.query_params.get('groupText')
         status = self.request.query_params.get('status')
         my_filter = self.request.query_params.get('my')
+        year_filter = self.request.query_params.get('year')
 
-        res = GeneratorService.get_group_list(self.request.user.userprofile.mira_id, datetime.datetime.now().year, txt_filter, group_txt_filter, status, my_filter)
+        res = GeneratorService.get_group_list(self.request.user.userprofile.mira_id, year_filter, txt_filter, group_txt_filter, status, my_filter)
 
         return Response(
             data=res,
