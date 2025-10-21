@@ -148,7 +148,6 @@ async function changeCaf() {
               @popup-hide="scope.set"
               filled
               behavior="dialog"
-              :readonly="disabled"
             >
             </q-select>
           </q-popup-edit>

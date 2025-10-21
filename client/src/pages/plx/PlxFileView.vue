@@ -30,6 +30,7 @@ const {
   disabled,
   fileData,
   files,
+  planData,
 } = storeToRefs(planViewStore);
 
 
@@ -135,6 +136,10 @@ watch(() => props.id,
 
         </q-item>
       </q-list>
+
+      <div class="q-py-md q-px-sm">
+        miraid: {{ planData[0]?.mira_id }}
+      </div>
 
       <div class="q-mt-xs">
         <template v-if="!disabled">

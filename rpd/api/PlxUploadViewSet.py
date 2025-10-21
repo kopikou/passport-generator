@@ -7,6 +7,7 @@ from rest_framework.viewsets import GenericViewSet
 from urllib3 import request
 
 from app.utils import UserProfileHasPermission
+from arim.models import UchPlanLines, UchPlanKaf
 from arim.services import AISServices
 from auths.models import Permissions
 from rpd.models import RPDFile, PlanData, LinesData, PlanDocuments, DocumentsTypes, LinesIndicators, SemesterData, \
@@ -123,7 +124,19 @@ class PlxUploadViewSet(
     def update_lines_data(self, request, *args, **kwargs):
         data = request.data['data']
 
-        instance = LinesData.objects.get(id=data['id'])
+        instance = LinesData.objects.select_related('plan').get(id=data['id'])
+
+        # чтобы обновить кафедру
+        planlines = list(UchPlanLines.objects.filter(
+            planid_id=instance.plan.mira_id,
+            newdisid=instance.newdisid,
+        ))
+        if len(planlines) == 1:
+            kaf = UchPlanKaf.objects.filter(id=data['caf']).first()
+            UchPlanLines.objects.filter(id=planlines[0].id).update(
+                kafcode=kaf.id,
+                ckaf=kaf.ckaf2istu
+            )
 
         serializer = LinesDataSerializer(instance, data=data)
         serializer.is_valid(raise_exception=True)
