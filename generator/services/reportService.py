@@ -723,7 +723,7 @@ class ReportService(object):
         formcontrols = FormControl.objects.all()
         formcontrol_by_id = {i.id: i.name for i in formcontrols}
         
-        competences_sorted = sorted([i for i in data['planlines']['indicators'] if item['competence_index']], key=lambda item: item['competence_index'])
+        competences_sorted = sorted([i for i in data['planlines']['indicators'] if i['competence_index']], key=lambda x: x['competence_index'])
         competences_grouped = {key: list(items) for key, items in
                                groupby(competences_sorted, key=lambda item: item['competence_index'])}
         competence = []
