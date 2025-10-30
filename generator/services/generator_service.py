@@ -286,6 +286,9 @@ class GeneratorService(object):
                 if not line:
                     line = LinesData.objects.get(dis=item['discpl'].replace('  ', ' ').strip(), newdisid=item['newdisid'], plan__mira_id=plan_id)
 
+                    line.mira_id = item['planlin']
+                    line.save()
+
                 print(line)
 
                 lines_link, created = PlanLinesLink.objects.select_related("user_accepted__userprofile",
