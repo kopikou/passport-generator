@@ -281,7 +281,10 @@ class GeneratorService(object):
             print(lines_link)
 
             if not lines_link:
-                line = LinesData.objects.get(mira_id=item['planlin'])
+                line = LinesData.objects.filter(mira_id=item['planlin']).first()
+
+                if not line:
+                    line = LinesData.objects.get(dis=item['discpl'].replace('  ', ' ').strip(), newdisid=item['newdisid'], plan__mira_id=plan_id)
 
                 print(line)
 
