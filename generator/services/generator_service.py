@@ -223,9 +223,6 @@ class GeneratorService(object):
             for planline in planlin_list:
                 line = filtered_data_sorted.get(f"{planline['planlin']}")
 
-                print(line)
-                print(planline)
-
                 if line:
 
                     res = lineslink_by_id.get(planline['planlin'], [])
@@ -278,8 +275,6 @@ class GeneratorService(object):
                 "user_accepted",
             ).first()
 
-            print(lines_link)
-
             if not lines_link:
                 line = LinesData.objects.filter(mira_id=item['planlin']).first()
 
@@ -288,8 +283,6 @@ class GeneratorService(object):
 
                     line.mira_id = item['planlin']
                     line.save()
-
-                print(line)
 
                 lines_link, created = PlanLinesLink.objects.select_related("user_accepted__userprofile",
                                                                     "user_confirmed__userprofile").get_or_create(

@@ -31,17 +31,16 @@ class IndPlan(models.Model):
 class Work(models.Model):
     name = models.TextField()
     type = models.TextField(choices=PlanWorkType.choices)
-    is_multiple = models.BooleanField(default=False)
+    hours_count = models.IntegerField(null=True, blank=True)
 
 class PlanWork(models.Model):
     plan = models.ForeignKey(IndPlan, on_delete=models.CASCADE, related_name="plan")
     work = models.ForeignKey(Work, on_delete=models.CASCADE, related_name="work",null=True, blank=True)
-    count_required = models.IntegerField(null=True, blank=True)
     is_done = models.BooleanField(null=True, blank=True)
-    count_done = models.IntegerField(null=True, blank=True)
     type = models.TextField(choices=PlanWorkType.choices, null=True, blank=True)
     name = models.TextField(null=True, blank=True)
     additional_info = models.TextField(null=True, blank=True)
+    hours_count = models.IntegerField(null=True, blank=True)
 
 class PlanComment(models.Model):
     plan = models.ForeignKey(IndPlan, on_delete=models.CASCADE, related_name="ind_plan")

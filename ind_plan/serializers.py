@@ -35,7 +35,7 @@ class IndPlanListSerializer(serializers.ModelSerializer):
 
 class WorkSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ['id', 'name', 'type', 'is_multiple']
+        fields = ['id', 'name', 'type', 'hours_count']
         model = Work
 
 class PlanWorkSerializer(serializers.ModelSerializer):
@@ -43,7 +43,7 @@ class PlanWorkSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PlanWork
-        fields = ['id', 'name', 'type', 'work', 'count_required', 'is_done', 'count_done', 'additional_info']
+        fields = ['id', 'name', 'type', 'work', 'is_done', 'hours_count', 'additional_info']
 
 class IndPlanUpdateSerializer(serializers.Serializer):
     status = serializers.IntegerField(required=False)
@@ -77,14 +77,11 @@ class PlanWorkAddUpdateSerializer(serializers.Serializer):
     plan_id = serializers.IntegerField(required=False)
     work_id = serializers.IntegerField(required=False)
     type = serializers.CharField(required=False)
-    count_required = serializers.IntegerField(required=False)
     work = WorkSerializer(read_only=True, required=False)
     additional_info = serializers.CharField(required=False)
 
     def update(self, instance, validated_data):
-        if 'count_required' in validated_data:
-            instance.count_required = validated_data['count_required']
-        elif 'additional_info' in validated_data:
+        if 'additional_info' in validated_data:
             instance.additional_info = validated_data['additional_info']
         instance.save()
         return instance
@@ -95,7 +92,6 @@ class PlanWorkAddUpdateSerializer(serializers.Serializer):
             type=validated_data['type'] if 'type' in validated_data else None,
             plan=IndPlan.objects.get(id=validated_data['plan_id']),
             work=Work.objects.get(pk=validated_data['work_id']) if 'work_id' in validated_data else None,
-            count_required=validated_data['count_required'] if 'count_required' in validated_data else None,
         )
 
         return plan_work

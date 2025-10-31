@@ -6,7 +6,7 @@ import LayoutHCF from "components/LayoutHCF.vue";
 import useMainStore from "stores/mainStore";
 import {storeToRefs} from "pinia";
 import {useQuasar} from "quasar";
-import * as moment from 'moment';
+import dayjs from "dayjs";
 
 const props = defineProps({
   id: {
@@ -198,6 +198,9 @@ const indPlanWorks = computed(() => {
     else
       return item.type
   }))];
+
+  let id = 0;
+
   let data = _(typesList)
     .map(item => {
       return {
@@ -208,6 +211,13 @@ const indPlanWorks = computed(() => {
               return work.work.type === item
             else
               return work.type === item
+          })
+          .map(x => {
+            id += 1
+            return {
+              index: id,
+              value: x
+            }
           })
           .value()
       }
@@ -236,43 +246,34 @@ const addCommentToWorkDialog = ref(false);
 
 const currentWork = ref(null);
 
-async function addUpdateWork(id: number = -1, count_required: number = -1, work_id: number = -1){
+async function createWork() {
   const formData = new FormData();
 
-  if (currentWork.value === null) {
-    if (work_id > -1) {
-      formData.append('work_id', work_id.toString());
-    }
+  formData.append('name', workToAdd.value.toString());
+  formData.append('type', typeToAdd.value.toString());
+  formData.append('plan_id', indPlan.value.plan.id.toString());
 
-    if (workToAdd.value !== '') {
-      formData.append('name', workToAdd.value);
-      workToAdd.value = '';
-    }
+  const r = await api.post(`/api/planwork/`, formData);
 
-    if (count_required > -1 && count_required != '') {
-      formData.append('count_required', count_required.toString());
-    }
+  indPlan.value.works.push(r.data);
+}
 
-    if (typeToAdd.value !== null) {
-      formData.append('type', typeToAdd.value.toString());
-      typeToAdd.value = null;
-    }
+async function addWork(work_id: number) {
+    const formData = new FormData();
 
-    if (id === -1 && count_required != '') {
-      formData.append('plan_id', indPlan.value.plan.id.toString());
-      const r = await api.post(`/api/planwork/`, formData);
-      indPlan.value.works.push(r.data);
-    } else if (id > -1 && count_required > 0) {
-      const r = await api.put(`/api/planwork/${id}/`, formData);
-      indPlan.value.works.find((item) => item.id === id).count_required = r.data.count_required;
-    } else if (id > -1 && count_required <= 0) {
-      await deleteWork(id);
-    }
-  } else {
-    formData.append('additional_info', currentWork.value.additional_info.toString());
-    const r = await api.put(`/api/planwork/${currentWork.value.id}/`, formData);
-    indPlan.value.works.find((item) => item.id === currentWork.value.id).count_required = r.data.count_required;
-  }
+    formData.append('work_id', work_id.toString());
+    formData.append('plan_id', indPlan.value.plan.id.toString());
+
+    const r = await api.post(`/api/planwork/`, formData);
+
+    indPlan.value.works.push(r.data);
+}
+
+async function updateWork() {
+  const formData = new FormData();
+
+  formData.append('additional_info', currentWork.value.additional_info.toString());
+  const r = await api.put(`/api/planwork/${currentWork.value.id}/`, formData);
 
   currentWork.value = null;
 }
@@ -318,7 +319,7 @@ async function deleteWork(id: number){
                 :icon="button.icon"
                 :color="button.color"
                 :text-color="button.text_color"
-                @click="statusToNext = button.next_status; (button.next_status === 1 || button.next_status === 3) ? changeStatusDialog = true : changeStatus()"
+                @click="statusToNext = button.next_status; (button.next_status === 3 || indPlan.plan.status === 3) ? changeStatusDialog = true : changeStatus()"
               >
                 <q-tooltip style="font-size: 12px; background-color: white; color: black">
                   {{ button.label }}
@@ -335,7 +336,7 @@ async function deleteWork(id: number){
       <div style="display: grid; grid-template-columns: 5fr 1fr; gap: 8px; margin: 8px">
         <q-input
           outlined
-          label="Наименогвание работы"
+          label="Наименование работы"
           v-model="workFilter"
           clearable
           @clear="workFilter = ''"
@@ -346,6 +347,7 @@ async function deleteWork(id: number){
           style="height: 100%"
           color="primary"
           @click="addWorkDialog = true"
+          :disable="!canEdit"
         />
       </div>
 
@@ -363,27 +365,14 @@ async function deleteWork(id: number){
               <q-item v-for="work in row.works" :style="'background-color:' + work.color">
                 <q-item-section style="display: grid; grid-template-columns: 6fr 3fr; gap: 8px; align-items: center; justify-content: space-between;">
                   <span>{{ work.name }}</span>
-                  <div v-if="work.is_multiple" style="display: grid; grid-template-columns: 6fr 1fr; gap: 10px; align-items: center;">
-                    <span class="text-right">Количество на исполнение</span>
-                    <q-input
-                      v-model="work.count_required"
-                      type="number"
-                      input-class="text-right"
-                      dense
-                      borderless
-                      min="0"
-                      :readonly="!canEdit"
-                      @update:model-value="addUpdateWork(work.plan_work, work.count_required, work.id)"
-                      :debounce="1000"
-                    />
-                  </div>
-                  <div v-else style="display: grid; grid-template-columns: auto auto; gap: 12px; align-items: center; justify-content: end">
+
+                  <div style="display: grid; grid-template-columns: auto auto; gap: 12px; align-items: center; justify-content: end">
                     <span>На исполнение</span>
 
                     <q-checkbox
-                        :disable="!canEdit"
+                        :disable="!canEdit || work.to_done"
                         v-model="work.to_done"
-                        @click="addUpdateWork(work.plan_work, -1, work.id)"
+                        @click="addWork(work.id)"
                     />
                   </div>
                 </q-item-section>
@@ -396,17 +385,17 @@ async function deleteWork(id: number){
 
         <q-list style="display: flex; flex-direction: column; justify-content: start;" separator>
           <span class="text-center">Взятые на исполнение</span>
-          <q-item v-for="(type, typeIndex) in indPlanWorks" style="display: flex; flex-direction: column">
+          <q-item v-for="type in indPlanWorks" style="display: flex; flex-direction: column">
             <span class="text-center">{{ type.type }}</span>
             <q-item-section
-              v-for="(work, index) in type.works"
+              v-for="work in type.works"
               style="display: grid; grid-template-columns:10fr 2fr 1fr; gap: 8px; align-items: center; justify-content: space-between; margin-left: 0; margin-bottom: 12px"
             >
               <div style="display: flex; flex-direction: column; gap: 6px">
-                <span v-if="work.name !== null">{{ index + 1 }}) {{ work.name }}</span>
-                <span v-else>{{ index + 1 }}) {{ work.work.name }}</span>
+                <span v-if="work.value.name !== null">{{ work.index }}) {{ work.value.name }}</span>
+                <span v-else>{{ work.index }}) {{ work.value.work.name }}</span>
 
-                <span style="color: dimgrey; font-size: small; white-space: pre-wrap">{{work.additional_info}}</span>
+                <span style="color: dimgrey; font-size: small; white-space: pre-wrap">{{work.value.additional_info}}</span>
               </div>
 
               <div v-show="canEdit">
@@ -414,31 +403,17 @@ async function deleteWork(id: number){
                   icon="mdi-message-text-outline"
                   color="secondary"
                   size="10px"
-                  @click="currentWork = work; addCommentToWorkDialog = true"
+                  @click="currentWork = work.value; addCommentToWorkDialog = true"
                   style="margin-inline: 8px"
                 />
                 <q-btn
                     icon="mdi-trash-can-outline"
                     color="red-4"
                     size="10px"
-                    @click="deleteWork(work.id)"
+                    @click="deleteWork(work.value.id)"
                     style="margin-inline: 8px"
                 />
               </div>
-
-              <q-input
-                  v-if="work.work !== null && work.work.is_multiple"
-                  v-model="work.count_required"
-                  style="margin-right: 10px"
-                  input-class="text-right"
-                  type="number"
-                  dense
-                  borderless
-                  min="0"
-                  :readonly="!canEdit"
-                  @update:model-value="addUpdateWork(work.id, work.count_required)"
-                  :debounce="1000"
-              />
             </q-item-section>
           </q-item>
         </q-list>
@@ -473,13 +448,13 @@ async function deleteWork(id: number){
               color="red-5"
               label="Отмена"
               v-close-popup
-              @click="workToAdd = null"
+              @click="workToAdd = ''; typeToAdd = null"
             />
             <q-btn
               color="primary"
               label="Добавить"
               v-close-popup
-              @click="addUpdateWork()"
+              @click="createWork()"
               :disable="workToAdd === '' || typeToAdd === null"
             />
           </q-card-actions>
@@ -500,7 +475,7 @@ async function deleteWork(id: number){
             Предыдущие комментарии:
             <div v-for="comment in indPlan.plan.comments" style="display: flex; flex-direction: column">
               <span style="align-self: start;">{{ comment.comment }}</span>
-              <span style="align-self: end; color: dimgrey" v-if="comment.author !== null && comment.date !== null"> - {{ comment.author.last_name }} {{ comment.author.first_name.substring(0, 1) }}.{{ comment.author.middle_name.substring(0, 1) }}., {{ (moment(comment.date)).format('DD-MM-YYYY, HH:mm') }}</span>
+              <span style="align-self: end; color: dimgrey" v-if="comment.author !== null && comment.date !== null"> - {{ comment.author.last_name }} {{ comment.author.first_name.substring(0, 1) }}.{{ comment.author.middle_name.substring(0, 1) }}., {{ dayjs(comment.date).format('DD.MM.YYYY, HH:mm') }}</span>
               <q-separator/>
             </div>
           </q-card-section>
@@ -542,7 +517,7 @@ async function deleteWork(id: number){
           <q-card-section class="q-pt-none">
             <div v-for="comment in indPlan.plan.comments" style="display: flex; flex-direction: column">
               <span style="align-self: start;">{{ comment.comment }}</span>
-              <span style="align-self: end; color: dimgrey" v-if="comment.author !== null && comment.date !== null"> - {{ comment.author.last_name }} {{ comment.author.first_name.substring(0, 1) }}.{{ comment.author.middle_name.substring(0, 1) }}., {{ (moment(comment.date)).format('DD-MM-YYYY, HH:mm') }}</span>
+              <span style="align-self: end; color: dimgrey" v-if="comment.author !== null && comment.date !== null"> - {{ comment.author.last_name }} {{ comment.author.first_name.substring(0, 1) }}.{{ comment.author.middle_name.substring(0, 1) }}., {{ dayjs(comment.date).format('DD.MM.YYYY, HH:mm') }}</span>
               <q-separator/>
             </div>
           </q-card-section>
@@ -580,7 +555,7 @@ async function deleteWork(id: number){
               color="primary"
               label="Добавить"
               v-close-popup
-              @click="addUpdateWork()"
+              @click="updateWork()"
               :disable="currentWork.additional_info === null"
             />
           </q-card-actions>
