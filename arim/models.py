@@ -24,6 +24,7 @@ class CatPerson(models.Model):
         managed = False
 
     name = models.CharField(max_length=128)
+    id1c = models.CharField(max_length=128)
     ckaf = models.ForeignKey("CatKaf", on_delete=models.CASCADE, db_column="ckaf")
     prepod = models.CharField(max_length=1, choices=BoolChoice, default=BoolChoice.f)
     doljnost_nauch = models.CharField(max_length=128, null=True)
@@ -275,3 +276,32 @@ class RpdUsers(models.Model):
     isspoadm = models.CharField(max_length=1, choices=BoolChoice)
     can_upload = models.CharField(max_length=1, choices=BoolChoice)
 
+
+
+class Person2Uchnagr(models.Model):
+    c1pers = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    cperson = models.ForeignKey("CatPerson", on_delete=models.CASCADE, db_column="cperson")
+    discpl = models.TextField()
+    grup = models.CharField(max_length=50)
+    hour = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    formcontr = models.CharField(max_length=50)
+    sem = models.IntegerField()
+    metka = models.CharField(max_length=50)
+    kurs = models.IntegerField()
+    direction = models.CharField(max_length=255)
+    realhour = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    doljnost = models.CharField(max_length=255)
+    studcount = models.IntegerField()
+    ddat = models.DateTimeField(null=True, blank=True)
+    cadmission = models.ForeignKey("Catadmission", on_delete=models.CASCADE, db_column="cadmission")
+    snapshot_time = models.DateTimeField(null=True, blank=True)
+    year = models.IntegerField()
+
+    class Meta:
+        db_table = 'person2uchnagr'  # или ваше настоящее имя таблицы
+        verbose_name = 'Академическая нагрузка'
+        verbose_name_plural = 'Академические нагрузки'
+
+    def __str__(self):
+        return f"{self.name} - {self.discpl} - {self.grup}"
