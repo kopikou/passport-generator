@@ -360,6 +360,7 @@ class AISServices(object):
                 d.name as discipline
                 , u.id as planlin
                 , d.id as discipline_id
+                , a.name as admission_name
                 , u.newdisid AS shifr
                 , u.cperson AS razrab
                 , ck.czav AS zavkaf
