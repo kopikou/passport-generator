@@ -3,8 +3,8 @@ from datetime import datetime
 from django.db import models
 
 from django.contrib.auth.models import User
+from app.utils import TimestampsModel
 
-# Create your models here.
 
 class PlanWorkType(models.TextChoices):
     scientific_research = 'Научно-исследовательская работа', 'scientific_research'
@@ -14,35 +14,43 @@ class PlanWorkType(models.TextChoices):
     work_with_students = 'Работа с обучающимися и абитуриентами', 'work_with_students'
     educ_method = 'Учебно-методическая работа', 'educ_method'
 
-class IndPlan(models.Model):
+class IndPlan(TimestampsModel):
     class IndPlanStatusChoice(models.IntegerChoices):
         created = 0, "Создан"
         waiting = 1, "Ожидает рассмотрения"
         accepted = 2, "Утвержден"
         on_refile = 3, "Требуются правки"
+
     user_created = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_created")
     user_accepted = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="user_accepted")
-    created_at = models.DateTimeField(null=True, blank=True, default=datetime.now)
     accepted_at = models.DateTimeField(null=True, blank=True)
     status = models.IntegerField(choices=IndPlanStatusChoice.choices, default=IndPlanStatusChoice.created)
     zav = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="zav")
     year = models.IntegerField(null=True, blank=True)
+    template = models.ForeignKey('IndPlanTemplate', on_delete=models.CASCADE, null=True)
 
-class Work(models.Model):
+
+class IndPlanTemplate(TimestampsModel):
     name = models.TextField()
-    type = models.TextField(choices=PlanWorkType.choices)
-    hours_count = models.IntegerField(null=True, blank=True)
+    year = models.IntegerField(null=True, blank=True)
+    is_active = models.BooleanField(default=False)
 
-class PlanWork(models.Model):
+
+class Work(TimestampsModel):
+    template = models.ForeignKey(IndPlanTemplate, on_delete=models.CASCADE, null=True)
+    name = models.TextField()
+    type = models.TextField()
+    order = models.IntegerField(default=0, db_default=0)
+    # hours_count = models.IntegerField(null=True, blank=True)
+
+class PlanWork(TimestampsModel):
     plan = models.ForeignKey(IndPlan, on_delete=models.CASCADE, related_name="plan")
     work = models.ForeignKey(Work, on_delete=models.CASCADE, related_name="work",null=True, blank=True)
     is_done = models.BooleanField(null=True, blank=True)
-    type = models.TextField(choices=PlanWorkType.choices, null=True, blank=True)
-    name = models.TextField(null=True, blank=True)
     additional_info = models.TextField(null=True, blank=True)
-    hours_count = models.IntegerField(null=True, blank=True)
 
-class PlanComment(models.Model):
+
+class PlanComment(TimestampsModel):
     plan = models.ForeignKey(IndPlan, on_delete=models.CASCADE, related_name="ind_plan")
     comment = models.TextField()
     date = models.DateTimeField(null=True, blank=True, default=datetime.now)

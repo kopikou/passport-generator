@@ -35,7 +35,7 @@ class IndPlanListSerializer(serializers.ModelSerializer):
 
 class WorkSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ['id', 'name', 'type', 'hours_count']
+        fields = ['id', 'name', 'type']
         model = Work
 
 class PlanWorkSerializer(serializers.ModelSerializer):
@@ -43,7 +43,7 @@ class PlanWorkSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PlanWork
-        fields = ['id', 'name', 'type', 'work', 'is_done', 'hours_count', 'additional_info']
+        fields = ['id', 'work', 'is_done', 'additional_info']
 
 class IndPlanUpdateSerializer(serializers.Serializer):
     status = serializers.IntegerField(required=False)
@@ -72,12 +72,12 @@ class IndPlanUpdateSerializer(serializers.Serializer):
             }
 
 class PlanWorkAddUpdateSerializer(serializers.Serializer):
-    id = serializers.IntegerField(required=False)
-    name = serializers.CharField(required=False)
+    # id = serializers.IntegerField(required=False)
+    # name = serializers.CharField(required=False)
     plan_id = serializers.IntegerField(required=False)
     work_id = serializers.IntegerField(required=False)
-    type = serializers.CharField(required=False)
-    work = WorkSerializer(read_only=True, required=False)
+    # type = serializers.CharField(required=False)
+    # work = WorkSerializer(read_only=True, required=False)
     additional_info = serializers.CharField(required=False)
 
     def update(self, instance, validated_data):
@@ -88,10 +88,8 @@ class PlanWorkAddUpdateSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         plan_work = PlanWork.objects.create(
-            name=validated_data['name'] if 'name' in validated_data else None,
-            type=validated_data['type'] if 'type' in validated_data else None,
-            plan=IndPlan.objects.get(id=validated_data['plan_id']),
-            work=Work.objects.get(pk=validated_data['work_id']) if 'work_id' in validated_data else None,
+            plan_id=validated_data['plan_id'],
+            work_id=validated_data['work_id'],
         )
 
         return plan_work

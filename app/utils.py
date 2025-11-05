@@ -27,7 +27,7 @@ class BaseModelManager(models.Manager):
 class TimestampsModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False, null=True)
     updated_at = models.DateTimeField(auto_now=True, editable=False, null=True)
-    is_deleted = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False, null=True)
 
     objects = models.Manager()
     # objects = BaseModelManager()
