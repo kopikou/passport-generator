@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import user_logged_in
 from django.dispatch import receiver
 
@@ -7,7 +8,8 @@ from auths.models import Permissions
 
 @receiver(user_logged_in)
 def user_logged_in_callback(sender, request, user, **kwargs):
-
+       if settings.DISABLE_MIRA:
+              return
 
        if 'student' in user.esiauser.types:
               mira_data = CatStud.objects.get(id=user.esiauser.mira_id)

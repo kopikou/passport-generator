@@ -1,4 +1,5 @@
 import pendulum
+from django.conf import settings
 from django.db.models import Q
 from rest_framework.permissions import BasePermission, IsAuthenticated
 
@@ -63,6 +64,9 @@ class CanViewRPDProgram(ProgramListPermissionMixin, IsAuthenticated):
             return True
 
         pk = view.kwargs['pk']
+        if settings.DISABLE_MIRA:
+            return pk == '4107'
+
         info = AISServices.get_plan_users_info(pk)
         mira_id = request.user.userprofile.mira_id
 

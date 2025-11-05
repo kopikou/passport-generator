@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 import platform
 from io import BytesIO
@@ -8,6 +9,7 @@ from time import sleep
 
 from sqlalchemy import False_
 
+from app.disable_mira_dumps import DATA_GROUPS_PROGRAM, DATA_GROUP_LIST, DATA_GENERATOR_4107
 from app.settings import BASE_DIR
 from pathlib import Path
 
@@ -63,7 +65,10 @@ class GeneratorViewSet(
 
     def retrieve(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
-        result = GeneratorService.get_rpd_data(pk, self.request.user.userprofile.mira_id)
+        if settings.DISABLE_MIRA:
+            result = DATA_GENERATOR_4107
+        else:
+            result = GeneratorService.get_rpd_data(pk, self.request.user.userprofile.mira_id)
         return Response(result)
 
     @action(methods=['POST'], url_path='save-asp-program-data', detail=True,
@@ -237,7 +242,11 @@ class GeneratorViewSet(
         my_filter = self.request.query_params.get('my')
         year_filter = self.request.query_params.get('year')
 
-        res = GeneratorService.get_group_list(self.request.user.userprofile.mira_id, year_filter, txt_filter, group_txt_filter, status, my_filter)
+        if settings.DISABLE_MIRA:
+           res = DATA_GROUP_LIST
+        else:
+            res = GeneratorService.get_group_list(self.request.user.userprofile.mira_id, year_filter, txt_filter,
+                                              group_txt_filter, status, my_filter)
 
         return Response(
             data=res,
@@ -246,7 +255,10 @@ class GeneratorViewSet(
     @action(methods=['GET'], url_path="get-group-program", detail=True, permission_classes=[IsAuthenticated])
     def get_group_program(self, request, *args, **kwargs):
         plan_id = self.kwargs['pk']
-        res = GeneratorService.get_group_program(plan_id, self.request.user.userprofile.mira_id)
+        if settings.DISABLE_MIRA:
+            res = DATA_GROUPS_PROGRAM
+        else:
+            res = GeneratorService.get_group_program(plan_id, self.request.user.userprofile.mira_id)
 
         return Response(
             data=res,
@@ -548,7 +560,7 @@ class GeneratorViewSet(
             instance.status = PlanLinesLink.StatusChoices.accepted
         elif instance.user_confirmed and instance.user_accepted:
             instance.status = PlanLinesLink.StatusChoices.accepted
-        elif instance.planlines.caf == 208: # кафедра физкультуры требует утверждение только Демидова (зав кафедры)
+        elif instance.planlines.caf == 208:  # кафедра физкультуры требует утверждение только Демидова (зав кафедры)
             instance.status = PlanLinesLink.StatusChoices.accepted
 
         instance.save()
@@ -630,7 +642,6 @@ class GeneratorViewSet(
 
         return Response()
 
-
     @action(methods=['POST'], url_path="set-work-hours-order", detail=True, permission_classes=[CanEditRPDProgram])
     def set_work_order(self, request, *args, **kwargs):
         serializer = WorkHoursOrderSerializer(data=self.request.data)
@@ -639,7 +650,7 @@ class GeneratorViewSet(
         whens = []
         ids = serializer.validated_data['order']
         for index, _id in enumerate(ids, start=1):
-            whens.append(When(id=_id, then=Value(index)),)
+            whens.append(When(id=_id, then=Value(index)), )
 
         if whens:
             DisciplineWorkHours.objects.filter(planlineslink_id=self.kwargs['pk'], id__in=ids).update(
@@ -647,7 +658,6 @@ class GeneratorViewSet(
             )
 
         return Response()
-
 
     @action(methods=['POST'], url_path="copy-old-rpd-program", detail=True, permission_classes=[CanEditRPDProgram])
     def get_old_rpd(self, request, *args, **kwargs):
@@ -703,7 +713,6 @@ class GeneratorViewSet(
                     dis_indicator_serializer.is_valid(raise_exception=True)
                     dis_indicator_serializer.save()
 
-
         has_to_change_themes = any([
             serializer.validated_data['themes'],
             serializer.validated_data['lections'],
@@ -722,13 +731,17 @@ class GeneratorViewSet(
             if serializer.validated_data['replace']:
                 # DisciplineThemes.objects.filter(planlineslink_id=pk).delete()
                 if serializer.validated_data['lections']:
-                    DisciplineWorkHours.objects.filter(planlineslink_id=pk, type=DisciplineWorkHours.TypeChoices.lectures).delete()
+                    DisciplineWorkHours.objects.filter(planlineslink_id=pk,
+                                                       type=DisciplineWorkHours.TypeChoices.lectures).delete()
                 if serializer.validated_data['labs']:
-                    DisciplineWorkHours.objects.filter(planlineslink_id=pk, type=DisciplineWorkHours.TypeChoices.laboratory).delete()
+                    DisciplineWorkHours.objects.filter(planlineslink_id=pk,
+                                                       type=DisciplineWorkHours.TypeChoices.laboratory).delete()
                 if serializer.validated_data['practices']:
-                    DisciplineWorkHours.objects.filter(planlineslink_id=pk, type=DisciplineWorkHours.TypeChoices.practice).delete()
+                    DisciplineWorkHours.objects.filter(planlineslink_id=pk,
+                                                       type=DisciplineWorkHours.TypeChoices.practice).delete()
                 if serializer.validated_data['srs']:
-                    DisciplineWorkHours.objects.filter(planlineslink_id=pk, type=DisciplineWorkHours.TypeChoices.independent).delete()
+                    DisciplineWorkHours.objects.filter(planlineslink_id=pk,
+                                                       type=DisciplineWorkHours.TypeChoices.independent).delete()
 
             d2s = RPDGenSerivce.get_displ2semestr(cattitle_id)
 
@@ -863,7 +876,8 @@ class GeneratorViewSet(
 
         return Response(doc_types)
 
-    @action(methods=['GET'], url_path="get-admissions-for-site-info", detail=False, permission_classes=[], serializer_class=GetAdmissionsForSiteInfoSerializer)
+    @action(methods=['GET'], url_path="get-admissions-for-site-info", detail=False, permission_classes=[],
+            serializer_class=GetAdmissionsForSiteInfoSerializer)
     def get_admissions_for_site_info(self, request, *args, **kwargs):
         serializer = GetAdmissionsForSiteInfoSerializer(data=self.request.query_params)
         serializer.is_valid()

@@ -80,6 +80,8 @@ class AISServices(object):
 
     @staticmethod
     def get_admission_list_by_person(id):
+        if settings.DISABLE_MIRA:
+            return []
 
         cfac = CatFaculty.objects.filter(cdean=id)
         ckaf = CatKaf.objects.filter(czav=id)

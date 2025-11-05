@@ -205,6 +205,8 @@ CLIENT_ID = ''
 CLIENT_SECRET = ''
 LOGIN_SITE = ''
 
+DISABLE_MIRA = False
+
 from .local import *
 
 
