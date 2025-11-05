@@ -45,6 +45,7 @@ from generator.serializer import PlanLinesLinkSerializer, \
     ThemesOrderSerializer, WorkHoursOrderSerializer, GetAdmissionsForSiteInfoSerializer, CopyProgramSerializer
 from generator.services import ReportService
 from generator.services.generator_service import GeneratorService
+from ind_plan.services.indPlan_service import IndPlanService
 from rpd.models import PlanData, LinesIndicators, PlanDocuments, DocumentsTypes
 from rpd.services import RPDGenSerivce
 from uplfile.models import UploadFiles
@@ -867,11 +868,17 @@ class GeneratorViewSet(
         serializer = GetAdmissionsForSiteInfoSerializer(data=self.request.query_params)
         serializer.is_valid()
 
-        data = GeneratorService.get_info_about_oop(serializer)
+        data = GeneratorService.get_info_about_oop(serializer.validated_data)
 
         return Response(
             data=data,
         )
+
+    @action(methods=['GET'], url_path="programs-by-year", detail=False, permission_classes=[])
+    def get_programs_by_year(self, request, *args, **kwargs):
+        year = request.query_params.get('year') or IndPlanService.get_current_uch_year()
+        programs = AISServices.get_programs_by_year(year)
+        return Response(programs)
 
     @action(methods=['GET'], url_path="get-rpd-done-info", detail=False, permission_classes=[])
     def get_rpd_done_info(self, request, *args, **kwargs):
@@ -904,7 +911,7 @@ class GeneratorViewSet(
         serializer = GetAdmissionsForSiteInfoSerializer(data=self.request.query_params)
         serializer.is_valid()
 
-        data = GeneratorService.get_info_about_oop(serializer)
+        data = GeneratorService.get_info_about_oop(serializer.validated_data)
 
         result = []
 

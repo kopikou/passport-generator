@@ -682,21 +682,21 @@ class GeneratorService(object):
         return None, None
 
     @classmethod
-    def get_info_about_oop(cls, serializer):
+    def get_info_about_oop(cls, validated_data):
         data = []
 
         query = PlanData.objects.filter(is_deleted=False).all()
-        if 'startyear' in serializer.validated_data:
-            query = query.filter(startyear=serializer.validated_data['startyear'])
+        if 'startyear' in validated_data:
+            query = query.filter(startyear=validated_data['startyear'])
 
-        if 'level' in serializer.validated_data:
+        if 'level' in validated_data:
             studylevel = {
                 1: 'ВПО-Специалисты',  # специалисты
                 2: 'ВПО-Бакалавры',  # бакалавры
                 3: 'ВПО-Магистры',  # магистры
                 4: 'СПО-Базовый уровень (на базе 11 кл)',  # СПО
                 5: 'Аспирантура',  # аспирантура
-            }.get(serializer.validated_data['level'])
+            }.get(validated_data['level'])
             if studylevel:
                 query = query.filter(studylevel=studylevel)
 

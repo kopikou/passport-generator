@@ -352,6 +352,41 @@ class AISServices(object):
         return data[0].get("fac", None)
 
     @staticmethod
+    @cache_function(timeout=60 * 1)
+    def get_programs_by_year(year):
+        q = f"""
+                SELECT
+                DISTINCT
+                d.name as discipline
+                , u.id as planlin
+                , d.id as discipline_id
+                , u.newdisid AS shifr
+                , u.cperson AS razrab
+                , ck.czav AS zavkaf
+                , p.cperson AS rop
+                , f.cdean AS fac
+                , ck.zav AS zavkaf_name
+                , f.dean AS fac_name
+                , cp1.name AS razrab_name
+                , cp2.name AS rop_name
+                , p.cadmission as admission_id
+                FROM uchplan_lines u
+                    LEFT JOIN uchplan_discpl d ON u.disid = d.id
+                    LEFT JOIN uchplan_plan p ON p.id = u.planid
+                    LEFT JOIN dbo.catadmission a ON a.cuchplan = p.id
+                    LEFT JOIN dbo.catkaf ck ON  ck.id = u.ckaf
+                    LEFT JOIN dbo.catfaculty f ON f.id = a.cfac
+                    LEFT JOIN dbo.catperson cp1 ON cp1.id = u.cperson
+                    LEFT JOIN dbo.catperson cp2 ON cp2.id = p.cperson
+                WHERE 
+                    p.startyear = %s
+                    AND u.cperson IS NOT NULL 
+                        """
+        data = Mira.fetch(q, [year])
+
+        return data
+
+    @staticmethod
     # @cache_function(timeout=10 * 1)
     def get_programs_by_plan(plan_id):
         q = f"""
