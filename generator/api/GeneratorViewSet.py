@@ -9,7 +9,7 @@ from time import sleep
 
 from sqlalchemy import False_
 
-from app.disable_mira_dumps import DATA_GROUPS_PROGRAM, DATA_GROUP_LIST, DATA_GENERATOR_4107
+from app.disable_mira_dumps import DATA_GROUPS_PROGRAM, DATA_GROUP_LIST
 from app.settings import BASE_DIR
 from pathlib import Path
 
@@ -65,10 +65,10 @@ class GeneratorViewSet(
 
     def retrieve(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
-        if settings.DISABLE_MIRA:
-            result = DATA_GENERATOR_4107
-        else:
-            result = GeneratorService.get_rpd_data(pk, self.request.user.userprofile.mira_id)
+        # if settings.DISABLE_MIRA:
+            # result = DATA_GENERATOR_4107
+        # else:
+        result = GeneratorService.get_rpd_data(pk, self.request.user.userprofile.mira_id)
         return Response(result)
 
     @action(methods=['POST'], url_path='save-asp-program-data', detail=True,

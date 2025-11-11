@@ -210,3 +210,5 @@ DISABLE_MIRA = False
 from .local import *
 
 
+if DISABLE_MIRA:
+    INSTALLED_APPS = [i for i in INSTALLED_APPS if i != 'esia_login']

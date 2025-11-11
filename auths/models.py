@@ -48,6 +48,7 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     try:
+        print(instance.id)
         instance.userprofile.save()
     except User.userprofile.RelatedObjectDoesNotExist as ex:
         UserProfile.objects.create(user=instance)

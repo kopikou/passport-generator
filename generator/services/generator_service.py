@@ -470,17 +470,44 @@ class GeneratorService(object):
             instance.status = PlanLinesLink.StatusChoices.is_filled
             instance.save()
 
-        users = CatPerson.objects.in_bulk(
-            [
-                instance.person,
-                instance.user_accepted.userprofile.mira_id if instance.user_accepted else None,
-                instance.user_confirmed.userprofile.mira_id if instance.user_confirmed else None
-            ]
-        )
+        if not settings.DISABLE_MIRA:
+            users = CatPerson.objects.in_bulk(
+                [
+                    instance.person,
+                    instance.user_accepted.userprofile.mira_id if instance.user_accepted else None,
+                    instance.user_confirmed.userprofile.mira_id if instance.user_confirmed else None
+                ]
+            )
+        else:
+            users = {}
 
         serializer = PlanLinesLinkSerializer(instance)
 
-        admission_info = AISServices.get_admissionn_info(serializer.data['cadmission'])
+        admission_info = AISServices.get_admissionn_info(serializer.data['cadmission']) if not settings.DISABLE_MIRA else [{
+            "id": 25064,
+            "yr": 2025,
+            "abbr": "ИСТб",
+            "cuchplan_id": 10179,
+            "spec_name": "Информационные системы и технологии в административном управлении",
+            "direct_name": "Информационные системы и технологии",
+            "kvalif_name": "Бакалавр",
+            "ckaf_id": 1988626,
+            "cfac_id": 46,
+            "ckaf__name": "Информационных технологий и анализа данных",
+            "ckaf__ccatdep__nameshort": "Институт информационных технологий и анализа данных ",
+            "cfac__name": "Институт информационных технологий и анализа данных",
+            "cadmkind": 2,
+            "cadmkind__name": "бакалавры",
+            "cadmkind__name_prof": "профиль",
+            "cdirection": 812733,
+            "cdirection__name": "Информационные системы и технологии",
+            "cdirection__cod": "09.03.02",
+            "cspec": None,
+            "cspec__name": None,
+            "cspec__code": None,
+            "cfob": 1,
+            "cfob__name": "очная"
+        }]
 
         other_discipline = list(LinesData.objects.filter(plan_id=serializer.data['planlines']['plan_id'],
                                                          synchronize=True).values("disid", "dis", "id"))
@@ -505,7 +532,7 @@ class GeneratorService(object):
             "user__last_name",
         ).last()
 
-        old_rpd = AISServices.get_old_rpd_list(serializer.data['mira_id'])
+        old_rpd = AISServices.get_old_rpd_list(serializer.data['mira_id']) if not settings.DISABLE_MIRA else []
 
         programs = []
         if user_mira_id:

@@ -18,4 +18,4 @@ django-storages==1.14.6
 tqdm==4.67.1
 pandas==2.3.0
 openpyxl==3.1.5
-git+ssh://git@devgit.istu.edu/portal/esia_login.git
+# git+ssh://git@devgit.istu.edu/portal/esia_login.git

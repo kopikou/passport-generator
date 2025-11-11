@@ -15,7 +15,8 @@ from rpd.api.AccreditationInfoViewSet import AccreditationInfoViewSet
 from rpd.api.PlxUploadViewSet import PlxUploadViewSet
 from uplfile.api import UploadFileViewSet
 
-from esia_login.urls import urlpatterns as esia_login_urls
+if not settings.DISABLE_MIRA:
+    from esia_login.urls import urlpatterns as esia_login_urls
 
 router = routers.DefaultRouter()
 router.register(r'user', UserApiViewSet, basename="user")
@@ -40,6 +41,9 @@ urlpatterns = [
     path('api/accounts/logout/', LogoutView.as_view()),
     path('api/accounts/bitrix-auth/', BitrixAuthView.as_view()),
     path('admin/', admin.site.urls),
-] + esia_login_urls + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+if not settings.DISABLE_MIRA:
+    urlpatterns += esia_login_urls + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
