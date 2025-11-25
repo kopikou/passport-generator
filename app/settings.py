@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'arim_library',
     'rop_monitoring',
     'ind_plan',
+    'competence_passport',
 ]
 
 MIDDLEWARE = [

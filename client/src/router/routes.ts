@@ -40,7 +40,7 @@ import ProfActivityItem from "pages/activity/components/ProfActivityItem.vue";
 import RopMonitorView from "pages/rop/RopMonitorView.vue";
 import IndPlanListView from "pages/indPlan/IndPlanListView.vue";
 import IndPlanViewItem from "pages/indPlan/IndPlanViewItem.vue";
-
+import CompetencePassportListView from 'src/pages/competence_passport/CompetencePassportListView.vue';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
@@ -372,6 +372,21 @@ const routes: RouteRecordRaw[] = [
     },
     ],
   },
+  {
+    path: '/competence',
+    name: 'CompetencePassportMain',
+    meta: {
+      permissions: [Permissions.can_use_generator],
+    },
+    children: [
+      {
+        path: '',
+        name: 'CompetencePassportListView',
+        component: CompetencePassportListView,
+      },
+    ]
+  },
+
   // Always leave this as last one,
   // but you can also remove it
   {

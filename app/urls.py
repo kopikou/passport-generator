@@ -14,6 +14,7 @@ from rop_monitoring.api import RopMonitoringViewSet, RopMonitoringScoreViewSet
 from rpd.api.AccreditationInfoViewSet import AccreditationInfoViewSet
 from rpd.api.PlxUploadViewSet import PlxUploadViewSet
 from uplfile.api import UploadFileViewSet
+from competence_passport.api.CompetencePassportViewSet import CompetencePassportViewSet
 
 if not settings.DISABLE_MIRA:
     from esia_login.urls import urlpatterns as esia_login_urls
@@ -30,6 +31,7 @@ router.register(r'rop-monitoring', RopMonitoringViewSet, basename="rop-monitorin
 router.register(r'rop-monitoring-score', RopMonitoringScoreViewSet, basename="rop-monitoring-score")
 router.register(r'indplan', IndPlanViewSet, basename="indplan")
 router.register(r'planwork', PlanWorkViewSet, basename="planwork")
+router.register(r'competence', CompetencePassportViewSet, basename='competence')
 
 # router_old = routers.DefaultRouter()
 # router_old.register(r'asp', AspPlanViewSet, basename="asp")
