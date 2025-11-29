@@ -1,4 +1,3 @@
-// stores/competencePassportStore.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from 'boot/axios'
@@ -9,6 +8,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   const groupsList = ref([])
   const currentProgram = ref(null)
   const currentGroupPrograms = ref([])
+  const currentPlanCompetences = ref([])
   const loading = ref(false)
   const selectedYear = ref(new Date().getFullYear())
   
@@ -74,6 +74,19 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       loading.value = false
     }
   }
+
+  async function fetchPlanCompetences(planId) {
+    loading.value = true
+    try {
+      const response = await api.get(`/api/competence/${planId}/competences/`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching plan competences:', error)
+      throw error
+    } finally {
+      loading.value = false
+    }
+}
 
   function setCurrentProgram(program) {
     currentProgram.value = program
@@ -152,6 +165,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     fetchGroupsList,
     fetchGroupPrograms,
     setCurrentProgram,
-    getProgramDetail
+    getProgramDetail,
+    fetchPlanCompetences
   }
 })

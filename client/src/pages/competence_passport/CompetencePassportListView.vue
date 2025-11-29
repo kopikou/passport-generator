@@ -133,7 +133,7 @@
                 
                 <q-btn 
                   color="primary" 
-                  label="Выбрать этот план" 
+                  label="Выбрать план" 
                   class="q-mt-md"
                   :disable="!selectedPlanFile"
                   @click="confirmPlanSelection"
@@ -292,6 +292,7 @@ async function confirmPlanSelection() {
   }
 
   try {
+    router.push(`/competences/${store.currentPlanId}`);
     $q.notify({
       type: 'positive',
       message: `Выбран учебный план: ${selectedPlanFile.value.name}`

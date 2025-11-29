@@ -41,6 +41,7 @@ import RopMonitorView from "pages/rop/RopMonitorView.vue";
 import IndPlanListView from "pages/indPlan/IndPlanListView.vue";
 import IndPlanViewItem from "pages/indPlan/IndPlanViewItem.vue";
 import CompetencePassportListView from 'src/pages/competence_passport/CompetencePassportListView.vue';
+import CompetencesView from 'src/pages/competence_passport/components/CompetencesView.vue';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
@@ -384,6 +385,14 @@ const routes: RouteRecordRaw[] = [
         name: 'CompetencePassportListView',
         component: CompetencePassportListView,
       },
+      {
+        path: '/competences/:planId',
+        name: 'competences',
+        component: CompetencesView,
+        meta: {
+          title: 'Компетенции учебного плана'
+        }
+      }
     ]
   },
 
