@@ -81,7 +81,7 @@ class CompetencePassportViewSet(
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Получаем план по mira_id
+            # Получаем план
             try:
                 plan = PlanData.objects.get(mira_id=plan_id)
             except PlanData.DoesNotExist:
@@ -90,12 +90,12 @@ class CompetencePassportViewSet(
                     status=status.HTTP_404_NOT_FOUND
                 )
             
-            # Получаем ВСЕ линии (дисциплины) данного плана
+            # Получаем дисциплины
             plan_lines = LinesData.objects.filter(plan=plan)
             
-            # Получаем уникальные компетенции через индикаторы линий данного плана
+            # Получаем уникальные компетенции 
             competences = LinesIndicators.objects.filter(
-                planlineid__in=plan_lines,  # Фильтруем по линиям, принадлежащим плану
+                planlineid__in=plan_lines, 
                 competence__isnull=False,
                 competence_index__isnull=False
             ).values(
@@ -103,7 +103,6 @@ class CompetencePassportViewSet(
                 'competence'
             ).distinct().order_by('competence_index')
             
-            # Преобразуем в список словарей
             competences_list = [
                 {
                     'id': f"{comp['competence_index']}_{hash(comp['competence'])}",
@@ -140,7 +139,7 @@ class CompetencePassportViewSet(
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Получаем план по mira_id
+            # Получаем план
             try:
                 plan = PlanData.objects.get(mira_id=plan_id)
             except PlanData.DoesNotExist:
@@ -149,9 +148,9 @@ class CompetencePassportViewSet(
                     status=status.HTTP_404_NOT_FOUND
                 )
             
-            # Получаем дисциплины для данного плана
+            # Получаем дисциплины 
             disciplines = LinesData.objects.filter(
-                plan=plan,  # Фильтруем по плану
+                plan=plan,  
                 synchronize=True
             ).values(
                 'id',

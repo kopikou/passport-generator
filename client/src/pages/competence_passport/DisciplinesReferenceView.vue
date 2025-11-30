@@ -17,6 +17,8 @@
           clearable
           multiple
           style="min-width: 250px;"
+          emit-value
+          map-options
         />
       </div>
       <div class="col-auto">
@@ -47,6 +49,9 @@
       <template v-slot:top>
         <div class="text-h6">Всего дисциплин: {{ filteredDisciplines.length }}</div>
         <q-space />
+        <div class="text-caption text-grey" v-if="selectedTypes && selectedTypes.length > 0">
+          Отфильтровано по типам: {{ selectedTypes.join(', ') }}
+        </div>
       </template>
 
       <template v-slot:body-cell-newdisid="props">
@@ -90,7 +95,7 @@ const store = useCompetencePassportStore()
 const loading = ref(false)
 const disciplines = ref([])
 const searchFilter = ref('')
-const selectedTypes = ref([])
+const selectedTypes = ref([]) 
 const currentPlan = ref(null)
 
 // Цветовая схема для всех типов
@@ -109,7 +114,6 @@ const typeColors = {
   'Другой': 'grey'
 }
 
-// Опции для фильтра
 const disciplineTypeOptions = Object.keys(typeColors).map(type => ({
   label: type,
   value: type
@@ -170,7 +174,7 @@ function getDisciplineTypes(disciplineIndex) {
   if (disciplineIndex.includes('Б1.В.02')) types.push('Модуль профильной подготовки')
   if (disciplineIndex.includes('Б1.В.03')) types.push('Модуль дополнительного профиля')
   
-  // Если не нашли конкретных типов, но есть общие категории
+  // Если нет конкретных типов, но есть общие категории
   if (types.length === 0 && (disciplineIndex.includes('Б1.Б') || disciplineIndex.includes('Б1.В'))) {
     types.push('Другой')
   }
@@ -195,10 +199,9 @@ const filteredDisciplines = computed(() => {
   }
   
   // Фильтр по выбранным типам
-  if (selectedTypes.value.length > 0) {
+  if (selectedTypes.value && selectedTypes.value.length > 0) {
     filtered = filtered.filter(disc => {
       const discTypes = getDisciplineTypes(disc.newdisid)
-      // Проверяем, есть ли хотя бы один выбранный тип в типах дисциплины
       return selectedTypes.value.some(selectedType => 
         discTypes.includes(selectedType)
       )
