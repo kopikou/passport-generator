@@ -66,7 +66,7 @@
               <q-card-section>
                 <div class="text-h6">Выбрать существующий</div>
                 <div class="text-caption text-grey">
-                  Выберите из уже загруженных учебных планов
+                  Выберите прошлогодний учебный план
                 </div>
               </q-card-section>
               <q-card-actions>
@@ -292,7 +292,7 @@ async function confirmPlanSelection() {
   }
 
   try {
-    router.push(`/competences/${store.currentPlanId}`);
+    router.push(`/competence/reference`);
     $q.notify({
       type: 'positive',
       message: `Выбран учебный план: ${selectedPlanFile.value.name}`

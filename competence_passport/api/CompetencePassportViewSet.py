@@ -22,6 +22,9 @@ class CompetencePassportViewSet(
 ):
     permission_classes = [UserProfileHasPermission(Permissions.can_use_generator) and CanViewRPDProgram]
 
+    def get_queryset(self):
+        return PlanData.objects.none()
+
     @action(methods=['GET'], detail=False, url_path='group-list')
     def get_group_list(self, request, *args, **kwargs):
         txt_filter = self.request.query_params.get('text')
@@ -65,165 +68,117 @@ class CompetencePassportViewSet(
             )
 
         return Response(data=res)
-    
-    @action(methods=['GET'], detail=True, url_path='competences')
-    def get_plan_competences(self, request, pk=None):
-        """
-        Получение всех компетенций для учебного плана
-        """
+        
+    @action(methods=['GET'], detail=False, url_path='all-competences')
+    def get_all_competences(self, request):
+        """Получение всех компетенций для конкретного учебного плана"""
         try:
-            
-            # Используем DUMP данные если MIRA отключена
-            if settings.DISABLE_MIRA:
-                plan_data = DATA_GROUPS_PROGRAM
-            else:
-                plan_data = GeneratorService.get_group_program(pk, self.request.user.userprofile.mira_id)
-            
-            if not plan_data:
-                return Response(
-                    {'error': 'Учебный план не найден или нет доступа'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            # Получаем первый элемент (основной план)
-            main_plan = plan_data[0] if plan_data else None
-            
-            if not main_plan:
-                return Response(
-                    {'error': 'Данные плана не найдены'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            # Получаем ID плана из данных
-            plan_id = main_plan.get('plan_id')
+            plan_id = self.request.query_params.get('plan_id')
             
             if not plan_id:
                 return Response(
-                    {'error': 'ID плана не указан в данных'}, 
+                    {'error': 'ID плана не указан'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Получаем план по mira_id
+            try:
+                plan = PlanData.objects.get(mira_id=plan_id)
+            except PlanData.DoesNotExist:
+                return Response(
+                    {'error': 'Учебный план не найден в базе данных'}, 
                     status=status.HTTP_404_NOT_FOUND
                 )
             
-            # Теперь получаем компетенции через существующие модели
-            return self._get_competences_by_plan_id(plan_id)
+            # Получаем ВСЕ линии (дисциплины) данного плана
+            plan_lines = LinesData.objects.filter(plan=plan)
+            
+            # Получаем уникальные компетенции через индикаторы линий данного плана
+            competences = LinesIndicators.objects.filter(
+                planlineid__in=plan_lines,  # Фильтруем по линиям, принадлежащим плану
+                competence__isnull=False,
+                competence_index__isnull=False
+            ).values(
+                'competence_index',
+                'competence'
+            ).distinct().order_by('competence_index')
+            
+            # Преобразуем в список словарей
+            competences_list = [
+                {
+                    'id': f"{comp['competence_index']}_{hash(comp['competence'])}",
+                    'competence_index': comp['competence_index'],
+                    'competence': comp['competence']
+                }
+                for comp in competences
+            ]
+            
+            return Response({
+                'plan_id': plan.id,
+                'plan_mira_id': plan.mira_id,
+                'plan_name': plan.planname,
+                'abbrprofile': plan.abbrprofile,
+                'competences': competences_list
+            })
             
         except Exception as e:
+            logger.error(f"Error fetching competences for plan {plan_id}: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении компетенций: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
-    def _get_competences_by_plan_id(self, plan_id):
-        """Вспомогательный метод для получения компетенций по ID плана"""
+
+    @action(methods=['GET'], detail=False, url_path='all-disciplines')
+    def get_all_disciplines(self, request):
+        """Получение всех дисциплин для конкретного учебного плана"""
         try:
-            plan = PlanData.objects.get(mira_id=plan_id)
+            plan_id = self.request.query_params.get('plan_id')
             
-            # Получаем все линии плана с индикаторами компетенций
-            lines_with_indicators = LinesData.objects.filter(
-                plan=plan
-            ).prefetch_related(
-                Prefetch(
-                    'indicators',
-                    queryset=LinesIndicators.objects.all().order_by('competence_index', 'indicator_index')
+            if not plan_id:
+                return Response(
+                    {'error': 'ID плана не указан'}, 
+                    status=status.HTTP_400_BAD_REQUEST
                 )
-            ).select_related('disid')
             
-            lines_count = lines_with_indicators.count()
+            # Получаем план по mira_id
+            try:
+                plan = PlanData.objects.get(mira_id=plan_id)
+            except PlanData.DoesNotExist:
+                return Response(
+                    {'error': 'Учебный план не найден в базе данных'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
             
-            # Формируем структуру данных
-            competences_data = []
+            # Получаем дисциплины для данного плана
+            disciplines = LinesData.objects.filter(
+                plan=plan,  # Фильтруем по плану
+                synchronize=True
+            ).values(
+                'id',
+                'newdisid',
+                'dis'
+            ).order_by('newdisid')
             
-            for line in lines_with_indicators:
-                line_data = {
-                    'discipline_id': line.id,
-                    'discipline_name': line.dis,
-                    'discipline_code': line.newdisid,
-                    'competences': []
+            disciplines_list = [
+                {
+                    'id': disc['id'],
+                    'newdisid': disc['newdisid'],
+                    'dis': disc['dis']
                 }
-                
-                # Группируем индикаторы по компетенциям
-                competence_groups = {}
-                indicators_count = line.indicators.count()
-                
-                for indicator in line.indicators.all():
-                    if indicator.competence and indicator.competence_index:
-                        comp_key = f"{indicator.competence_index}_{indicator.competence}"
-                        if comp_key not in competence_groups:
-                            competence_groups[comp_key] = {
-                                'competence_index': indicator.competence_index,
-                                'competence_name': indicator.competence,
-                                'indicators': []
-                            }
-                        
-                        competence_groups[comp_key]['indicators'].append({
-                            'indicator_index': indicator.indicator_index,
-                            'indicator_name': indicator.indicator
-                        })
-                
-                # Преобразуем в список
-                line_data['competences'] = list(competence_groups.values())
-                competences_data.append(line_data)
+                for disc in disciplines
+            ]
             
             return Response({
                 'plan_id': plan.id,
+                'plan_mira_id': plan.mira_id,
                 'plan_name': plan.planname,
                 'abbrprofile': plan.abbrprofile,
-                'startyear': plan.startyear,
-                'competences': competences_data
+                'disciplines': disciplines_list
             })
             
-        except PlanData.DoesNotExist:
-            return Response(
-                {'error': 'Учебный план не найден в базе данных'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
         except Exception as e:
+            logger.error(f"Error fetching disciplines for plan {plan_id}: {str(e)}")
             return Response(
-                {'error': f'Ошибка при получении компетенций из базы: {str(e)}'}, 
+                {'error': f'Ошибка при получении дисциплин: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-
-    # @action(methods=['POST'], detail=True, url_path='upload-plan')
-    # def upload_plan_file(self, request, pk=None):
-    #     """
-    #     Загрузка нового файла учебного плана
-    #     """
-    #     plan_file = request.FILES.get('plan_file')
-    #     if not plan_file:
-    #         return Response({'error': 'Файл не предоставлен'}, status=status.HTTP_400_BAD_REQUEST)
-        
-
-        
-    #     return Response({
-    #         'message': 'Файл успешно загружен',
-    #         'file_url': 'url_to_saved_file'  
-    #     })
-
-    # @action(methods=['POST'], detail=True, url_path='select-plan')
-    # def select_plan_file(self, request, pk=None):
-    #     """
-    #     Выбор существующего файла учебного плана
-    #     """
-    #     file_id = request.data.get('file_id')
-    #     if not file_id:
-    #         return Response({'error': 'ID файла не предоставлен'}, status=status.HTTP_400_BAD_REQUEST)
-        
-
-    #     return Response({'message': 'Учебный план успешно выбран'})
-
-    # @action(methods=['GET'], detail=True, url_path='available-plans')
-    # def get_available_plans(self, request, pk=None):
-    #     """
-    #     Получение списка доступных учебных планов
-    #     """
-
-    #     available_plans = [
-    #         {
-    #             'id': 1,
-    #             'name': 'Учебный план 2025',
-    #             'url': '/uploads/plans/plan_2025.plx',
-    #             'date': '2025-04-07'
-    #         }
-    #     ]
-        
-    #     return Response(available_plans)
