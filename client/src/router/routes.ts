@@ -42,6 +42,12 @@ import IndPlanListView from "pages/indPlan/IndPlanListView.vue";
 import IndPlanViewItem from "pages/indPlan/IndPlanViewItem.vue";
 import CompetencePassportListView from 'src/pages/competence_passport/CompetencePassportListView.vue';
 import CompetencesView from 'src/pages/competence_passport/components/CompetencesView.vue';
+import LayoutWithMenus from 'src/pages/competence_passport/components/LayoutWithMenus.vue';
+import CompetenceReferenceView from 'src/pages/competence_passport/CompetenceReferenceView.vue';
+import DisciplinesReferenceView from 'src/pages/competence_passport/DisciplinesReferenceView.vue';
+import CompetenceMatrixView from 'src/pages/competence_passport/CompetenceMatrixView.vue';
+import CompetenceSchemaView from 'src/pages/competence_passport/CompetenceSchemaView.vue';
+import CompetencePassportView from 'src/pages/competence_passport/CompetencePassportView.vue';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
@@ -386,13 +392,51 @@ const routes: RouteRecordRaw[] = [
         component: CompetencePassportListView,
       },
       {
-        path: '/competences/:planId',
-        name: 'competences',
-        component: CompetencesView,
+        path: 'reference',
+        component: LayoutWithMenus,
+        children: [
+          {
+            path: ':planId?',
+            name: 'competenceReference',
+            component: CompetenceReferenceView,
+            meta: {
+              title: 'Справочник компетенций'
+            }
+          },
+          {
+            path: 'disciplines/:planId?',
+            name: 'disciplinesReference',
+            component: DisciplinesReferenceView,
+            meta: {
+              title: 'Справочник дисциплин'
+            }
+          }
+        ]
+      },
+      {
+        path: 'matrix',
+        name: 'competenceMatrix',
+        component:CompetenceMatrixView,
         meta: {
-          title: 'Компетенции учебного плана'
+          title: 'Матрица компетенций'
         }
-      }
+      },
+      {
+        path: 'schema',
+        name: 'competenceSchema',
+        component:CompetenceSchemaView,
+        meta: {
+          title: 'Схема компетенций'
+        }
+      },
+      {
+        path: 'passport',
+        name: 'competencePassport',
+        component: CompetencePassportView,
+        meta: {
+          title: 'Паспорт компетенций'
+        }
+      },
     ]
   },
 
