@@ -14,6 +14,9 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   const currentPlanDisciplines = ref([])
   const competenceMatrix = ref([])
   const matrixLoading = ref(false)
+  const disciplineCompetences = ref([])
+  const editingDiscipline = ref(null)
+  const saving = ref(false)
   
   // Фильтры
   const textFilter = ref('')
@@ -152,6 +155,71 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
+  async function fetchDisciplineCompetencesDetailed(planId, disciplineId) {
+    loading.value = true
+    try {
+      if (!planId || !disciplineId) {
+        throw new Error('Plan ID and Discipline ID are required')
+      }
+      
+      const response = await api.get('/api/competence/discipline-competences-detailed/', {
+        params: { 
+          plan_id: planId,
+          discipline_id: disciplineId
+        }
+      })
+      
+      disciplineCompetences.value = response.data.competences
+      editingDiscipline.value = {
+        id: response.data.discipline_id,
+        index: response.data.discipline_index,
+        name: response.data.discipline_name,
+        planId: response.data.plan_mira_id
+      }
+      
+      return response.data
+    } catch (error) {
+      console.error('Error fetching detailed discipline competences:', error)
+      throw error
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  async function updateDisciplineCompetences(selectedCompetences) {
+    saving.value = true
+    try {
+      if (!editingDiscipline.value) {
+        throw new Error('No discipline selected for editing')
+      }
+      
+      const payload = {
+        plan_id: editingDiscipline.value.planId,
+        discipline_id: editingDiscipline.value.id,
+        selected_competences: selectedCompetences  
+      }
+      
+      const response = await api.post(
+        '/api/competence/update-discipline-competences/', 
+        payload
+      )
+      
+      await fetchCompetenceMatrix(editingDiscipline.value.planId)
+      
+      return response.data
+    } catch (error) {
+      console.error('Error updating discipline competences:', error)
+      throw error
+    } finally {
+      saving.value = false
+    }
+  }
+  
+  function clearEditingDiscipline() {
+    editingDiscipline.value = null
+    disciplineCompetences.value = []
+  }
+
   return {
     programList,
     groupsList,
@@ -175,5 +243,13 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     competenceMatrix,
     matrixLoading,
     fetchCompetenceMatrix,
+
+    disciplineCompetences,
+    editingDiscipline,
+    saving,
+    fetchDisciplineCompetencesDetailed,
+    updateDisciplineCompetences,
+    clearEditingDiscipline,
+    currentPlanDisciplines,
   }
 })

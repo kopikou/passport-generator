@@ -62,72 +62,89 @@
             </div>
           </template>
 
-          <template v-slot:body-cell-index="props">
-            <q-td :props="props">
-              <div 
-                :class="[
-                  'text-weight-medium',
-                  props.row.type === 'group' ? 'text-primary' : 'text-grey-8',
-                  `level-${props.row.level}`
-                ]"
-                :style="{ marginLeft: `${(props.row.level - 1) * 20}px`, display: 'flex', alignItems: 'center' }"
-              >
-                <q-btn
-                  v-if="props.row.type === 'group' && hasChildren(props.row.index)"
-                  flat
-                  dense
-                  round
-                  size="sm"
-                  :icon="isExpanded(props.row.index) ? 'remove' : 'add'"
-                  @click.stop="toggleGroup(props.row.index)"
-                  class="q-mr-xs"
-                  style="min-width: 24px; min-height: 24px;"
-                />
-                <q-icon 
-                  v-else-if="props.row.type === 'group'" 
-                  :name="getGroupIcon(props.row.level)" 
-                  class="q-mr-xs"
-                  size="16px"
-                />
-                <span style="width: 16px; display: inline-block;" v-else></span>
-                {{ props.value }}
-              </div>
-            </q-td>
-          </template>
-
-          <template v-slot:body-cell-name="props">
-            <q-td :props="props">
-              <div 
-                :class="[
-                  props.row.type === 'group' ? 'text-bold' : '',
-                  `level-${props.row.level}`
-                ]"
-              >
-                {{ props.value }}
-              </div>
-            </q-td>
-          </template>
-
-          <template v-slot:body-cell-competence_indices="props">
-            <q-td :props="props">
-              <div v-if="props.value" class="competence-indices-cell">
-                <template v-for="(index, idx) in props.value.split(', ')" :key="idx">
-                  <q-badge 
-                    :color="getCompetenceBadgeColor(index)"
-                    class="q-mx-xs q-my-xs q-px-sm q-py-xs"
-                    style="display: inline-block;"
-                  >
-                    {{ index }}
-                  </q-badge>
-                  <br v-if="(idx + 1) % 5 === 0" />
-                </template>
-              </div>
-              <div v-else class="text-grey text-italic">
-                Нет компетенций
-              </div>
-            </q-td>
+          <template v-slot:body="props">
+            <q-tr 
+              :props="props" 
+              :class="{ 'clickable-row': props.row.type === 'discipline' }"
+              @dblclick="onRowDoubleClick(props.row)"
+            >
+              <q-td key="index" :props="props">
+                <div 
+                  :class="[
+                    'text-weight-medium',
+                    props.row.type === 'group' ? 'text-primary' : 'text-grey-8',
+                    `level-${props.row.level}`
+                  ]"
+                  :style="{ marginLeft: `${(props.row.level - 1) * 20}px`, display: 'flex', alignItems: 'center' }"
+                >
+                  <q-btn
+                    v-if="props.row.type === 'group' && hasChildren(props.row.index)"
+                    flat
+                    dense
+                    round
+                    size="sm"
+                    :icon="isExpanded(props.row.index) ? 'remove' : 'add'"
+                    @click.stop="toggleGroup(props.row.index)"
+                    class="q-mr-xs"
+                    style="min-width: 24px; min-height: 24px;"
+                  />
+                  <q-icon 
+                    v-else-if="props.row.type === 'group'" 
+                    :name="getGroupIcon(props.row.level)" 
+                    class="q-mr-xs"
+                    size="16px"
+                  />
+                  <span style="width: 16px; display: inline-block;" v-else></span>
+                  {{ props.row.index }}
+                </div>
+              </q-td>
+              
+              <q-td key="name" :props="props">
+                <div 
+                  :class="[
+                    props.row.type === 'group' ? 'text-bold' : '',
+                    `level-${props.row.level}`
+                  ]"
+                >
+                  {{ props.row.name }}
+                </div>
+              </q-td>
+              
+              <q-td key="competence_indices" :props="props">
+                <div v-if="props.row.competence_indices" class="competence-indices-cell">
+                  <template v-for="(index, idx) in props.row.competence_indices.split(', ')" :key="idx">
+                    <q-badge 
+                      :color="getCompetenceBadgeColor(index)"
+                      class="q-mx-xs q-my-xs q-px-sm q-py-xs"
+                      style="display: inline-block;"
+                    >
+                      {{ index }}
+                    </q-badge>
+                    <br v-if="(idx + 1) % 5 === 0" />
+                  </template>
+                </div>
+                <div v-else class="text-grey text-italic">
+                  Нет компетенций
+                </div>
+              </q-td>
+            </q-tr>
           </template>
         </q-table>
+        
+        <!-- Модальное окно редактирования -->
+        <discipline-competences-editor
+          v-if="editingRow"
+          :plan-id="store.currentPlanId"
+          :discipline-id="editingRow.id"
+          :discipline-index="editingRow.index"
+          :discipline-name="editingRow.name"
+          :show="showEditor"
+          @update:show="showEditor = $event"
+          @saved="onCompetencesSaved"
+        />
+        <div v-if="debugInfo" class="q-pa-sm bg-yellow-2 text-caption">
+          Отладка: editingRow = {{ editingRow }}, showEditor = {{ showEditor }}
+        </div>
       </div>
     </template>
   </top-navigation-menu>
@@ -137,18 +154,27 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
 import TopNavigationMenu from './components/TopNavigationMenu.vue'
+import DisciplineCompetencesEditor from './components/DisciplineCompetencesEditor.vue'
+import { useQuasar } from 'quasar'
 
+const $q = useQuasar()
 const store = useCompetencePassportStore()
 const matrixLoading = ref(false)
 const searchFilter = ref('')
 const currentPlan = ref(null)
-const expandedGroups = ref(new Set()) // Храним раскрытые группы
+const expandedGroups = ref(new Set())
 const pagination = ref({
   sortBy: 'index',
   descending: false,
   page: 1,
   rowsPerPage: 0
 })
+
+// Новые переменные для редактирования
+const showEditor = ref(false)
+const editingRow = ref(null)
+const disciplinesMap = ref({}) // Кэш дисциплин для быстрого поиска
+const debugInfo = ref(true) // Включите для отладки
 
 const columns = [
   {
@@ -254,7 +280,6 @@ function getParentGroups(itemIndex) {
 
 // Проверяем, виден ли элемент в текущем состоянии
 function isItemVisible(item) {
-  
   const parentGroups = getParentGroups(item.index)
   
   for (const parentIndex of parentGroups) {
@@ -276,7 +301,7 @@ const filteredMatrix = computed(() => {
     filtered = filtered.filter(item => 
       item.index.toLowerCase().includes(searchLower) ||
       item.name.toLowerCase().includes(searchLower) ||
-      item.competence_indices.toLowerCase().includes(searchLower)
+      (item.competence_indices && item.competence_indices.toLowerCase().includes(searchLower))
     )
   }
   
@@ -287,16 +312,135 @@ const visibleMatrix = computed(() => {
   return filteredMatrix.value.filter(item => isItemVisible(item))
 })
 
+// Функция для загрузки дисциплин плана
+async function loadDisciplines() {
+  if (!store.currentPlanId) return
+  
+  try {
+    await store.fetchAllDisciplines(store.currentPlanId)
+    
+    disciplinesMap.value = {}
+    
+    const disciplines = store.currentPlanDisciplines
+    
+    if (disciplines && Array.isArray(disciplines)) {
+      disciplines.forEach(discipline => {
+        if (discipline && discipline.newdisid) {
+          disciplinesMap.value[discipline.newdisid] = discipline
+        }
+      })
+    }   
+    
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: `Ошибка загрузки дисциплин: ${error.message}`,
+      position: 'top-right'
+    })
+  }
+}
+
+// Обработчик двойного клика
+async function onRowDoubleClick(row) {
+  
+  if (row.type !== 'discipline') {
+    return
+  }
+  
+  if (!store.currentPlanId) {
+    $q.notify({
+      type: 'warning',
+      message: 'План не выбран. Пожалуйста, выберите учебный план.',
+      position: 'top-right'
+    })
+    return
+  }
+  
+  // Проверяем, загружены ли дисциплины
+  const disciplines = store.currentPlanDisciplines
+  
+  if (!disciplines || disciplines.length === 0) {
+    await loadDisciplines()
+  }
+  
+  // Проверяем, создана ли карта дисциплин
+  if (Object.keys(disciplinesMap.value).length === 0) {
+    // Если нет, пробуем создать из текущих дисциплин
+    disciplines.forEach(discipline => {
+      if (discipline && discipline.newdisid) {
+        disciplinesMap.value[discipline.newdisid] = discipline
+      }
+    })
+  }
+  
+  // Ищем дисциплину в карте дисциплин
+  let discipline = disciplinesMap.value[row.index]
+  
+  if (!discipline) {
+    
+    const found = disciplines?.find(
+      disc => disc.newdisid === row.index
+    )
+    
+    if (found) {
+      discipline = found
+      disciplinesMap.value[row.index] = found 
+    }
+  }
+  
+  if (!discipline) {
+    $q.notify({
+      type: 'warning',
+      message: `Дисциплина "${row.index}" не найдена в списке дисциплин плана`,
+      position: 'top-right'
+    })
+    return
+  }
+  
+  if (!discipline.id) {
+    $q.notify({
+      type: 'warning',
+      message: `Дисциплина "${row.index}" не имеет идентификатора`,
+      position: 'top-right'
+    })
+    return
+  }
+  
+  
+  editingRow.value = {
+    id: discipline.id,
+    index: discipline.newdisid,
+    name: discipline.dis
+  }
+  
+  showEditor.value = true
+}
+
+function onCompetencesSaved() {
+  showEditor.value = false
+  editingRow.value = null
+  
+  $q.notify({
+    type: 'positive',
+    message: 'Компетенции успешно обновлены',
+    position: 'top-right',
+    timeout: 2000
+  })
+  
+  loadCompetenceMatrix()
+  loadDisciplines()
+}
+
 async function loadCompetenceMatrix() {
   matrixLoading.value = true
   try {
     const planId = store.currentPlanId
     
     if (!planId) {
-      console.warn('Plan ID is not available. Please select a plan first.')
       return
     }
     
+    // Загружаем матрицу компетенций
     const response = await store.fetchCompetenceMatrix(planId)
     currentPlan.value = {
       planname: response.plan_name,
@@ -310,8 +454,14 @@ async function loadCompetenceMatrix() {
       }
     })
     
+    await loadDisciplines()
+    
   } catch (error) {
-    console.error('Error loading competence matrix:', error)
+    $q.notify({
+      type: 'negative',
+      message: `Ошибка загрузки матрицы: ${error.message}`,
+      position: 'top-right'
+    })
   } finally {
     matrixLoading.value = false
   }
@@ -319,13 +469,17 @@ async function loadCompetenceMatrix() {
 
 watch(() => store.currentPlanId, (newPlanId) => {
   if (newPlanId) {
+    disciplinesMap.value = {}
     loadCompetenceMatrix()
   }
 })
 
 onMounted(() => {
-  loadCompetenceMatrix()
+  if (store.currentPlanId) {
+    loadCompetenceMatrix()
+  }
 })
+
 </script>
 
 <style scoped lang="scss">
@@ -366,6 +520,18 @@ onMounted(() => {
   min-height: 24px;
   width: 24px;
   height: 24px;
+}
+
+.clickable-row {
+  cursor: pointer;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+  
+  &:active {
+    background-color: rgba(0, 0, 0, 0.08);
+  }
 }
 
 :deep(.q-table) {
