@@ -12,6 +12,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   const loading = ref(false)
   const selectedYear = ref(new Date().getFullYear())
   const currentPlanDisciplines = ref([])
+  const competenceMatrix = ref([])
+  const matrixLoading = ref(false)
   
   // Фильтры
   const textFilter = ref('')
@@ -130,6 +132,26 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
+  async function fetchCompetenceMatrix(planId) {
+    matrixLoading.value = true
+    try {
+      if (!planId) {
+        throw new Error('Plan ID is required')
+      }
+      
+      const response = await api.get('/api/competence/competence-matrix/', {
+        params: { plan_id: planId }
+      })
+      competenceMatrix.value = response.data.matrix || []
+      return response.data
+    } catch (error) {
+      console.error('Error fetching competence matrix:', error)
+      throw error
+    } finally {
+      matrixLoading.value = false
+    }
+  }
+
   return {
     programList,
     groupsList,
@@ -150,5 +172,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     getProgramDetail,
     fetchAllCompetences,
     fetchAllDisciplines,
+    competenceMatrix,
+    matrixLoading,
+    fetchCompetenceMatrix,
   }
 })

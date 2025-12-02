@@ -7,16 +7,29 @@
           Справочник всех компетенций 
         </div>
       </div>
-      <div class="col-auto">
+      <div class="col-auto q-mr-md">
         <q-select
           v-model="competenceTypeFilter"
           :options="competenceTypeOptions"
-          label="Тип компетенции"
+          label="Фильтр по типам"
           dense
           outlined
           clearable
           style="min-width: 200px;"
         />
+      </div>
+      <div class="col-auto">
+        <q-input
+          v-model="searchFilter"
+          placeholder="Поиск по компетенциям..."
+          dense
+          outlined
+          clearable
+        >
+          <template v-slot:append>
+            <q-icon name="search" />
+          </template>
+        </q-input>
       </div>
     </div>
 
@@ -33,17 +46,7 @@
       <template v-slot:top>
         <div class="text-h6">Всего компетенций: {{ filteredCompetences.length }}</div>
         <q-space />
-        <q-input
-          v-model="searchFilter"
-          placeholder="Поиск по компетенциям..."
-          dense
-          outlined
-          clearable
-        >
-          <template v-slot:append>
-            <q-icon name="search" />
-          </template>
-        </q-input>
+        
       </template>
 
       <template v-slot:body-cell-competence_index="props">

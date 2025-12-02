@@ -41,7 +41,6 @@ import RopMonitorView from "pages/rop/RopMonitorView.vue";
 import IndPlanListView from "pages/indPlan/IndPlanListView.vue";
 import IndPlanViewItem from "pages/indPlan/IndPlanViewItem.vue";
 import CompetencePassportListView from 'src/pages/competence_passport/CompetencePassportListView.vue';
-import CompetencesView from 'src/pages/competence_passport/components/CompetencesView.vue';
 import LayoutWithMenus from 'src/pages/competence_passport/components/LayoutWithMenus.vue';
 import CompetenceReferenceView from 'src/pages/competence_passport/CompetenceReferenceView.vue';
 import DisciplinesReferenceView from 'src/pages/competence_passport/DisciplinesReferenceView.vue';
