@@ -1,4 +1,3 @@
-<!-- DisciplineCompetencesEditor.vue -->
 <template>
   <q-dialog v-model="showDialog" persistent>
     <q-card style="width: 1400px; max-width: 95vw;">

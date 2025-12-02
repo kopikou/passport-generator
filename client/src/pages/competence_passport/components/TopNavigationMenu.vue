@@ -32,8 +32,12 @@
       />
     </q-tabs>
 
+    <!-- Используем слот content для размещения контента -->
     <div class="content-area">
-      <slot name="content"></slot>
+      <slot name="content">
+        <!-- Fallback если слот не передан -->
+        <slot></slot>
+      </slot>
     </div>
   </div>
 </template>
@@ -55,6 +59,8 @@ watch(
   },
   { immediate: true }
 )
+
+defineExpose({ currentTab })
 </script>
 
 <style scoped lang="scss">
