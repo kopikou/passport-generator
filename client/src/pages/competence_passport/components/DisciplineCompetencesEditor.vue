@@ -1,6 +1,6 @@
 <template>
-  <q-dialog v-model="showDialog" persistent>
-    <q-card style="width: 1400px; max-width: 95vw;">
+  <q-dialog v-model="showDialog" persistent maximized>
+    <q-card class="full-height-dialog">
       <q-card-section class="row items-center q-pb-none">
         <div class="text-h6">Управление компетенциями дисциплины</div>
         <q-space />
@@ -9,50 +9,42 @@
 
       <q-card-section class="q-pt-none">
         <!-- Информация о дисциплине -->
-        <div class="q-mb-md">
-          <div class="text-subtitle1">
-            <strong>Дисциплина:</strong> {{ discipline?.index }} - {{ discipline?.name }}
+        <div class="row items-center q-mb-sm">
+          <div class="col">
+            <div class="text-subtitle1">
+              <strong>Дисциплина:</strong> {{ discipline?.index }} - {{ discipline?.name }}
+            </div>
+            <div class="text-caption text-blue q-mt-xs">
+              <q-icon name="info" />
+              Установите флаги для компетенций, которые формируются данной дисциплиной
+            </div>
           </div>
-          <div class="text-caption text-blue q-mt-xs">
-            <q-icon name="info" />
-            Установите флаги для компетенций, которые формируются данной дисциплиной
+          
+          <!-- Статистика -->
+          <div class="col-auto">
+            <div class="row items-center q-gutter-md">
+              <q-badge color="grey" outline>
+                Всего: {{ allCompetences.length }}
+              </q-badge>
+              <q-badge color="positive" outline>
+                Выбрано: {{ selectedCount }}
+              </q-badge>
+              <q-badge color="negative" outline>
+                Не выбрано: {{ unselectedCount }}
+              </q-badge>
+            </div>
           </div>
         </div>
         
-        <!-- Статистика -->
-        <div class="row q-mb-md q-gutter-md">
-          <q-card flat bordered class="col-auto">
-            <q-card-section class="q-pa-sm">
-              <div class="text-caption text-grey">Всего компетенций</div>
-              <div class="text-h6">{{ allCompetences.length }}</div>
-            </q-card-section>
-          </q-card>
-          
-          <q-card flat bordered class="col-auto">
-            <q-card-section class="q-pa-sm">
-              <div class="text-caption text-grey">Выбрано</div>
-              <div class="text-h6 text-positive">{{ selectedCount }}</div>
-            </q-card-section>
-          </q-card>
-          
-          <q-card flat bordered class="col-auto">
-            <q-card-section class="q-pa-sm">
-              <div class="text-caption text-grey">Не выбрано</div>
-              <div class="text-h6 text-negative">{{ unselectedCount }}</div>
-            </q-card-section>
-          </q-card>
-        </div>
-        
-        <!-- Фильтры и поиск -->
-        <div class="row q-mb-md q-gutter-md">
-          <div class="col-12 col-md-6">
+        <!-- Панель фильтров -->
+        <div class="row q-mb-md q-gutter-sm">
+          <div class="col">
             <q-input
               v-model="searchQuery"
-              placeholder="Поиск по индексу или содержанию компетенции..."
+              placeholder="Поиск по компетенциям..."
               dense
               outlined
               clearable
-              class="full-width"
             >
               <template v-slot:append>
                 <q-icon name="search" />
@@ -60,86 +52,79 @@
             </q-input>
           </div>
           
-          <div class="col-12 col-md-3">
+          <div class="col-auto">
             <q-select
               v-model="selectedTypeFilter"
               :options="typeOptions"
-              label="Фильтр по типу"
+              label="Тип компетенции"
               dense
               outlined
               clearable
               emit-value
               map-options
-              class="full-width"
+              style="min-width: 200px;"
             />
           </div>
           
-          <div class="col-12 col-md-3">
+          <div class="col-auto">
             <q-select
               v-model="selectedStatusFilter"
               :options="statusOptions"
-              label="Фильтр по статусу"
+              label="Статус"
               dense
               outlined
               clearable
               emit-value
               map-options
-              class="full-width"
+              style="min-width: 150px;"
             />
+          </div>
+          
+          <div class="col-auto">
+            <q-btn
+              flat
+              dense
+              color="positive"
+              icon="check_box"
+              label="Все"
+              @click="selectAll"
+              :disabled="loading"
+            />
+            <q-btn
+              flat
+              dense
+              color="negative"
+              icon="check_box_outline_blank"
+              label="Ничего"
+              @click="unselectAll"
+              :disabled="loading"
+            />
+            <q-btn
+              flat
+              dense
+              color="primary"
+              icon="filter_alt_off"
+              @click="resetFilters"
+              :disabled="loading"
+            >
+              <q-tooltip>Сбросить фильтры</q-tooltip>
+            </q-btn>
           </div>
         </div>
         
-        <!-- Кнопки действий -->
-        <div class="row q-mb-md q-gutter-sm">
-          <q-btn
-            flat
-            dense
-            color="positive"
-            icon="check_box"
-            label="Выбрать все"
-            @click="selectAll"
-            :disabled="loading"
-          />
-          <q-btn
-            flat
-            dense
-            color="negative"
-            icon="check_box_outline_blank"
-            label="Снять все"
-            @click="unselectAll"
-            :disabled="loading"
-          />
-          <q-btn
-            flat
-            dense
-            color="primary"
-            icon="filter_alt_off"
-            label="Сбросить фильтры"
-            @click="resetFilters"
-            :disabled="loading"
-          />
-        </div>
-        
-        <!-- Состояние загрузки -->
-        <div v-if="loading" class="text-center q-pa-lg">
-          <q-spinner size="50px" color="primary" />
-          <div class="q-mt-md">Загрузка данных...</div>
-        </div>
-        
-        <!-- Таблица компетенций -->
-        <div v-if="!loading">
+        <div v-if="!loading" class="competence-table-container">
           <q-table
             :rows="filteredCompetences"
             :columns="columns"
             row-key="competence_index"
             :loading="saving"
             :pagination="pagination"
-            :rows-per-page-options="[10, 20, 50, 100]"
+            :rows-per-page-options="[20, 50, 100, 200]"
             binary-state-sort
             flat
             bordered
+            class="full-height-table"
             virtual-scroll
-            style="height: 500px;"
           >
             <template v-slot:top>
               <div class="text-h6">Компетенции плана ({{ filteredCompetences.length }} из {{ allCompetences.length }})</div>
@@ -196,42 +181,19 @@
                     </div>
                   </div>
                 </q-td>
-                
-                <!-- Тип компетенции -->
-                <q-td key="type" :props="props">
-                  <q-badge :color="getTypeColor(props.row.type)" class="q-px-sm q-py-xs">
-                    {{ props.row.type }}
-                  </q-badge>
-                </q-td>
-                
-                <!-- Действия -->
-                <q-td key="actions" :props="props">
-                  <q-btn
-                    flat
-                    dense
-                    round
-                    icon="info"
-                    color="info"
-                    size="sm"
-                    @click="showCompetenceDetails(props.row)"
-                  >
-                    <q-tooltip>Подробности</q-tooltip>
-                  </q-btn>
-                </q-td>
               </q-tr>
             </template>
           </q-table>
           
           <!-- Подсказка -->
-          <div class="text-caption text-grey q-mt-md">
+          <div class="text-caption text-grey q-mt-sm">
             <q-icon name="info" />
-            Включите флаги для компетенций, которые формируются данной дисциплиной. 
-            Все изменения сохраняются автоматически.
+            Найдено: {{ filteredCompetences.length }} из {{ allCompetences.length }}
           </div>
         </div>
       </q-card-section>
 
-      <q-card-actions align="right" class="q-pa-md">
+      <q-card-actions align="right" class="q-pa-md bg-grey-2">
         <q-btn 
           flat 
           label="Закрыть" 
@@ -254,57 +216,6 @@
     </q-card>
   </q-dialog>
   
-  <!-- Диалог с деталями компетенции -->
-  <q-dialog v-model="showDetailsDialog" persistent>
-    <q-card style="width: 800px; max-width: 90vw;">
-      <q-card-section class="row items-center q-pb-none">
-        <div class="text-h6">Детали компетенции</div>
-        <q-space />
-        <q-btn icon="close" flat round dense v-close-popup />
-      </q-card-section>
-      
-      <q-card-section v-if="selectedCompetence" class="q-pt-none">
-        <div class="q-mb-md">
-          <div class="text-subtitle1">
-            <q-badge :color="getTypeColor(selectedCompetence.type)" class="q-mr-sm">
-              {{ selectedCompetence.competence_index }}
-            </q-badge>
-            {{ selectedCompetence.type }}
-          </div>
-          <div class="text-body1 q-mt-sm">{{ selectedCompetence.competence }}</div>
-        </div>
-        
-        <div v-if="selectedCompetence.indicators && selectedCompetence.indicators.length > 0">
-          <div class="text-subtitle2 q-mb-sm">Индикаторы компетенции:</div>
-          <q-list bordered separator>
-            <q-item
-              v-for="indicator in selectedCompetence.indicators"
-              :key="indicator.index"
-              class="q-py-sm"
-            >
-              <q-item-section>
-                <q-item-label class="text-weight-medium">
-                  {{ indicator.index }}
-                </q-item-label>
-                <q-item-label caption v-if="indicator.name">
-                  {{ indicator.name }}
-                </q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </div>
-        
-        <div v-else class="text-center q-pa-lg text-grey">
-          <q-icon name="info" size="50px" />
-          <div class="q-mt-md">Нет индикаторов для этой компетенции</div>
-        </div>
-      </q-card-section>
-      
-      <q-card-actions align="right">
-        <q-btn flat label="Закрыть" color="primary" v-close-popup />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
 </template>
 
 <script setup>
@@ -394,7 +305,7 @@ const hasChanges = computed(() => {
   return JSON.stringify(originalSelected) !== JSON.stringify(currentSelected)
 })
 
-// Отфильтрованные компетенции
+// компетенции
 const filteredCompetences = computed(() => {
   let filtered = allCompetences.value
   
@@ -448,20 +359,6 @@ const columns = [
     sortable: true,
     style: 'min-width: 400px;'
   },
-  {
-    name: 'type',
-    label: 'Тип',
-    align: 'center',
-    field: row => row.type,
-    sortable: true,
-    style: 'width: 150px;'
-  },
-  {
-    name: 'actions',
-    label: 'Действия',
-    align: 'center',
-    style: 'width: 80px;'
-  }
 ]
 
 const pagination = ref({
@@ -518,7 +415,7 @@ async function loadCompetenceData() {
       params: { plan_id: props.planId }
     })
     
-    // Формируем объединенный список всех компетенций
+    // Формируем список всех компетенций
     allCompetences.value = allResponse.data.competences.map(comp => {
       const isSelected = currentResponse.data.competences.some(
         c => c.competence_index === comp.competence_index && c.selected
@@ -615,20 +512,7 @@ async function saveChanges() {
     })
     return
   }
-  
-  const confirmed = await $q.dialog({
-    title: 'Подтверждение сохранения',
-    message: `Вы уверены, что хотите сохранить изменения для ${selectedCount.value} компетенций?`,
-    html: true,
-    cancel: true,
-    persistent: true,
-    ok: {
-      label: 'Сохранить',
-      color: 'positive'
-    }
-  })
-  
-  if (!confirmed) return
+
   
   saving.value = true
   try {
@@ -672,7 +556,6 @@ async function saveChanges() {
 watch(() => props.show, (newVal) => {
   showDialog.value = newVal
   if (newVal) {
-    // Сбрасываем фильтры и загружаем данные
     resetFilters()
     loadCompetenceData()
   } else {
@@ -693,20 +576,33 @@ watch(showDialog, (newVal) => {
 </script>
 
 <style scoped lang="scss">
-.competence-table {
-  .q-table {
-    .q-badge {
-      font-size: 12px;
-      font-weight: 500;
-    }
+.full-height-dialog {
+  width: 90vw;
+  max-width: 1200px;
+  height: 90vh;
+  
+  .q-card__section {
+    padding: 16px;
+  }
+}
+
+.competence-table-container {
+  height: calc(90vh - 280px); 
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  
+  .full-height-table {
+    flex: 1;
+    min-height: 0; 
     
-    .q-toggle {
-      transform: scale(0.9);
-    }
-    
-    .q-chip {
-      height: 20px;
-      font-size: 11px;
+    :deep(.q-table__container) {
+      height: 100%;
+      
+      .q-table__middle {
+        flex: 1;
+        min-height: 0;
+      }
     }
   }
 }

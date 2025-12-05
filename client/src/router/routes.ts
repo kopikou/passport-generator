@@ -425,7 +425,8 @@ const routes: RouteRecordRaw[] = [
         name: 'competenceSchema',
         component:CompetenceSchemaView,
         meta: {
-          title: 'Схема компетенций'
+          title: 'Схема компетенций',
+          requiresValidMatrix: true
         }
       },
       {
@@ -433,7 +434,8 @@ const routes: RouteRecordRaw[] = [
         name: 'competencePassport',
         component: CompetencePassportView,
         meta: {
-          title: 'Паспорт компетенций'
+          title: 'Паспорт компетенций',
+          requiresValidMatrix: true
         }
       },
     ]

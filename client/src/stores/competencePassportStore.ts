@@ -25,6 +25,15 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   const myFilter = ref(0)
   const currentPlanId = ref(null)
 
+  // Валидация матрицы
+  const matrixValidation = ref({
+    isValid: false,
+    disciplinesWithoutCompetences: [],
+    competencesWithoutDisciplines: [],
+    lastChecked: null,
+    validationInProgress: false
+  })
+
   // Геттеры
   const filteredPrograms = computed(() => {
     return _.orderBy(programList.value, ['abbrprofile', 'startyear'])
@@ -204,6 +213,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
         payload
       )
       
+      matrixValidation.value.isValid = false
+      
       await fetchCompetenceMatrix(editingDiscipline.value.planId)
       
       return response.data
@@ -218,6 +229,121 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   function clearEditingDiscipline() {
     editingDiscipline.value = null
     disciplineCompetences.value = []
+  }
+
+  // ВВалидация матрицы
+  async function validateCompetenceMatrix(planId) {
+    matrixValidation.value.validationInProgress = true
+    
+    try {
+      if (!planId) {
+        if (!currentPlanId.value) {
+          throw new Error('Plan ID is required for validation')
+        }
+        planId = currentPlanId.value
+      }
+      
+      // 1. Загружаем матрицу компетенций
+      if (!competenceMatrix.value.length) {
+        await fetchCompetenceMatrix(planId)
+      }
+      
+      // 2. Загружаем все компетенции плана
+      const competencesData = await fetchAllCompetences(planId)
+      const allCompetences = competencesData.competences || []
+      
+      // 3. Находим дисциплины без компетенций
+      const disciplines = competenceMatrix.value.filter(
+        item => item.type === 'discipline'
+      )
+      
+      const disciplinesWithoutCompetences = disciplines.filter(
+        disc => !disc.competence_indices || disc.competence_indices.trim() === ''
+      ).map(disc => ({
+        index: disc.index,
+        name: disc.name
+      }))
+      
+      // 4. Находим все компетенции, которые есть в матрице
+      const usedCompetences = new Set()
+      competenceMatrix.value.forEach(item => {
+        if (item.competence_indices) {
+          item.competence_indices.split(', ').forEach(comp => {
+            usedCompetences.add(comp.trim())
+          })
+        }
+      })
+      
+      // 5. Находим компетенции без дисциплин
+      const competencesWithoutDisciplines = allCompetences.filter(
+        comp => !usedCompetences.has(comp.competence_index)
+      ).map(comp => ({
+        competence_index: comp.competence_index,
+        competence: comp.competence
+      }))
+      
+      // 6. Проверяем валидность
+      const isValid = disciplinesWithoutCompetences.length === 0 && 
+                     competencesWithoutDisciplines.length === 0
+      
+      // 7. Сохраняем результаты валидации
+      matrixValidation.value = {
+        isValid,
+        disciplinesWithoutCompetences,
+        competencesWithoutDisciplines,
+        lastChecked: new Date(),
+        validationInProgress: false
+      }
+      
+      // 8. Сохраняем для других страниц
+      localStorage.setItem(`matrix_valid_${planId}`, isValid ? 'true' : 'false')
+      
+      if (isValid) {
+        localStorage.setItem(`matrix_validation_${planId}`, JSON.stringify({
+          isValid,
+          checkedAt: new Date().toISOString()
+        }))
+      }
+      
+      return matrixValidation.value
+      
+    } catch (error) {
+      console.error('Error validating competence matrix:', error)
+      matrixValidation.value.validationInProgress = false
+      throw error
+    }
+  }
+  
+  // Проверка валидности 
+  function checkMatrixValidityFromStorage(planId) {
+    if (!planId) planId = currentPlanId.value
+    if (!planId) return false
+    
+    const storedValue = localStorage.getItem(`matrix_valid_${planId}`)
+    return storedValue === 'true'
+  }
+  
+  function resetMatrixValidation() {
+    matrixValidation.value = {
+      isValid: false,
+      disciplinesWithoutCompetences: [],
+      competencesWithoutDisciplines: [],
+      lastChecked: null,
+      validationInProgress: false
+    }
+    
+    if (currentPlanId.value) {
+      localStorage.removeItem(`matrix_valid_${currentPlanId.value}`)
+      localStorage.removeItem(`matrix_validation_${currentPlanId.value}`)
+    }
+  }
+  
+  function getValidationStatus() {
+    return {
+      ...matrixValidation.value,
+      fromStorage: currentPlanId.value ? 
+        checkMatrixValidityFromStorage(currentPlanId.value) : false
+    }
   }
 
   return {
@@ -243,7 +369,6 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     competenceMatrix,
     matrixLoading,
     fetchCompetenceMatrix,
-
     disciplineCompetences,
     editingDiscipline,
     saving,
@@ -251,5 +376,11 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     updateDisciplineCompetences,
     clearEditingDiscipline,
     currentPlanDisciplines,
+
+    matrixValidation,
+    validateCompetenceMatrix,
+    checkMatrixValidityFromStorage,
+    resetMatrixValidation,
+    getValidationStatus
   }
 })

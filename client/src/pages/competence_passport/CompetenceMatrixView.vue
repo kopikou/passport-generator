@@ -2,46 +2,193 @@
   <top-navigation-menu>
     <template #content>
       <div class="q-pa-md">
+        <!-- Блок с валидацией матрицы -->
+        <div v-if="validationStatus" class="q-mb-md validation-container">
+          <q-banner 
+            :class="validationStatus.type === 'error' ? 'bg-negative text-white' : 'bg-positive text-white'"
+            rounded
+          >
+            <template v-slot:avatar>
+              <q-icon :name="validationStatus.type === 'error' ? 'warning' : 'check_circle'" size="24px" />
+            </template>
+            
+            <div class="text-body1 q-mb-xs">{{ validationStatus.title }}</div>
+            <div class="text-body2">{{ validationStatus.message }}</div>
+            
+            <template v-if="validationStatus.details" v-slot:action>
+              <q-btn 
+                flat 
+                :color="validationStatus.type === 'error' ? 'white' : 'dark'" 
+                :label="showValidationDetails ? 'Скрыть детали' : 'Показать детали'" 
+                @click="showValidationDetails = !showValidationDetails"
+                class="q-mr-sm"
+              />
+              <q-btn 
+                v-if="validationStatus.type === 'error'"
+                flat 
+                :color="validationStatus.type === 'error' ? 'white' : 'dark'" 
+                label="Обновить проверку" 
+                @click="runMatrixValidation"
+                :loading="store.matrixValidation.validationInProgress"
+                icon="refresh"
+              />
+            </template>
+          </q-banner>
+          
+          <!-- Детали валидации -->
+          <q-slide-transition>
+            <div v-if="showValidationDetails && validationStatus.details" class="validation-details q-pa-md bg-grey-2 q-mt-sm">
+              <!-- Дисциплины без компетенций -->
+              <div v-if="store.matrixValidation.disciplinesWithoutCompetences.length > 0" class="q-mb-md">
+                <div class="text-subtitle1 text-weight-medium q-mb-sm">
+                  <q-icon name="error_outline" color="negative" class="q-mr-xs" />
+                  Дисциплины без компетенций ({{ store.matrixValidation.disciplinesWithoutCompetences.length }}):
+                </div>
+                <div class="q-gutter-sm">
+                  <q-chip 
+                    v-for="disc in store.matrixValidation.disciplinesWithoutCompetences" 
+                    :key="disc.index"
+                    color="negative" 
+                    text-color="white"
+                    icon="school"
+                    clickable
+                    @click="scrollToDiscipline(disc.index)"
+                    class="cursor-pointer"
+                  >
+                    {{ disc.index }} - {{ disc.name }}
+                  </q-chip>
+                </div>
+                <div class="text-caption text-grey q-mt-xs">
+                  Нажмите на дисциплину для быстрого перехода к ней в таблице
+                </div>
+              </div>
+              
+              <!-- Компетенции без дисциплин -->
+              <div v-if="store.matrixValidation.competencesWithoutDisciplines.length > 0" class="q-mb-md">
+                <div class="text-subtitle1 text-weight-medium q-mb-sm">
+                  <q-icon name="warning" color="warning" class="q-mr-xs" />
+                  Компетенции без дисциплин ({{ store.matrixValidation.competencesWithoutDisciplines.length }}):
+                </div>
+                <div class="q-gutter-sm">
+                  <q-chip 
+                    v-for="comp in store.matrixValidation.competencesWithoutDisciplines" 
+                    :key="comp.competence_index"
+                    color="warning" 
+                    text-color="dark"
+                    icon="assignment"
+                  >
+                    {{ comp.competence_index }}
+                    <q-tooltip>
+                      {{ comp.competence }}
+                    </q-tooltip>
+                  </q-chip>
+                </div>
+                <div class="text-caption text-grey q-mt-xs">
+                  Эти компетенции не привязаны ни к одной дисциплине плана
+                </div>
+              </div>
+              
+              <!-- Сводка -->
+              <div class="row items-center justify-between q-mt-md">
+                <div class="col">
+                  <div class="text-caption">
+                    <q-icon name="info" class="q-mr-xs" />
+                    Проверка выполнена: {{ lastCheckedFormatted }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </q-slide-transition>
+        </div>
+
         <div class="row items-center q-mb-md">
           <div class="col">
             <h2 class="text-h4 q-ma-none">Матрица компетенций</h2>
             <div class="text-subtitle1 text-grey">
               Соответствие дисциплины и формируемых компетенций
             </div>
+            <div class="text-subtitle1 text-grey">
+              Окно редактора вызывается двойным щелчком мыши в необходимой строке
+            </div>
+            
+            <!-- Статус валидации в шапке -->
+            <div v-if="validationStatus" class="validation-status-indicator q-mt-sm">
+              <q-chip 
+                :color="validationStatus.type === 'error' ? 'negative' : 'positive'" 
+                text-color="white"
+                :icon="validationStatus.type === 'error' ? 'error' : 'check_circle'"
+                size="sm"
+              >
+                {{ validationStatus.type === 'error' ? 'Требуется исправление' : 'Матрица проверена' }}
+              </q-chip>
+              
+              <span class="q-ml-sm text-caption">
+                <span v-if="store.matrixValidation.disciplinesWithoutCompetences.length > 0">
+                  {{ store.matrixValidation.disciplinesWithoutCompetences.length }} дисциплин без компетенций
+                </span>
+                <span v-if="store.matrixValidation.disciplinesWithoutCompetences.length > 0 && store.matrixValidation.competencesWithoutDisciplines.length > 0">
+                  , 
+                </span>
+                <span v-if="store.matrixValidation.competencesWithoutDisciplines.length > 0">
+                  {{ store.matrixValidation.competencesWithoutDisciplines.length }} компетенций без дисциплин
+                </span>
+              </span>
+            </div>
           </div>
+          
           <div class="col-auto">
-            <q-btn
-              flat
-              dense
-              color="primary"
-              icon="expand_more"
-              @click="expandAll"
-              label="Раскрыть все"
-              class="q-mr-sm"
-            />
-            <q-btn
-              flat
-              dense
-              color="primary"
-              icon="expand_less"
-              @click="collapseAll"
-              label="Свернуть все"
-              class="q-mr-sm"
-            />
-            <q-input
-              v-model="searchFilter"
-              placeholder="Поиск по дисциплинам, группам или индексам..."
-              dense
-              outlined
-              clearable
-            >
-              <template v-slot:append>
-                <q-icon name="search" />
-              </template>
-            </q-input>
+            <!-- Кнопки управления матрицей -->
+            <div class="row items-center q-gutter-sm">
+              <q-btn
+                flat
+                dense
+                color="primary"
+                icon="expand_more"
+                @click="expandAll"
+                label="Раскрыть все"
+                class="q-mr-sm"
+              />
+              <q-btn
+                flat
+                dense
+                color="primary"
+                icon="expand_less"
+                @click="collapseAll"
+                label="Свернуть все"
+                class="q-mr-sm"
+              />
+              
+              <!-- Кнопка проверки матрицы -->
+              <q-btn
+                flat
+                dense
+                color="primary"
+                icon="check_circle"
+                label="Проверить"
+                @click="runMatrixValidation"
+                :loading="store.matrixValidation.validationInProgress"
+                class="q-mr-sm"
+              >
+                <q-tooltip>Проверить связи между дисциплинами и компетенциями</q-tooltip>
+              </q-btn>
+              
+              <q-input
+                v-model="searchFilter"
+                placeholder="Поиск по дисциплинам, группам или индексам..."
+                dense
+                outlined
+                clearable
+                style="min-width: 300px;"
+              >
+                <template v-slot:append>
+                  <q-icon name="search" />
+                </template>
+              </q-input>
+            </div>
           </div>
         </div>
 
+        <!-- Таблица матрицы -->
         <q-table
           :rows="visibleMatrix"
           :columns="columns"
@@ -51,11 +198,13 @@
           binary-state-sort
           flat
           bordered
-          virtual-scroll
-          style="height: calc(100vh - 200px);"
+          style="height: auto;"
+          :class="{ 'has-validation-errors': validationStatus?.type === 'error' }"
         >
           <template v-slot:top>
-            <div class="text-h6">Показано строк: {{ visibleMatrix.length }} из {{ store.competenceMatrix.length }}</div>
+            <div class="text-h6">
+              Показано строк: {{ visibleMatrix.length }} из {{ store.competenceMatrix.length }}
+            </div>
             <q-space />
             <div class="text-caption text-grey" v-if="searchFilter">
               Поиск: "{{ searchFilter }}"
@@ -65,8 +214,13 @@
           <template v-slot:body="props">
             <q-tr 
               :props="props" 
-              :class="{ 'clickable-row': props.row.type === 'discipline' }"
+              :class="[
+                { 'clickable-row': props.row.type === 'discipline' },
+                { 'row-without-competences': props.row.type === 'discipline' && isDisciplineWithoutCompetences(props.row.index) },
+                { 'highlighted-row': props.row.index === highlightedDiscipline }
+              ]"
               @dblclick="onRowDoubleClick(props.row)"
+              :data-index="props.row.index"
             >
               <q-td key="index" :props="props">
                 <div 
@@ -83,9 +237,10 @@
                     dense
                     round
                     size="sm"
-                    :icon="isExpanded(props.row.index) ? 'remove' : 'add'"
+                    icon="keyboard_arrow_down"
+                    :class="{ 'rotate-180': isExpanded(props.row.index) }"
                     @click.stop="toggleGroup(props.row.index)"
-                    class="q-mr-xs"
+                    class="q-mr-xs transition-transform"
                     style="min-width: 24px; min-height: 24px;"
                   />
                   <q-icon 
@@ -95,6 +250,18 @@
                     size="16px"
                   />
                   <span style="width: 16px; display: inline-block;" v-else></span>
+                  
+                  <!-- Индикатор проблемной дисциплины -->
+                  <q-icon 
+                    v-if="props.row.type === 'discipline' && isDisciplineWithoutCompetences(props.row.index)"
+                    name="error_outline" 
+                    color="negative" 
+                    size="16px"
+                    class="q-mr-xs"
+                  >
+                    <q-tooltip>У этой дисциплины нет компетенций</q-tooltip>
+                  </q-icon>
+                  
                   {{ props.row.index }}
                 </div>
               </q-td>
@@ -103,7 +270,8 @@
                 <div 
                   :class="[
                     props.row.type === 'group' ? 'text-bold' : '',
-                    `level-${props.row.level}`
+                    `level-${props.row.level}`,
+                    { 'text-negative': props.row.type === 'discipline' && isDisciplineWithoutCompetences(props.row.index) }
                   ]"
                 >
                   {{ props.row.name }}
@@ -124,10 +292,18 @@
                   </template>
                 </div>
                 <div v-else class="text-grey text-italic">
+                  <q-icon name="warning" color="negative" class="q-mr-xs" />
                   Нет компетенций
                 </div>
               </q-td>
             </q-tr>
+          </template>
+          
+          <template v-slot:no-data>
+            <div class="full-width row flex-center q-gutter-sm">
+              <q-icon name="info" size="2em" />
+              <span>Нет данных для отображения</span>
+            </div>
           </template>
         </q-table>
         
@@ -142,23 +318,23 @@
           @update:show="showEditor = $event"
           @saved="onCompetencesSaved"
         />
-        <div v-if="debugInfo" class="q-pa-sm bg-yellow-2 text-caption">
-          Отладка: editingRow = {{ editingRow }}, showEditor = {{ showEditor }}
-        </div>
       </div>
     </template>
   </top-navigation-menu>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted, nextTick } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { useRouter } from 'vue-router'
 import TopNavigationMenu from './components/TopNavigationMenu.vue'
 import DisciplineCompetencesEditor from './components/DisciplineCompetencesEditor.vue'
-import { useQuasar } from 'quasar'
+import { useQuasar, date } from 'quasar'
 
 const $q = useQuasar()
+const router = useRouter()
 const store = useCompetencePassportStore()
+
 const matrixLoading = ref(false)
 const searchFilter = ref('')
 const currentPlan = ref(null)
@@ -170,11 +346,13 @@ const pagination = ref({
   rowsPerPage: 0
 })
 
-// Новые переменные для редактирования
 const showEditor = ref(false)
 const editingRow = ref(null)
-const disciplinesMap = ref({}) // Кэш дисциплин для быстрого поиска
-const debugInfo = ref(true) // Включите для отладки
+const disciplinesMap = ref({})
+
+// Валидация
+const showValidationDetails = ref(false)
+const highlightedDiscipline = ref(null)
 
 const columns = [
   {
@@ -184,7 +362,7 @@ const columns = [
     align: 'left',
     field: row => row.index,
     sortable: true,
-    style: 'width: 150px;'
+    style: 'width: 180px; min-width: 180px; max-width: 180px;'
   },
   {
     name: 'name',
@@ -193,7 +371,7 @@ const columns = [
     align: 'left',
     field: row => row.name,
     sortable: true,
-    style: 'width: 350px;'
+    style: 'width: 400px; min-width: 400px; max-width: 400px;'
   },
   {
     name: 'competence_indices',
@@ -201,97 +379,53 @@ const columns = [
     align: 'left',
     field: row => row.competence_indices,
     sortable: false,
-    style: 'min-width: 400px;'
+    style: 'width: calc(100vw - 650px); min-width: 400px; max-width: calc(100vw - 650px);'
   }
 ]
 
-// Функция для определения цвета по типу компетенции
-function getCompetenceBadgeColor(competenceIndex) {
-  if (!competenceIndex) return 'grey'
+// Вычисляемые свойства
+const validationStatus = computed(() => {
+  const validation = store.matrixValidation
   
-  if (competenceIndex.includes('УК') || competenceIndex.startsWith('УК')) return 'blue'
-  if (competenceIndex.includes('ОПК') || competenceIndex.startsWith('ОПК')) return 'green'
-  if (competenceIndex.includes('ПК') || competenceIndex.startsWith('ПК')) return 'orange'
-  if (competenceIndex.includes('ДК') || competenceIndex.startsWith('ДК')) return 'purple'
+  if (validation.validationInProgress) {
+    return {
+      type: 'info',
+      title: 'Проверка матрицы...',
+      message: 'Идет проверка связей между дисциплинами и компетенциями',
+      details: false
+    }
+  }
   
-  return 'grey'
-}
+  if (validation.isValid) {
+    return {
+      type: 'success',
+      title: 'Матрица компетенций проверена успешно!',
+      message: 'Все дисциплины имеют компетенции и все компетенции привязаны к дисциплинам.',
+      details: true
+    }
+  } else if (validation.disciplinesWithoutCompetences.length > 0 || 
+             validation.competencesWithoutDisciplines.length > 0) {
+    return {
+      type: 'error',
+      title: 'Найдены проблемы в матрице компетенций',
+      message: `Необходимо исправить ${validation.disciplinesWithoutCompetences.length} дисциплин без компетенций и ${validation.competencesWithoutDisciplines.length} компетенций без дисциплин`,
+      details: true
+    }
+  }
+  
+  return null
+})
 
-// Функция для получения иконки группы по уровню
-function getGroupIcon(level) {
-  const icons = [
-    'folder',      // уровень 1
-    'folder_open', // уровень 2
-    'folder',      // уровень 3
-    'folder_open', // уровень 4
-    'folder'       // уровень 5
-  ]
-  return icons[level - 1] || 'folder'
-}
-
-function hasChildren(groupIndex) {
-  const allItems = store.competenceMatrix
-  return allItems.some(item => 
-    item.index !== groupIndex && 
-    item.index.startsWith(groupIndex + '.')
+const lastCheckedFormatted = computed(() => {
+  if (!store.matrixValidation.lastChecked) return 'еще не проверялась'
+  
+  const timeStamp = date.formatDate(
+    store.matrixValidation.lastChecked, 
+    'DD.MM.YYYY HH:mm:ss'
   )
-}
-
-function isExpanded(groupIndex) {
-  return expandedGroups.value.has(groupIndex)
-}
-
-// Переключаем состояние группы (раскрыть/скрыть)
-function toggleGroup(groupIndex) {
-  if (expandedGroups.value.has(groupIndex)) {
-    expandedGroups.value.delete(groupIndex)
-  } else {
-    expandedGroups.value.add(groupIndex)
-  }
-}
-
-// Раскрыть все группы
-function expandAll() {
-  const allItems = store.competenceMatrix
-  allItems.forEach(item => {
-    if (item.type === 'group' && hasChildren(item.index)) {
-      expandedGroups.value.add(item.index)
-    }
-  })
-}
-
-// Свернуть все группы
-function collapseAll() {
-  expandedGroups.value.clear()
-}
-
-// Получаем все родительские группы для элемента
-function getParentGroups(itemIndex) {
-  const parents = []
-  const parts = itemIndex.split('.')
   
-  for (let i = 1; i < parts.length; i++) {
-    const parentIndex = parts.slice(0, i).join('.')
-    parents.push(parentIndex)
-  }
-  
-  return parents
-}
-
-// Проверяем, виден ли элемент в текущем состоянии
-function isItemVisible(item) {
-  const parentGroups = getParentGroups(item.index)
-  
-  for (const parentIndex of parentGroups) {
-    // Если родитель - группа и она не раскрыта, элемент не виден
-    const parentItem = store.competenceMatrix.find(g => g.index === parentIndex && g.type === 'group')
-    if (parentItem && !expandedGroups.value.has(parentIndex)) {
-      return false
-    }
-  }
-  
-  return true
-}
+  return timeStamp
+})
 
 const filteredMatrix = computed(() => {
   let filtered = store.competenceMatrix
@@ -312,7 +446,143 @@ const visibleMatrix = computed(() => {
   return filteredMatrix.value.filter(item => isItemVisible(item))
 })
 
-// Функция для загрузки дисциплин плана
+// Методы
+function getCompetenceBadgeColor(competenceIndex) {
+  if (!competenceIndex) return 'grey'
+  
+  if (competenceIndex.includes('УК') || competenceIndex.startsWith('УК')) return 'blue'
+  if (competenceIndex.includes('ОПК') || competenceIndex.startsWith('ОПК')) return 'green'
+  if (competenceIndex.includes('ПК') || competenceIndex.startsWith('ПК')) return 'orange'
+  if (competenceIndex.includes('ДК') || competenceIndex.startsWith('ДК')) return 'purple'
+  
+  return 'grey'
+}
+
+function getGroupIcon(level) {
+  const icons = [
+    'folder',
+    'folder_open',
+    'folder',
+    'folder_open',
+    'folder'
+  ]
+  return icons[level - 1] || 'folder'
+}
+
+function hasChildren(groupIndex) {
+  const allItems = store.competenceMatrix
+  return allItems.some(item => 
+    item.index !== groupIndex && 
+    item.index.startsWith(groupIndex + '.')
+  )
+}
+
+function isExpanded(groupIndex) {
+  return expandedGroups.value.has(groupIndex)
+}
+
+function toggleGroup(groupIndex) {
+  if (expandedGroups.value.has(groupIndex)) {
+    expandedGroups.value.delete(groupIndex)
+  } else {
+    expandedGroups.value.add(groupIndex)
+  }
+}
+
+function expandAll() {
+  const allItems = store.competenceMatrix
+  allItems.forEach(item => {
+    if (item.type === 'group' && hasChildren(item.index)) {
+      expandedGroups.value.add(item.index)
+    }
+  })
+}
+
+function collapseAll() {
+  expandedGroups.value.clear()
+}
+
+function getParentGroups(itemIndex) {
+  const parents = []
+  const parts = itemIndex.split('.')
+  
+  for (let i = 1; i < parts.length; i++) {
+    const parentIndex = parts.slice(0, i).join('.')
+    parents.push(parentIndex)
+  }
+  
+  return parents
+}
+
+function isItemVisible(item) {
+  const parentGroups = getParentGroups(item.index)
+  
+  for (const parentIndex of parentGroups) {
+    const parentItem = store.competenceMatrix.find(g => g.index === parentIndex && g.type === 'group')
+    if (parentItem && !expandedGroups.value.has(parentIndex)) {
+      return false
+    }
+  }
+  
+  return true
+}
+
+// Валидационные методы
+function isDisciplineWithoutCompetences(disciplineIndex) {
+  return store.matrixValidation.disciplinesWithoutCompetences.some(
+    disc => disc.index === disciplineIndex
+  )
+}
+
+function scrollToDiscipline(disciplineIndex) {
+  highlightedDiscipline.value = disciplineIndex
+  showValidationDetails.value = false
+  
+  // Прокрутка к дисциплине
+  setTimeout(() => {
+  const row = document.querySelector(`tr[data-index="${CSS.escape(disciplineIndex)}"]`)
+    if (row) {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      row.classList.add('blink-animation')
+      setTimeout(() => row.classList.remove('blink-animation'), 2000)
+    }
+  }, 100)
+}
+async function runMatrixValidation() {
+  try {
+    const result = await store.validateCompetenceMatrix(store.currentPlanId)
+    
+    if (result.isValid) {
+      $q.notify({
+        type: 'positive',
+        message: 'Матрица компетенций проверена успешно! Все связи установлены.',
+        position: 'top-right',
+        timeout: 3000
+      })
+      localStorage.setItem(`matrix_valid_${store.currentPlanId}`, 'true')
+    } else {
+      $q.notify({
+        type: 'warning',
+        message: `Найдены проблемы: ${result.disciplinesWithoutCompetences.length} дисциплин без компетенций, ${result.competencesWithoutDisciplines.length} компетенций без дисциплин`,
+        position: 'top-right',
+        timeout: 5000,
+        actions: [
+          { label: 'Показать детали', color: 'white', handler: () => {
+            showValidationDetails.value = true
+          }}
+        ]
+      })
+    }
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: `Ошибка при проверке матрицы: ${error.message}`,
+      position: 'top-right'
+    })
+  }
+}
+
+// Основные методы
 async function loadDisciplines() {
   if (!store.currentPlanId) return
   
@@ -340,9 +610,7 @@ async function loadDisciplines() {
   }
 }
 
-// Обработчик двойного клика
 async function onRowDoubleClick(row) {
-  
   if (row.type !== 'discipline') {
     return
   }
@@ -356,16 +624,13 @@ async function onRowDoubleClick(row) {
     return
   }
   
-  // Проверяем, загружены ли дисциплины
   const disciplines = store.currentPlanDisciplines
   
   if (!disciplines || disciplines.length === 0) {
     await loadDisciplines()
   }
   
-  // Проверяем, создана ли карта дисциплин
   if (Object.keys(disciplinesMap.value).length === 0) {
-    // Если нет, пробуем создать из текущих дисциплин
     disciplines.forEach(discipline => {
       if (discipline && discipline.newdisid) {
         disciplinesMap.value[discipline.newdisid] = discipline
@@ -373,11 +638,9 @@ async function onRowDoubleClick(row) {
     })
   }
   
-  // Ищем дисциплину в карте дисциплин
   let discipline = disciplinesMap.value[row.index]
   
   if (!discipline) {
-    
     const found = disciplines?.find(
       disc => disc.newdisid === row.index
     )
@@ -406,7 +669,6 @@ async function onRowDoubleClick(row) {
     return
   }
   
-  
   editingRow.value = {
     id: discipline.id,
     index: discipline.newdisid,
@@ -427,8 +689,12 @@ function onCompetencesSaved() {
     timeout: 2000
   })
   
-  loadCompetenceMatrix()
-  loadDisciplines()
+  // После сохранения запускаем проверку матрицы
+  setTimeout(() => {
+    loadCompetenceMatrix()
+    loadDisciplines()
+    runMatrixValidation()
+  }, 500)
 }
 
 async function loadCompetenceMatrix() {
@@ -440,7 +706,6 @@ async function loadCompetenceMatrix() {
       return
     }
     
-    // Загружаем матрицу компетенций
     const response = await store.fetchCompetenceMatrix(planId)
     currentPlan.value = {
       planname: response.plan_name,
@@ -455,6 +720,7 @@ async function loadCompetenceMatrix() {
     })
     
     await loadDisciplines()
+    await runMatrixValidation()
     
   } catch (error) {
     $q.notify({
@@ -467,9 +733,11 @@ async function loadCompetenceMatrix() {
   }
 }
 
+// Хуки жизненного цикла
 watch(() => store.currentPlanId, (newPlanId) => {
   if (newPlanId) {
     disciplinesMap.value = {}
+    store.resetMatrixValidation()
     loadCompetenceMatrix()
   }
 })
@@ -480,13 +748,77 @@ onMounted(() => {
   }
 })
 
+onUnmounted(() => {
+  highlightedDiscipline.value = null
+})
 </script>
 
 <style scoped lang="scss">
+
+.validation-container {
+  .q-banner {
+    border-left: 4px solid;
+    
+    &.bg-negative {
+      border-left-color: darken(#f44336, 10%);
+    }
+    
+    &.bg-positive {
+      border-left-color: darken(#4CAF50, 10%);
+    }
+  }
+}
+
+.validation-details {
+  border-radius: 0 0 8px 8px;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-top: none;
+}
+
+.validation-status-indicator {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.row-without-competences {
+  background-color: rgba(244, 67, 54, 0.08) !important;
+  border-left: 4px solid #f44336 !important;
+  
+  &:hover {
+    background-color: rgba(244, 67, 54, 0.12) !important;
+  }
+}
+
+.highlighted-row {
+  animation: highlight-pulse 2s ease-in-out;
+  background-color: rgba(255, 193, 7, 0.15) !important;
+  border: 2px solid #ffc107 !important;
+  position: relative;
+
+}
+
+.blink-animation {
+  animation: blink 1s 3;
+}
+
+@keyframes highlight-pulse {
+  0% { background-color: rgba(255, 193, 7, 0.1); }
+  50% { background-color: rgba(255, 193, 7, 0.3); }
+  100% { background-color: rgba(255, 193, 7, 0.15); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 .competence-indices-cell {
   max-height: 200px;
   overflow-y: auto;
   padding: 8px;
+  word-break: break-word;
 }
 
 .text-italic {
@@ -515,13 +847,6 @@ onMounted(() => {
   font-size: 12px;
 }
 
-.expand-button {
-  min-width: 24px;
-  min-height: 24px;
-  width: 24px;
-  height: 24px;
-}
-
 .clickable-row {
   cursor: pointer;
   
@@ -534,18 +859,63 @@ onMounted(() => {
   }
 }
 
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.transition-transform {
+  transition: transform 0.3s ease;
+}
+
 :deep(.q-table) {
-  .q-virtual-scroll {
-    overflow: auto;
-  }
+
   
   .q-badge {
     font-size: 12px;
     line-height: 1.2;
+    margin: 2px 4px 2px 0; 
+    white-space: nowrap;
   }
   
   .q-td {
     padding: 8px 16px;
+  }
+}
+
+:deep(table) {
+  table-layout: fixed;
+  width: 100%;
+  
+  th, td {
+    text-overflow: ellipsis;
+    white-space: normal;
+  }
+  
+  td:nth-child(1) { 
+    width: 180px;
+  }
+  
+  td:nth-child(2) {
+    width: 400px;
+  }
+  
+  td:nth-child(3) { 
+    width: auto; 
+  }
+}
+
+.has-validation-errors {
+  :deep(.row-without-competences) {
+    animation: error-pulse 2s infinite;
+  }
+}
+
+@keyframes error-pulse {
+  0%, 100% { 
+    background-color: rgba(244, 67, 54, 0.08); 
+  }
+  50% { 
+    background-color: rgba(244, 67, 54, 0.15); 
   }
 }
 </style>
