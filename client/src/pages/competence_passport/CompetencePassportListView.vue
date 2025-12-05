@@ -237,6 +237,8 @@ async function selectGroup(planId) {
   selectedAction.value = '';
   selectedPlanFile.value = null;
   uploadedFile.value = null;
+
+  await store.fetchAllDisciplines(planId);
 }
 
 function selectAction(action) {

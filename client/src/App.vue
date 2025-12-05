@@ -139,5 +139,20 @@ onBeforeMount(async () => {
 </template>
 
 <style scoped>
+.container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 50px);
+  overflow: hidden;
+}
 
+.q-layout {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.q-page-container {
+  height: 100%;
+  overflow: hidden;
+}
 </style>

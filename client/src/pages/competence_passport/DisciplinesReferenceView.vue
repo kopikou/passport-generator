@@ -7,7 +7,7 @@
           Справочник всех дисциплин
         </div>
       </div>
-      <div class="col-auto">
+      <div class="col-auto q-mr-md">
         <q-select
           v-model="selectedTypes"
           :options="disciplineTypeOptions"

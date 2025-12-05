@@ -1,5 +1,5 @@
 <template>
-  <layout-with-menus>
+  <top-navigation-menu>
     <template #content>
       <div class="q-pa-md">
         <h2 class="text-h4 q-mb-md">Схема компетенций</h2>
@@ -8,9 +8,9 @@
         </div>
       </div>
     </template>
-  </layout-with-menus>
+  </top-navigation-menu>
 </template>
 
 <script setup>
-import LayoutWithMenus from './components/LayoutWithMenus.vue'
+import TopNavigationMenu from './components/TopNavigationMenu.vue'
 </script>
