@@ -36,6 +36,71 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     validationInProgress: false
   })
 
+  // Вспомогательные функции
+  const _getGroupListParams = () => {
+    return {
+      year: selectedYear.value,
+      text: textFilter.value,
+      groupText: groupTextFilter.value,
+      status: statusFilter.value,
+      my: myFilter.value
+    }
+  }
+
+  const _handleApiError = (error, operation) => {
+    console.error(`Error ${operation}:`, error)
+    throw error
+  }
+
+  const _setLoadingState = (isLoading, target = null) => {
+    if (target) {
+      target.value = isLoading
+    } else {
+      loading.value = isLoading
+    }
+  }
+
+  const _fetchWithPlanId = async (endpoint, planId, params = {}, loadingTarget = null) => {
+    if (!planId) {
+      throw new Error('Plan ID is required')
+    }
+    
+    _setLoadingState(true, loadingTarget)
+    try {
+      const response = await api.get(endpoint, { params: { plan_id: planId, ...params } })
+      return response.data
+    } catch (error) {
+      _handleApiError(error, `fetching from ${endpoint}`)
+    } finally {
+      _setLoadingState(false, loadingTarget)
+    }
+  }
+
+  const _resetData = (dataRef, defaultValue = []) => {
+    dataRef.value = defaultValue
+  }
+
+  const _updateMatrixValidation = (isValid, disciplinesWithoutCompetences = [], competencesWithoutDisciplines = []) => {
+    matrixValidation.value = {
+      isValid,
+      disciplinesWithoutCompetences,
+      competencesWithoutDisciplines,
+      lastChecked: new Date(),
+      validationInProgress: false
+    }
+
+    if (currentPlanId.value) {
+      localStorage.setItem(`matrix_valid_${currentPlanId.value}`, isValid ? 'true' : 'false')
+      
+      if (isValid) {
+        localStorage.setItem(`matrix_validation_${currentPlanId.value}`, JSON.stringify({
+          isValid,
+          checkedAt: new Date().toISOString()
+        }))
+      }
+    }
+  }
+
   // Геттеры
   const filteredPrograms = computed(() => {
     return _.orderBy(programList.value, ['abbrprofile', 'startyear'])
@@ -56,39 +121,31 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
 
   // Действия
   async function fetchGroupsList() {
-    loading.value = true
+    _setLoadingState(true)
     try {
-      const params = {
-        year: selectedYear.value,
-        text: textFilter.value,
-        groupText: groupTextFilter.value,
-        status: statusFilter.value,
-        my: myFilter.value
-      }
-      
-      const response = await api.get('/api/competence/group-list/', { params })
+      const response = await api.get('/api/competence/group-list/', { 
+        params: _getGroupListParams() 
+      })
       groupsList.value = response.data
     } catch (error) {
-      console.error('Error fetching groups list:', error)
-      groupsList.value = []
-      throw error
+      _handleApiError(error, 'fetching groups list')
+      _resetData(groupsList)
     } finally {
-      loading.value = false
+      _setLoadingState(false)
     }
   }
 
   async function fetchGroupPrograms(planId) {
-    loading.value = true
+    _setLoadingState(true)
     try {
       currentPlanId.value = planId
       const response = await api.get(`/api/competence/${planId}/group-program/`)
       currentGroupPrograms.value = response.data
     } catch (error) {
-      console.error('Error fetching group programs:', error)
-      currentGroupPrograms.value = []
-      throw error
+      _handleApiError(error, 'fetching group programs')
+      _resetData(currentGroupPrograms)
     } finally {
-      loading.value = false
+      _setLoadingState(false)
     }
   }
 
@@ -101,73 +158,47 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       const response = await api.get(`/api/competence/${programId}/`)
       return response.data
     } catch (error) {
-      console.error('Error fetching program detail:', error)
-      throw error
+      _handleApiError(error, 'fetching program detail')
     }
   }
 
   async function fetchAllCompetences(planId) {
-    loading.value = true
     try {
-      if (!planId) {
-        throw new Error('Plan ID is required')
-      }
-      
-      const response = await api.get('/api/competence/all-competences/', {
-        params: { plan_id: planId }
-      })
-      currentPlanCompetences.value = response.data.competences
-      return response.data
+      const data = await _fetchWithPlanId('/api/competence/all-competences/', planId)
+      currentPlanCompetences.value = data.competences
+      return data
     } catch (error) {
-      console.error('Error fetching plan competences:', error)
-      throw error
-    } finally {
-      loading.value = false
+      _resetData(currentPlanCompetences)
     }
   }
 
   async function fetchAllDisciplines(planId) {
-    loading.value = true
     try {
-      if (!planId) {
-        throw new Error('Plan ID is required')
-      }
-      
-      const response = await api.get('/api/competence/all-disciplines/', {
-        params: { plan_id: planId }
-      })
-      currentPlanDisciplines.value = response.data.disciplines
-      return response.data
+      const data = await _fetchWithPlanId('/api/competence/all-disciplines/', planId)
+      currentPlanDisciplines.value = data.disciplines
+      return data
     } catch (error) {
-      console.error('Error fetching plan disciplines:', error)
-      throw error
-    } finally {
-      loading.value = false
+      _resetData(currentPlanDisciplines)
     }
   }
 
   async function fetchCompetenceMatrix(planId) {
-    matrixLoading.value = true
     try {
-      if (!planId) {
-        throw new Error('Plan ID is required')
-      }
-      
-      const response = await api.get('/api/competence/competence-matrix/', {
-        params: { plan_id: planId }
-      })
-      competenceMatrix.value = response.data.matrix || []
-      return response.data
+      const data = await _fetchWithPlanId(
+        '/api/competence/competence-matrix/', 
+        planId, 
+        {}, 
+        matrixLoading
+      )
+      competenceMatrix.value = data.matrix || []
+      return data
     } catch (error) {
-      console.error('Error fetching competence matrix:', error)
-      throw error
-    } finally {
-      matrixLoading.value = false
+      _resetData(competenceMatrix)
     }
   }
 
   async function fetchDisciplineCompetencesDetailed(planId, disciplineId) {
-    loading.value = true
+    _setLoadingState(true)
     try {
       if (!planId || !disciplineId) {
         throw new Error('Plan ID and Discipline ID are required')
@@ -190,15 +221,14 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       
       return response.data
     } catch (error) {
-      console.error('Error fetching detailed discipline competences:', error)
-      throw error
+      _handleApiError(error, 'fetching detailed discipline competences')
     } finally {
-      loading.value = false
+      _setLoadingState(false)
     }
   }
   
   async function updateDisciplineCompetences(selectedCompetences) {
-    saving.value = true
+    _setLoadingState(true, saving)
     try {
       if (!editingDiscipline.value) {
         throw new Error('No discipline selected for editing')
@@ -221,10 +251,9 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       
       return response.data
     } catch (error) {
-      console.error('Error updating discipline competences:', error)
-      throw error
+      _handleApiError(error, 'updating discipline competences')
     } finally {
-      saving.value = false
+      _setLoadingState(false, saving)
     }
   }
   
@@ -233,7 +262,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     disciplineCompetences.value = []
   }
 
-  // ВВалидация матрицы
+  // Валидация матрицы
   async function validateCompetenceMatrix(planId) {
     matrixValidation.value.validationInProgress = true
     
@@ -288,24 +317,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       const isValid = disciplinesWithoutCompetences.length === 0 && 
                      competencesWithoutDisciplines.length === 0
       
-      // 7. Сохраняем результаты валидации
-      matrixValidation.value = {
-        isValid,
-        disciplinesWithoutCompetences,
-        competencesWithoutDisciplines,
-        lastChecked: new Date(),
-        validationInProgress: false
-      }
-      
-      // 8. Сохраняем для других страниц
-      localStorage.setItem(`matrix_valid_${planId}`, isValid ? 'true' : 'false')
-      
-      if (isValid) {
-        localStorage.setItem(`matrix_validation_${planId}`, JSON.stringify({
-          isValid,
-          checkedAt: new Date().toISOString()
-        }))
-      }
+      _updateMatrixValidation(isValid, disciplinesWithoutCompetences, competencesWithoutDisciplines)
       
       return matrixValidation.value
       
@@ -349,23 +361,17 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   }
 
   async function fetchCompetenceSchema(planId) {
-    schemaLoading.value = true
     try {
-      if (!planId) {
-        throw new Error('Plan ID is required')
-      }
-      
-      const response = await api.get('/api/competence/competence-schema-data/', {
-        params: { plan_id: planId }
-      })
-      
-      schemaData.value = response.data.schema_rows || []
-      return response.data
+      const data = await _fetchWithPlanId(
+        '/api/competence/competence-schema-data/', 
+        planId, 
+        {}, 
+        schemaLoading
+      )
+      schemaData.value = data.schema_rows || []
+      return data
     } catch (error) {
-      console.error('Error fetching competence schema:', error)
-      throw error
-    } finally {
-      schemaLoading.value = false
+      _resetData(schemaData)
     }
   }
 
@@ -381,17 +387,21 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     statusFilter,
     myFilter,
     currentPlanId,
+    
     filteredPrograms,
     filteredGroupPrograms,
     fetchGroupsList,
     fetchGroupPrograms,
     setCurrentProgram,
     getProgramDetail,
+    
     fetchAllCompetences,
     fetchAllDisciplines,
+    
     competenceMatrix,
     matrixLoading,
     fetchCompetenceMatrix,
+    
     disciplineCompetences,
     editingDiscipline,
     saving,

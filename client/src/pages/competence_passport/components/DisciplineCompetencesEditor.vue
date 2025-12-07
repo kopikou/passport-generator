@@ -120,14 +120,19 @@
             :loading="saving"
             :pagination="pagination"
             :rows-per-page-options="[20, 50, 100, 200]"
-            binary-state-sort
             flat
             bordered
             class="full-height-table"
             virtual-scroll
+            :no-data-label="noDataMessage"
           >
             <template v-slot:top>
-              <div class="text-h6">Компетенции плана ({{ filteredCompetences.length }} из {{ allCompetences.length }})</div>
+              <div class="text-h6">
+                Компетенции плана ({{ filteredCompetences.length }} из {{ allCompetences.length }})
+                <template v-if="filteredCompetences.length !== allCompetences.length">
+                  (отфильтровано)
+                </template>
+              </div>
               <q-space />
               <div class="text-caption text-grey" v-if="searchQuery">
                 Поиск: "{{ searchQuery }}"
@@ -188,7 +193,12 @@
           <!-- Подсказка -->
           <div class="text-caption text-grey q-mt-sm">
             <q-icon name="info" />
-            Найдено: {{ filteredCompetences.length }} из {{ allCompetences.length }}
+            <template v-if="filteredCompetences.length === allCompetences.length">
+              Все компетенции плана ({{ allCompetences.length }})
+            </template>
+            <template v-else>
+              Найдено: {{ filteredCompetences.length }} из {{ allCompetences.length }}
+            </template>
           </div>
         </div>
       </q-card-section>
@@ -215,14 +225,12 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
-  
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
 import { useQuasar } from 'quasar'
-import { api } from 'boot/axios'
 
 const props = defineProps({
   planId: {
@@ -267,6 +275,17 @@ const discipline = ref(null)
 const allCompetences = ref([])
 const originalCompetences = ref([])
 
+// Сообщение при отсутствии данных
+const noDataMessage = computed(() => {
+  if (allCompetences.value.length === 0) {
+    return 'Нет данных о компетенциях'
+  }
+  if (filteredCompetences.value.length === 0) {
+    return 'Нет компетенций, соответствующих фильтрам'
+  }
+  return 'Нет данных'
+})
+
 const typeOptions = computed(() => {
   const types = new Set(allCompetences.value.map(c => c.type))
   return Array.from(types).map(type => ({
@@ -305,7 +324,7 @@ const hasChanges = computed(() => {
   return JSON.stringify(originalSelected) !== JSON.stringify(currentSelected)
 })
 
-// компетенции
+// Компетенции с фильтрацией
 const filteredCompetences = computed(() => {
   let filtered = allCompetences.value
   
@@ -333,14 +352,13 @@ const filteredCompetences = computed(() => {
   return filtered
 })
 
-// Колонки таблицы
+// Колонки таблицы (без сортировки)
 const columns = [
   {
     name: 'selected',
     label: 'Формируется',
     align: 'center',
     field: row => row.selected,
-    sortable: true,
     style: 'width: 100px;'
   },
   {
@@ -348,7 +366,6 @@ const columns = [
     label: 'Индекс компетенции',
     align: 'left',
     field: row => row.competence_index,
-    sortable: true,
     style: 'width: 150px;'
   },
   {
@@ -356,14 +373,11 @@ const columns = [
     label: 'Содержание компетенции',
     align: 'left',
     field: row => row.competence,
-    sortable: true,
     style: 'min-width: 400px;'
   },
 ]
 
 const pagination = ref({
-  sortBy: 'competence_index',
-  descending: false,
   page: 1,
   rowsPerPage: 20
 })
@@ -404,39 +418,20 @@ function getCompetenceType(competenceIndex) {
 async function loadCompetenceData() {
   loading.value = true
   try {
-    const currentResponse = await api.get('/api/competence/discipline-competences-detailed/', {
-      params: {
-        plan_id: props.planId,
-        discipline_id: props.disciplineId
-      }
-    })
+    // Используем метод из стора для получения детальной информации о компетенциях
+    const response = await store.fetchDisciplineCompetencesDetailed(props.planId, props.disciplineId)
     
-    const allResponse = await api.get('/api/competence/all-competences/', {
-      params: { plan_id: props.planId }
-    })
+    // Данные уже отсортированы на бэкенде в методе get_discipline_competences_detailed
+    // через вызов _sort_competences
+    allCompetences.value = response.competences.map(comp => ({
+      ...comp,
+      type_short: getShortType(comp.type),
+      // Убедимся, что indicators есть как массив
+      indicators: comp.indicators || [],
+      indicators_count: comp.indicators_count || 0
+    }))
     
-    // Формируем список всех компетенций
-    allCompetences.value = allResponse.data.competences.map(comp => {
-      const isSelected = currentResponse.data.competences.some(
-        c => c.competence_index === comp.competence_index && c.selected
-      )
-      
-      const selectedComp = currentResponse.data.competences.find(
-        c => c.competence_index === comp.competence_index && c.selected
-      )
-      
-      const type = getCompetenceType(comp.competence_index)
-      
-      return {
-        ...comp,
-        selected: isSelected,
-        type: type,
-        type_short: getShortType(type),
-        indicators_count: selectedComp ? selectedComp.indicators_count : 0,
-        indicators: selectedComp ? selectedComp.indicators : []
-      }
-    })
-    
+    // Сохраняем оригинальные данные для сравнения
     originalCompetences.value = JSON.parse(JSON.stringify(allCompetences.value))
     
     discipline.value = {
@@ -460,7 +455,7 @@ async function loadCompetenceData() {
 
 function onToggleCompetence(competence) {
   if (competence.selected) {
-    // При выборе компетенции создаем пустые индикаторы
+    // При выборе компетенции создаем пустые индикаторы, если их нет
     if (!competence.indicators || competence.indicators.length === 0) {
       competence.indicators = [
         { index: `${competence.competence_index}.1`, name: '' }
@@ -497,11 +492,6 @@ function resetFilters() {
   selectedStatusFilter.value = null
 }
 
-function showCompetenceDetails(competence) {
-  selectedCompetence.value = competence
-  showDetailsDialog.value = true
-}
-
 async function saveChanges() {
   if (!hasChanges.value) {
     $q.notify({
@@ -513,10 +503,9 @@ async function saveChanges() {
     return
   }
 
-  
   saving.value = true
   try {
-    const selectedCompetences = allCompetences.value
+    const selectedCompetencesData = allCompetences.value
       .filter(comp => comp.selected)
       .map(comp => ({
         competence_index: comp.competence_index,
@@ -524,19 +513,17 @@ async function saveChanges() {
         indicators: comp.indicators || []
       }))
     
-    const response = await api.post('/api/competence/update-discipline-competences/', {
-      plan_id: props.planId,
-      discipline_id: props.disciplineId,
-      selected_competences: selectedCompetences
-    })
+    // Используем метод из стора для сохранения
+    await store.updateDisciplineCompetences(selectedCompetencesData)
     
     $q.notify({
       type: 'positive',
-      message: `Успешно сохранено ${selectedCompetences.length} компетенций`,
+      message: `Успешно сохранено ${selectedCompetencesData.length} компетенций`,
       position: 'top-right',
       timeout: 3000
     })
     
+    // Обновляем оригинальные данные
     originalCompetences.value = JSON.parse(JSON.stringify(allCompetences.value))
     
     emit('saved')
