@@ -6,7 +6,7 @@
           <div class="col">
             <h2 class="text-h4 q-ma-none">Схема компетенций</h2>
             <div class="text-subtitle1 text-grey">
-              Соответствие компетенций, дисциплин и семестров изучения
+              Соответствие компетенций, дисциплины и семестров изучения
             </div>
           </div>
           
@@ -66,7 +66,7 @@
             </thead>
             
             <tbody>
-              <template v-for="row in visibleRows" :key="row.id">
+              <template v-for="(row, index) in visibleRows" :key="row.id">
                 <!-- Строка компетенции -->
                 <tr v-if="row.type === 'competence'" class="competence-row">
                   <td :colspan="10" style="background-color: #e3f2fd; border-bottom: 2px solid #bbdefb;">
@@ -82,24 +82,19 @@
                 </tr>
                 
                 <!-- Строка дисциплины -->
-                <tr v-else-if="row.type === 'discipline'" class="discipline-row" :class="{ 'bg-grey-1': rowIndex % 2 === 0 }">
+                <tr v-else-if="row.type === 'discipline'" class="discipline-row" :class="{ 'bg-grey-1': index % 2 === 0 }">
                   <td class="text-center" style="font-weight: 500;">
                     {{ row.discipline_index }}
                   </td>
-                  <td class="text-truncate" style="max-width: 320px;">
+                  <td class="text-wrap" style="max-width: 320px; text-align: left;">
                     {{ row.discipline_name }}
                   </td>
                   <td v-for="semester in [1,2,3,4,5,6,7,8]" :key="semester" :class="`semester-${semester}`">
                     <div class="text-center">
-                      <div v-if="row[`semester_${semester}`] && row[`semester_${semester}`] !== ' '">
-                        <q-chip
-                          size="xs"
-                          :color="getSemesterChipColor(row[`semester_${semester}`])"
-                          text-color="white"
-                          dense
-                        >
+                      <div v-if="row[`semester_${semester}`] && row[`semester_${semester}`] !== ''">
+                        <div class="semester-forms text-weight-medium" style="font-size: 0.9rem;">
                           {{ row[`semester_${semester}`] }}
-                        </q-chip>
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -117,11 +112,21 @@
               </template>
               
               <!-- Нет данных -->
-              <tr v-if="visibleRows.length === 0">
+              <tr v-if="visibleRows.length === 0 && !store.schemaLoading">
                 <td :colspan="10" class="text-center q-py-xl">
                   <div class="full-width row flex-center q-gutter-sm">
                     <q-icon name="info" size="2em" color="grey" />
                     <span>Нет данных для отображения. Проверьте матрицу компетенций.</span>
+                  </div>
+                </td>
+              </tr>
+              
+              <!-- Загрузка -->
+              <tr v-if="store.schemaLoading">
+                <td :colspan="10" class="text-center q-py-xl">
+                  <div class="full-width row flex-center q-gutter-sm">
+                    <q-spinner color="primary" size="2em" />
+                    <span>Загрузка данных схемы...</span>
                   </div>
                 </td>
               </tr>
@@ -134,6 +139,9 @@
           <div class="col">
             <div class="text-caption text-grey">
               Показано: {{ visibleRows.length }} строк ({{ competenceCount }} компетенций, {{ disciplineCount }} дисциплин)
+              <span v-if="store.schemaLoading" class="q-ml-sm">
+                <q-spinner color="primary" size="1em" /> Загрузка...
+              </span>
             </div>
           </div>
         </div>
@@ -153,25 +161,23 @@ const $q = useQuasar()
 const router = useRouter()
 const store = useCompetencePassportStore()
 
-const loading = ref(false)
 const searchFilter = ref('')
-const schemaData = ref([])
 
 // Вычисляемые свойства
 const filteredRows = computed(() => {
   if (!searchFilter.value) {
-    return schemaData.value
+    return store.schemaData || []
   }
   
   const searchLower = searchFilter.value.toLowerCase()
-  return schemaData.value.filter(row => {
+  return (store.schemaData || []).filter(row => {
     if (row.type === 'competence') {
       return row.competence_index.toLowerCase().includes(searchLower) ||
              row.competence_name.toLowerCase().includes(searchLower) ||
              (row.competence_type && row.competence_type.toLowerCase().includes(searchLower))
     } else if (row.type === 'discipline') {
-      return row.discipline_index.toLowerCase().includes(searchLower) ||
-             row.discipline_name.toLowerCase().includes(searchLower)
+      return (row.discipline_index && row.discipline_index.toLowerCase().includes(searchLower)) ||
+             (row.discipline_name && row.discipline_name.toLowerCase().includes(searchLower))
     }
     return true
   })
@@ -182,140 +188,20 @@ const visibleRows = computed(() => {
 })
 
 const competenceCount = computed(() => {
-  return schemaData.value.filter(row => row.type === 'competence').length
+  return (store.schemaData || []).filter(row => row.type === 'competence').length
 })
 
 const disciplineCount = computed(() => {
-  return schemaData.value.filter(row => row.type === 'discipline').length
+  return (store.schemaData || []).filter(row => row.type === 'discipline').length
 })
 
-// Методы
-function getSemesterChipColor(value) {
-  if (!value) return 'grey'
-  
-  // Цвета для разных типов данных в семестрах
-  value = value.toLowerCase()
-  if (value.includes('з') || value.includes('зач')) return 'blue'    // зачет
-  if (value.includes('эк') || value.includes('экз')) return 'red'    // экзамен
-  if (value.includes('кр') || value.includes('курс')) return 'orange' // курсовая работа
-  if (value.includes('пр') || value.includes('практ')) return 'green'  // практика
-  if (value.includes('кп') || value.includes('кр пр')) return 'purple' // курсовой проект
-  
-  return 'primary'
-}
-
 async function loadCompetenceSchema() {
-  loading.value = true
-  
   try {
     if (!store.currentPlanId) {
       throw new Error('План не выбран')
     }
     
-    // 1. Загружаем матрицу компетенций
-    const matrixResponse = await store.fetchCompetenceMatrix(store.currentPlanId)
-    
-    // 2. Загружаем все компетенции плана
-    const competencesResponse = await store.fetchAllCompetences(store.currentPlanId)
-    
-    // 3. Загружаем все дисциплины плана
-    await store.fetchAllDisciplines(store.currentPlanId)
-    
-    // 4. Формируем данные для схемы
-    const competences = competencesResponse.competences || []
-    const matrix = matrixResponse.matrix || []
-    
-    const schemaRows = []
-    
-    // Сортируем компетенции по типу и индексу
-    const sortedCompetences = [...competences].sort((a, b) => {
-      const typeA = getCompetenceType(a.competence_index)
-      const typeB = getCompetenceType(b.competence_index)
-      
-      const typeOrder = {
-        'Универсальная': 1,
-        'Общепрофессиональная': 2,
-        'Профессиональная': 3,
-        'Дополнительная': 4,
-        'Другая': 5
-      }
-      
-      if (typeOrder[typeA] !== typeOrder[typeB]) {
-        return typeOrder[typeA] - typeOrder[typeB]
-      }
-      
-      return a.competence_index.localeCompare(b.competence_index)
-    })
-    
-    // Проходим по всем компетенциям
-    sortedCompetences.forEach(competence => {
-      // Находим дисциплины, которые формируют эту компетенцию
-      const disciplineRows = matrix
-        .filter(item => item.type === 'discipline' && item.competence_indices_list)
-        .filter(item => item.competence_indices_list.includes(competence.competence_index))
-        .map(item => {
-          return {
-            id: `discipline_${item.index}_${competence.competence_index}`,
-            type: 'discipline',
-            discipline_index: item.index,
-            discipline_name: item.name,
-            parent_competence: competence.competence_index,
-            semester_1: ' ',
-            semester_2: ' ',
-            semester_3: ' ',
-            semester_4: ' ',
-            semester_5: ' ',
-            semester_6: ' ',
-            semester_7: ' ',
-            semester_8: ' '
-          }
-        })
-      
-      if (disciplineRows.length > 0) {
-        // Добавляем строку компетенции
-        schemaRows.push({
-          id: `competence_${competence.competence_index}`,
-          type: 'competence',
-          competence_index: competence.competence_index,
-          competence_name: competence.competence,
-          competence_type: getCompetenceType(competence.competence_index)
-        })
-        
-        // Добавляем дисциплины под компетенцией
-        schemaRows.push(...disciplineRows)
-      }
-    })
-    
-    const competencesWithDisciplines = new Set(
-      matrix
-        .filter(item => item.type === 'discipline' && item.competence_indices_list)
-        .flatMap(item => item.competence_indices_list)
-    )
-    
-    const competencesWithoutDisciplines = competences.filter(
-      comp => !competencesWithDisciplines.has(comp.competence_index)
-    )
-    
-    if (competencesWithoutDisciplines.length > 0) {
-      schemaRows.push({
-        id: 'divider_no_disciplines',
-        type: 'divider',
-        label: `Компетенции без дисциплин (${competencesWithoutDisciplines.length})`
-      })
-      
-      competencesWithoutDisciplines.forEach(competence => {
-        schemaRows.push({
-          id: `competence_no_disc_${competence.competence_index}`,
-          type: 'competence',
-          competence_index: competence.competence_index,
-          competence_name: competence.competence,
-          competence_type: getCompetenceType(competence.competence_index),
-          warning: true
-        })
-      })
-    }
-    
-    schemaData.value = schemaRows
+    await store.fetchCompetenceSchema(store.currentPlanId)
     
   } catch (error) {
     console.error('Error loading competence schema:', error)
@@ -324,24 +210,6 @@ async function loadCompetenceSchema() {
       message: `Ошибка загрузки схемы компетенций: ${error.message}`,
       position: 'top-right'
     })
-  } finally {
-    loading.value = false
-  }
-}
-
-function getCompetenceType(competenceIndex) {
-  if (!competenceIndex) return 'Неизвестно'
-  
-  if (competenceIndex.includes('УК') || competenceIndex.startsWith('УК')) {
-    return 'Универсальная'
-  } else if (competenceIndex.includes('ОПК') || competenceIndex.startsWith('ОПК')) {
-    return 'Общепрофессиональная'
-  } else if (competenceIndex.includes('ПК') || competenceIndex.startsWith('ПК')) {
-    return 'Профессиональная'
-  } else if (competenceIndex.includes('ДК') || competenceIndex.startsWith('ДК')) {
-    return 'Дополнительная'
-  } else {
-    return 'Другая'
   }
 }
 
@@ -455,31 +323,34 @@ onMounted(() => {
       overflow-wrap: break-word;
       white-space: normal;
       text-align: left;
+      min-height: 40px;
+      vertical-align: top;
+      padding-top: 10px;
+      padding-bottom: 10px;
     }
     
-    // Семестры
     &.semester-1,
-    &.semester-2 {
-      background-color: rgba(232, 245, 233, 0.1) !important;
-    }
-    
+    &.semester-2,
     &.semester-3,
-    &.semester-4 {
-      background-color: rgba(227, 242, 253, 0.1) !important;
-    }
-    
+    &.semester-4,
     &.semester-5,
-    &.semester-6 {
-      background-color: rgba(255, 243, 224, 0.1) !important;
-    }
-    
+    &.semester-6,
     &.semester-7,
     &.semester-8 {
-      background-color: rgba(252, 228, 236, 0.1) !important;
+      background-color: white !important;
+    }
+    
+    .semester-forms {
+      font-size: 0.9rem;
+      font-weight: 500;
+      line-height: 1.2;
+      color: #333;
+      padding: 2px 4px;
+      border-radius: 4px;
+      display: inline-block;
     }
   }
   
-  // Строка компетенции
   .competence-row {
     td {
       padding: 12px !important;
@@ -491,7 +362,6 @@ onMounted(() => {
     }
   }
   
-  // Строка дисциплины
   .discipline-row {
     transition: background-color 0.2s;
     
@@ -500,7 +370,6 @@ onMounted(() => {
     }
   }
   
-  // Разделитель
   .divider-row {
     td {
       padding: 8px !important;
@@ -510,12 +379,6 @@ onMounted(() => {
   .bg-grey-1 {
     background-color: #fafafa !important;
   }
-}
-
-.q-chip {
-  min-height: 20px;
-  font-size: 10px;
-  padding: 0 6px;
 }
 
 @media (max-width: 1200px) {
@@ -534,8 +397,12 @@ onMounted(() => {
       padding: 4px 6px;
     }
     
-    td.text-truncate {
+    td.text-wrap {
       max-width: 250px;
+    }
+    
+    .semester-forms {
+      font-size: 0.8rem;
     }
   }
 }

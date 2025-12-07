@@ -17,6 +17,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   const disciplineCompetences = ref([])
   const editingDiscipline = ref(null)
   const saving = ref(false)
+  const schemaData = ref([])
+  const schemaLoading = ref(false)
   
   // Фильтры
   const textFilter = ref('')
@@ -346,6 +348,27 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
+  async function fetchCompetenceSchema(planId) {
+    schemaLoading.value = true
+    try {
+      if (!planId) {
+        throw new Error('Plan ID is required')
+      }
+      
+      const response = await api.get('/api/competence/competence-schema-data/', {
+        params: { plan_id: planId }
+      })
+      
+      schemaData.value = response.data.schema_rows || []
+      return response.data
+    } catch (error) {
+      console.error('Error fetching competence schema:', error)
+      throw error
+    } finally {
+      schemaLoading.value = false
+    }
+  }
+
   return {
     programList,
     groupsList,
@@ -381,6 +404,10 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     validateCompetenceMatrix,
     checkMatrixValidityFromStorage,
     resetMatrixValidation,
-    getValidationStatus
+    getValidationStatus,
+
+    schemaData,
+    schemaLoading,
+    fetchCompetenceSchema,
   }
 })

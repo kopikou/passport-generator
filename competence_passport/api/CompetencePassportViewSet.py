@@ -11,7 +11,7 @@ from generator.services.generator_service import GeneratorService
 from app.utils import UserProfileHasPermission
 from auths.models import Permissions
 from generator.permissions import CanViewRPDProgram
-from rpd.models.rpd_models import PlanData, LinesData, LinesIndicators
+from rpd.models.rpd_models import PlanData, LinesData, LinesIndicators, SemesterData
 import logging
 logger = logging.getLogger(__name__)
 
@@ -595,3 +595,191 @@ class CompetencePassportViewSet(
             return 'Дополнительная'
         else:
             return 'Другая'
+        
+    @action(methods=['GET'], detail=False, url_path='competence-schema-data')
+    def get_competence_schema_data(self, request):
+        """Получение данных для схемы компетенций с формами аттестации"""
+        try:
+            plan_id = self.request.query_params.get('plan_id')
+            
+            if not plan_id:
+                return Response(
+                    {'error': 'ID плана не указан'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Получаем план
+            try:
+                plan = PlanData.objects.get(mira_id=plan_id)
+            except PlanData.DoesNotExist:
+                return Response(
+                    {'error': 'Учебный план не найден в базе данных'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            all_competences = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence__isnull=False,
+                competence_index__isnull=False
+            ).values(
+                'competence_index',
+                'competence'
+            ).distinct()
+            
+            competences_list = list(all_competences)
+            
+            def sort_competences(comp_list):
+                def get_competence_type(competence_index):
+                    if not competence_index:
+                        return 'Другая'
+                    
+                    if 'УК' in competence_index or competence_index.startswith('УК'):
+                        return 'Универсальная'
+                    elif 'ОПК' in competence_index or competence_index.startswith('ОПК'):
+                        return 'Общепрофессиональная'
+                    elif 'ПК' in competence_index or competence_index.startswith('ПК'):
+                        return 'Профессиональная'
+                    elif 'ДК' in competence_index or competence_index.startswith('ДК'):
+                        return 'Дополнительная'
+                    else:
+                        return 'Другая'
+                
+                type_order = {
+                    'Универсальная': 1,
+                    'Общепрофессиональная': 2,
+                    'Профессиональная': 3,
+                    'Дополнительная': 4,
+                    'Другая': 5
+                }
+                
+                return sorted(comp_list, key=lambda x: (
+                    type_order.get(get_competence_type(x['competence_index']), 99),
+                    x['competence_index']
+                ))
+            
+            competences = sort_competences(competences_list)
+            
+            # Получаем дисциплины с семестрами и индикаторами
+            disciplines = LinesData.objects.filter(
+                plan=plan
+            ).prefetch_related(
+                Prefetch(
+                    'semesters',
+                    queryset=SemesterData.objects.all().order_by('num')
+                ),
+                Prefetch(
+                    'indicators',
+                    queryset=LinesIndicators.objects.filter(
+                        competence__isnull=False,
+                        competence_index__isnull=False
+                    )
+                )
+            ).order_by('newdisid')
+            
+            schema_rows = []
+            
+            for comp in competences:
+                comp_index = comp['competence_index']
+                comp_name = comp['competence']
+                comp_type = self._get_competence_type(comp_index)
+                
+                schema_rows.append({
+                    'type': 'competence',
+                    'competence_index': comp_index,
+                    'competence_name': comp_name,
+                    'competence_type': comp_type
+                })
+                
+                # Находим дисциплины, формирующие эту компетенцию
+                discipline_rows = []
+                for disc in disciplines:
+                    has_competence = any(
+                        indicator.competence_index == comp_index 
+                        for indicator in disc.indicators.all()
+                    )
+                    
+                    if has_competence:
+                        semester_data = {}
+                        
+                        for sem in disc.semesters.all():
+                            forms = []
+                            if sem.ekz:  # Экзамен
+                                forms.append('Э')
+                            if sem.zach:  # Зачет
+                                forms.append('З')
+                            if sem.zacho and sem.zacho > 0:  # Зачет с оценкой
+                                forms.append('Зо')
+                            if sem.kp:  # Курсовой проект
+                                forms.append('КП')
+                            if sem.kr:  # Курсовая работа
+                                forms.append('КР')
+                            
+                            if forms:
+                                semester_data[f'semester_{sem.num}'] = ', '.join(forms)
+                            else:
+                                semester_data[f'semester_{sem.num}'] = ''
+                        
+                        # Заполняем все 8 семестров
+                        full_semester_data = {}
+                        for i in range(1, 9):
+                            key = f'semester_{i}'
+                            full_semester_data[key] = semester_data.get(key, '')
+                        
+                        discipline_rows.append({
+                            'type': 'discipline',
+                            'discipline_index': disc.newdisid or '',
+                            'discipline_name': disc.dis,
+                            'parent_competence': comp_index,
+                            **full_semester_data
+                        })
+                
+                if discipline_rows:
+                    schema_rows.extend(discipline_rows)
+                else:
+                    schema_rows.pop()
+            
+            all_disciplines_with_competences = LinesData.objects.filter(
+                plan=plan,
+                indicators__competence_index__isnull=False
+            ).distinct()
+            
+            all_competence_indices = set()
+            for disc in all_disciplines_with_competences:
+                for indicator in disc.indicators.all():
+                    if indicator.competence_index:
+                        all_competence_indices.add(indicator.competence_index)
+            
+            competences_without_disciplines = []
+            for comp in competences:
+                if comp['competence_index'] not in all_competence_indices:
+                    competences_without_disciplines.append(comp)
+            
+            if competences_without_disciplines:
+                schema_rows.append({
+                    'type': 'divider',
+                    'label': f'Компетенции без дисциплин ({len(competences_without_disciplines)})'
+                })
+                
+                for comp in competences_without_disciplines:
+                    schema_rows.append({
+                        'type': 'competence',
+                        'competence_index': comp['competence_index'],
+                        'competence_name': comp['competence'],
+                        'competence_type': self._get_competence_type(comp['competence_index']),
+                        'warning': True
+                    })
+            
+            return Response({
+                'plan_id': plan.id,
+                'plan_mira_id': plan.mira_id,
+                'plan_name': plan.planname,
+                'abbrprofile': plan.abbrprofile,
+                'schema_rows': schema_rows
+            })
+            
+        except Exception as e:
+            logger.error(f"Error fetching competence schema data for plan {plan_id}: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при получении данных схемы компетенций: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
