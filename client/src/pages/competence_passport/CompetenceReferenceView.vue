@@ -62,8 +62,10 @@
       </template>
 
       <template v-slot:body-cell-competence="props">
-        <q-td :props="props">
-          {{ props.value }}
+        <q-td :props="props" class="competence-content-cell">
+          <div class="competence-text">
+            {{ props.value }}
+          </div>
         </q-td>
       </template>
 
@@ -103,20 +105,23 @@ const columns = [
     required: true,
     label: 'Индекс компетенции',
     align: 'left',
-    field: row => row.competence_index
+    field: row => row.competence_index,
+    style: 'width: 150px; min-width: 150px;'
   },
   {
     name: 'competence',
     required: true,
     label: 'Содержание компетенции',
     align: 'left',
-    field: row => row.competence
+    field: row => row.competence,
+    style: 'min-width: 800px;'
   },
   {
     name: 'type',
     label: 'Тип',
     align: 'center',
-    field: row => getCompetenceType(row.competence_index)
+    field: row => getCompetenceType(row.competence_index),
+    style: 'width: 180px; min-width: 180px;'
   }
 ]
 
@@ -238,5 +243,28 @@ onMounted(() => {
 
 .text-weight-bold {
   font-weight: 600;
+}
+
+.competence-content-cell {
+  max-width: 800px;
+}
+
+.competence-text {
+  word-wrap: break-word;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+:deep(.q-table) {
+  table-layout: fixed;
+}
+
+:deep(.q-table th),
+:deep(.q-table td) {
+  vertical-align: top;
+}
+
+:deep(.q-table__card) {
+  overflow-x: auto;
 }
 </style>

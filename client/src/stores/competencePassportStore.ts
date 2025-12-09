@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from 'boot/axios'
 import _ from 'lodash'
+import { LocalStorage, useQuasar } from 'quasar';
 
 export const useCompetencePassportStore = defineStore('competencePassport', () => {
   const programList = ref([])
@@ -25,7 +26,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   const groupTextFilter = ref('')
   const statusFilter = ref('')
   const myFilter = ref(0)
-  const currentPlanId = ref(null)
+  const currentPlanId =  ref(LocalStorage.getItem('current_plan_id') || null)
 
   // Валидация матрицы
   const matrixValidation = ref({
@@ -120,6 +121,16 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   })
 
   // Действия
+  function setCurrentPlanId(planId) {
+    currentPlanId.value = planId;
+    if (planId) {
+      LocalStorage.set('current_plan_id', planId);
+    } else {
+      LocalStorage.remove('current_plan_id');
+    }
+  }
+
+
   async function fetchGroupsList() {
     _setLoadingState(true)
     try {
@@ -138,7 +149,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   async function fetchGroupPrograms(planId) {
     _setLoadingState(true)
     try {
-      currentPlanId.value = planId
+      setCurrentPlanId(planId);
       const response = await api.get(`/api/competence/${planId}/group-program/`)
       currentGroupPrograms.value = response.data
     } catch (error) {
@@ -387,6 +398,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     statusFilter,
     myFilter,
     currentPlanId,
+
+    setCurrentPlanId,
     
     filteredPrograms,
     filteredGroupPrograms,
