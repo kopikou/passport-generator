@@ -12,6 +12,7 @@ from app.utils import UserProfileHasPermission
 from auths.models import Permissions
 from generator.permissions import CanViewRPDProgram
 from rpd.models.rpd_models import PlanData, LinesData, LinesIndicators, SemesterData
+from competence_passport.models import Scheme
 import logging
 import re
 
@@ -647,6 +648,222 @@ class CompetencePassportViewSet(
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
+    @action(methods=['GET'], detail=False, url_path='discipline-semester-schemes')
+    def get_discipline_semester_schemes(self, request):
+        """Получение схем форм аттестации для дисциплины по компетенциям"""
+        try:
+            plan_id = self.request.query_params.get('plan_id')
+            discipline_id = self.request.query_params.get('discipline_id')
+            
+            if not plan_id or not discipline_id:
+                return Response(
+                    {'error': 'ID плана и дисциплины обязательны'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            plan, error_response = self._get_plan_or_error_response(plan_id)
+            if error_response:
+                return error_response
+            
+            discipline, error_response = self._get_discipline_or_error_response(plan, discipline_id)
+            if error_response:
+                return error_response
+            
+            # Получаем все компетенции дисциплины
+            competence_indicators = LinesIndicators.objects.filter(
+                planlineid=discipline,
+                competence_index__isnull=False
+            ).values('competence_index', 'competence').distinct()
+            
+            # Получаем существующие схемы для этой дисциплины
+            existing_schemes = Scheme.objects.filter(
+                planlineid=discipline
+            ).order_by('competence_index', 'semester')
+            
+            # Группируем схемы по компетенциям
+            schemes_by_competence = {}
+            for scheme in existing_schemes:
+                comp_key = scheme.competence_index
+                if comp_key not in schemes_by_competence:
+                    schemes_by_competence[comp_key] = []
+                schemes_by_competence[comp_key].append({
+                    'semester': scheme.semester,
+                    'ekz': scheme.ekz or False,
+                    'zach': scheme.zach or False,
+                    'zacho': scheme.zacho or False,
+                    'kp': scheme.kp or False,
+                    'kr': scheme.kr or False,
+                    'id': scheme.id
+                })
+            
+            semesters = SemesterData.objects.filter(planlineid=discipline).order_by('num')
+            semester_numbers = [sem.num for sem in semesters]
+            
+            # Формируем данные по компетенциям
+            competence_schemes = []
+            for comp in competence_indicators:
+                comp_schemes = schemes_by_competence.get(comp['competence_index'], [])
+                
+                # Создаем структуру для всех семестров дисциплины
+                semesters_data = {}
+                for sem_num in range(1, 9):  # Все возможные семестры
+                    forms = []
+                    scheme_id = None
+                    
+                    # Ищем схему для этого семестра
+                    for scheme in comp_schemes:
+                        if scheme['semester'] == sem_num:
+                            if scheme['ekz']: forms.append('Э')
+                            if scheme['zach']: forms.append('З')
+                            if scheme['zacho']: forms.append('Зо')
+                            if scheme['kp']: forms.append('КП')
+                            if scheme['kr']: forms.append('КР')
+                            scheme_id = scheme['id']
+                            break
+                    
+                    semesters_data[f'semester_{sem_num}'] = {
+                        'forms': forms,
+                        'forms_display': ', '.join(forms) if forms else '',
+                        'scheme_id': scheme_id,
+                        'has_scheme': len(forms) > 0
+                    }
+                
+                competence_schemes.append({
+                    'competence_index': comp['competence_index'],
+                    'competence': comp['competence'],
+                    'semesters': semesters_data
+                })
+            
+            return Response({
+                'plan_id': plan.id,
+                'discipline_id': discipline.id,
+                'discipline_index': discipline.newdisid,
+                'discipline_name': discipline.dis,
+                'semester_numbers': semester_numbers,
+                'competence_schemes': competence_schemes
+            })
+            
+        except Exception as e:
+            logger.error(f"Error fetching discipline semester schemes: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при получении схем форм аттестации: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(methods=['POST'], detail=False, url_path='update-semester-scheme')
+    def update_semester_scheme(self, request):
+        """Обновление схемы формы аттестации для компетенции в семестре"""
+        try:
+            plan_id = request.data.get('plan_id')
+            discipline_id = request.data.get('discipline_id')
+            competence_index = request.data.get('competence_index')
+            semester = request.data.get('semester')
+            forms = request.data.get('forms', {})
+            
+            if not all([plan_id, discipline_id, competence_index, semester]):
+                return Response(
+                    {'error': 'Все обязательные поля должны быть заполнены'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            plan, error_response = self._get_plan_or_error_response(plan_id)
+            if error_response:
+                return error_response
+            
+            discipline, error_response = self._get_discipline_or_error_response(plan, discipline_id)
+            if error_response:
+                return error_response
+            
+            forms_converted = {}
+            for key in ['ekz', 'zach', 'zacho', 'kp', 'kr']:
+                value = forms.get(key, False)
+                forms_converted[key] = bool(value)
+            
+            has_any_form = any(forms_converted.values())
+            
+            with transaction.atomic():
+                # Проверяем, существует ли компетенция для этой дисциплины
+                competence_exists = LinesIndicators.objects.filter(
+                    planlineid=discipline,
+                    competence_index=competence_index
+                ).exists()
+                
+                if not competence_exists:
+                    return Response(
+                        {'error': 'Компетенция не привязана к данной дисциплине'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                semester_exists = SemesterData.objects.filter(
+                    planlineid=discipline,
+                    num=semester
+                ).exists()
+                
+                if not semester_exists:
+                    return Response(
+                        {'error': 'Указанный семестр не существует для данной дисциплины'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                competence_name = None
+                competence_obj = LinesIndicators.objects.filter(
+                    planlineid=discipline,
+                    competence_index=competence_index
+                ).first()
+                if competence_obj:
+                    competence_name = competence_obj.competence
+                
+                if has_any_form:
+                    # Создаем или обновляем запись
+                    scheme, created = Scheme.objects.update_or_create(
+                        planlineid=discipline,
+                        competence_index=competence_index,
+                        semester=semester,
+                        defaults={
+                            'competence': competence_name or competence_index,
+                            'ekz': forms_converted['ekz'],
+                            'zach': forms_converted['zach'],
+                            'zacho': forms_converted['zacho'],
+                            'kp': forms_converted['kp'],
+                            'kr': forms_converted['kr']
+                        }
+                    )
+                    scheme_id = scheme.id
+                else:
+                    # Удаляем запись, если она существует
+                    deleted_count, _ = Scheme.objects.filter(
+                        planlineid=discipline,
+                        competence_index=competence_index,
+                        semester=semester
+                    ).delete()
+                    
+                    scheme_id = None
+                    created = False
+                
+                # Формируем строку для отображения
+                forms_display = []
+                if forms_converted['ekz']: forms_display.append('Э')
+                if forms_converted['zach']: forms_display.append('З')
+                if forms_converted['zacho']: forms_display.append('Зо')
+                if forms_converted['kp']: forms_display.append('КП')
+                if forms_converted['kr']: forms_display.append('КР')
+                
+                return Response({
+                    'success': True,
+                    'scheme_id': scheme_id,
+                    'created': created,
+                    'forms_display': ', '.join(forms_display) if forms_display else '',
+                    'has_forms': has_any_form,
+                    'message': 'Схема успешно обновлена'
+                })
+                
+        except Exception as e:
+            logger.error(f"Error updating semester scheme: {str(e)}", exc_info=True)
+            return Response(
+                {'error': f'Ошибка при обновлении схемы: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
     @action(methods=['GET'], detail=False, url_path='competence-schema-data')
     def get_competence_schema_data(self, request):
         """Получение данных для схемы компетенций с формами аттестации"""
@@ -678,6 +895,10 @@ class CompetencePassportViewSet(
                         competence__isnull=False,
                         competence_index__isnull=False
                     )
+                ),
+                Prefetch(
+                    'competence_schemes',
+                    queryset=Scheme.objects.all()
                 )
             ).order_by('newdisid')
             
@@ -693,6 +914,8 @@ class CompetencePassportViewSet(
                 'Б1.В',
                 'Б1.В.01',
                 'Б1.В.02',
+                'Б1.В.02.ДВ.01',
+                'Б1.В.02.ДВ.02',
                 'Б1.В.03',
                 'Б2',
                 'Б2.Б',
@@ -712,7 +935,8 @@ class CompetencePassportViewSet(
                     'type': 'competence',
                     'competence_index': comp_index,
                     'competence_name': comp_name,
-                    'competence_type': comp_type
+                    'competence_type': comp_type,
+                    'id': f"comp_{comp_index.replace('.', '_').replace('-', '_')}"
                 })
                 
                 # Находим дисциплины, формирующие эту компетенцию
@@ -727,36 +951,41 @@ class CompetencePassportViewSet(
                     )
                     
                     if has_competence:
-                        semester_data = {}
-                        
-                        for sem in disc.semesters.all():
-                            forms = []
-                            if sem.ekz:  # Экзамен
-                                forms.append('Э')
-                            if sem.zach:  # Зачет
-                                forms.append('З')
-                            if sem.zacho and sem.zacho > 0:  # Зачет с оценкой
-                                forms.append('Зо')
-                            if sem.kp:  # Курсовой проект
-                                forms.append('КП')
-                            if sem.kr:  # Курсовая работа
-                                forms.append('КР')
-                            
-                            if forms:
-                                semester_data[f'semester_{sem.num}'] = ', '.join(forms)
-                            else:
-                                semester_data[f'semester_{sem.num}'] = ''
+                        # Получаем схемы для этой компетенции и дисциплины
+                        competence_schemes = {}
+                        for scheme in disc.competence_schemes.all():
+                            if scheme.competence_index == comp_index:
+                                forms = []
+                                if scheme.ekz: forms.append('Э')
+                                if scheme.zach: forms.append('З')
+                                if scheme.zacho: forms.append('Зо')
+                                if scheme.kp: forms.append('КП')
+                                if scheme.kr: forms.append('КР')
+                                
+                                competence_schemes[scheme.semester] = {
+                                    'forms': forms,
+                                    'forms_display': ', '.join(forms) if forms else '',
+                                    'has_custom_scheme': len(forms) > 0
+                                }
                         
                         # Заполняем все 8 семестров
                         full_semester_data = {}
                         for i in range(1, 9):
                             key = f'semester_{i}'
-                            full_semester_data[key] = semester_data.get(key, '')
+                            if i in competence_schemes:
+                                full_semester_data[key] = competence_schemes[i]
+                            else:
+                                full_semester_data[key] = {
+                                    'forms': [],
+                                    'forms_display': '',
+                                    'has_custom_scheme': False
+                                }
                         
                         discipline_rows.append({
                             'type': 'discipline',
                             'discipline_index': disc.newdisid or '',
                             'discipline_name': disc.dis,
+                            'discipline_id': disc.id,
                             'parent_competence': comp_index,
                             **full_semester_data
                         })

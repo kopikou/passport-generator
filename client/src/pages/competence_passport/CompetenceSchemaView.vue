@@ -89,12 +89,21 @@
                   <td class="text-wrap" style="max-width: 320px; text-align: left;">
                     {{ row.discipline_name }}
                   </td>
-                  <td v-for="semester in [1,2,3,4,5,6,7,8]" :key="semester" :class="`semester-${semester}`">
+                  <td 
+                    v-for="semester in [1,2,3,4,5,6,7,8]" 
+                    :key="semester" 
+                    :class="`semester-${semester}`"
+                    @click="openEditDialog(row, semester)"
+                    style="cursor: pointer; position: relative;"
+                  >
                     <div class="text-center">
                       <div v-if="row[`semester_${semester}`] && row[`semester_${semester}`] !== ''">
                         <div class="semester-forms text-weight-medium" style="font-size: 0.9rem;">
-                          {{ row[`semester_${semester}`] }}
+                          {{ row[`semester_${semester}`].forms_display }}
                         </div>
+                      </div>
+                      <div v-else class="text-grey-6 text-caption">
+                        <q-icon name="edit" size="xs" />
                       </div>
                     </div>
                   </td>
@@ -145,6 +154,12 @@
             </div>
           </div>
         </div>
+
+        <edit-semester-forms-dialog
+          v-model="editDialogVisible"
+          :editing-data="editingData"
+          @saved="handleFormsSaved"
+        />
       </div>
     </template>
   </top-navigation-menu>
@@ -155,6 +170,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
 import { useRouter } from 'vue-router'
 import TopNavigationMenu from './components/TopNavigationMenu.vue'
+import EditSemesterFormsDialog from './components/EditSemesterFormsDialog.vue'
 import { useQuasar } from 'quasar'
 
 const $q = useQuasar()
@@ -162,6 +178,9 @@ const router = useRouter()
 const store = useCompetencePassportStore()
 
 const searchFilter = ref('')
+
+const editDialogVisible = ref(false)
+const editingData = ref({})
 
 // Вычисляемые свойства
 const filteredRows = computed(() => {
@@ -211,6 +230,33 @@ async function loadCompetenceSchema() {
       position: 'top-right'
     })
   }
+}
+
+function openEditDialog(row, semester) {
+  editingData.value = {
+    discipline_id: row.discipline_id,
+    discipline_index: row.discipline_index,
+    discipline_name: row.discipline_name,
+    competence_index: row.parent_competence,
+    competence: getCompetenceName(row.parent_competence),
+    semester: semester,
+    forms: row[`semester_${semester}`]?.forms || [],
+    planId: store.currentPlanId
+  }
+  
+  editDialogVisible.value = true
+}
+
+function getCompetenceName(competenceIndex) {
+  const schemaData = store.schemaData || []
+  const competence = schemaData.find(item => 
+    item.type === 'competence' && item.competence_index === competenceIndex
+  )
+  return competence ? competence.competence_name : ''
+}
+
+function handleFormsSaved() {
+  loadCompetenceSchema()
 }
 
 // Хуки жизненного цикла

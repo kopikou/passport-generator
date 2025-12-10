@@ -37,6 +37,11 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     validationInProgress: false
   })
 
+  const editingScheme = ref(null)
+  const schemeLoading = ref(false)
+  const disciplineSchemes = ref([])
+
+
   // Вспомогательные функции
   const _getGroupListParams = () => {
     return {
@@ -386,6 +391,67 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
+  async function fetchDisciplineSchemes(planId, disciplineId) {
+    _setLoadingState(true, schemeLoading)
+    try {
+      if (!planId || !disciplineId) {
+        throw new Error('Plan ID and Discipline ID are required')
+      }
+      
+      const response = await api.get('/api/competence/discipline-semester-schemes/', {
+        params: { 
+          plan_id: planId,
+          discipline_id: disciplineId
+        }
+      })
+      
+      disciplineSchemes.value = response.data.competence_schemes || []
+      
+      return response.data
+    } catch (error) {
+      _handleApiError(error, 'fetching discipline schemes')
+      _resetData(disciplineSchemes)
+    } finally {
+      _setLoadingState(false, schemeLoading)
+    }
+  }
+
+  async function updateSemesterScheme(payload) {
+    _setLoadingState(true, saving)
+    try {
+      const response = await api.post(
+        '/api/competence/update-semester-scheme/', 
+        payload
+      )
+
+      if (editingDiscipline.value) {
+        await fetchDisciplineSchemes(
+          editingDiscipline.value.planId,
+          editingDiscipline.value.id
+        )
+      }
+      
+      // Обновляем схему компетенций
+      if (currentPlanId.value) {
+        await fetchCompetenceSchema(currentPlanId.value)
+      }
+      
+      return response.data
+    } catch (error) {
+      _handleApiError(error, 'updating semester scheme')
+    } finally {
+      _setLoadingState(false, saving)
+    }
+  }
+
+  function setEditingScheme(data) {
+    editingScheme.value = data
+  }
+
+  function clearEditingScheme() {
+    editingScheme.value = null
+  }
+
   return {
     programList,
     groupsList,
@@ -432,5 +498,13 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     schemaData,
     schemaLoading,
     fetchCompetenceSchema,
+    editingScheme,
+
+    schemeLoading,
+    disciplineSchemes,
+    fetchDisciplineSchemes,
+    updateSemesterScheme,
+    setEditingScheme,
+    clearEditingScheme,
   }
 })
