@@ -70,7 +70,7 @@
 
       <template v-slot:body-cell-types="props">
         <q-td :props="props">
-          <div class="column q-gap-y-sm" style="min-height: 60px; padding: 8px 0;">
+          <div class="column q-gap-y-sm" style="min-height: 60px; padding: 8px 0; align-items: center;">
             <q-badge 
               v-for="type in props.value" 
               :key="type"
@@ -97,6 +97,33 @@ const disciplines = ref([])
 const searchFilter = ref('')
 const selectedTypes = ref([]) 
 const currentPlan = ref(null)
+
+// Определяем группы, которые нужно исключить
+const groupsToExclude = [
+  'Б1',
+  'Б1.Б',
+  'Б1.Б.01',
+  'Б1.Б.02',
+  'Б1.Б.03',
+  'Б1.Б.04',
+  'Б1.Б.05',
+  'Б1.В',
+  'Б1.В.01',
+  'Б1.В.02',
+  'Б1.В.03',
+  'Б2',
+  'Б2.Б',
+  'Б2.В',
+  'Б3',
+  'ФТД'
+]
+
+// Функция для проверки, является ли индекс обобщающей группой
+function isExcludedGroup(disciplineIndex) {
+  if (!disciplineIndex) return false
+  
+  return groupsToExclude.some(group => disciplineIndex === group)
+}
 
 // Цветовая схема для всех типов
 const typeColors = {
@@ -156,6 +183,10 @@ const pagination = ref({
 function getDisciplineTypes(disciplineIndex) {
   if (!disciplineIndex) return ['Не указан']
   
+  if (isExcludedGroup(disciplineIndex)) {
+    return ['Обобщающая группа']
+  }
+  
   const types = []
   
   // Основные категории
@@ -174,7 +205,6 @@ function getDisciplineTypes(disciplineIndex) {
   if (disciplineIndex.includes('Б1.В.02')) types.push('Модуль профильной подготовки')
   if (disciplineIndex.includes('Б1.В.03')) types.push('Модуль дополнительного профиля')
   
-  // Если нет конкретных типов, но есть общие категории
   if (types.length === 0 && (disciplineIndex.includes('Б1.Б') || disciplineIndex.includes('Б1.В'))) {
     types.push('Другой')
   }
@@ -189,19 +219,22 @@ function getTypeColor(type) {
 const filteredDisciplines = computed(() => {
   let filtered = disciplines.value
   
+  filtered = filtered.filter(disc => !isExcludedGroup(disc.newdisid))
+  
   // Фильтр по поисковому запросу
   if (searchFilter.value) {
     const searchLower = searchFilter.value.toLowerCase()
     filtered = filtered.filter(disc => 
       disc.dis.toLowerCase().includes(searchLower) ||
-      disc.newdisid.toLowerCase().includes(searchLower)
+      (disc.newdisid && disc.newdisid.toLowerCase().includes(searchLower))
     )
   }
   
-  // Фильтр по выбранным типам
   if (selectedTypes.value && selectedTypes.value.length > 0) {
     filtered = filtered.filter(disc => {
       const discTypes = getDisciplineTypes(disc.newdisid)
+      // Исключаем обобщающие группы из фильтрации по типам
+      if (discTypes.includes('Обобщающая группа')) return false
       return selectedTypes.value.some(selectedType => 
         discTypes.includes(selectedType)
       )

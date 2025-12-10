@@ -15,7 +15,7 @@
           dense
           outlined
           clearable
-          style="min-width: 200px;"
+          style="min-width: 220px;"
         />
       </div>
       <div class="col-auto">
@@ -39,14 +39,18 @@
       row-key="id"
       :loading="loading"
       :pagination="pagination"
-      binary-state-sort
       flat
       bordered
+      :no-data-label="noDataMessage"
     >
       <template v-slot:top>
-        <div class="text-h6">Всего компетенций: {{ filteredCompetences.length }}</div>
+        <div class="text-h6">
+          Всего компетенций: {{ filteredCompetences.length }}
+          <template v-if="filteredCompetences.length !== competences.length">
+            (отфильтровано из {{ competences.length }})
+          </template>
+        </div>
         <q-space />
-        
       </template>
 
       <template v-slot:body-cell-competence_index="props">
@@ -58,8 +62,10 @@
       </template>
 
       <template v-slot:body-cell-competence="props">
-        <q-td :props="props">
-          {{ props.value }}
+        <q-td :props="props" class="competence-content-cell">
+          <div class="competence-text">
+            {{ props.value }}
+          </div>
         </q-td>
       </template>
 
@@ -85,10 +91,12 @@ const competenceTypeFilter = ref(null)
 const searchFilter = ref('')
 const currentPlan = ref(null)
 
+// Опции для фильтра по типам компетенций
 const competenceTypeOptions = [
-  { label: 'УК - Универсальные компетенции', value: 'УК' },
-  { label: 'ОПК - Общепрофессиональные компетенции', value: 'ОПК' },
-  { label: 'ПК - Профессиональные компетенции', value: 'ПК' }
+  { label: 'Универсальные компетенции', value: 'Универсальная' },
+  { label: 'Общепрофессиональные компетенции', value: 'Общепрофессиональная' },
+  { label: 'Профессиональные компетенции', value: 'Профессиональная' },
+  { label: 'Дополнительные компетенции', value: 'Дополнительная' }
 ]
 
 const columns = [
@@ -98,7 +106,7 @@ const columns = [
     label: 'Индекс компетенции',
     align: 'left',
     field: row => row.competence_index,
-    sortable: true
+    style: 'width: 150px; min-width: 150px;'
   },
   {
     name: 'competence',
@@ -106,40 +114,58 @@ const columns = [
     label: 'Содержание компетенции',
     align: 'left',
     field: row => row.competence,
-    sortable: true
+    style: 'min-width: 800px;'
   },
   {
     name: 'type',
     label: 'Тип',
     align: 'center',
     field: row => getCompetenceType(row.competence_index),
-    sortable: true
+    style: 'width: 180px; min-width: 180px;'
   }
 ]
 
 const pagination = ref({
-  sortBy: 'competence_index',
-  descending: false,
   page: 1,
   rowsPerPage: 25
 })
 
+const noDataMessage = computed(() => {
+  if (competences.value.length === 0) {
+    return 'Нет данных о компетенциях'
+  }
+  if (filteredCompetences.value.length === 0) {
+    return 'Нет компетенций, соответствующих фильтрам'
+  }
+  return 'Нет данных'
+})
+
 function getCompetenceType(competenceIndex) {
-  if (!competenceIndex) return 'Не указан'
+  if (!competenceIndex) return 'Неизвестно'
   
-  if (competenceIndex.includes('УК')) return 'УК'
-  if (competenceIndex.includes('ОПК')) return 'ОПК'
-  if (competenceIndex.includes('ПК')) return 'ПК'
+  if (competenceIndex.includes('УК') || competenceIndex.startsWith('УК')) {
+    return 'Универсальная'
+  }
+  if (competenceIndex.includes('ОПК') || competenceIndex.startsWith('ОПК')) {
+    return 'Общепрофессиональная'
+  }
+  if (competenceIndex.includes('ПК') || competenceIndex.startsWith('ПК')) {
+    return 'Профессиональная'
+  }
+  if (competenceIndex.includes('ДК') || competenceIndex.startsWith('ДК')) {
+    return 'Дополнительная'
+  }
   
-  return 'Другой'
+  return 'Другая'
 }
 
 function getTypeColor(type) {
   const colors = {
-    'УК': 'blue',
-    'ОПК': 'green',
-    'ПК': 'orange',
-    'Другой': 'grey'
+    'Универсальная': 'blue',
+    'Общепрофессиональная': 'green',
+    'Профессиональная': 'orange',
+    'Дополнительная': 'purple',
+    'Другая': 'grey'
   }
   return colors[type] || 'grey'
 }
@@ -147,14 +173,12 @@ function getTypeColor(type) {
 const filteredCompetences = computed(() => {
   let filtered = competences.value
   
-  // Фильтр по типу компетенции
   if (competenceTypeFilter.value) {
     filtered = filtered.filter(comp => 
       getCompetenceType(comp.competence_index) === competenceTypeFilter.value.value
     )
   }
   
-  // Поиск по тексту
   if (searchFilter.value) {
     const searchLower = searchFilter.value.toLowerCase()
     filtered = filtered.filter(comp => 
@@ -174,17 +198,19 @@ async function loadCompetences() {
     if (!planId) {
       throw new Error('Plan ID is not available. Please select a plan first.')
     }
-
     
     const response = await store.fetchAllCompetences(planId)
+    
     competences.value = response.competences || []
     currentPlan.value = {
       planname: response.plan_name,
       abbrprofile: response.abbrprofile
     }
     
+    
   } catch (error) {
-    console.error('Error loading competences:', error)
+    competences.value = []
+    currentPlan.value = null
   } finally {
     loading.value = false
   }
@@ -193,10 +219,52 @@ async function loadCompetences() {
 watch(() => store.currentPlanId, (newPlanId) => {
   if (newPlanId) {
     loadCompetences()
+  } else {
+    competences.value = []
+    currentPlan.value = null
   }
 })
 
 onMounted(() => {
-  loadCompetences()
+  if (store.currentPlanId) {
+    loadCompetences()
+  }
 })
 </script>
+
+<style scoped>
+.text-subtitle1 {
+  margin-bottom: 1rem;
+}
+
+.q-table {
+  margin-top: 1rem;
+}
+
+.text-weight-bold {
+  font-weight: 600;
+}
+
+.competence-content-cell {
+  max-width: 800px;
+}
+
+.competence-text {
+  word-wrap: break-word;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+:deep(.q-table) {
+  table-layout: fixed;
+}
+
+:deep(.q-table th),
+:deep(.q-table td) {
+  vertical-align: top;
+}
+
+:deep(.q-table__card) {
+  overflow-x: auto;
+}
+</style>

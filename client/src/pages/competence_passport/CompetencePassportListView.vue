@@ -3,11 +3,19 @@
     <template #header>
       <div class="q-px-sm q-pb-sm">
         <div class="flex justify-between q-my-sm q-px-sm"
-             style="display: grid; grid-template-columns: 1fr 1fr 220px auto auto; gap: 8px; align-items: center;">
+             style="display: grid; grid-template-columns: 1fr 220px auto auto; gap: 8px; align-items: center;">
+          <q-input 
+            outlined 
+            label="Поиск по направлению, аббревиатуре, специальности, коду и т.д." 
+            v-model="store.groupTextFilter" 
+            clearable
+            @update:model-value="handleSearchChange"
+          />
           <q-select
             v-model="store.selectedYear"
             label="Год"
             :options="yearsList"
+            @update:model-value="handleYearChange"
           />
         </div>
       </div>
@@ -22,7 +30,7 @@
           separator
         >
           <q-item
-            v-for="group in store.groupsList"
+            v-for="group in filteredGroups"
             :key="group.plan_id"
             style="display: grid; gap: 8px;"
             clickable
@@ -99,12 +107,10 @@
 
             <!-- Выбор существующего плана -->
             <div v-if="selectedAction === 'select'">
-              <div class="text-h6 q-mb-md">Существующие учебные планы</div>
-              
+              <div class="text-h6 q-mb-md">Доступные учебные планы:</div>
               
               <!-- Список доступных файлов -->
               <div v-if="availablePlanFiles.length > 0">
-                <div class="text-subtitle2 q-mb-sm">Доступные учебные планы:</div>
                 <q-list bordered>
                   <q-item 
                     v-for="(file, index) in availablePlanFiles" 
@@ -163,7 +169,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useCompetencePassportStore } from 'stores/competencePassportStore';
 import { useRouter } from 'vue-router';
-import { useQuasar } from 'quasar';
+import { LocalStorage, useQuasar } from 'quasar';
 import _ from 'lodash';
 import LayoutHCF from 'components/LayoutHCF.vue';
 import dayjs from "dayjs";
@@ -186,7 +192,53 @@ const yearsList = computed(() => {
   return list;
 });
 
-// Получение первого файла из массива plx_file
+const filteredGroups = computed(() => {
+  if (!store.groupTextFilter || store.groupTextFilter.trim() === '') {
+    return store.groupsList;
+  }
+  
+  const searchLower = store.groupTextFilter.toLowerCase().trim();
+  
+  return store.groupsList.filter(group => {
+    const fieldsToSearch = [
+      group.abbr,
+      group.yr?.toString(),
+      group.dir, 
+      group.sp,
+      group.kod, 
+      group.spec, 
+      group.name, 
+    ];
+    
+    const fullMatchFields = [
+      `${group.abbr}-${group.yr?.toString()?.slice(-2)}`,
+    ];
+    
+    for (const field of fieldsToSearch) {
+      if (field && field.toString().toLowerCase().includes(searchLower)) {
+        return true;
+      }
+    }
+    
+    for (const field of fullMatchFields) {
+      if (field && field.toLowerCase().includes(searchLower)) {
+        return true;
+      }
+    }
+    
+    if (group.dir && typeof group.dir === 'object') {
+      if (group.dir.name && group.dir.name.toLowerCase().includes(searchLower)) {
+        return true;
+      }
+      if (group.dir.code && group.dir.code.toLowerCase().includes(searchLower)) {
+        return true;
+      }
+    }
+    
+    return false;
+  });
+});
+
 function getFirstPlxFile(plxFile) {
   if (!plxFile) return null;
   if (Array.isArray(plxFile) && plxFile.length > 0) {
@@ -201,15 +253,14 @@ const currentGroupPlxFile = computed(() => {
   const currentGroup = store.groupsList.find(group => group.plan_id === store.currentPlanId);
   return getFirstPlxFile(currentGroup?.plx_file);
 });
-
-// Доступные файлы учебных планов
 const availablePlanFiles = computed(() => {
   if (!currentGroupPlxFile.value) return [];
   
   return [
     {
       name: getFileName(currentGroupPlxFile.value),
-      url: currentGroupPlxFile.value
+      url: currentGroupPlxFile.value,
+      date: new Date().toLocaleDateString()
     }
   ];
 });
@@ -230,10 +281,26 @@ function getFileName(url) {
   }
 }
 
+function handleSearchChange() {
+  if (store.groupTextFilter && store.groupTextFilter.trim() !== '') {
+    LocalStorage.set('surp_rpdgroupfilter', store.groupTextFilter);
+  } else {
+    LocalStorage.remove('surp_rpdgroupfilter');
+  }
+  debouncedFetchGroupsList();
+}
 
-// Действия при выборе группы
+function handleYearChange() {
+  debouncedFetchGroupsList();
+}
+
+const debouncedFetchGroupsList = _.debounce(async () => {
+  await store.fetchGroupsList();
+}, 300);
+
 async function selectGroup(planId) {
-  store.currentPlanId = planId;
+  //store.currentPlanId = planId;
+  store.setCurrentPlanId(planId);
   selectedAction.value = '';
   selectedPlanFile.value = null;
   uploadedFile.value = null;
@@ -310,18 +377,23 @@ async function confirmPlanSelection() {
 
 // Загрузка данных при монтировании
 onMounted(async () => {
-  await store.fetchGroupsList()
+  const savedFilter = LocalStorage.getItem('surp_rpdgroupfilter');
+  if (savedFilter !== null && savedFilter !== undefined && savedFilter !== 'null') {
+    store.groupTextFilter = savedFilter;
+  } else {
+    store.groupTextFilter = '';
+    LocalStorage.remove('surp_rpdgroupfilter');
+  }
+  
+  await store.fetchGroupsList();
 })
 
-// Обновление данных при изменении фильтров
 watch([
   () => store.textFilter,
-  () => store.groupTextFilter,
   () => store.statusFilter,
   () => store.myFilter,
-  () => store.selectedYear
 ], _.debounce(async () => {
-  await store.fetchGroupsList()
+  await store.fetchGroupsList();
 }, 300))
 </script>
 
