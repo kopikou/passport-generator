@@ -73,22 +73,11 @@
                 </template>
               </q-field>
             </div>
-            
-            <div>
-              <div class="text-subtitle1 q-mb-xs">Кафедра</div>
-              <q-field outlined dense>
-                <template v-slot:control>
-                  <div class="self-center full-width no-outline">{{ planData?.caf_name }}</div>
-                </template>
-              </q-field>
-            </div>
           </div>
         </div>
 
-        <!-- Контент для компетенций -->
         <template v-else>
           <div class="text-h5 q-mb-sm">{{ sectionTitle }}</div>
-
           <!-- Контент конкретного раздела -->
           <div class="section-details">
             <div v-if="selectedSection === 'competence-relations'">
@@ -151,12 +140,10 @@ const route = useRoute()
 const router = useRouter()
 const store = useCompetencePassportStore()
 
-// Состояние
 const loading = ref(false)
 const currentCompetence = ref(null)
 const planData = ref(null)
 
-// Вычисляемые свойства
 const selectedSection = computed(() => {
   return route.query.section
 })
@@ -177,7 +164,6 @@ const sectionTitle = computed(() => {
   return sections[selectedSection.value] || 'Паспорт компетенции'
 })
 
-// Методы для работы с компетенциями
 const getCompetenceType = (competenceIndex) => {
   if (!competenceIndex) return 'Неизвестно'
   
@@ -195,18 +181,6 @@ const getCompetenceType = (competenceIndex) => {
   }
   
   return 'Другая'
-}
-
-const getCompetenceBadgeColor = (competenceIndex) => {
-  const type = getCompetenceType(competenceIndex)
-  const colors = {
-    'Универсальная': 'blue',
-    'Общепрофессиональная': 'green',
-    'Профессиональная': 'orange',
-    'Дополнительная': 'purple',
-    'Другая': 'grey'
-  }
-  return colors[type] || 'grey'
 }
 
 // Методы для титульного листа
@@ -239,18 +213,32 @@ const loadPlanData = async () => {
 
   loading.value = true
   try {
-    // Загружаем данные плана
-    const response = await store.fetchAllCompetences(store.currentPlanId)
+    const competencesData = await store.fetchAllCompetences(store.currentPlanId)
     
-    // Создаем структуру данных плана
-    planData.value = {
-      admission: {
-        cadmkind: 1, // По умолчанию, нужно будет получить реальное значение
-        spec_name: response?.plan_name || 'Не указано',
-        direct_name: response?.abbrprofile || 'Не указано',
-        cfac__name: 'Факультет' // Нужно получить из API
-      },
-      caf_name: 'Кафедра' // Нужно получить из API
+    if (competencesData) {
+      planData.value = {
+        plan_id: competencesData.plan_id,
+        plan_mira_id: competencesData.plan_mira_id,
+        plan_name: competencesData.plan_name,
+        abbrprofile: competencesData.abbrprofile,
+        admission: {
+          cadmkind: 1, 
+          spec_name: competencesData.plan_name,
+          direct_name: competencesData.abbrprofile,
+          cfac__name: 'Не указано'
+        },
+      }
+      try {
+        const planResponse = await store.fetchPlanDetails(store.currentPlanId)
+        if (planResponse) {
+          planData.value = {
+            ...planData.value,
+            ...planResponse
+          }
+        }
+      } catch (error) {
+        console.warn('Не удалось загрузить детальные данные плана:', error)
+      }
     }
   } catch (error) {
     console.error('Ошибка загрузки данных плана:', error)
@@ -260,7 +248,6 @@ const loadPlanData = async () => {
   }
 }
 
-// Загрузка данных компетенции
 const loadCompetenceData = async (competenceIndex) => {
   if (!competenceIndex || !store.currentPlanId) {
     currentCompetence.value = null
@@ -269,10 +256,8 @@ const loadCompetenceData = async (competenceIndex) => {
 
   loading.value = true
   try {
-    // Загружаем все компетенции плана
     const data = await store.fetchAllCompetences(store.currentPlanId)
     
-    // Находим нужную компетенцию
     const competence = data?.competences?.find(
       comp => comp.competence_index === competenceIndex
     )
@@ -291,7 +276,6 @@ const loadCompetenceData = async (competenceIndex) => {
   }
 }
 
-// Наблюдатели
 watch(
   () => route.query,
   (newQuery) => {
@@ -323,7 +307,6 @@ watch(
   }
 )
 
-// Проверка при монтировании
 onMounted(() => {
   if (route.query.section === 'title-page' && store.currentPlanId) {
     loadPlanData()
@@ -332,19 +315,7 @@ onMounted(() => {
   }
 })
 
-// Проверка валидности матрицы при входе на страницу
-watch(
-  () => route.meta.requiresValidMatrix,
-  (requiresValid) => {
-    if (requiresValid && store.currentPlanId && route.query.section !== 'title-page') {
-      const isValid = store.checkMatrixValidityFromStorage(store.currentPlanId)
-      if (!isValid) {
-        console.warn('Матрица компетенций не проверена')
-      }
-    }
-  },
-  { immediate: true }
-)
+
 </script>
 
 <style scoped lang="scss">
@@ -417,7 +388,6 @@ watch(
   }
 }
 
-// Стили для бейджей
 .q-badge {
   font-size: 12px;
   padding: 4px 10px;

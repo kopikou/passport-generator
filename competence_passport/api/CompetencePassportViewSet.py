@@ -1039,3 +1039,73 @@ class CompetencePassportViewSet(
                 {'error': f'Ошибка при получении данных схемы компетенций: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+    @action(methods=['GET'], detail=False, url_path='plan-details')
+    def get_plan_details(self, request):
+        """Получение детальной информации о плане для титульного листа"""
+        try:
+            plan_id = self.request.query_params.get('plan_id')
+            
+            error_response = self._validate_plan_id(plan_id)
+            if error_response:
+                return error_response
+            
+            plan, error_response = self._get_plan_or_error_response(plan_id)
+            if error_response:
+                return error_response
+            
+            # 1. Находим PlanLinesLink для этого плана
+            from generator.models import PlanLinesLink
+            from rpd.models import LinesData
+            
+            # Находим первую дисциплину плана
+            first_discipline = LinesData.objects.filter(plan=plan).first()
+            if not first_discipline:
+                return Response(
+                    {'error': 'В плане нет дисциплин'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Ищем PlanLinesLink для этой дисциплины
+            plan_lines_link = PlanLinesLink.objects.filter(
+                planlines=first_discipline
+            ).first()
+            
+            # Если нет PlanLinesLink, ищем любой для этого плана
+            if not plan_lines_link:
+                plan_lines_link = PlanLinesLink.objects.filter(
+                    planlines__plan=plan
+                ).first()
+            
+            if not plan_lines_link:
+                # Создаем временный PlanLinesLink
+                plan_lines_link = PlanLinesLink.objects.create(
+                    planlines=first_discipline,
+                    status=PlanLinesLink.StatusChoices.is_filled,
+                    person=self.request.user.userprofile.mira_id if hasattr(self.request.user, 'userprofile') else None,
+                )
+            
+            # 2. Получаем данные через GeneratorService.get_rpd_data()
+            user_mira_id = self.request.user.userprofile.mira_id if hasattr(self.request.user, 'userprofile') else None
+            plan_data = GeneratorService.get_rpd_data(plan_lines_link.id, user_mira_id)
+            
+            # 3. Форматируем ответ для паспорта компетенций
+            response_data = {
+                'plan_id': plan.id,
+                'plan_mira_id': plan.mira_id,
+                'plan_name': plan.planname,
+                'abbrprofile': plan.abbrprofile,
+                'admission': plan_data.get('admission', {}),
+                'planlines': plan_data.get('planlines', {}),
+                'caf_name': plan_data.get('planlines', {}).get('caf_name', 'Не указано'),
+                'plx_file': plan_data.get('plx_file', ''),
+            }
+            
+            return Response(response_data)
+            
+        except Exception as e:
+            logger.error(f"Error fetching plan details for plan {plan_id}: {str(e)}", exc_info=True)
+            return Response(
+                {'error': f'Ошибка при получении данных плана: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

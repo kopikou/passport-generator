@@ -452,6 +452,25 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     editingScheme.value = null
   }
 
+  async function fetchPlanDetails(planId) {
+    _setLoadingState(true)
+    try {
+      if (!planId) {
+        throw new Error('Plan ID is required')
+      }
+      
+      const response = await api.get('/api/competence/plan-details/', { 
+        params: { plan_id: planId } 
+      })
+      return response.data
+    } catch (error) {
+      console.error('Error fetching plan details:', error)
+      return null
+    } finally {
+      _setLoadingState(false)
+    }
+  }
+
   return {
     programList,
     groupsList,
@@ -506,5 +525,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     updateSemesterScheme,
     setEditingScheme,
     clearEditingScheme,
+
+    fetchPlanDetails,
   }
 })
