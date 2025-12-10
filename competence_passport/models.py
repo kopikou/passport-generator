@@ -8,15 +8,16 @@ from rpd.models import LinesData, LinesIndicators
 from app.utils import TimestampsModel, OverwriteStorage
 
 # Create your models here.
-class CompetenceFormationScheme(TimestampsModel):
+class Scheme(TimestampsModel):
     """Схема формирования компетенций дисциплинами по семестрам"""
     planlineid = models.ForeignKey(LinesData, on_delete=models.CASCADE, db_column="planlineid", related_name="competence_schemes")
     competence_index = models.TextField(null=True, blank=True)
     competence = models.TextField(null=True, blank=True)
     semester = models.IntegerField()
+    ekz = models.BooleanField(null=True)
     zach = models.BooleanField(null=True)
+    zacho = models.BooleanField(null=True)
     kp = models.BooleanField(null=True)
     kr = models.BooleanField(null=True)
-    zacho = models.BooleanField(null=True)
     
-    indicator = models.OneToOneField(LinesIndicators, on_delete=models.SET_NULL, null=True, blank=True,)
+    #indicator = models.OneToOneField(LinesIndicators, on_delete=models.SET_NULL, null=True, blank=True,)
