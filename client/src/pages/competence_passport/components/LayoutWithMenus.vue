@@ -34,14 +34,13 @@ const currentSidebar = computed(() => {
     return ReferenceLeftMenu
   }
   
-  if (routeName?.startsWith('passport')) {
+  if (routeName?.startsWith('competencePassport')) {
     return PassportLeftMenu
   }
   
   return null
 })
 
-// Показывать ли сайдбар вообще
 const showSidebar = computed(() => {
   return currentSidebar.value !== null
 })
