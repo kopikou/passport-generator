@@ -127,7 +127,7 @@ const columns = [
 
 const pagination = ref({
   page: 1,
-  rowsPerPage: 25
+  rowsPerPage: 0
 })
 
 const noDataMessage = computed(() => {

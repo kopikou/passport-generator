@@ -25,124 +25,54 @@
       </div>
 
       <div v-else class="section-content">
-        <!-- Титульный лист -->
-        <div v-if="selectedSection === 'title-page'" class="title-page-section">
-          <div class="text-h5 q-mb-sm">Титульный лист</div>
-          <div class="q-gutter-y-sm">
-            <div v-if="planData?.admission?.cadmkind != 5">
-              <div class="text-subtitle1 q-mb-xs">Профиль/Специальность</div>
-              <q-field outlined dense>
-                <template v-slot:control>
-                  <div class="self-center full-width no-outline">{{ planData?.admission?.spec_name }}</div>
-                </template>
-              </q-field>
-            </div>
-            
-            <div v-if="planData?.admission?.cadmkind != 5">
-              <div class="text-subtitle1 q-mb-xs">Наименование направления</div>
-              <q-field outlined dense>
-                <template v-slot:control>
-                  <div class="self-center full-width no-outline">{{ planData?.admission?.direct_name }}</div>
-                </template>
-              </q-field>
-            </div>
-            
-            <div v-if="planData?.admission?.cadmkind == 5">
-              <div class="text-subtitle1 q-mb-xs">Наименование направления</div>
-              <q-field outlined dense>
-                <template v-slot:control>
-                  <div class="self-center full-width no-outline">{{ getSpecName(planData?.admission?.spec_name) }}</div>
-                </template>
-              </q-field>
-            </div>
-            
-            <div v-if="planData?.admission?.cadmkind == 5">
-              <div class="text-subtitle1 q-mb-xs">Направленность</div>
-              <q-field outlined dense>
-                <template v-slot:control>
-                  <div class="self-center full-width no-outline">{{ getSpecNapr(planData?.admission?.spec_name) }}</div>
-                </template>
-              </q-field>
-            </div>
-            
-            <div>
-              <div class="text-subtitle1 q-mb-xs">Факультет</div>
-              <q-field outlined dense>
-                <template v-slot:control>
-                  <div class="self-center full-width no-outline">{{ planData?.admission?.cfac__name }}</div>
-                </template>
-              </q-field>
-            </div>
-          </div>
-        </div>
-
-        <template v-else>
-          <div class="text-h5 q-mb-sm">{{ sectionTitle }}</div>
-          <!-- Контент конкретного раздела -->
-          <div class="section-details">
-            <div v-if="selectedSection === 'competence-relations'">
-              <div class="text-subtitle1 text-grey">Для чего необходимо формирование компетенции</div>
-              <q-card flat bordered class="q-pa-md">
-                <div class="text-body1 text-grey">
-                  Раздел находится в разработке...
-                </div>
-              </q-card>
-            </div>
-
-            <div v-else-if="selectedSection === 'competence-indicators'">
-              <div class="text-subtitle1 text-grey">Итоговый индикатор достижения компетенции.  Данные автоматически получены из учебного плана.</div>
-              <q-card flat bordered class="q-pa-md">
-                <div class="text-body1 text-grey">
-                  Раздел находится в разработке...
-                </div>
-              </q-card>
-            </div>
-
-            <div v-else-if="selectedSection === 'indicator-disciplines'">
-              <div class="text-subtitle1 text-grey">Индикаторы и их содержание автоматически получены из учебного плана.</div>
-              <q-card flat bordered class="q-pa-md">
-                <div class="text-body1 text-grey">
-                  Раздел находится в разработке...
-                </div>
-              </q-card>
-            </div>
-
-            <div v-else-if="selectedSection === 'indicator-results'">
-              <div class="text-subtitle1 text-grey">Раскройте для заполнения</div>
-              <q-card flat bordered class="q-pa-md">
-                <div class="text-body1 text-grey">
-                  Раздел находится в разработке...
-                </div>
-              </q-card>
-            </div>
-
-            <div v-else-if="selectedSection === 'assessment-criteria'">
-              <div class="text-subtitle1 text-grey">Раскройте для заполнения</div>
-              <q-card flat bordered class="q-pa-md">
-                <div class="text-body1 text-grey">
-                  Раздел находится в разработке...
-                </div>
-              </q-card>
-            </div>
-          </div>
-        </template>
+        <component
+          :is="currentSectionComponent"
+          :plan-data="planData"
+          :competence="currentCompetence"
+          :plan-id="store.currentPlanId"
+          @data-saved="handleDataSaved"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { useQuasar } from 'quasar'
 
 const route = useRoute()
 const router = useRouter()
 const store = useCompetencePassportStore()
+const $q = useQuasar()
 
 const loading = ref(false)
 const currentCompetence = ref(null)
 const planData = ref(null)
+
+// импорты компонентов
+const sectionComponents = {
+  'title-page': defineAsyncComponent(() => 
+    import('./components/menu_sections/TitlePageSection.vue')
+  ),
+  'competence-relations': defineAsyncComponent(() => 
+    import('./components/menu_sections/CompetenceRelationsSection.vue')
+  ),
+  'competence-indicators': defineAsyncComponent(() => 
+    import('./components/menu_sections/CompetenceIndicatorsSection.vue')
+  ),
+  'indicator-disciplines': defineAsyncComponent(() => 
+    import('./components/menu_sections/IndicatorDisciplinesSection.vue')
+  ),
+  'indicator-results': defineAsyncComponent(() => 
+    import('./components/menu_sections/IndicatorResultsSection.vue')
+  ),
+  'assessment-criteria': defineAsyncComponent(() => 
+    import('./components/menu_sections/AssessmentCriteriaSection.vue')
+  )
+}
 
 const selectedSection = computed(() => {
   return route.query.section
@@ -152,59 +82,10 @@ const pageTitle = computed(() => {
   return route.meta.title || 'Паспорт компетенций'
 })
 
-const sectionTitle = computed(() => {
-  const sections = {
-    'title-page': 'Титульный лист',
-    'competence-relations': '1.1 Связь компетенции с иными компетенциями',
-    'competence-indicators': '2 Индикаторы достижения компетенции',
-    'indicator-disciplines': '2.1 Соотнесение индикаторов достижения компетенций с дисциплинами  (модулями), практиками',
-    'indicator-results': '2.2 Соотнесение индикаторов достижения компетенций с результатами обучения  по дисциплинам (модулям), практикам',
-    'assessment-criteria': '3 Критерии и средства (методы) оценивания индикаторов достижения  компетенции в рамках промежуточной аттестации'
-  }
-  return sections[selectedSection.value] || 'Паспорт компетенции'
+const currentSectionComponent = computed(() => {
+  return sectionComponents[selectedSection.value]
 })
 
-const getCompetenceType = (competenceIndex) => {
-  if (!competenceIndex) return 'Неизвестно'
-  
-  if (competenceIndex.includes('УК') || competenceIndex.startsWith('УК')) {
-    return 'Универсальная'
-  }
-  if (competenceIndex.includes('ОПК') || competenceIndex.startsWith('ОПК')) {
-    return 'Общепрофессиональная'
-  }
-  if (competenceIndex.includes('ПК') || competenceIndex.startsWith('ПК')) {
-    return 'Профессиональная'
-  }
-  if (competenceIndex.includes('ДК') || competenceIndex.startsWith('ДК')) {
-    return 'Дополнительная'
-  }
-  
-  return 'Другая'
-}
-
-// Методы для титульного листа
-const getSpecNapr = (name) => {
-  if (!name) return 'Отсутствует'
-  const names = name.split("направленность")
-  if (names.length > 1) {
-    return names[1].replace(' - ', '')
-  } else {
-    return 'Отсутствует'
-  }
-}
-
-const getSpecName = (name) => {
-  if (!name) return ''
-  const names = name.split("направленность")
-  if (names.length > 1) {
-    return names[0].replace(', ', '')
-  } else {
-    return name
-  }
-}
-
-// Загрузка данных плана для титульного листа
 const loadPlanData = async () => {
   if (!store.currentPlanId) {
     planData.value = null
@@ -276,6 +157,15 @@ const loadCompetenceData = async (competenceIndex) => {
   }
 }
 
+const handleDataSaved = (message) => {
+  $q.notify({
+    message: message,
+    color: "secondary",
+    position: "bottom-right",
+    html: true,
+  })
+}
+
 watch(
   () => route.query,
   (newQuery) => {
@@ -314,8 +204,6 @@ onMounted(() => {
     loadCompetenceData(route.query.competence)
   }
 })
-
-
 </script>
 
 <style scoped lang="scss">
@@ -353,44 +241,6 @@ onMounted(() => {
   .section-content {
     max-width: 1200px;
     margin: 0 auto;
-    
-    .text-h5 {
-      margin-bottom: 8px;
-    }
   }
-  
-  .title-page-section {
-    .q-field {
-      margin-bottom: 12px;
-      
-      &:last-child {
-        margin-bottom: 0;
-      }
-      
-      .q-field__control {
-        background: #f5f5f5;
-        min-height: 40px;
-      }
-    }
-  }
-  
-  .section-details {
-    margin-top: 16px;
-    
-    .text-subtitle1 {
-      margin-bottom: 8px;
-    }
-    
-    .q-card {
-      min-height: 100px;
-      margin-top: 8px;
-    }
-  }
-}
-
-.q-badge {
-  font-size: 12px;
-  padding: 4px 10px;
-  font-weight: 500;
 }
 </style>

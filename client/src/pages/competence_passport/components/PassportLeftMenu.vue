@@ -58,6 +58,8 @@
           v-ripple
           class="title-page-header q-mb-sm"
           @click="navigateToTitlePage"
+          :active="isTitlePageActive()"
+          active-class="active-menu-item"
         >
           <q-item-section>
             <q-item-label class="text-weight-medium">
@@ -77,6 +79,8 @@
             class="competence-header"
             :class="getCompetenceClass(comp.competence_index)"
             @click="toggleCompetence(comp.competence_index)"
+            :active="isCompetenceActive(comp)"
+            active-class="active-menu-item"
           >
             <q-item-section avatar>
               <q-btn
@@ -111,9 +115,11 @@
                 v-ripple
                 class="submenu-item"
                 @click="navigateToCompetenceRelations(comp)"
+                :active="isSectionActive(comp, 'competence-relations')"
+                active-class="active-menu-item"
               >
                 <q-item-section>
-                  <div class="text-caption">1.1 Связь компетенции с иными компетенциях</div>
+                  <div class="text-caption">1.1. Связь компетенции с иными компетенциях</div>
                 </q-item-section>
                 <q-item-section side>
                   <q-icon name="keyboard_arrow_right" size="xs" />
@@ -126,6 +132,8 @@
                 v-ripple
                 class="submenu-item"
                 @click="navigateToCompetenceIndicators(comp)"
+                :active="isSectionActive(comp, 'competence-indicators')"
+                active-class="active-menu-item"
               >
                 <q-item-section>
                   <div class="text-caption">2. Индикаторы достижения компетенции</div>
@@ -141,6 +149,8 @@
                 v-ripple
                 class="submenu-item"
                 @click="navigateToIndicatorDisciplines(comp)"
+                :active="isSectionActive(comp, 'indicator-disciplines')"
+                active-class="active-menu-item"
               >
                 <q-item-section>
                   <div class="text-caption">2.1. Соотнесение индикаторов с дисциплинами</div>
@@ -156,6 +166,8 @@
                 v-ripple
                 class="submenu-item"
                 @click="navigateToIndicatorResults(comp)"
+                :active="isSectionActive(comp, 'indicator-results')"
+                active-class="active-menu-item"
               >
                 <q-item-section>
                   <div class="text-caption">2.2. Соотнесение индикаторов с результатами обучения</div>
@@ -171,6 +183,8 @@
                 v-ripple
                 class="submenu-item"
                 @click="navigateToAssessmentCriteria(comp)"
+                :active="isSectionActive(comp, 'assessment-criteria')"
+                active-class="active-menu-item"
               >
                 <q-item-section>
                   <div class="text-caption">3. Критерии и средства оценивания индикаторов</div>
@@ -203,11 +217,12 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
 import { useQuasar } from 'quasar'
 
 const router = useRouter()
+const $route = useRoute()
 const store = useCompetencePassportStore()
 const $q = useQuasar()
 
@@ -263,6 +278,21 @@ const getCompetenceClass = (competenceIndex) => {
   return `competence-${type.toLowerCase().replace(/ /g, '-')}`
 }
 
+const isTitlePageActive = () => {
+  return $route.query.section === 'title-page'
+}
+
+const isCompetenceActive = (competence) => {
+  return $route.params.competenceId === competence.competence_index && 
+         $route.query.section && 
+         $route.query.section !== 'title-page'
+}
+
+const isSectionActive = (competence, sectionName) => {
+  return $route.params.competenceId === competence.competence_index && 
+         $route.query.section === sectionName
+}
+
 const filteredCompetences = computed(() => {
   let competences = competencesData.value
   
@@ -283,6 +313,9 @@ const filteredCompetences = computed(() => {
 })
 
 const isCompetenceExpanded = (competenceIndex) => {
+  if ($route.params.competenceId === competenceIndex) {
+    return true
+  }
   return expandedCompetences.value.has(competenceIndex)
 }
 
@@ -319,7 +352,18 @@ const handleTypeFilter = () => {
   expandedCompetences.value.clear()
 }
 
-// Навигация для титульного листа
+watch(() => $route.params.competenceId, (newCompetenceId) => {
+  if (newCompetenceId) {
+    expandedCompetences.value.add(newCompetenceId)
+  }
+})
+
+watch(() => $route.query.section, (newSection) => {
+  if (newSection === 'title-page') {
+    expandedCompetences.value.clear()
+  }
+})
+
 const navigateToTitlePage = () => {
   router.push({
     name: 'competencePassport',
@@ -332,7 +376,6 @@ const navigateToTitlePage = () => {
   })
 }
 
-// Навигация для компетенций
 const navigateToCompetenceRelations = (competence) => {
   router.push({
     name: 'competencePassport',
@@ -414,6 +457,10 @@ const loadCompetences = async () => {
     const data = await store.fetchAllCompetences(store.currentPlanId)
     if (data && data.competences) {
       competencesData.value = data.competences
+
+      if ($route.params.competenceId) {
+        expandedCompetences.value.add($route.params.competenceId)
+      }
     } else {
       competencesData.value = []
     }
@@ -441,12 +488,17 @@ watch(() => store.currentPlanId, async (newPlanId) => {
     await loadCompetences()
   } else {
     competencesData.value = []
+    expandedCompetences.value.clear()
   }
 })
 
 watch(() => store.currentPlanCompetences, (newCompetences) => {
   if (newCompetences && newCompetences.length > 0) {
     competencesData.value = newCompetences
+
+    if ($route.params.competenceId) {
+      expandedCompetences.value.add($route.params.competenceId)
+    }
   }
 }, { deep: true })
 </script>
@@ -544,6 +596,33 @@ watch(() => store.currentPlanCompetences, (newCompetences) => {
   
   .border-top {
     border-top: 1px solid #e0e0e0;
+  }
+}
+
+.active-menu-item {
+  background-color: #e3f2fd !important; 
+  color: #1976d2 !important;
+
+  &.title-page-header {
+    border-left-color: #1976d2 !important;
+  }
+  
+  &.competence-header {
+    border-left-color: #1976d2 !important;
+    background-color: rgba(25, 118, 210, 0.1) !important;
+  }
+  
+  &.submenu-item {
+    border-left-color: #1976d2 !important;
+    background-color: rgba(25, 118, 210, 0.1) !important;
+    
+    .text-caption {
+      color: #1976d2 !important;
+    }
+    
+    .q-icon {
+      color: #1976d2 !important;
+    }
   }
 }
 

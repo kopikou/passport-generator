@@ -176,7 +176,7 @@ const pagination = ref({
   sortBy: 'newdisid',
   descending: false,
   page: 1,
-  rowsPerPage: 25
+  rowsPerPage: 0
 })
 
 // Определяем все возможные типы дисциплины по индексу
