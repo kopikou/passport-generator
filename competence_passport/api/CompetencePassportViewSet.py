@@ -1301,7 +1301,7 @@ class CompetencePassportViewSet(
 
     @action(methods=['POST'], detail=False, url_path='update-competence-final-indicators')
     def update_competence_final_indicators(self, request):
-        """Обновление итоговых индикаторов компетенции в linesindicators"""
+        """Обновление итоговых индикаторов компетенции"""
         try:
             plan_id = request.data.get('plan_id')
             competence_index = request.data.get('competence_index')
@@ -1407,5 +1407,154 @@ class CompetencePassportViewSet(
             logger.error(f"Error updating competence final indicators: {str(e)}")
             return Response(
                 {'error': f'Ошибка при обновлении итоговых индикаторов: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    @action(methods=['GET'], detail=False, url_path='competence-indicator-disciplines')
+    def get_competence_indicator_disciplines(self, request):
+        """Получение индикаторов компетенции с привязкой к дисциплинами"""
+        try:
+            plan_id = self.request.query_params.get('plan_id')
+            competence_index = self.request.query_params.get('competence_index')
+            
+            if not plan_id or not competence_index:
+                return Response(
+                    {'error': 'ID плана и индекс компетенции обязательны'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            plan, error_response = self._get_plan_or_error_response(plan_id)
+            if error_response:
+                return error_response
+
+            # Определяем обобщающие группы
+            summary_groups_to_exclude = {
+                'Б1',
+                'Б1.Б',
+                'Б1.Б.01',
+                'Б1.Б.02',
+                'Б1.Б.03',
+                'Б1.Б.04',
+                'Б1.Б.05',
+                'Б1.В',
+                'Б1.В.01',
+                'Б1.В.02',
+                'Б1.В.02.ДВ.01',
+                'Б1.В.02.ДВ.02',
+                'Б1.В.03',
+                'Б2',
+                'Б2.Б',
+                'Б2.В',
+                'Б3',
+                'ФТД'
+            }
+            
+            # Получаем все индикаторы для этой компетенции с информацией о дисциплинах
+            indicators = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).select_related('planlineid').order_by('indicator_index')
+            
+            # Фильтруем индикаторы: исключаем обобщающие группы и итоговые индикаторы
+            filtered_indicators = []
+            
+            for indicator in indicators:
+                # Проверяем, является ли индикатор итоговым
+                is_final_indicator = 'Итоговый индикатор' in indicator.indicator_index
+
+                if is_final_indicator:
+                    continue
+
+                discipline_index = indicator.planlineid.newdisid or ''
+                is_summary_group = discipline_index in summary_groups_to_exclude
+
+                if is_summary_group:
+                    continue
+                    
+                filtered_indicators.append(indicator)
+            
+            # Формируем таблицу данных из отфильтрованных индикаторов
+            table_data = []
+            for indicator in filtered_indicators:
+                table_data.append({
+                    'id': indicator.id,
+                    'indicator_index': indicator.indicator_index,
+                    'indicator_content': indicator.indicator,
+                    'discipline_index': indicator.planlineid.newdisid or '',
+                    'discipline_name': indicator.planlineid.dis,
+                    'discipline_id': indicator.planlineid.id,
+                })
+            
+            competence_data = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).first()
+            
+            return Response({
+                'plan_id': plan.id,
+                'plan_mira_id': plan.mira_id,
+                'plan_name': plan.planname,
+                'competence_index': competence_index,
+                'competence': competence_data.competence if competence_data else '',
+                'table_data': table_data,
+            })
+            
+        except Exception as e:
+            logger.error(f"Error fetching competence indicator disciplines: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при получении индикаторов с дисциплинами: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    @action(methods=['POST'], detail=False, url_path='update-indicator-content')
+    def update_indicator_content(self, request):
+        """Обновление содержания индикатора"""
+        try:
+            indicator_id = request.data.get('indicator_id')
+            new_content = request.data.get('indicator_content', '').strip()
+            
+            if not indicator_id:
+                return Response(
+                    {'error': 'ID индикатора обязателен'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            with transaction.atomic():
+                try:
+                    indicator = LinesIndicators.objects.get(id=indicator_id)
+
+                    indicator.indicator = new_content
+                    indicator.save()
+                    
+                    plan = indicator.planlineid.plan
+                    competence_index = indicator.competence_index
+                    
+                    return Response({
+                        'success': True,
+                        'message': 'Содержание индикатора успешно обновлено',
+                        'indicator': {
+                            'id': indicator.id,
+                            'indicator_index': indicator.indicator_index,
+                            'indicator_content': indicator.indicator,
+                            'competence_index': indicator.competence_index,
+                            'discipline_id': indicator.planlineid.id,
+                            'discipline_name': indicator.planlineid.dis,
+                            'discipline_index': indicator.planlineid.newdisid,
+                        },
+                        'plan_id': plan.id,
+                        'plan_mira_id': plan.mira_id,
+                        'plan_name': plan.planname
+                    })
+                    
+                except LinesIndicators.DoesNotExist:
+                    return Response(
+                        {'error': 'Индикатор не найден'}, 
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                    
+        except Exception as e:
+            logger.error(f"Error updating indicator content: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при обновлении содержания индикатора: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
