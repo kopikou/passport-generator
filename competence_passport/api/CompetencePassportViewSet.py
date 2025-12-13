@@ -13,6 +13,7 @@ from auths.models import Permissions
 from generator.permissions import CanViewRPDProgram
 from rpd.models.rpd_models import PlanData, LinesData, LinesIndicators, SemesterData
 from competence_passport.models import Scheme, CompetenceRelations
+from generator.models import DisciplineIndicators
 import logging
 import re
 
@@ -1556,5 +1557,128 @@ class CompetencePassportViewSet(
             logger.error(f"Error updating indicator content: {str(e)}")
             return Response(
                 {'error': f'Ошибка при обновлении содержания индикатора: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    @action(methods=['GET'], detail=False, url_path='indicator-details')
+    def get_indicator_details(self, request):
+        """Получение деталей индикатора (знать/уметь/владеть)"""
+        try:
+            indicator_id = self.request.query_params.get('indicator_id')
+            
+            if not indicator_id:
+                return Response(
+                    {'error': 'ID индикатора обязателен'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            try:
+                indicator = LinesIndicators.objects.get(id=indicator_id)
+            except LinesIndicators.DoesNotExist:
+                return Response(
+                    {'error': 'Индикатор не найден'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            discipline_indicator = DisciplineIndicators.objects.filter(
+                indicator=indicator
+            ).first()
+            
+            if discipline_indicator:
+                response_data = {
+                    'know': discipline_indicator.know or '',
+                    'able': discipline_indicator.able or '',
+                    'own': discipline_indicator.own or '',
+                    'criteria': discipline_indicator.criteria or '',
+                    'methods': discipline_indicator.methods or '',
+                }
+            else:
+                response_data = {
+                    'know': '',
+                    'able': '',
+                    'own': '',
+                    'criteria': '',
+                    'methods': '',
+                }
+
+            response_data.update({
+                'indicator_id': indicator.id,
+                'indicator_index': indicator.indicator_index,
+                'indicator_content': indicator.indicator,
+                'competence_index': indicator.competence_index,
+                'discipline_id': indicator.planlineid.id,
+                'discipline_name': indicator.planlineid.dis,
+                'discipline_index': indicator.planlineid.newdisid,
+            })
+            
+            return Response(response_data)
+            
+        except Exception as e:
+            logger.error(f"Error fetching indicator details: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при получении деталей индикатора: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(methods=['POST'], detail=False, url_path='save-indicator-details')
+    def save_indicator_details(self, request):
+        """Сохранение деталей индикатора (знать/уметь/владеть)"""
+        try:
+            indicator_id = request.data.get('indicator_id')
+            know = request.data.get('know', '')
+            able = request.data.get('able', '')
+            own = request.data.get('own', '')
+            criteria = request.data.get('criteria', '')
+            methods = request.data.get('methods', '')
+            
+            if not indicator_id:
+                return Response(
+                    {'error': 'ID индикатора обязателен'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            with transaction.atomic():
+                try:
+                    indicator = LinesIndicators.objects.get(id=indicator_id)
+                except LinesIndicators.DoesNotExist:
+                    return Response(
+                        {'error': 'Индикатор не найден'}, 
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
+                discipline_indicator, created = DisciplineIndicators.objects.update_or_create(
+                    indicator=indicator,
+                    defaults={
+                        'planlineid': indicator.planlineid,
+                        'know': know,
+                        'able': able,
+                        'own': own,
+                        'criteria': criteria,
+                        'methods': methods
+                    }
+                )
+                
+                return Response({
+                    'success': True,
+                    'message': 'Данные индикатора успешно сохранены',
+                    'created': created,
+                    'indicator': {
+                        'id': indicator.id,
+                        'indicator_index': indicator.indicator_index,
+                        'indicator_content': indicator.indicator,
+                        'competence_index': indicator.competence_index,
+                        'know': discipline_indicator.know,
+                        'able': discipline_indicator.able,
+                        'own': discipline_indicator.own,
+                        'criteria': discipline_indicator.criteria,
+                        'methods': discipline_indicator.methods,
+                        'updated_at': discipline_indicator.updated_at
+                    }
+                })
+                
+        except Exception as e:
+            logger.error(f"Error saving indicator details: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при сохранении данных индикатора: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

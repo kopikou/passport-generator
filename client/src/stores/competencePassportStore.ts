@@ -41,6 +41,10 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   const schemeLoading = ref(false)
   const disciplineSchemes = ref([])
 
+  const competenceIndicatorsData = ref([])
+  const competenceIndicatorsCreteria = ref([])
+  const indicatorsLoading = ref(false)
+
 
   // Вспомогательные функции
   const _getGroupListParams = () => {
@@ -615,6 +619,104 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
+  async function fetchCompetenceIndicators(planId, competenceIndex) {
+    _setLoadingState(true, indicatorsLoading)
+    try {
+      if (!planId || !competenceIndex) {
+        throw new Error('Plan ID и индекс компетенции обязательны')
+      }
+      
+      const response = await api.get('/api/competence/competence-indicator-disciplines/', {
+        params: { 
+          plan_id: planId,
+          competence_index: competenceIndex
+        }
+      })
+      const tableData = response.data.table_data || []
+      const indicatorsWithDetails = await Promise.all(
+        tableData.map(async (indicator) => {
+          try {
+            const detailsResponse = await api.get('/api/competence/indicator-details/', {
+              params: {
+                indicator_id: indicator.id
+              }
+            })
+
+            return {
+              ...indicator, 
+              ...detailsResponse.data, 
+              saving: false, 
+              saved: false 
+            }
+          } catch (error) {
+            console.warn(`Error loading details for indicator ${indicator.id}:`, error)
+            return {
+              ...indicator,
+              know: '',
+              able: '',
+              own: '',
+              criteria: '',
+              methods: '',
+              saving: false,
+              saved: false
+            }
+          }
+        })
+      )
+      
+      competenceIndicatorsData.value = indicatorsWithDetails
+      competenceIndicatorsCreteria.value = indicatorsWithDetails
+      return response.data
+    } catch (error) {
+      console.error('Error fetching competence indicators:', error)
+      _resetData(competenceIndicatorsData)
+      _resetData(competenceIndicatorsCreteria)
+      throw error
+    } finally {
+      _setLoadingState(false, indicatorsLoading)
+    }
+  }
+
+  async function saveIndicatorDetails(indicatorData) {
+    _setLoadingState(true, saving)
+    try {
+      const payload = {
+        indicator_id: indicatorData.id,
+        know: indicatorData.know || '',
+        able: indicatorData.able || '',
+        own: indicatorData.own || '',
+        criteria: indicatorData.criteria || '',
+        methods: indicatorData.methods || ''
+      }
+      
+      const response = await api.post('/api/competence/save-indicator-details/', payload)
+
+      const index = competenceIndicatorsData.value.findIndex(item => item.id === indicatorData.id)
+      if (index !== -1) {
+        competenceIndicatorsData.value[index] = {
+          ...competenceIndicatorsData.value[index],
+          ...response.data.indicator,
+          saving: false,
+          saved: true
+        }
+        competenceIndicatorsCreteria.value[index] = {
+          ...competenceIndicatorsCreteria.value[index],
+          ...response.data.indicator,
+          saving: false,
+          saved: true
+        }
+      }
+      
+      return response.data
+    } catch (error) {
+      console.error('Error saving indicator details:', error)
+      throw error
+    } finally {
+      _setLoadingState(false, saving)
+    }
+  }
+
+
   return {
     programList,
     groupsList,
@@ -680,5 +782,11 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
 
     fetchCompetenceIndicatorDisciplines,
     updateIndicatorContent,
+
+    competenceIndicatorsData,
+    competenceIndicatorsCreteria,
+    indicatorsLoading,
+    fetchCompetenceIndicators,
+    saveIndicatorDetails,
   }
 })
