@@ -25,7 +25,7 @@ const props = defineProps({
     default: null
   },
   planId: {
-    type: String,
+    type: Number,
     default: ''
   }
 })

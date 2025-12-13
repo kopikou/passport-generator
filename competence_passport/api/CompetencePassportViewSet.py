@@ -12,7 +12,7 @@ from app.utils import UserProfileHasPermission
 from auths.models import Permissions
 from generator.permissions import CanViewRPDProgram
 from rpd.models.rpd_models import PlanData, LinesData, LinesIndicators, SemesterData
-from competence_passport.models import Scheme
+from competence_passport.models import Scheme, CompetenceRelations
 import logging
 import re
 
@@ -1107,5 +1107,121 @@ class CompetencePassportViewSet(
             logger.error(f"Error fetching plan details for plan {plan_id}: {str(e)}", exc_info=True)
             return Response(
                 {'error': f'Ошибка при получении данных плана: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    @action(methods=['GET'], detail=False, url_path='competence-relations')
+    def get_competence_relations(self, request):
+        """Получение связей компетенции с другими компетенциями"""
+        try:
+            plan_id = self.request.query_params.get('plan_id')
+            competence_index = self.request.query_params.get('competence_index')
+            
+            if not plan_id or not competence_index:
+                return Response(
+                    {'error': 'ID плана и индекс компетенции обязательны'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            plan, error_response = self._get_plan_or_error_response(plan_id)
+            if error_response:
+                return error_response
+
+            competence_exists = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).exists()
+            
+            if not competence_exists:
+                return Response(
+                    {'error': 'Компетенция не найдена в плане'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            competence_data = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).first()
+            
+            # Получаем или создаем запись о связях
+            relations, created = CompetenceRelations.objects.get_or_create(
+                plan=plan,
+                competence_index=competence_index,
+                defaults={
+                    'competence': competence_data.competence if competence_data else competence_index,
+                    'relations': ''
+                }
+            )
+            
+            return Response({
+                'plan_id': plan.id,
+                'plan_mira_id': plan.mira_id,
+                'plan_name': plan.planname,
+                'competence_index': competence_index,
+                'competence': relations.competence or (competence_data.competence if competence_data else ''),
+                'relations': relations.relations or '',
+                'created': created
+            })
+            
+        except Exception as e:
+            logger.error(f"Error fetching competence relations: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при получении связей компетенции: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(methods=['POST'], detail=False, url_path='update-competence-relations')
+    def update_competence_relations(self, request):
+        """Обновление связей компетенции с другими компетенциями"""
+        try:
+            plan_id = request.data.get('plan_id')
+            competence_index = request.data.get('competence_index')
+            relations_text = request.data.get('relations_text', '')
+            
+            if not plan_id or not competence_index:
+                return Response(
+                    {'error': 'ID плана и индекс компетенции обязательны'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            plan, error_response = self._get_plan_or_error_response(plan_id)
+            if error_response:
+                return error_response
+
+            competence_data = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).first()
+            
+            if not competence_data:
+                return Response(
+                    {'error': 'Компетенция не найдена в плане'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            
+            with transaction.atomic():
+                relations, created = CompetenceRelations.objects.update_or_create(
+                    plan=plan,
+                    competence_index=competence_index,
+                    defaults={
+                        'competence': competence_data.competence,
+                        'relations': relations_text
+                    }
+                )
+                
+                return Response({
+                    'success': True,
+                    'message': 'Связи компетенции успешно обновлены',
+                    'competence_index': competence_index,
+                    'relations': relations_text,
+                    'created': created,
+                    'updated_at': relations.updated_at
+                })
+                
+        except Exception as e:
+            logger.error(f"Error updating competence relations: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при обновлении связей компетенции: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

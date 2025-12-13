@@ -3,29 +3,32 @@
     <div class="text-h5 q-mb-sm">{{ sectionTitle }}</div>
     <div class="section-details">
       <div class="text-subtitle1 text-grey">Для чего необходимо формирование компетенции</div>
-        <div class="q-gutter-y-md">
-          <q-input
-            v-model="relationsText"
-            filled
-            type="textarea"
-            placeholder="Связь компетенции с иными компетенциями"
-            rows="10"
-            bg-color="grey-4"
-            :readonly="disabled"
-            debounce="1000"
-            @update:model-value="saveData"
-          />
-        </div>
+      <div class="q-gutter-y-md">
+        <q-input
+          v-model="relationsText"
+          filled
+          type="textarea"
+          placeholder="Связь компетенции с иными компетенциями"
+          rows="10"
+          bg-color="grey-4"
+          :readonly="disabled"
+          :loading="loading"
+          debounce="1000"
+          @update:model-value="saveData"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { api } from 'boot/axios'
 import { useQuasar } from 'quasar'
+import { useCompetencePassportStore } from 'stores/competencePassportStore'
 
 const $q = useQuasar()
+const store = useCompetencePassportStore()
+
 const props = defineProps({
   planData: {
     type: Object,
@@ -36,7 +39,7 @@ const props = defineProps({
     default: null
   },
   planId: {
-    type: String,
+    type: Number,
     default: ''
   }
 })
@@ -47,8 +50,9 @@ const sectionTitle = '1.1. Связь компетенции с иными ко�
 const relationsText = ref('')
 const disabled = ref(false)
 const loading = ref(false)
+const saving = ref(false)
 
-const loadData = async () => {
+const loadRelations = async () => {
   if (!props.planId || !props.competence?.competence_index) {
     relationsText.value = ''
     return
@@ -56,53 +60,72 @@ const loadData = async () => {
 
   loading.value = true
   try {
-    const response = await api.get('/api/competence/competence-relations/', {
-      params: {
-        plan_id: props.planId,
-        competence_index: props.competence.competence_index
-      }
-    })
+    const data = await store.fetchCompetenceRelations(
+      props.planId, 
+      props.competence.competence_index
+    )
     
-    if (response.data && response.data.relations_text) {
-      relationsText.value = response.data.relations_text
+    if (data.relations) {
+      relationsText.value = data.relations
     } else {
       relationsText.value = ''
     }
   } catch (error) {
+    console.error('Ошибка загрузки связей компетенции:', error)
     relationsText.value = ''
+    $q.notify({
+      message: 'Ошибка загрузки связей компетенции',
+      color: 'negative',
+      position: 'bottom-right'
+    })
   } finally {
     loading.value = false
   }
 }
 
 const saveData = async () => {
-  if (!props.planId || !props.competence || !relationsText.value) {
+  if (!props.planId || !props.competence?.competence_index || saving.value) {
     return
   }
 
+  saving.value = true
   try {
-    const response = await api.post('/api/competence/save-competence-relations/', {
-      plan_id: props.planId,
-      competence_index: props.competence.competence_index,
-      relations_text: relationsText.value
-    })
+    await store.updateCompetenceRelations(
+      props.planId,
+      props.competence.competence_index,
+      relationsText.value || ''
+    )
     
-    if (response.status === 200) {
-      emit('data-saved', "Данные <span class='text-bold'>о связи компетенции</span> сохранены!")
-    }
+    emit('data-saved', 'Связи компетенции успешно сохранены')
   } catch (error) {
-    console.error('Ошибка сохранения данных связи компетенции:', error)
-    emit('data-saved', "Данные <span class='text-bold'>о связи компетенции</span> не сохранены!")
+    console.error('Ошибка сохранения связей компетенции:', error)
+    $q.notify({
+      message: 'Ошибка сохранения связей компетенции',
+      color: 'negative',
+      position: 'bottom-right'
+    })
+  } finally {
+    saving.value = false
   }
 }
 
-onMounted(() => {
-  loadData()
+watch(() => props.competence, (newCompetence) => {
+  if (newCompetence) {
+    loadRelations()
+  }
+}, { immediate: true })
+
+watch(() => props.planId, (newPlanId) => {
+  if (newPlanId && props.competence) {
+    loadRelations()
+  }
 })
 
-watch(() => props.competence, () => {
-  loadData()
-}, { immediate: true })
+onMounted(() => {
+  if (props.planId && props.competence) {
+    loadRelations()
+  }
+})
 </script>
 
 <style scoped lang="scss">
@@ -122,6 +145,12 @@ watch(() => props.competence, () => {
     .q-input {
       .q-field__control {
         background: #f5f5f5;
+      }
+      
+      &.q-field--loading {
+        .q-field__control:after {
+          background: rgba(255, 255, 255, 0.7);
+        }
       }
     }
   }

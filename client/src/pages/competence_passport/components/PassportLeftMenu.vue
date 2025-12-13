@@ -381,7 +381,7 @@ const navigateToCompetenceRelations = (competence) => {
     name: 'competencePassport',
     params: { 
       planId: store.currentPlanId,
-      competenceId: competence.competence_index 
+      //competenceId: competence.competence_index 
     },
     query: { 
       section: 'competence-relations',
@@ -395,7 +395,7 @@ const navigateToCompetenceIndicators = (competence) => {
     name: 'competencePassport',
     params: { 
       planId: store.currentPlanId,
-      competenceId: competence.competence_index 
+      //competenceId: competence.competence_index 
     },
     query: { 
       section: 'competence-indicators',
@@ -409,7 +409,7 @@ const navigateToIndicatorDisciplines = (competence) => {
     name: 'competencePassport',
     params: { 
       planId: store.currentPlanId,
-      competenceId: competence.competence_index 
+      //competenceId: competence.competence_index 
     },
     query: { 
       section: 'indicator-disciplines',
@@ -423,7 +423,7 @@ const navigateToIndicatorResults = (competence) => {
     name: 'competencePassport',
     params: { 
       planId: store.currentPlanId,
-      competenceId: competence.competence_index 
+      //competenceId: competence.competence_index 
     },
     query: { 
       section: 'indicator-results',
@@ -437,7 +437,7 @@ const navigateToAssessmentCriteria = (competence) => {
     name: 'competencePassport',
     params: { 
       planId: store.currentPlanId,
-      competenceId: competence.competence_index 
+      //competenceId: competence.competence_index 
     },
     query: { 
       section: 'assessment-criteria',

@@ -471,6 +471,53 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
+  async function fetchCompetenceRelations(planId, competenceIndex) {
+    _setLoadingState(true)
+    try {
+      if (!planId || !competenceIndex) {
+        throw new Error('Plan ID и индекс компетенции обязательны')
+      }
+      
+      const response = await api.get('/api/competence/competence-relations/', {
+        params: { 
+          plan_id: planId,
+          competence_index: competenceIndex
+        }
+      })
+      
+      return response.data
+    } catch (error) {
+      console.error('Error fetching competence relations:', error)
+      throw error
+    } finally {
+      _setLoadingState(false)
+    }
+  }
+
+  async function updateCompetenceRelations(planId, competenceIndex, relationsText) {
+    _setLoadingState(true, saving)
+    try {
+      if (!planId || !competenceIndex) {
+        throw new Error('Plan ID и индекс компетенции обязательны')
+      }
+      
+      const payload = {
+        plan_id: planId,
+        competence_index: competenceIndex,
+        relations_text: relationsText || ''
+      }
+      
+      const response = await api.post('/api/competence/update-competence-relations/', payload)
+      
+      return response.data
+    } catch (error) {
+      console.error('Error updating competence relations:', error)
+      throw error
+    } finally {
+      _setLoadingState(false, saving)
+    }
+  }
+
   return {
     programList,
     groupsList,
@@ -527,5 +574,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     clearEditingScheme,
 
     fetchPlanDetails,
+
+    fetchCompetenceRelations,
+    updateCompetenceRelations,
   }
 })
