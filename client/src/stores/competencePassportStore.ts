@@ -518,6 +518,57 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
+  async function fetchCompetenceFinalIndicators(planId, competenceIndex) {
+    _setLoadingState(true)
+    try {
+      if (!planId || !competenceIndex) {
+        throw new Error('Plan ID и индекс компетенции обязательны')
+      }
+      
+      const response = await api.get('/api/competence/competence-final-indicators/', {
+        params: { 
+          plan_id: planId,
+          competence_index: competenceIndex
+        }
+      })
+      
+      return response.data
+    } catch (error) {
+      console.error('Error fetching competence final indicators:', error)
+      throw error
+    } finally {
+      _setLoadingState(false)
+    }
+  }
+
+  async function updateCompetenceFinalIndicators(planId, competenceIndex, finalIndicatorText, indicatorId = null) {
+    _setLoadingState(true, saving)
+    try {
+      if (!planId || !competenceIndex) {
+        throw new Error('Plan ID и индекс компетенции обязательны')
+      }
+      
+      const payload = {
+        plan_id: planId,
+        competence_index: competenceIndex,
+        final_indicator_text: finalIndicatorText || ''
+      }
+      
+      if (indicatorId) {
+        payload.indicator_id = indicatorId
+      }
+      
+      const response = await api.post('/api/competence/update-competence-final-indicators/', payload)
+      
+      return response.data
+    } catch (error) {
+      console.error('Error updating competence final indicators:', error)
+      throw error
+    } finally {
+      _setLoadingState(false, saving)
+    }
+  }
+
   return {
     programList,
     groupsList,
@@ -577,5 +628,10 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
 
     fetchCompetenceRelations,
     updateCompetenceRelations,
+
+    fetchCompetenceFinalIndicators,
+    updateCompetenceFinalIndicators,
+
+    
   }
 })

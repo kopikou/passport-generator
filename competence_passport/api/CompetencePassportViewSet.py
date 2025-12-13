@@ -1225,3 +1225,187 @@ class CompetencePassportViewSet(
                 {'error': f'Ошибка при обновлении связей компетенции: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(methods=['GET'], detail=False, url_path='competence-final-indicators')
+    def get_competence_final_indicators(self, request):
+        """Получение итоговых индикаторов достижения компетенции"""
+        try:
+            plan_id = self.request.query_params.get('plan_id')
+            competence_index = self.request.query_params.get('competence_index')
+            
+            if not plan_id or not competence_index:
+                return Response(
+                    {'error': 'ID плана и индекс компетенции обязательны'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            plan, error_response = self._get_plan_or_error_response(plan_id)
+            if error_response:
+                return error_response
+
+            all_indicators = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).order_by('indicator_index')
+            
+            # Ищем итоговый индикатор (содержит "Итоговый индикатор" в индексе)
+            final_indicators = []
+            other_indicators = []
+            
+            for indicator in all_indicators:
+                indicator_data = {
+                    'id': indicator.id,
+                    'indicator_index': indicator.indicator_index,
+                    'indicator': indicator.indicator,
+                    'discipline_id': indicator.planlineid.id,
+                    'discipline_index': indicator.planlineid.newdisid,
+                    'discipline_name': indicator.planlineid.dis,
+                    'is_final': 'Итоговый индикатор' in indicator.indicator_index
+                }
+                
+                if indicator_data['is_final']:
+                    final_indicators.append(indicator_data)
+                else:
+                    other_indicators.append(indicator_data)
+            
+            # Если нет итоговых индикаторов, берем первый доступный как основной
+            primary_indicator = None
+            if final_indicators:
+                primary_indicator = final_indicators[0]
+            elif other_indicators:
+                primary_indicator = other_indicators[0]
+            
+            competence_data = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).first()
+            
+            return Response({
+                'plan_id': plan.id,
+                'plan_mira_id': plan.mira_id,
+                'plan_name': plan.planname,
+                'competence_index': competence_index,
+                'competence': competence_data.competence if competence_data else '',
+                'primary_indicator': primary_indicator,
+                'all_indicators': final_indicators + other_indicators,
+                'final_indicators_count': len(final_indicators),
+                'total_indicators_count': len(all_indicators)
+            })
+            
+        except Exception as e:
+            logger.error(f"Error fetching competence final indicators: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при получении итоговых индикаторов компетенции: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(methods=['POST'], detail=False, url_path='update-competence-final-indicators')
+    def update_competence_final_indicators(self, request):
+        """Обновление итоговых индикаторов компетенции в linesindicators"""
+        try:
+            plan_id = request.data.get('plan_id')
+            competence_index = request.data.get('competence_index')
+            final_indicator_text = request.data.get('final_indicator_text', '')
+            indicator_id = request.data.get('indicator_id') 
+            
+            if not plan_id or not competence_index:
+                return Response(
+                    {'error': 'ID плана и индекс компетенции обязательны'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            plan, error_response = self._get_plan_or_error_response(plan_id)
+            if error_response:
+                return error_response
+
+            with transaction.atomic():
+                competence_exists = LinesIndicators.objects.filter(
+                    planlineid__plan=plan,
+                    competence_index=competence_index
+                ).exists()
+                
+                if not competence_exists:
+                    return Response(
+                        {'error': 'Компетенция не найдена в плане'}, 
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                
+                if indicator_id:
+                    try:
+                        indicator = LinesIndicators.objects.get(
+                            id=indicator_id,
+                            planlineid__plan=plan,
+                            competence_index=competence_index
+                        )
+                        indicator.indicator = final_indicator_text
+                        indicator.save()
+                        
+                        return Response({
+                            'success': True,
+                            'message': f'Итоговый индикатор "{indicator.indicator_index}" успешно обновлен',
+                            'indicator_id': indicator.id,
+                            'indicator_index': indicator.indicator_index,
+                            'updated': True
+                        })
+                        
+                    except LinesIndicators.DoesNotExist:
+                        return Response(
+                            {'error': 'Указанный индикатор не найден'}, 
+                            status=status.HTTP_404_NOT_FOUND
+                        )
+                
+                # Если indicator_id не передан, ищем итоговый индикатор
+                final_indicators = LinesIndicators.objects.filter(
+                    planlineid__plan=plan,
+                    competence_index=competence_index,
+                    indicator_index__icontains='Итоговый индикатор'
+                ).order_by('indicator_index')
+                
+                if final_indicators.exists():
+                    indicator = final_indicators.first()
+                    indicator.indicator = final_indicator_text
+                    indicator.save()
+                    
+                    return Response({
+                        'success': True,
+                        'message': f'Итоговый индикатор "{indicator.indicator_index}" успешно обновлен',
+                        'indicator_id': indicator.id,
+                        'indicator_index': indicator.indicator_index,
+                        'updated': True
+                    })
+
+                first_indicator = LinesIndicators.objects.filter(
+                    planlineid__plan=plan,
+                    competence_index=competence_index
+                ).first()
+                
+                if first_indicator:
+                    new_indicator_index = f"{first_indicator.indicator_index} (Итоговый индикатор)"
+                    
+                    indicator = LinesIndicators.objects.create(
+                        planlineid=first_indicator.planlineid,
+                        competence_index=competence_index,
+                        competence=first_indicator.competence,
+                        indicator_index=new_indicator_index,
+                        indicator=final_indicator_text
+                    )
+                    
+                    return Response({
+                        'success': True,
+                        'message': f'Создан новый итоговый индикатор "{new_indicator_index}"',
+                        'indicator_id': indicator.id,
+                        'indicator_index': indicator.indicator_index,
+                        'created': True
+                    })
+
+                return Response(
+                    {'error': 'Для этой компетенции нет индикаторов в учебном плане'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+                    
+        except Exception as e:
+            logger.error(f"Error updating competence final indicators: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при обновлении итоговых индикаторов: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
