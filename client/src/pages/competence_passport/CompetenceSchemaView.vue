@@ -109,7 +109,6 @@
                   </td>
                 </tr>
                 
-                <!-- Разделитель -->
                 <tr v-else-if="row.type === 'divider'" class="divider-row">
                   <td :colspan="10" style="background-color: #fff3cd; font-weight: bold; border-top: 2px solid #ffeaa7; border-bottom: 2px solid #ffeaa7;">
                     <div class="text-center text-warning q-py-xs">
@@ -119,8 +118,7 @@
                   </td>
                 </tr>
               </template>
-              
-              <!-- Нет данных -->
+
               <tr v-if="visibleRows.length === 0 && !store.schemaLoading">
                 <td :colspan="10" class="text-center q-py-xl">
                   <div class="full-width row flex-center q-gutter-sm">
@@ -130,7 +128,6 @@
                 </td>
               </tr>
               
-              <!-- Загрузка -->
               <tr v-if="store.schemaLoading">
                 <td :colspan="10" class="text-center q-py-xl">
                   <div class="full-width row flex-center q-gutter-sm">
@@ -182,7 +179,6 @@ const searchFilter = ref('')
 const editDialogVisible = ref(false)
 const editingData = ref({})
 
-// Вычисляемые свойства
 const filteredRows = computed(() => {
   if (!searchFilter.value) {
     return store.schemaData || []
@@ -223,7 +219,6 @@ async function loadCompetenceSchema() {
     await store.fetchCompetenceSchema(store.currentPlanId)
     
   } catch (error) {
-    console.error('Error loading competence schema:', error)
     $q.notify({
       type: 'negative',
       message: `Ошибка загрузки схемы компетенций: ${error.message}`,
@@ -259,7 +254,6 @@ function handleFormsSaved() {
   loadCompetenceSchema()
 }
 
-// Хуки жизненного цикла
 watch(() => store.currentPlanId, (newPlanId) => {
   if (newPlanId) {
     loadCompetenceSchema()

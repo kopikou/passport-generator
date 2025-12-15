@@ -25,7 +25,7 @@ import PassportLeftMenu from './PassportLeftMenu.vue'
 
 const $route = useRoute()
 
-// Определяем, какой сайдбар показывать в зависимости от маршрута
+// Определяем, какое меню показывать в зависимости от маршрута
 const currentSidebar = computed(() => {
   const routeName = $route.name
   

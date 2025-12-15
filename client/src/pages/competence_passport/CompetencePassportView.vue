@@ -1,6 +1,5 @@
 <template>
   <div class="competence-passport-view">
-    <!-- Заголовок раздела -->
     <div class="section-header q-mb-md">
       <div class="text-h4 q-mb-xs">{{ pageTitle }}</div>
       <div v-if="currentCompetence" class="text-subtitle1 text-grey">
@@ -8,7 +7,6 @@
       </div>
     </div>
 
-    <!-- Основной контент -->
     <div v-if="!selectedSection" class="empty-state q-pa-xl text-center">
       <span
         style="align-content: center; text-align: center; font-size: 20px; font-weight: bold"

@@ -435,7 +435,6 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
         )
       }
       
-      // Обновляем схему компетенций
       if (currentPlanId.value) {
         await fetchCompetenceSchema(currentPlanId.value)
       }

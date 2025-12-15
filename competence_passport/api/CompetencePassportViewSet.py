@@ -182,13 +182,6 @@ class CompetencePassportViewSet(
             )
         return None
 
-    def _natural_sort_key(self, s):
-        """Ключ для естественной сортировки (natural sort)"""
-        def convert(text):
-            return int(text) if text.isdigit() else text.lower()
-        
-        return [convert(c) for c in re.split(r'(\d+)', s)]
-
     def _sort_competence_list(self, competence_list):
         """Сортировка списка индексов компетенций"""
         if isinstance(competence_list, set):
@@ -272,6 +265,29 @@ class CompetencePassportViewSet(
             if error_response:
                 return error_response
             
+            # Определяем группы, которые нужно исключить
+            groups_to_exclude = {
+                'Б1',
+                'Б1.Б',
+                'Б1.Б.01',
+                'Б1.Б.02',
+                'Б1.Б.03',
+                'Б1.Б.04',
+                'Б1.Б.05',
+                'Б1.В',
+                'Б1.В.01',
+                'Б1.В.02',
+                'Б1.В.02.ДВ.01',
+                'Б1.В.02.ДВ.02',
+                'Б1.В.03',
+                'Б2',
+                'Б2.Б',
+                'Б2.В',
+                'Б3',
+                'ФТД',
+                'Б1.Б.05.02.ДВ.01',
+            }
+            
             disciplines = LinesData.objects.filter(
                 plan=plan
             ).values(
@@ -281,6 +297,22 @@ class CompetencePassportViewSet(
                 'synchronize'
             ).order_by('newdisid')
             
+            filtered_disciplines = []
+            for disc in disciplines:
+                disc_newdisid = disc['newdisid']
+                
+                if not disc_newdisid:
+                    filtered_disciplines.append(disc)
+                    continue
+                
+                should_exclude = False
+
+                if disc_newdisid in groups_to_exclude:
+                    should_exclude = True
+                
+                if not should_exclude:
+                    filtered_disciplines.append(disc)
+            
             disciplines_list = [
                 {
                     'id': disc['id'],
@@ -288,7 +320,7 @@ class CompetencePassportViewSet(
                     'dis': disc['dis'],
                     'synchronize': disc['synchronize']
                 }
-                for disc in disciplines
+                for disc in filtered_disciplines
             ]
             
             return Response(self._get_plan_response_data(plan, {
@@ -328,13 +360,7 @@ class CompetencePassportViewSet(
                     ).only('competence_index', 'competence')
                 )
             ).order_by('newdisid')
-            
-            # Получаем все уникальные компетенции
-            all_competences = self._get_all_competences_for_plan(plan)
-            all_competences_sorted = self._sort_competences(all_competences)
-            all_competence_indices = [comp['competence_index'] for comp in all_competences_sorted]
-            
-            # Создаем словарь для группировки дисциплины по префиксам
+
             groups = {}
             
             # Определяем названия для основных групп
@@ -707,7 +733,7 @@ class CompetencePassportViewSet(
                 
                 # Создаем структуру для всех семестров дисциплины
                 semesters_data = {}
-                for sem_num in range(1, 9):  # Все возможные семестры
+                for sem_num in range(1, 9): 
                     forms = []
                     scheme_id = None
                     
@@ -783,7 +809,6 @@ class CompetencePassportViewSet(
             has_any_form = any(forms_converted.values())
             
             with transaction.atomic():
-                # Проверяем, существует ли компетенция для этой дисциплины
                 competence_exists = LinesIndicators.objects.filter(
                     planlineid=discipline,
                     competence_index=competence_index
@@ -841,7 +866,6 @@ class CompetencePassportViewSet(
                     scheme_id = None
                     created = False
                 
-                # Формируем строку для отображения
                 forms_display = []
                 if forms_converted['ekz']: forms_display.append('Э')
                 if forms_converted['zach']: forms_display.append('З')
@@ -920,9 +944,13 @@ class CompetencePassportViewSet(
                 'Б1.В.03',
                 'Б2',
                 'Б2.Б',
-                'Б2.В',
+                'Б2.В'
+            }
+
+            groups_to_exclude_with_children = {
                 'Б3',
-                'ФТД'
+                'ФТД', 
+                'Б1.Б.05.02.ДВ.01'
             }
             
             schema_rows = []
@@ -943,7 +971,22 @@ class CompetencePassportViewSet(
                 # Находим дисциплины, формирующие эту компетенцию
                 discipline_rows = []
                 for disc in disciplines:
-                    if disc.newdisid and disc.newdisid in groups_to_exclude:
+                    should_exclude = False
+                    disc_newdisid = disc.newdisid
+                    
+                    if disc_newdisid:
+                        if disc_newdisid in groups_to_exclude:
+                            should_exclude = True
+
+                        for group in groups_to_exclude_with_children:
+                            if disc_newdisid.startswith(group + '.'): 
+                                should_exclude = True
+                                break
+                            elif disc_newdisid == group: 
+                                should_exclude = True
+                                break
+                    
+                    if should_exclude:
                         continue
                     
                     has_competence = any(
@@ -1059,15 +1102,13 @@ class CompetencePassportViewSet(
             from generator.models import PlanLinesLink
             from rpd.models import LinesData
             
-            # Находим первую дисциплину плана
             first_discipline = LinesData.objects.filter(plan=plan).first()
             if not first_discipline:
                 return Response(
                     {'error': 'В плане нет дисциплин'}, 
                     status=status.HTTP_404_NOT_FOUND
                 )
-            
-            # Ищем PlanLinesLink для этой дисциплины
+
             plan_lines_link = PlanLinesLink.objects.filter(
                 planlines=first_discipline
             ).first()
@@ -1079,14 +1120,13 @@ class CompetencePassportViewSet(
                 ).first()
             
             if not plan_lines_link:
-                # Создаем временный PlanLinesLink
                 plan_lines_link = PlanLinesLink.objects.create(
                     planlines=first_discipline,
                     status=PlanLinesLink.StatusChoices.is_filled,
                     person=self.request.user.userprofile.mira_id if hasattr(self.request.user, 'userprofile') else None,
                 )
             
-            # 2. Получаем данные через GeneratorService.get_rpd_data()
+            # 2. Получаем данные через GeneratorService
             user_mira_id = self.request.user.userprofile.mira_id if hasattr(self.request.user, 'userprofile') else None
             plan_data = GeneratorService.get_rpd_data(plan_lines_link.id, user_mira_id)
             
@@ -1428,8 +1468,8 @@ class CompetencePassportViewSet(
             if error_response:
                 return error_response
 
-            # Определяем обобщающие группы
-            summary_groups_to_exclude = {
+            # Определяем группы, которые нужно исключить
+            groups_to_exclude = {
                 'Б1',
                 'Б1.Б',
                 'Б1.Б.01',
@@ -1445,9 +1485,12 @@ class CompetencePassportViewSet(
                 'Б1.В.03',
                 'Б2',
                 'Б2.Б',
-                'Б2.В',
+                'Б2.В'
+            }
+            groups_to_exclude_with_children = {
                 'Б3',
-                'ФТД'
+                'ФТД', 
+                'Б1.Б.05.02.ДВ.01'
             }
             
             # Получаем все индикаторы для этой компетенции с информацией о дисциплинах
@@ -1460,16 +1503,27 @@ class CompetencePassportViewSet(
             filtered_indicators = []
             
             for indicator in indicators:
-                # Проверяем, является ли индикатор итоговым
                 is_final_indicator = 'Итоговый индикатор' in indicator.indicator_index
 
                 if is_final_indicator:
                     continue
 
                 discipline_index = indicator.planlineid.newdisid or ''
-                is_summary_group = discipline_index in summary_groups_to_exclude
+                should_exclude = False
+                    
+                if discipline_index:
+                    if discipline_index in groups_to_exclude:
+                        should_exclude = True
 
-                if is_summary_group:
+                    for group in groups_to_exclude_with_children:
+                        if discipline_index.startswith(group + '.'): 
+                            should_exclude = True
+                            break
+                        elif discipline_index == group: 
+                            should_exclude = True
+                            break
+                    
+                if should_exclude:
                     continue
                     
                 filtered_indicators.append(indicator)
@@ -1528,7 +1582,6 @@ class CompetencePassportViewSet(
                     indicator.save()
                     
                     plan = indicator.planlineid.plan
-                    competence_index = indicator.competence_index
                     
                     return Response({
                         'success': True,

@@ -14,9 +14,6 @@
         <q-item-label>Компетенции</q-item-label>
         <q-item-label caption>УК, ОПК, ПК</q-item-label>
       </q-item-section>
-      <q-item-section side>
-        <q-icon name="keyboard_arrow_right" size="xs" />
-      </q-item-section>
     </q-item>
 
     <q-item 
@@ -30,9 +27,6 @@
       <q-item-section>
         <q-item-label>Дисциплины</q-item-label>
         <q-item-label caption>Список всех дисциплин</q-item-label>
-      </q-item-section>
-      <q-item-section side>
-        <q-icon name="keyboard_arrow_right" size="xs" />
       </q-item-section>
     </q-item>
   </q-list>

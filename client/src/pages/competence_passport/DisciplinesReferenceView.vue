@@ -98,32 +98,6 @@ const searchFilter = ref('')
 const selectedTypes = ref([]) 
 const currentPlan = ref(null)
 
-// Определяем группы, которые нужно исключить
-const groupsToExclude = [
-  'Б1',
-  'Б1.Б',
-  'Б1.Б.01',
-  'Б1.Б.02',
-  'Б1.Б.03',
-  'Б1.Б.04',
-  'Б1.Б.05',
-  'Б1.В',
-  'Б1.В.01',
-  'Б1.В.02',
-  'Б1.В.03',
-  'Б2',
-  'Б2.Б',
-  'Б2.В',
-  'Б3',
-  'ФТД'
-]
-
-// Функция для проверки, является ли индекс обобщающей группой
-function isExcludedGroup(disciplineIndex) {
-  if (!disciplineIndex) return false
-  
-  return groupsToExclude.some(group => disciplineIndex === group)
-}
 
 // Цветовая схема для всех типов
 const typeColors = {
@@ -183,10 +157,6 @@ const pagination = ref({
 function getDisciplineTypes(disciplineIndex) {
   if (!disciplineIndex) return ['Не указан']
   
-  if (isExcludedGroup(disciplineIndex)) {
-    return ['Обобщающая группа']
-  }
-  
   const types = []
   
   // Основные категории
@@ -219,9 +189,6 @@ function getTypeColor(type) {
 const filteredDisciplines = computed(() => {
   let filtered = disciplines.value
   
-  filtered = filtered.filter(disc => !isExcludedGroup(disc.newdisid))
-  
-  // Фильтр по поисковому запросу
   if (searchFilter.value) {
     const searchLower = searchFilter.value.toLowerCase()
     filtered = filtered.filter(disc => 
@@ -233,8 +200,7 @@ const filteredDisciplines = computed(() => {
   if (selectedTypes.value && selectedTypes.value.length > 0) {
     filtered = filtered.filter(disc => {
       const discTypes = getDisciplineTypes(disc.newdisid)
-      // Исключаем обобщающие группы из фильтрации по типам
-      if (discTypes.includes('Обобщающая группа')) return false
+      
       return selectedTypes.value.some(selectedType => 
         discTypes.includes(selectedType)
       )
@@ -261,7 +227,6 @@ async function loadDisciplines() {
     }
     
   } catch (error) {
-    console.error('Error loading disciplines:', error)
   } finally {
     loading.value = false
   }

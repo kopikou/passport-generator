@@ -91,7 +91,6 @@ const competenceTypeFilter = ref(null)
 const searchFilter = ref('')
 const currentPlan = ref(null)
 
-// Опции для фильтра по типам компетенций
 const competenceTypeOptions = [
   { label: 'Универсальные компетенции', value: 'Универсальная' },
   { label: 'Общепрофессиональные компетенции', value: 'Общепрофессиональная' },

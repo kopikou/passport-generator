@@ -350,7 +350,6 @@ const showEditor = ref(false)
 const editingRow = ref(null)
 const disciplinesMap = ref({})
 
-// Валидация
 const showValidationDetails = ref(false)
 const highlightedDiscipline = ref(null)
 
@@ -383,7 +382,6 @@ const columns = [
   }
 ]
 
-// Вычисляемые свойства
 const validationStatus = computed(() => {
   const validation = store.matrixValidation
   
@@ -446,7 +444,6 @@ const visibleMatrix = computed(() => {
   return filteredMatrix.value.filter(item => isItemVisible(item))
 })
 
-// Методы
 function getCompetenceBadgeColor(competenceIndex) {
   if (!competenceIndex) return 'grey'
   
@@ -582,7 +579,6 @@ async function runMatrixValidation() {
   }
 }
 
-// Основные методы
 async function loadDisciplines() {
   if (!store.currentPlanId) return
   
@@ -733,7 +729,6 @@ async function loadCompetenceMatrix() {
   }
 }
 
-// Хуки жизненного цикла
 watch(() => store.currentPlanId, (newPlanId) => {
   if (newPlanId) {
     disciplinesMap.value = {}

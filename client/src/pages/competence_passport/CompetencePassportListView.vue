@@ -83,7 +83,6 @@
             </q-card>
           </div>
 
-          <!-- Отображение выбранного действия -->
           <div v-if="selectedAction">
             <q-separator class="q-my-lg" />
             
@@ -324,7 +323,6 @@ function selectPlanFile(file) {
   selectedPlanFile.value = file;
 }
 
-// Загрузка файла учебного плана
 async function uploadPlanFile() {
   if (!uploadedFile.value) {
     $q.notify({
@@ -350,7 +348,6 @@ async function uploadPlanFile() {
   }
 }
 
-// Подтверждение выбора учебного плана
 async function confirmPlanSelection() {
   if (!selectedPlanFile.value) {
     $q.notify({
@@ -375,7 +372,6 @@ async function confirmPlanSelection() {
   }
 }
 
-// Загрузка данных при монтировании
 onMounted(async () => {
   const savedFilter = LocalStorage.getItem('surp_rpdgroupfilter');
   if (savedFilter !== null && savedFilter !== undefined && savedFilter !== 'null') {

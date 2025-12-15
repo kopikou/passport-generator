@@ -66,9 +66,6 @@
               Титульный лист
             </q-item-label>
           </q-item-section>
-          <q-item-section side>
-            <q-icon name="keyboard_arrow_right" size="xs" />
-          </q-item-section>
         </q-item>
 
         <!-- Компетенции -->
@@ -88,7 +85,7 @@
                 dense
                 round
                 size="sm"
-                :icon="isCompetenceExpanded(comp.competence_index) ? 'keyboard_arrow_down' : 'keyboard_arrow_right'"
+                :icon="isCompetenceExpanded(comp.competence_index) ? 'keyboard_arrow_down' : 'keyboard_arrow_down'"
                 :class="{ 'rotate-180': isCompetenceExpanded(comp.competence_index) }"
                 class="transition-transform"
                 style="min-width: 24px; min-height: 24px;"
@@ -121,9 +118,6 @@
                 <q-item-section>
                   <div class="text-caption">1.1. Связь компетенции с иными компетенциях</div>
                 </q-item-section>
-                <q-item-section side>
-                  <q-icon name="keyboard_arrow_right" size="xs" />
-                </q-item-section>
               </q-item>
 
               <!-- 2. Индикаторы достижения компетенции -->
@@ -137,9 +131,6 @@
               >
                 <q-item-section>
                   <div class="text-caption">2. Индикаторы достижения компетенции</div>
-                </q-item-section>
-                <q-item-section side>
-                  <q-icon name="keyboard_arrow_right" size="xs" />
                 </q-item-section>
               </q-item>
 
@@ -155,9 +146,6 @@
                 <q-item-section>
                   <div class="text-caption">2.1. Соотнесение индикаторов с дисциплинами</div>
                 </q-item-section>
-                <q-item-section side>
-                  <q-icon name="keyboard_arrow_right" size="xs" />
-                </q-item-section>
               </q-item>
 
               <!-- 2.2. Соотнесение индикаторов с результатами обучения -->
@@ -172,9 +160,6 @@
                 <q-item-section>
                   <div class="text-caption">2.2. Соотнесение индикаторов с результатами обучения</div>
                 </q-item-section>
-                <q-item-section side>
-                  <q-icon name="keyboard_arrow_right" size="xs" />
-                </q-item-section>
               </q-item>
 
               <!-- 3. Критерии и средства оценивания индикаторов -->
@@ -188,9 +173,6 @@
               >
                 <q-item-section>
                   <div class="text-caption">3. Критерии и средства оценивания индикаторов</div>
-                </q-item-section>
-                <q-item-section side>
-                  <q-icon name="keyboard_arrow_right" size="xs" />
                 </q-item-section>
               </q-item>
             </div>
@@ -381,7 +363,6 @@ const navigateToCompetenceRelations = (competence) => {
     name: 'competencePassport',
     params: { 
       planId: store.currentPlanId,
-      //competenceId: competence.competence_index 
     },
     query: { 
       section: 'competence-relations',
@@ -395,7 +376,6 @@ const navigateToCompetenceIndicators = (competence) => {
     name: 'competencePassport',
     params: { 
       planId: store.currentPlanId,
-      //competenceId: competence.competence_index 
     },
     query: { 
       section: 'competence-indicators',
@@ -408,8 +388,7 @@ const navigateToIndicatorDisciplines = (competence) => {
   router.push({
     name: 'competencePassport',
     params: { 
-      planId: store.currentPlanId,
-      //competenceId: competence.competence_index 
+      planId: store.currentPlanId, 
     },
     query: { 
       section: 'indicator-disciplines',
@@ -423,7 +402,6 @@ const navigateToIndicatorResults = (competence) => {
     name: 'competencePassport',
     params: { 
       planId: store.currentPlanId,
-      //competenceId: competence.competence_index 
     },
     query: { 
       section: 'indicator-results',
@@ -437,7 +415,6 @@ const navigateToAssessmentCriteria = (competence) => {
     name: 'competencePassport',
     params: { 
       planId: store.currentPlanId,
-      //competenceId: competence.competence_index 
     },
     query: { 
       section: 'assessment-criteria',
