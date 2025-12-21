@@ -29,7 +29,7 @@
                 :color="validationStatus.type === 'error' ? 'white' : 'dark'" 
                 label="Обновить проверку" 
                 @click="runMatrixValidation"
-                :loading="store.matrixValidation.validationInProgress"
+                :loading="matrixValidation.validationInProgress"
                 icon="refresh"
               />
             </template>
@@ -39,14 +39,14 @@
           <q-slide-transition>
             <div v-if="showValidationDetails && validationStatus.details" class="validation-details q-pa-md bg-grey-2 q-mt-sm">
               <!-- Дисциплины без компетенций -->
-              <div v-if="store.matrixValidation.disciplinesWithoutCompetences.length > 0" class="q-mb-md">
+              <div v-if="matrixValidation.disciplinesWithoutCompetences.length > 0" class="q-mb-md">
                 <div class="text-subtitle1 text-weight-medium q-mb-sm">
                   <q-icon name="error_outline" color="negative" class="q-mr-xs" />
-                  Дисциплины без компетенций ({{ store.matrixValidation.disciplinesWithoutCompetences.length }}):
+                  Дисциплины без компетенций ({{ matrixValidation.disciplinesWithoutCompetences.length }}):
                 </div>
                 <div class="q-gutter-sm">
                   <q-chip 
-                    v-for="disc in store.matrixValidation.disciplinesWithoutCompetences" 
+                    v-for="disc in matrixValidation.disciplinesWithoutCompetences" 
                     :key="disc.index"
                     color="negative" 
                     text-color="white"
@@ -64,14 +64,14 @@
               </div>
               
               <!-- Компетенции без дисциплин -->
-              <div v-if="store.matrixValidation.competencesWithoutDisciplines.length > 0" class="q-mb-md">
+              <div v-if="matrixValidation.competencesWithoutDisciplines.length > 0" class="q-mb-md">
                 <div class="text-subtitle1 text-weight-medium q-mb-sm">
                   <q-icon name="warning" color="warning" class="q-mr-xs" />
-                  Компетенции без дисциплин ({{ store.matrixValidation.competencesWithoutDisciplines.length }}):
+                  Компетенции без дисциплин ({{ matrixValidation.competencesWithoutDisciplines.length }}):
                 </div>
                 <div class="q-gutter-sm">
                   <q-chip 
-                    v-for="comp in store.matrixValidation.competencesWithoutDisciplines" 
+                    v-for="comp in matrixValidation.competencesWithoutDisciplines" 
                     :key="comp.competence_index"
                     color="warning" 
                     text-color="dark"
@@ -123,14 +123,14 @@
               </q-chip>
               
               <span class="q-ml-sm text-caption">
-                <span v-if="store.matrixValidation.disciplinesWithoutCompetences.length > 0">
-                  {{ store.matrixValidation.disciplinesWithoutCompetences.length }} дисциплин без компетенций
+                <span v-if="matrixValidation.disciplinesWithoutCompetences.length > 0">
+                  {{ matrixValidation.disciplinesWithoutCompetences.length }} дисциплин без компетенций
                 </span>
-                <span v-if="store.matrixValidation.disciplinesWithoutCompetences.length > 0 && store.matrixValidation.competencesWithoutDisciplines.length > 0">
+                <span v-if="matrixValidation.disciplinesWithoutCompetences.length > 0 && matrixValidation.competencesWithoutDisciplines.length > 0">
                   , 
                 </span>
-                <span v-if="store.matrixValidation.competencesWithoutDisciplines.length > 0">
-                  {{ store.matrixValidation.competencesWithoutDisciplines.length }} компетенций без дисциплин
+                <span v-if="matrixValidation.competencesWithoutDisciplines.length > 0">
+                  {{ matrixValidation.competencesWithoutDisciplines.length }} компетенций без дисциплин
                 </span>
               </span>
             </div>
@@ -166,7 +166,7 @@
                 icon="check_circle"
                 label="Проверить"
                 @click="runMatrixValidation"
-                :loading="store.matrixValidation.validationInProgress"
+                :loading="matrixValidation.validationInProgress"
                 class="q-mr-sm"
               >
                 <q-tooltip>Проверить связи между дисциплинами и компетенциями</q-tooltip>
@@ -203,7 +203,7 @@
         >
           <template v-slot:top>
             <div class="text-h6">
-              Показано строк: {{ visibleMatrix.length }} из {{ store.competenceMatrix.length }}
+              Показано строк: {{ visibleMatrix.length }} из {{ competenceMatrix.length }}
             </div>
             <q-space />
             <div class="text-caption text-grey" v-if="searchFilter">
@@ -310,7 +310,7 @@
         <!-- Модальное окно редактирования -->
         <discipline-competences-editor
           v-if="editingRow"
-          :plan-id="store.currentPlanId"
+          :plan-id="currentPlanId"
           :discipline-id="editingRow.id"
           :discipline-index="editingRow.index"
           :discipline-name="editingRow.name"
@@ -323,19 +323,27 @@
   </top-navigation-menu>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch, onUnmounted, nextTick } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
 import { useRouter } from 'vue-router'
 import TopNavigationMenu from './components/TopNavigationMenu.vue'
 import DisciplineCompetencesEditor from './components/DisciplineCompetencesEditor.vue'
+import { storeToRefs } from 'pinia'
 import { useQuasar, date } from 'quasar'
 
 const $q = useQuasar()
 const router = useRouter()
 const store = useCompetencePassportStore()
+const {
+  competenceMatrix,
+  matrixLoading,
+  currentPlanId,
+  matrixValidation,
+  currentPlanDisciplines,
+  saving
+} = storeToRefs(store)
 
-const matrixLoading = ref(false)
 const searchFilter = ref('')
 const currentPlan = ref(null)
 const expandedGroups = ref(new Set())
@@ -383,7 +391,7 @@ const columns = [
 ]
 
 const validationStatus = computed(() => {
-  const validation = store.matrixValidation
+  const validation = matrixValidation.value
   
   if (validation.validationInProgress) {
     return {
@@ -415,10 +423,10 @@ const validationStatus = computed(() => {
 })
 
 const lastCheckedFormatted = computed(() => {
-  if (!store.matrixValidation.lastChecked) return 'еще не проверялась'
+  if (!matrixValidation.value.lastChecked) return 'еще не проверялась'
   
   const timeStamp = date.formatDate(
-    store.matrixValidation.lastChecked, 
+    matrixValidation.value.lastChecked, 
     'DD.MM.YYYY HH:mm:ss'
   )
   
@@ -426,7 +434,7 @@ const lastCheckedFormatted = computed(() => {
 })
 
 const filteredMatrix = computed(() => {
-  let filtered = store.competenceMatrix
+  let filtered = competenceMatrix.value
   
   if (searchFilter.value) {
     const searchLower = searchFilter.value.toLowerCase()
@@ -467,7 +475,7 @@ function getGroupIcon(level) {
 }
 
 function hasChildren(groupIndex) {
-  const allItems = store.competenceMatrix
+  const allItems = competenceMatrix.value
   return allItems.some(item => 
     item.index !== groupIndex && 
     item.index.startsWith(groupIndex + '.')
@@ -487,7 +495,7 @@ function toggleGroup(groupIndex) {
 }
 
 function expandAll() {
-  const allItems = store.competenceMatrix
+  const allItems = competenceMatrix.value
   allItems.forEach(item => {
     if (item.type === 'group' && hasChildren(item.index)) {
       expandedGroups.value.add(item.index)
@@ -515,7 +523,7 @@ function isItemVisible(item) {
   const parentGroups = getParentGroups(item.index)
   
   for (const parentIndex of parentGroups) {
-    const parentItem = store.competenceMatrix.find(g => g.index === parentIndex && g.type === 'group')
+    const parentItem = competenceMatrix.value.find(g => g.index === parentIndex && g.type === 'group')
     if (parentItem && !expandedGroups.value.has(parentIndex)) {
       return false
     }
@@ -526,7 +534,7 @@ function isItemVisible(item) {
 
 // Валидационные методы
 function isDisciplineWithoutCompetences(disciplineIndex) {
-  return store.matrixValidation.disciplinesWithoutCompetences.some(
+  return matrixValidation.value.disciplinesWithoutCompetences.some(
     disc => disc.index === disciplineIndex
   )
 }
@@ -547,7 +555,7 @@ function scrollToDiscipline(disciplineIndex) {
 }
 async function runMatrixValidation() {
   try {
-    const result = await store.validateCompetenceMatrix(store.currentPlanId)
+    const result = await store.validateCompetenceMatrix(currentPlanId.value)
     
     if (result.isValid) {
       $q.notify({
@@ -556,7 +564,7 @@ async function runMatrixValidation() {
         position: 'top-right',
         timeout: 3000
       })
-      localStorage.setItem(`matrix_valid_${store.currentPlanId}`, 'true')
+      localStorage.setItem(`matrix_valid_${currentPlanId.value}`, 'true')
     } else {
       $q.notify({
         type: 'warning',
@@ -580,14 +588,14 @@ async function runMatrixValidation() {
 }
 
 async function loadDisciplines() {
-  if (!store.currentPlanId) return
+  if (!currentPlanId.value) return
   
   try {
-    await store.fetchAllDisciplines(store.currentPlanId)
+    await store.fetchAllDisciplines(currentPlanId.value)
     
     disciplinesMap.value = {}
     
-    const disciplines = store.currentPlanDisciplines
+    const disciplines = currentPlanDisciplines.value
     
     if (disciplines && Array.isArray(disciplines)) {
       disciplines.forEach(discipline => {
@@ -611,7 +619,7 @@ async function onRowDoubleClick(row) {
     return
   }
   
-  if (!store.currentPlanId) {
+  if (!currentPlanId.value) {
     $q.notify({
       type: 'warning',
       message: 'План не выбран. Пожалуйста, выберите учебный план.',
@@ -620,7 +628,7 @@ async function onRowDoubleClick(row) {
     return
   }
   
-  const disciplines = store.currentPlanDisciplines
+  const disciplines = currentPlanDisciplines.value
   
   if (!disciplines || disciplines.length === 0) {
     await loadDisciplines()
@@ -696,7 +704,7 @@ function onCompetencesSaved() {
 async function loadCompetenceMatrix() {
   matrixLoading.value = true
   try {
-    const planId = store.currentPlanId
+    const planId = currentPlanId.value
     
     if (!planId) {
       return
@@ -708,7 +716,7 @@ async function loadCompetenceMatrix() {
       abbrprofile: response.abbrprofile
     }
     
-    const allItems = store.competenceMatrix
+    const allItems = competenceMatrix.value
     allItems.forEach(item => {
       if (item.type === 'group' && item.level <= 2 && hasChildren(item.index)) {
         expandedGroups.value.add(item.index)
@@ -729,7 +737,7 @@ async function loadCompetenceMatrix() {
   }
 }
 
-watch(() => store.currentPlanId, (newPlanId) => {
+watch(() => currentPlanId.value, (newPlanId) => {
   if (newPlanId) {
     disciplinesMap.value = {}
     store.resetMatrixValidation()
@@ -738,7 +746,7 @@ watch(() => store.currentPlanId, (newPlanId) => {
 })
 
 onMounted(() => {
-  if (store.currentPlanId) {
+  if (currentPlanId.value) {
     loadCompetenceMatrix()
   }
 })

@@ -13,7 +13,7 @@ from auths.models import Permissions
 from generator.permissions import CanViewRPDProgram
 from rpd.models.rpd_models import PlanData, LinesData, LinesIndicators, SemesterData
 from competence_passport.models import Scheme, CompetenceRelations
-from generator.models import DisciplineIndicators
+from generator.models import DisciplineIndicators, PlanLinesLink
 import logging
 import re
 
@@ -120,24 +120,13 @@ class CompetencePassportViewSet(
         def sort_key(item):
             competence_index = item.get('competence_index', '')
             
-            # Сортируем по типу компетенции
-            type_order = {
-                'Универсальная': 1,
-                'Общепрофессиональная': 2,
-                'Профессиональная': 3,
-                'Дополнительная': 4,
-                'Другая': 5
-            }
-            comp_type = self._get_competence_type(competence_index)
-            type_priority = type_order.get(comp_type, 99)
-            
             prefix, sub_type, num1, num2, num3 = self._extract_competence_parts(competence_index)
             
             # Сортируем по префиксу (УК, ОПК, ПК, ДК)
             prefix_order = {'УК': 1, 'ОПК': 2, 'ПК': 3, 'ДК': 4}
             prefix_priority = prefix_order.get(prefix.upper(), 5)
-            
-            return (type_priority, prefix_priority, num1, num2, num3, competence_index)
+
+            return (prefix_priority, num1, num2, num3)
         
         return sorted(competences_list, key=sort_key)
 
@@ -653,11 +642,6 @@ class CompetencePassportViewSet(
                 
                 return Response({
                     'success': True,
-                    'message': f'Удалено {deleted_count} индикаторов, добавлено {added_count} индикаторов, сохранено {kept_count} индикаторов',
-                    'deleted': deleted_count,
-                    'added': added_count,
-                    'kept': kept_count,
-                    'total': deleted_count + added_count + kept_count,
                     'competences_deleted': comp_to_delete_sorted,
                     'competences_added': comp_to_add_sorted,
                     'competences_kept': comp_to_keep_sorted,
@@ -672,108 +656,6 @@ class CompetencePassportViewSet(
             logger.error(f"Error updating discipline competences: {str(e)}")
             return Response(
                 {'error': f'Ошибка при обновлении компетенций: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    @action(methods=['GET'], detail=False, url_path='discipline-semester-schemes')
-    def get_discipline_semester_schemes(self, request):
-        """Получение схем форм аттестации для дисциплины по компетенциям"""
-        try:
-            plan_id = self.request.query_params.get('plan_id')
-            discipline_id = self.request.query_params.get('discipline_id')
-            
-            if not plan_id or not discipline_id:
-                return Response(
-                    {'error': 'ID плана и дисциплины обязательны'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            plan, error_response = self._get_plan_or_error_response(plan_id)
-            if error_response:
-                return error_response
-            
-            discipline, error_response = self._get_discipline_or_error_response(plan, discipline_id)
-            if error_response:
-                return error_response
-            
-            # Получаем все компетенции дисциплины
-            competence_indicators = LinesIndicators.objects.filter(
-                planlineid=discipline,
-                competence_index__isnull=False
-            ).values('competence_index', 'competence').distinct()
-            
-            # Получаем существующие схемы для этой дисциплины
-            existing_schemes = Scheme.objects.filter(
-                planlineid=discipline
-            ).order_by('competence_index', 'semester')
-            
-            # Группируем схемы по компетенциям
-            schemes_by_competence = {}
-            for scheme in existing_schemes:
-                comp_key = scheme.competence_index
-                if comp_key not in schemes_by_competence:
-                    schemes_by_competence[comp_key] = []
-                schemes_by_competence[comp_key].append({
-                    'semester': scheme.semester,
-                    'ekz': scheme.ekz or False,
-                    'zach': scheme.zach or False,
-                    'zacho': scheme.zacho or False,
-                    'kp': scheme.kp or False,
-                    'kr': scheme.kr or False,
-                    'id': scheme.id
-                })
-            
-            semesters = SemesterData.objects.filter(planlineid=discipline).order_by('num')
-            semester_numbers = [sem.num for sem in semesters]
-            
-            # Формируем данные по компетенциям
-            competence_schemes = []
-            for comp in competence_indicators:
-                comp_schemes = schemes_by_competence.get(comp['competence_index'], [])
-                
-                # Создаем структуру для всех семестров дисциплины
-                semesters_data = {}
-                for sem_num in range(1, 9): 
-                    forms = []
-                    scheme_id = None
-                    
-                    # Ищем схему для этого семестра
-                    for scheme in comp_schemes:
-                        if scheme['semester'] == sem_num:
-                            if scheme['ekz']: forms.append('Э')
-                            if scheme['zach']: forms.append('З')
-                            if scheme['zacho']: forms.append('Зо')
-                            if scheme['kp']: forms.append('КП')
-                            if scheme['kr']: forms.append('КР')
-                            scheme_id = scheme['id']
-                            break
-                    
-                    semesters_data[f'semester_{sem_num}'] = {
-                        'forms': forms,
-                        'forms_display': ', '.join(forms) if forms else '',
-                        'scheme_id': scheme_id,
-                        'has_scheme': len(forms) > 0
-                    }
-                
-                competence_schemes.append({
-                    'competence_index': comp['competence_index'],
-                    'competence': comp['competence'],
-                    'semesters': semesters_data
-                })
-            
-            return Response({
-                'plan_id': plan.id,
-                'discipline_id': discipline.id,
-                'discipline_index': discipline.newdisid,
-                'discipline_name': discipline.dis,
-                'semester_numbers': semester_numbers,
-                'competence_schemes': competence_schemes
-            })
-            
-        except Exception as e:
-            logger.error(f"Error fetching discipline semester schemes: {str(e)}")
-            return Response(
-                {'error': f'Ошибка при получении схем форм аттестации: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
@@ -1053,26 +935,6 @@ class CompetencePassportViewSet(
                     if indicator.competence_index:
                         all_competence_indices.add(indicator.competence_index)
             
-            competences_without_disciplines = []
-            for comp in competences:
-                if comp['competence_index'] not in all_competence_indices:
-                    competences_without_disciplines.append(comp)
-            
-            if competences_without_disciplines:
-                schema_rows.append({
-                    'type': 'divider',
-                    'label': f'Компетенции без дисциплин ({len(competences_without_disciplines)})'
-                })
-                
-                for comp in competences_without_disciplines:
-                    schema_rows.append({
-                        'type': 'competence',
-                        'competence_index': comp['competence_index'],
-                        'competence_name': comp['competence'],
-                        'competence_type': self._get_competence_type(comp['competence_index']),
-                        'warning': True
-                    })
-            
             return Response(self._get_plan_response_data(plan, {
                 'schema_rows': schema_rows
             }))
@@ -1099,9 +961,6 @@ class CompetencePassportViewSet(
                 return error_response
             
             # 1. Находим PlanLinesLink для этого плана
-            from generator.models import PlanLinesLink
-            from rpd.models import LinesData
-            
             first_discipline = LinesData.objects.filter(plan=plan).first()
             if not first_discipline:
                 return Response(
@@ -1113,20 +972,7 @@ class CompetencePassportViewSet(
                 planlines=first_discipline
             ).first()
             
-            # Если нет PlanLinesLink, ищем любой для этого плана
-            if not plan_lines_link:
-                plan_lines_link = PlanLinesLink.objects.filter(
-                    planlines__plan=plan
-                ).first()
-            
-            if not plan_lines_link:
-                plan_lines_link = PlanLinesLink.objects.create(
-                    planlines=first_discipline,
-                    status=PlanLinesLink.StatusChoices.is_filled,
-                    person=self.request.user.userprofile.mira_id if hasattr(self.request.user, 'userprofile') else None,
-                )
-            
-            # 2. Получаем данные через GeneratorService
+            # 2. Получаем данные 
             user_mira_id = self.request.user.userprofile.mira_id if hasattr(self.request.user, 'userprofile') else None
             plan_data = GeneratorService.get_rpd_data(plan_lines_link.id, user_mira_id)
             

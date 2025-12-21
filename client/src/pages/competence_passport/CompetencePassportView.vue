@@ -27,7 +27,7 @@
           :is="currentSectionComponent"
           :plan-data="planData"
           :competence="currentCompetence"
-          :plan-id="store.currentPlanId"
+          :plan-id="currentPlanId"
           @data-saved="handleDataSaved"
         />
       </div>
@@ -35,16 +35,21 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 import { useQuasar } from 'quasar'
 
 const route = useRoute()
-const router = useRouter()
 const store = useCompetencePassportStore()
 const $q = useQuasar()
+
+const {
+  currentPlanId,
+  currentPlanCompetences
+} = storeToRefs(store)
 
 const loading = ref(false)
 const currentCompetence = ref(null)
@@ -85,14 +90,14 @@ const currentSectionComponent = computed(() => {
 })
 
 const loadPlanData = async () => {
-  if (!store.currentPlanId) {
+  if (!currentPlanId.value) {
     planData.value = null
     return
   }
 
   loading.value = true
   try {
-    const competencesData = await store.fetchAllCompetences(store.currentPlanId)
+    const competencesData = await store.fetchAllCompetences(currentPlanId.value)
     
     if (competencesData) {
       planData.value = {
@@ -108,7 +113,7 @@ const loadPlanData = async () => {
         },
       }
       try {
-        const planResponse = await store.fetchPlanDetails(store.currentPlanId)
+        const planResponse = await store.fetchPlanDetails(currentPlanId.value)
         if (planResponse) {
           planData.value = {
             ...planData.value,
@@ -128,14 +133,14 @@ const loadPlanData = async () => {
 }
 
 const loadCompetenceData = async (competenceIndex) => {
-  if (!competenceIndex || !store.currentPlanId) {
+  if (!competenceIndex || !currentPlanId.value) {
     currentCompetence.value = null
     return
   }
 
   loading.value = true
   try {
-    const data = await store.fetchAllCompetences(store.currentPlanId)
+    const data = await store.fetchAllCompetences(currentPlanId.value)
     
     const competence = data?.competences?.find(
       comp => comp.competence_index === competenceIndex
@@ -145,7 +150,7 @@ const loadCompetenceData = async (competenceIndex) => {
       currentCompetence.value = competence
     } else {
       currentCompetence.value = null
-      console.warn(`Компетенция ${competenceIndex} не найдена в плане ${store.currentPlanId}`)
+      console.warn(`Компетенция ${competenceIndex} не найдена в плане ${currentPlanId.value}`)
     }
   } catch (error) {
     console.error('Ошибка загрузки данных компетенции:', error)
@@ -180,7 +185,7 @@ watch(
 )
 
 watch(
-  () => store.currentPlanId,
+  () => currentPlanId.value,
   (newPlanId) => {
     if (newPlanId) {
       if (route.query.section === 'title-page') {
@@ -196,9 +201,9 @@ watch(
 )
 
 onMounted(() => {
-  if (route.query.section === 'title-page' && store.currentPlanId) {
+  if (route.query.section === 'title-page' && currentPlanId.value) {
     loadPlanData()
-  } else if (route.query.competence && store.currentPlanId) {
+  } else if (route.query.competence && currentPlanId.value) {
     loadCompetenceData(route.query.competence)
   }
 })

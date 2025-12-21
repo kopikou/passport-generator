@@ -197,15 +197,21 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 import { useQuasar } from 'quasar'
 
 const router = useRouter()
 const $route = useRoute()
 const store = useCompetencePassportStore()
+const {
+  currentPlanId,
+  currentPlanCompetences,
+} = storeToRefs(store)
+
 const $q = useQuasar()
 
 const searchText = ref('')
@@ -350,7 +356,7 @@ const navigateToTitlePage = () => {
   router.push({
     name: 'competencePassport',
     params: { 
-      planId: store.currentPlanId
+      planId: currentPlanId.value
     },
     query: { 
       section: 'title-page'
@@ -362,7 +368,7 @@ const navigateToCompetenceRelations = (competence) => {
   router.push({
     name: 'competencePassport',
     params: { 
-      planId: store.currentPlanId,
+      planId: currentPlanId.value,
     },
     query: { 
       section: 'competence-relations',
@@ -375,7 +381,7 @@ const navigateToCompetenceIndicators = (competence) => {
   router.push({
     name: 'competencePassport',
     params: { 
-      planId: store.currentPlanId,
+      planId: currentPlanId.value,
     },
     query: { 
       section: 'competence-indicators',
@@ -388,7 +394,7 @@ const navigateToIndicatorDisciplines = (competence) => {
   router.push({
     name: 'competencePassport',
     params: { 
-      planId: store.currentPlanId, 
+      planId: currentPlanId.value, 
     },
     query: { 
       section: 'indicator-disciplines',
@@ -401,7 +407,7 @@ const navigateToIndicatorResults = (competence) => {
   router.push({
     name: 'competencePassport',
     params: { 
-      planId: store.currentPlanId,
+      planId: currentPlanId.value,
     },
     query: { 
       section: 'indicator-results',
@@ -414,7 +420,7 @@ const navigateToAssessmentCriteria = (competence) => {
   router.push({
     name: 'competencePassport',
     params: { 
-      planId: store.currentPlanId,
+      planId: currentPlanId.value,
     },
     query: { 
       section: 'assessment-criteria',
@@ -424,14 +430,14 @@ const navigateToAssessmentCriteria = (competence) => {
 }
 
 const loadCompetences = async () => {
-  if (!store.currentPlanId) {
+  if (!currentPlanId.value) {
     competencesData.value = []
     return
   }
 
   loading.value = true
   try {
-    const data = await store.fetchAllCompetences(store.currentPlanId)
+    const data = await store.fetchAllCompetences(currentPlanId.value)
     if (data && data.competences) {
       competencesData.value = data.competences
 
@@ -455,12 +461,12 @@ const loadCompetences = async () => {
 }
 
 onMounted(async () => {
-  if (store.currentPlanId) {
+  if (currentPlanId.value) {
     await loadCompetences()
   }
 })
 
-watch(() => store.currentPlanId, async (newPlanId) => {
+watch(() => currentPlanId.value, async (newPlanId) => {
   if (newPlanId) {
     await loadCompetences()
   } else {
@@ -469,7 +475,7 @@ watch(() => store.currentPlanId, async (newPlanId) => {
   }
 })
 
-watch(() => store.currentPlanCompetences, (newCompetences) => {
+watch(() => currentPlanCompetences.value, (newCompetences) => {
   if (newCompetences && newCompetences.length > 0) {
     competencesData.value = newCompetences
 

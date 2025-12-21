@@ -7,12 +7,12 @@
           <q-input 
             outlined 
             label="Поиск по направлению, аббревиатуре, специальности, коду и т.д." 
-            v-model="store.groupTextFilter" 
+            v-model="groupTextFilter" 
             clearable
             @update:model-value="handleSearchChange"
           />
           <q-select
-            v-model="store.selectedYear"
+            v-model="selectedYear"
             label="Год"
             :options="yearsList"
             @update:model-value="handleYearChange"
@@ -21,7 +21,7 @@
       </div>
     </template>
     <template #content>
-      <div v-if="store.groupsList.length > 0"
+      <div v-if="groupsList.length > 0"
            style="display: grid; grid-template-columns: 300px 1fr; overflow: hidden; height: 100%"
       >
         <!-- Левая панель со списком групп -->
@@ -34,7 +34,7 @@
             :key="group.plan_id"
             style="display: grid; gap: 8px;"
             clickable
-            :active="store.currentPlanId === group.plan_id"
+            :active="currentPlanId === group.plan_id"
             @click="selectGroup(group.plan_id)"
             active-class="my-active-item"
           >
@@ -51,7 +51,7 @@
         </q-list>
 
         <!-- Правая панель с выбором действия -->
-        <div v-if="store.currentPlanId" style="display: flex; flex-direction: column; height: 100%; padding: 20px;">
+        <div v-if="currentPlanId" style="display: flex; flex-direction: column; height: 100%; padding: 20px;">
           <div class="text-h5 q-mb-md">Выберите действие для группы</div>
           
           <!-- Карточки выбора действия -->
@@ -164,16 +164,26 @@
   </layout-h-c-f>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { useCompetencePassportStore } from 'stores/competencePassportStore';
 import { useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia'
 import { LocalStorage, useQuasar } from 'quasar';
 import _ from 'lodash';
 import LayoutHCF from 'components/LayoutHCF.vue';
 import dayjs from "dayjs";
 
 const store = useCompetencePassportStore()
+const {
+  groupsList,
+  currentPlanId,
+  groupTextFilter,
+  textFilter,
+  statusFilter,
+  myFilter,
+  selectedYear
+} = storeToRefs(store)
 const router = useRouter()
 const $q = useQuasar()
 
@@ -192,13 +202,13 @@ const yearsList = computed(() => {
 });
 
 const filteredGroups = computed(() => {
-  if (!store.groupTextFilter || store.groupTextFilter.trim() === '') {
-    return store.groupsList;
+  if (!groupTextFilter.value || groupTextFilter.value.trim() === '') {
+    return groupsList.value;
   }
   
-  const searchLower = store.groupTextFilter.toLowerCase().trim();
+  const searchLower = groupTextFilter.value.toLowerCase().trim();
   
-  return store.groupsList.filter(group => {
+  return groupsList.value.filter(group => {
     const fieldsToSearch = [
       group.abbr,
       group.yr?.toString(),
@@ -248,8 +258,8 @@ function getFirstPlxFile(plxFile) {
 
 // Текущий файл учебного плана для выбранной группы
 const currentGroupPlxFile = computed(() => {
-  if (!store.currentPlanId) return null;
-  const currentGroup = store.groupsList.find(group => group.plan_id === store.currentPlanId);
+  if (!currentPlanId.value) return null;
+  const currentGroup = groupsList.value.find(group => group.plan_id === currentPlanId.value);
   return getFirstPlxFile(currentGroup?.plx_file);
 });
 const availablePlanFiles = computed(() => {
@@ -281,8 +291,8 @@ function getFileName(url) {
 }
 
 function handleSearchChange() {
-  if (store.groupTextFilter && store.groupTextFilter.trim() !== '') {
-    LocalStorage.set('surp_rpdgroupfilter', store.groupTextFilter);
+  if (groupTextFilter.value && groupTextFilter.value.trim() !== '') {
+    LocalStorage.set('surp_rpdgroupfilter', groupTextFilter.value);
   } else {
     LocalStorage.remove('surp_rpdgroupfilter');
   }
@@ -298,7 +308,6 @@ const debouncedFetchGroupsList = _.debounce(async () => {
 }, 300);
 
 async function selectGroup(planId) {
-  //store.currentPlanId = planId;
   store.setCurrentPlanId(planId);
   selectedAction.value = '';
   selectedPlanFile.value = null;
@@ -375,9 +384,9 @@ async function confirmPlanSelection() {
 onMounted(async () => {
   const savedFilter = LocalStorage.getItem('surp_rpdgroupfilter');
   if (savedFilter !== null && savedFilter !== undefined && savedFilter !== 'null') {
-    store.groupTextFilter = savedFilter;
+    groupTextFilter.value = savedFilter;
   } else {
-    store.groupTextFilter = '';
+    groupTextFilter.value = '';
     LocalStorage.remove('surp_rpdgroupfilter');
   }
   
@@ -385,9 +394,9 @@ onMounted(async () => {
 })
 
 watch([
-  () => store.textFilter,
-  () => store.statusFilter,
-  () => store.myFilter,
+  () => textFilter.value,
+  () => statusFilter.value,
+  () => myFilter.value,
 ], _.debounce(async () => {
   await store.fetchGroupsList();
 }, 300))

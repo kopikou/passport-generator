@@ -69,10 +69,11 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 
 const props = defineProps({
   planData: {
@@ -93,14 +94,17 @@ const emit = defineEmits(['data-saved'])
 
 const $q = useQuasar()
 const store = useCompetencePassportStore()
+const {
+  competenceIndicatorsCreteria,
+  loading
+} = storeToRefs(store)
 
 const sectionTitle = '3. Критерии и средства (методы) оценивания индикаторов достижения  компетенции в рамках промежуточной аттестации'
 
-const loading = ref(false)
 const error = ref(null)
 
 const indicators = computed(() => {
-  return store.competenceIndicatorsCreteria
+  return competenceIndicatorsCreteria.value
 })
 
 const hasCompetenceData = computed(() => {
@@ -149,7 +153,7 @@ async function saveIndicator(indicator) {
     
   } catch (err) {
     $q.notify({
-      message: 'Данные <span class="text-bold">индикатора</span> не сохранены',
+      message: 'Данные индикатора не сохранены',
       color: 'negative',
       position: 'bottom-right',
       timeout: 3000,

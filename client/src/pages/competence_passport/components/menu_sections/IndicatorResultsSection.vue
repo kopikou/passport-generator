@@ -79,10 +79,11 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 
 const props = defineProps({
   planData: {
@@ -103,14 +104,17 @@ const emit = defineEmits(['data-saved'])
 
 const $q = useQuasar()
 const store = useCompetencePassportStore()
+const {
+  competenceIndicatorsData,
+  loading
+} = storeToRefs(store)
 
 const sectionTitle = '2.2 Соотнесение индикаторов достижения компетенций с результатами обучения по дисциплинам (модулям), практикам'
 
-const loading = ref(false)
 const error = ref(null)
 
 const indicators = computed(() => {
-  return store.competenceIndicatorsData
+  return competenceIndicatorsData.value
 })
 
 const hasCompetenceData = computed(() => {

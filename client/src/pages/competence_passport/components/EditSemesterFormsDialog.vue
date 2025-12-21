@@ -117,7 +117,7 @@
           label="Сохранить" 
           color="positive" 
           @click="saveForms" 
-          :loading="store.saving"
+          :loading="saving"
           :disable="!hasChanges"
         >
           <q-tooltip v-if="!hasChanges">
@@ -129,9 +129,10 @@
   </q-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -144,6 +145,11 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'saved'])
 
 const store = useCompetencePassportStore()
+const {
+  currentPlanId,
+  saving
+} = storeToRefs(store)
+
 const showDialog = ref(false)
 const forms = ref({
   ekz: false,
@@ -211,7 +217,7 @@ function closeDialog() {
 async function saveForms() {
   try {
     const payload = {
-      plan_id: props.editingData.planId || store.currentPlanId,
+      plan_id: props.editingData.planId || currentPlanId.value,
       discipline_id: props.editingData.discipline_id,
       competence_index: props.editingData.competence_index,
       semester: props.editingData.semester,

@@ -226,9 +226,10 @@
   </q-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 import { useQuasar } from 'quasar'
 
 const props = defineProps({
@@ -258,9 +259,13 @@ const emit = defineEmits(['update:show', 'saved'])
 
 const $q = useQuasar()
 const store = useCompetencePassportStore()
+const {
+  saving,
+  currentPlanId,
+  loading
+} = storeToRefs(store)
+
 const showDialog = ref(false)
-const saving = ref(false)
-const loading = ref(false)
 const showDetailsDialog = ref(false)
 const selectedCompetence = ref(null)
 

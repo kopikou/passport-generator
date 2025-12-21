@@ -92,13 +92,18 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import { useQuasar } from 'quasar'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 
 const $q = useQuasar()
 const store = useCompetencePassportStore()
+const {
+  saving,
+  loading
+} = storeToRefs(store)
 
 const props = defineProps({
   planData: {
@@ -119,8 +124,6 @@ const emit = defineEmits(['data-saved'])
 
 const sectionTitle = '2.1. Соотнесение индикаторов с дисциплинами'
 const tableData = ref([])
-const loading = ref(false)
-const saving = ref(false)
 const finalIndicatorsCount = ref(0)
 
 const editingRowId = ref(null)

@@ -395,31 +395,6 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
-  async function fetchDisciplineSchemes(planId, disciplineId) {
-    _setLoadingState(true, schemeLoading)
-    try {
-      if (!planId || !disciplineId) {
-        throw new Error('Plan ID and Discipline ID are required')
-      }
-      
-      const response = await api.get('/api/competence/discipline-semester-schemes/', {
-        params: { 
-          plan_id: planId,
-          discipline_id: disciplineId
-        }
-      })
-      
-      disciplineSchemes.value = response.data.competence_schemes || []
-      
-      return response.data
-    } catch (error) {
-      _handleApiError(error, 'fetching discipline schemes')
-      _resetData(disciplineSchemes)
-    } finally {
-      _setLoadingState(false, schemeLoading)
-    }
-  }
-
   async function updateSemesterScheme(payload) {
     _setLoadingState(true, saving)
     try {
@@ -427,13 +402,6 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
         '/api/competence/update-semester-scheme/', 
         payload
       )
-
-      if (editingDiscipline.value) {
-        await fetchDisciplineSchemes(
-          editingDiscipline.value.planId,
-          editingDiscipline.value.id
-        )
-      }
       
       if (currentPlanId.value) {
         await fetchCompetenceSchema(currentPlanId.value)
@@ -721,70 +689,58 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     groupsList,
     currentProgram,
     currentGroupPrograms,
+    currentPlanCompetences,
     loading,
     selectedYear,
+    currentPlanDisciplines,
+    competenceMatrix,
+    matrixLoading,
+    disciplineCompetences,
+    editingDiscipline,
+    saving,
+    schemaData,
+    schemaLoading,
     textFilter,
     groupTextFilter,
     statusFilter,
     myFilter,
     currentPlanId,
+    matrixValidation,
+    editingScheme,
+    schemeLoading,
+    disciplineSchemes,
+    competenceIndicatorsData,
+    competenceIndicatorsCreteria,
+    indicatorsLoading,
 
     setCurrentPlanId,
-    
     filteredPrograms,
     filteredGroupPrograms,
     fetchGroupsList,
     fetchGroupPrograms,
     setCurrentProgram,
     getProgramDetail,
-    
     fetchAllCompetences,
     fetchAllDisciplines,
-    
-    competenceMatrix,
-    matrixLoading,
     fetchCompetenceMatrix,
-    
-    disciplineCompetences,
-    editingDiscipline,
-    saving,
     fetchDisciplineCompetencesDetailed,
     updateDisciplineCompetences,
     clearEditingDiscipline,
-    currentPlanDisciplines,
-
-    matrixValidation,
     validateCompetenceMatrix,
     checkMatrixValidityFromStorage,
     resetMatrixValidation,
     getValidationStatus,
-
-    schemaData,
-    schemaLoading,
     fetchCompetenceSchema,
-    editingScheme,
-
-    schemeLoading,
-    disciplineSchemes,
-    fetchDisciplineSchemes,
     updateSemesterScheme,
     setEditingScheme,
     clearEditingScheme,
-
     fetchPlanDetails,
-
     fetchCompetenceRelations,
     updateCompetenceRelations,
-
     fetchCompetenceFinalIndicators,
     updateCompetenceFinalIndicators,
-
     fetchCompetenceIndicatorDisciplines,
     updateIndicatorContent,
-
-    competenceIndicatorsData,
-    competenceIndicatorsCreteria,
-    indicatorsLoading,
     fetchCompetenceIndicators,
     saveIndicatorDetails,
   }

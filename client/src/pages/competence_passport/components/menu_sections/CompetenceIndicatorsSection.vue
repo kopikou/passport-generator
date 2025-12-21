@@ -21,13 +21,18 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 
 const $q = useQuasar()
 const store = useCompetencePassportStore()
+const {
+  saving,
+  loading
+} = storeToRefs(store)
 
 const props = defineProps({
   planData: {
@@ -49,8 +54,6 @@ const emit = defineEmits(['data-saved'])
 const sectionTitle = '2. Индикаторы достижения компетенции'
 const finalIndicatorText = ref('')
 const disabled = ref(false)
-const loading = ref(false)
-const saving = ref(false)
 
 const loadIndicators = async () => {
   if (!props.planId || !props.competence?.competence_index) {

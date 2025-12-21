@@ -87,13 +87,18 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 
 const store = useCompetencePassportStore()
-const loading = ref(false)
-const disciplines = ref([])
+const {
+  currentPlanDisciplines,
+  currentPlanId,
+  loading
+} = storeToRefs(store)
+
 const searchFilter = ref('')
 const selectedTypes = ref([]) 
 const currentPlan = ref(null)
@@ -187,7 +192,7 @@ function getTypeColor(type) {
 }
 
 const filteredDisciplines = computed(() => {
-  let filtered = disciplines.value
+  let filtered = currentPlanDisciplines.value
   
   if (searchFilter.value) {
     const searchLower = searchFilter.value.toLowerCase()
@@ -213,14 +218,14 @@ const filteredDisciplines = computed(() => {
 async function loadDisciplines() {
   loading.value = true
   try {
-    const planId = store.currentPlanId
+    const planId = currentPlanId.value
     
     if (!planId) {
       throw new Error('Plan ID is not available. Please select a plan first.')
     }
     
     const response = await store.fetchAllDisciplines(planId)
-    disciplines.value = response.disciplines || []
+    currentPlanDisciplines.value = response.disciplines || []
     currentPlan.value = {
       planname: response.plan_name,
       abbrprofile: response.abbrprofile
@@ -232,7 +237,7 @@ async function loadDisciplines() {
   }
 }
 
-watch(() => store.currentPlanId, (newPlanId) => {
+watch(() => currentPlanId.value, (newPlanId) => {
   if (newPlanId) {
     loadDisciplines()
   }

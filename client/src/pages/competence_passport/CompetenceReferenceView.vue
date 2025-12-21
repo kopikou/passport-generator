@@ -80,12 +80,17 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 
 const store = useCompetencePassportStore()
-const loading = ref(false)
+const {
+  currentPlanId,
+  loading
+} = storeToRefs(store)
+
 const competences = ref([])
 const competenceTypeFilter = ref(null)
 const searchFilter = ref('')
@@ -192,7 +197,7 @@ const filteredCompetences = computed(() => {
 async function loadCompetences() {
   loading.value = true
   try {
-    const planId = store.currentPlanId
+    const planId = currentPlanId.value
     
     if (!planId) {
       throw new Error('Plan ID is not available. Please select a plan first.')
@@ -215,7 +220,7 @@ async function loadCompetences() {
   }
 }
 
-watch(() => store.currentPlanId, (newPlanId) => {
+watch(() => currentPlanId.value, (newPlanId) => {
   if (newPlanId) {
     loadCompetences()
   } else {
@@ -225,7 +230,7 @@ watch(() => store.currentPlanId, (newPlanId) => {
 })
 
 onMounted(() => {
-  if (store.currentPlanId) {
+  if (currentPlanId.value) {
     loadCompetences()
   }
 })
