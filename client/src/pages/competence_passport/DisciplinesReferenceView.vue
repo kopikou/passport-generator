@@ -1,6 +1,6 @@
 <template>
-  <div class="q-pa-md">
-    <div class="row items-center q-mb-md">
+  <div class="q-mb-lg">
+    <div class="row items-center">
       <div class="col">
         <h2 class="text-h4 q-ma-none">Дисциплины</h2>
         <div class="text-subtitle1 text-grey">
@@ -87,43 +87,22 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 
 const store = useCompetencePassportStore()
-const loading = ref(false)
-const disciplines = ref([])
+const {
+  currentPlanDisciplines,
+  currentPlanId,
+  loading
+} = storeToRefs(store)
+
 const searchFilter = ref('')
 const selectedTypes = ref([]) 
 const currentPlan = ref(null)
 
-// Определяем группы, которые нужно исключить
-const groupsToExclude = [
-  'Б1',
-  'Б1.Б',
-  'Б1.Б.01',
-  'Б1.Б.02',
-  'Б1.Б.03',
-  'Б1.Б.04',
-  'Б1.Б.05',
-  'Б1.В',
-  'Б1.В.01',
-  'Б1.В.02',
-  'Б1.В.03',
-  'Б2',
-  'Б2.Б',
-  'Б2.В',
-  'Б3',
-  'ФТД'
-]
-
-// Функция для проверки, является ли индекс обобщающей группой
-function isExcludedGroup(disciplineIndex) {
-  if (!disciplineIndex) return false
-  
-  return groupsToExclude.some(group => disciplineIndex === group)
-}
 
 // Цветовая схема для всех типов
 const typeColors = {
@@ -176,16 +155,12 @@ const pagination = ref({
   sortBy: 'newdisid',
   descending: false,
   page: 1,
-  rowsPerPage: 25
+  rowsPerPage: 0
 })
 
 // Определяем все возможные типы дисциплины по индексу
 function getDisciplineTypes(disciplineIndex) {
   if (!disciplineIndex) return ['Не указан']
-  
-  if (isExcludedGroup(disciplineIndex)) {
-    return ['Обобщающая группа']
-  }
   
   const types = []
   
@@ -217,11 +192,8 @@ function getTypeColor(type) {
 }
 
 const filteredDisciplines = computed(() => {
-  let filtered = disciplines.value
+  let filtered = currentPlanDisciplines.value
   
-  filtered = filtered.filter(disc => !isExcludedGroup(disc.newdisid))
-  
-  // Фильтр по поисковому запросу
   if (searchFilter.value) {
     const searchLower = searchFilter.value.toLowerCase()
     filtered = filtered.filter(disc => 
@@ -233,8 +205,7 @@ const filteredDisciplines = computed(() => {
   if (selectedTypes.value && selectedTypes.value.length > 0) {
     filtered = filtered.filter(disc => {
       const discTypes = getDisciplineTypes(disc.newdisid)
-      // Исключаем обобщающие группы из фильтрации по типам
-      if (discTypes.includes('Обобщающая группа')) return false
+      
       return selectedTypes.value.some(selectedType => 
         discTypes.includes(selectedType)
       )
@@ -247,27 +218,26 @@ const filteredDisciplines = computed(() => {
 async function loadDisciplines() {
   loading.value = true
   try {
-    const planId = store.currentPlanId
+    const planId = currentPlanId.value
     
     if (!planId) {
       throw new Error('Plan ID is not available. Please select a plan first.')
     }
     
     const response = await store.fetchAllDisciplines(planId)
-    disciplines.value = response.disciplines || []
+    currentPlanDisciplines.value = response.disciplines || []
     currentPlan.value = {
       planname: response.plan_name,
       abbrprofile: response.abbrprofile
     }
     
   } catch (error) {
-    console.error('Error loading disciplines:', error)
   } finally {
     loading.value = false
   }
 }
 
-watch(() => store.currentPlanId, (newPlanId) => {
+watch(() => currentPlanId.value, (newPlanId) => {
   if (newPlanId) {
     loadDisciplines()
   }
@@ -277,3 +247,26 @@ onMounted(() => {
   loadDisciplines()
 })
 </script>
+
+<style scoped>
+.text-subtitle1 {
+  margin-bottom: 1rem;
+}
+
+.q-table {
+  margin-top: 1rem;
+}
+
+:deep(.q-table) {
+  table-layout: fixed;
+}
+
+:deep(.q-table th),
+:deep(.q-table td) {
+  vertical-align: top;
+}
+
+:deep(.q-table__card) {
+  overflow-x: auto;
+}
+</style>

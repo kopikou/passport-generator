@@ -12,7 +12,8 @@ from app.utils import UserProfileHasPermission
 from auths.models import Permissions
 from generator.permissions import CanViewRPDProgram
 from rpd.models.rpd_models import PlanData, LinesData, LinesIndicators, SemesterData
-from competence_passport.models import Scheme
+from competence_passport.models import Scheme, CompetenceRelations
+from generator.models import DisciplineIndicators, PlanLinesLink
 import logging
 import re
 
@@ -119,24 +120,13 @@ class CompetencePassportViewSet(
         def sort_key(item):
             competence_index = item.get('competence_index', '')
             
-            # Сортируем по типу компетенции
-            type_order = {
-                'Универсальная': 1,
-                'Общепрофессиональная': 2,
-                'Профессиональная': 3,
-                'Дополнительная': 4,
-                'Другая': 5
-            }
-            comp_type = self._get_competence_type(competence_index)
-            type_priority = type_order.get(comp_type, 99)
-            
             prefix, sub_type, num1, num2, num3 = self._extract_competence_parts(competence_index)
             
             # Сортируем по префиксу (УК, ОПК, ПК, ДК)
             prefix_order = {'УК': 1, 'ОПК': 2, 'ПК': 3, 'ДК': 4}
             prefix_priority = prefix_order.get(prefix.upper(), 5)
-            
-            return (type_priority, prefix_priority, num1, num2, num3, competence_index)
+
+            return (prefix_priority, num1, num2, num3)
         
         return sorted(competences_list, key=sort_key)
 
@@ -180,13 +170,6 @@ class CompetencePassportViewSet(
                 status=status.HTTP_400_BAD_REQUEST
             )
         return None
-
-    def _natural_sort_key(self, s):
-        """Ключ для естественной сортировки (natural sort)"""
-        def convert(text):
-            return int(text) if text.isdigit() else text.lower()
-        
-        return [convert(c) for c in re.split(r'(\d+)', s)]
 
     def _sort_competence_list(self, competence_list):
         """Сортировка списка индексов компетенций"""
@@ -251,7 +234,7 @@ class CompetencePassportViewSet(
             }))
             
         except Exception as e:
-            logger.error(f"Error fetching competences for plan {plan_id}: {str(e)}")
+            #logger.error(f"Error fetching competences for plan {plan_id}: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении компетенций: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -271,6 +254,29 @@ class CompetencePassportViewSet(
             if error_response:
                 return error_response
             
+            # Определяем группы, которые нужно исключить
+            groups_to_exclude = {
+                'Б1',
+                'Б1.Б',
+                'Б1.Б.01',
+                'Б1.Б.02',
+                'Б1.Б.03',
+                'Б1.Б.04',
+                'Б1.Б.05',
+                'Б1.В',
+                'Б1.В.01',
+                'Б1.В.02',
+                'Б1.В.02.ДВ.01',
+                'Б1.В.02.ДВ.02',
+                'Б1.В.03',
+                'Б2',
+                'Б2.Б',
+                'Б2.В',
+                'Б3',
+                'ФТД',
+                'Б1.Б.05.02.ДВ.01',
+            }
+            
             disciplines = LinesData.objects.filter(
                 plan=plan
             ).values(
@@ -280,6 +286,22 @@ class CompetencePassportViewSet(
                 'synchronize'
             ).order_by('newdisid')
             
+            filtered_disciplines = []
+            for disc in disciplines:
+                disc_newdisid = disc['newdisid']
+                
+                if not disc_newdisid:
+                    filtered_disciplines.append(disc)
+                    continue
+                
+                should_exclude = False
+
+                if disc_newdisid in groups_to_exclude:
+                    should_exclude = True
+                
+                if not should_exclude:
+                    filtered_disciplines.append(disc)
+            
             disciplines_list = [
                 {
                     'id': disc['id'],
@@ -287,7 +309,7 @@ class CompetencePassportViewSet(
                     'dis': disc['dis'],
                     'synchronize': disc['synchronize']
                 }
-                for disc in disciplines
+                for disc in filtered_disciplines
             ]
             
             return Response(self._get_plan_response_data(plan, {
@@ -295,7 +317,7 @@ class CompetencePassportViewSet(
             }))
             
         except Exception as e:
-            logger.error(f"Error fetching disciplines for plan {plan_id}: {str(e)}")
+            #logger.error(f"Error fetching disciplines for plan {plan_id}: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении дисциплин: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -327,13 +349,7 @@ class CompetencePassportViewSet(
                     ).only('competence_index', 'competence')
                 )
             ).order_by('newdisid')
-            
-            # Получаем все уникальные компетенции
-            all_competences = self._get_all_competences_for_plan(plan)
-            all_competences_sorted = self._sort_competences(all_competences)
-            all_competence_indices = [comp['competence_index'] for comp in all_competences_sorted]
-            
-            # Создаем словарь для группировки дисциплины по префиксам
+
             groups = {}
             
             # Определяем названия для основных групп
@@ -423,7 +439,7 @@ class CompetencePassportViewSet(
             }))
             
         except Exception as e:
-            logger.error(f"Error fetching competence matrix for plan {plan_id}: {str(e)}")
+            #logger.error(f"Error fetching competence matrix for plan {plan_id}: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении матрицы компетенций: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -501,7 +517,7 @@ class CompetencePassportViewSet(
             })
             
         except Exception as e:
-            logger.error(f"Error fetching detailed discipline competences: {str(e)}")
+            #logger.error(f"Error fetching detailed discipline competences: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении детальной информации: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -626,11 +642,6 @@ class CompetencePassportViewSet(
                 
                 return Response({
                     'success': True,
-                    'message': f'Удалено {deleted_count} индикаторов, добавлено {added_count} индикаторов, сохранено {kept_count} индикаторов',
-                    'deleted': deleted_count,
-                    'added': added_count,
-                    'kept': kept_count,
-                    'total': deleted_count + added_count + kept_count,
                     'competences_deleted': comp_to_delete_sorted,
                     'competences_added': comp_to_add_sorted,
                     'competences_kept': comp_to_keep_sorted,
@@ -642,111 +653,9 @@ class CompetencePassportViewSet(
                 })
                 
         except Exception as e:
-            logger.error(f"Error updating discipline competences: {str(e)}")
+            #logger.error(f"Error updating discipline competences: {str(e)}")
             return Response(
                 {'error': f'Ошибка при обновлении компетенций: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    @action(methods=['GET'], detail=False, url_path='discipline-semester-schemes')
-    def get_discipline_semester_schemes(self, request):
-        """Получение схем форм аттестации для дисциплины по компетенциям"""
-        try:
-            plan_id = self.request.query_params.get('plan_id')
-            discipline_id = self.request.query_params.get('discipline_id')
-            
-            if not plan_id or not discipline_id:
-                return Response(
-                    {'error': 'ID плана и дисциплины обязательны'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            plan, error_response = self._get_plan_or_error_response(plan_id)
-            if error_response:
-                return error_response
-            
-            discipline, error_response = self._get_discipline_or_error_response(plan, discipline_id)
-            if error_response:
-                return error_response
-            
-            # Получаем все компетенции дисциплины
-            competence_indicators = LinesIndicators.objects.filter(
-                planlineid=discipline,
-                competence_index__isnull=False
-            ).values('competence_index', 'competence').distinct()
-            
-            # Получаем существующие схемы для этой дисциплины
-            existing_schemes = Scheme.objects.filter(
-                planlineid=discipline
-            ).order_by('competence_index', 'semester')
-            
-            # Группируем схемы по компетенциям
-            schemes_by_competence = {}
-            for scheme in existing_schemes:
-                comp_key = scheme.competence_index
-                if comp_key not in schemes_by_competence:
-                    schemes_by_competence[comp_key] = []
-                schemes_by_competence[comp_key].append({
-                    'semester': scheme.semester,
-                    'ekz': scheme.ekz or False,
-                    'zach': scheme.zach or False,
-                    'zacho': scheme.zacho or False,
-                    'kp': scheme.kp or False,
-                    'kr': scheme.kr or False,
-                    'id': scheme.id
-                })
-            
-            semesters = SemesterData.objects.filter(planlineid=discipline).order_by('num')
-            semester_numbers = [sem.num for sem in semesters]
-            
-            # Формируем данные по компетенциям
-            competence_schemes = []
-            for comp in competence_indicators:
-                comp_schemes = schemes_by_competence.get(comp['competence_index'], [])
-                
-                # Создаем структуру для всех семестров дисциплины
-                semesters_data = {}
-                for sem_num in range(1, 9):  # Все возможные семестры
-                    forms = []
-                    scheme_id = None
-                    
-                    # Ищем схему для этого семестра
-                    for scheme in comp_schemes:
-                        if scheme['semester'] == sem_num:
-                            if scheme['ekz']: forms.append('Э')
-                            if scheme['zach']: forms.append('З')
-                            if scheme['zacho']: forms.append('Зо')
-                            if scheme['kp']: forms.append('КП')
-                            if scheme['kr']: forms.append('КР')
-                            scheme_id = scheme['id']
-                            break
-                    
-                    semesters_data[f'semester_{sem_num}'] = {
-                        'forms': forms,
-                        'forms_display': ', '.join(forms) if forms else '',
-                        'scheme_id': scheme_id,
-                        'has_scheme': len(forms) > 0
-                    }
-                
-                competence_schemes.append({
-                    'competence_index': comp['competence_index'],
-                    'competence': comp['competence'],
-                    'semesters': semesters_data
-                })
-            
-            return Response({
-                'plan_id': plan.id,
-                'discipline_id': discipline.id,
-                'discipline_index': discipline.newdisid,
-                'discipline_name': discipline.dis,
-                'semester_numbers': semester_numbers,
-                'competence_schemes': competence_schemes
-            })
-            
-        except Exception as e:
-            logger.error(f"Error fetching discipline semester schemes: {str(e)}")
-            return Response(
-                {'error': f'Ошибка при получении схем форм аттестации: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
@@ -782,7 +691,6 @@ class CompetencePassportViewSet(
             has_any_form = any(forms_converted.values())
             
             with transaction.atomic():
-                # Проверяем, существует ли компетенция для этой дисциплины
                 competence_exists = LinesIndicators.objects.filter(
                     planlineid=discipline,
                     competence_index=competence_index
@@ -840,7 +748,6 @@ class CompetencePassportViewSet(
                     scheme_id = None
                     created = False
                 
-                # Формируем строку для отображения
                 forms_display = []
                 if forms_converted['ekz']: forms_display.append('Э')
                 if forms_converted['zach']: forms_display.append('З')
@@ -858,7 +765,7 @@ class CompetencePassportViewSet(
                 })
                 
         except Exception as e:
-            logger.error(f"Error updating semester scheme: {str(e)}", exc_info=True)
+            #logger.error(f"Error updating semester scheme: {str(e)}", exc_info=True)
             return Response(
                 {'error': f'Ошибка при обновлении схемы: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -919,9 +826,13 @@ class CompetencePassportViewSet(
                 'Б1.В.03',
                 'Б2',
                 'Б2.Б',
-                'Б2.В',
+                'Б2.В'
+            }
+
+            groups_to_exclude_with_children = {
                 'Б3',
-                'ФТД'
+                'ФТД', 
+                'Б1.Б.05.02.ДВ.01'
             }
             
             schema_rows = []
@@ -942,7 +853,22 @@ class CompetencePassportViewSet(
                 # Находим дисциплины, формирующие эту компетенцию
                 discipline_rows = []
                 for disc in disciplines:
-                    if disc.newdisid and disc.newdisid in groups_to_exclude:
+                    should_exclude = False
+                    disc_newdisid = disc.newdisid
+                    
+                    if disc_newdisid:
+                        if disc_newdisid in groups_to_exclude:
+                            should_exclude = True
+
+                        for group in groups_to_exclude_with_children:
+                            if disc_newdisid.startswith(group + '.'): 
+                                should_exclude = True
+                                break
+                            elif disc_newdisid == group: 
+                                should_exclude = True
+                                break
+                    
+                    if should_exclude:
                         continue
                     
                     has_competence = any(
@@ -1009,33 +935,649 @@ class CompetencePassportViewSet(
                     if indicator.competence_index:
                         all_competence_indices.add(indicator.competence_index)
             
-            competences_without_disciplines = []
-            for comp in competences:
-                if comp['competence_index'] not in all_competence_indices:
-                    competences_without_disciplines.append(comp)
-            
-            if competences_without_disciplines:
-                schema_rows.append({
-                    'type': 'divider',
-                    'label': f'Компетенции без дисциплин ({len(competences_without_disciplines)})'
-                })
-                
-                for comp in competences_without_disciplines:
-                    schema_rows.append({
-                        'type': 'competence',
-                        'competence_index': comp['competence_index'],
-                        'competence_name': comp['competence'],
-                        'competence_type': self._get_competence_type(comp['competence_index']),
-                        'warning': True
-                    })
-            
             return Response(self._get_plan_response_data(plan, {
                 'schema_rows': schema_rows
             }))
             
         except Exception as e:
-            logger.error(f"Error fetching competence schema data for plan {plan_id}: {str(e)}")
+            #logger.error(f"Error fetching competence schema data for plan {plan_id}: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении данных схемы компетенций: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    @action(methods=['GET'], detail=False, url_path='plan-details')
+    def get_plan_details(self, request):
+        """Получение детальной информации о плане для титульного листа"""
+        try:
+            plan_id = self.request.query_params.get('plan_id')
+            
+            error_response = self._validate_plan_id(plan_id)
+            if error_response:
+                return error_response
+            
+            plan, error_response = self._get_plan_or_error_response(plan_id)
+            if error_response:
+                return error_response
+            
+            # 1. Находим PlanLinesLink для этого плана
+            first_discipline = LinesData.objects.filter(plan=plan).first()
+            if not first_discipline:
+                return Response(
+                    {'error': 'В плане нет дисциплин'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            plan_lines_link = PlanLinesLink.objects.filter(
+                planlines=first_discipline
+            ).first()
+            
+            # 2. Получаем данные 
+            user_mira_id = self.request.user.userprofile.mira_id if hasattr(self.request.user, 'userprofile') else None
+            plan_data = GeneratorService.get_rpd_data(plan_lines_link.id, user_mira_id)
+            
+            # 3. Форматируем ответ для паспорта компетенций
+            response_data = {
+                'plan_id': plan.id,
+                'plan_mira_id': plan.mira_id,
+                'plan_name': plan.planname,
+                'abbrprofile': plan.abbrprofile,
+                'admission': plan_data.get('admission', {}),
+                'planlines': plan_data.get('planlines', {}),
+                'caf_name': plan_data.get('planlines', {}).get('caf_name', 'Не указано'),
+                'plx_file': plan_data.get('plx_file', ''),
+            }
+            
+            return Response(response_data)
+            
+        except Exception as e:
+            #logger.error(f"Error fetching plan details for plan {plan_id}: {str(e)}", exc_info=True)
+            return Response(
+                {'error': f'Ошибка при получении данных плана: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    @action(methods=['GET'], detail=False, url_path='competence-relations')
+    def get_competence_relations(self, request):
+        """Получение связей компетенции с другими компетенциями"""
+        try:
+            plan_id = self.request.query_params.get('plan_id')
+            competence_index = self.request.query_params.get('competence_index')
+            
+            if not plan_id or not competence_index:
+                return Response(
+                    {'error': 'ID плана и индекс компетенции обязательны'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            plan, error_response = self._get_plan_or_error_response(plan_id)
+            if error_response:
+                return error_response
+
+            competence_exists = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).exists()
+            
+            if not competence_exists:
+                return Response(
+                    {'error': 'Компетенция не найдена в плане'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            competence_data = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).first()
+            
+            # Получаем или создаем запись о связях
+            relations, created = CompetenceRelations.objects.get_or_create(
+                plan=plan,
+                competence_index=competence_index,
+                defaults={
+                    'competence': competence_data.competence if competence_data else competence_index,
+                    'relations': ''
+                }
+            )
+            
+            return Response({
+                'plan_id': plan.id,
+                'plan_mira_id': plan.mira_id,
+                'plan_name': plan.planname,
+                'competence_index': competence_index,
+                'competence': relations.competence or (competence_data.competence if competence_data else ''),
+                'relations': relations.relations or '',
+                'created': created
+            })
+            
+        except Exception as e:
+            #logger.error(f"Error fetching competence relations: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при получении связей компетенции: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(methods=['POST'], detail=False, url_path='update-competence-relations')
+    def update_competence_relations(self, request):
+        """Обновление связей компетенции с другими компетенциями"""
+        try:
+            plan_id = request.data.get('plan_id')
+            competence_index = request.data.get('competence_index')
+            relations_text = request.data.get('relations_text', '')
+            
+            if not plan_id or not competence_index:
+                return Response(
+                    {'error': 'ID плана и индекс компетенции обязательны'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            plan, error_response = self._get_plan_or_error_response(plan_id)
+            if error_response:
+                return error_response
+
+            competence_data = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).first()
+            
+            if not competence_data:
+                return Response(
+                    {'error': 'Компетенция не найдена в плане'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            
+            with transaction.atomic():
+                relations, created = CompetenceRelations.objects.update_or_create(
+                    plan=plan,
+                    competence_index=competence_index,
+                    defaults={
+                        'competence': competence_data.competence,
+                        'relations': relations_text
+                    }
+                )
+                
+                return Response({
+                    'success': True,
+                    'message': 'Связи компетенции успешно обновлены',
+                    'competence_index': competence_index,
+                    'relations': relations_text,
+                    'created': created,
+                    'updated_at': relations.updated_at
+                })
+                
+        except Exception as e:
+            #logger.error(f"Error updating competence relations: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при обновлении связей компетенции: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(methods=['GET'], detail=False, url_path='competence-final-indicators')
+    def get_competence_final_indicators(self, request):
+        """Получение итоговых индикаторов достижения компетенции"""
+        try:
+            plan_id = self.request.query_params.get('plan_id')
+            competence_index = self.request.query_params.get('competence_index')
+            
+            if not plan_id or not competence_index:
+                return Response(
+                    {'error': 'ID плана и индекс компетенции обязательны'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            plan, error_response = self._get_plan_or_error_response(plan_id)
+            if error_response:
+                return error_response
+
+            all_indicators = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).order_by('indicator_index')
+            
+            # Ищем итоговый индикатор (содержит "Итоговый индикатор" в индексе)
+            final_indicators = []
+            other_indicators = []
+            
+            for indicator in all_indicators:
+                indicator_data = {
+                    'id': indicator.id,
+                    'indicator_index': indicator.indicator_index,
+                    'indicator': indicator.indicator,
+                    'discipline_id': indicator.planlineid.id,
+                    'discipline_index': indicator.planlineid.newdisid,
+                    'discipline_name': indicator.planlineid.dis,
+                    'is_final': 'Итоговый индикатор' in indicator.indicator_index
+                }
+                
+                if indicator_data['is_final']:
+                    final_indicators.append(indicator_data)
+                else:
+                    other_indicators.append(indicator_data)
+            
+            # Если нет итоговых индикаторов, берем первый доступный как основной
+            primary_indicator = None
+            if final_indicators:
+                primary_indicator = final_indicators[0]
+            elif other_indicators:
+                primary_indicator = other_indicators[0]
+            
+            competence_data = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).first()
+            
+            return Response({
+                'plan_id': plan.id,
+                'plan_mira_id': plan.mira_id,
+                'plan_name': plan.planname,
+                'competence_index': competence_index,
+                'competence': competence_data.competence if competence_data else '',
+                'primary_indicator': primary_indicator,
+                'all_indicators': final_indicators + other_indicators,
+                'final_indicators_count': len(final_indicators),
+                'total_indicators_count': len(all_indicators)
+            })
+            
+        except Exception as e:
+            #logger.error(f"Error fetching competence final indicators: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при получении итоговых индикаторов компетенции: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(methods=['POST'], detail=False, url_path='update-competence-final-indicators')
+    def update_competence_final_indicators(self, request):
+        """Обновление итоговых индикаторов компетенции"""
+        try:
+            plan_id = request.data.get('plan_id')
+            competence_index = request.data.get('competence_index')
+            final_indicator_text = request.data.get('final_indicator_text', '')
+            indicator_id = request.data.get('indicator_id') 
+            
+            if not plan_id or not competence_index:
+                return Response(
+                    {'error': 'ID плана и индекс компетенции обязательны'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            plan, error_response = self._get_plan_or_error_response(plan_id)
+            if error_response:
+                return error_response
+
+            with transaction.atomic():
+                competence_exists = LinesIndicators.objects.filter(
+                    planlineid__plan=plan,
+                    competence_index=competence_index
+                ).exists()
+                
+                if not competence_exists:
+                    return Response(
+                        {'error': 'Компетенция не найдена в плане'}, 
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                
+                if indicator_id:
+                    try:
+                        indicator = LinesIndicators.objects.get(
+                            id=indicator_id,
+                            planlineid__plan=plan,
+                            competence_index=competence_index
+                        )
+                        indicator.indicator = final_indicator_text
+                        indicator.save()
+                        
+                        return Response({
+                            'success': True,
+                            'message': f'Итоговый индикатор "{indicator.indicator_index}" успешно обновлен',
+                            'indicator_id': indicator.id,
+                            'indicator_index': indicator.indicator_index,
+                            'updated': True
+                        })
+                        
+                    except LinesIndicators.DoesNotExist:
+                        return Response(
+                            {'error': 'Указанный индикатор не найден'}, 
+                            status=status.HTTP_404_NOT_FOUND
+                        )
+                
+                # Если indicator_id не передан, ищем итоговый индикатор
+                final_indicators = LinesIndicators.objects.filter(
+                    planlineid__plan=plan,
+                    competence_index=competence_index,
+                    indicator_index__icontains='Итоговый индикатор'
+                ).order_by('indicator_index')
+                
+                if final_indicators.exists():
+                    indicator = final_indicators.first()
+                    indicator.indicator = final_indicator_text
+                    indicator.save()
+                    
+                    return Response({
+                        'success': True,
+                        'message': f'Итоговый индикатор "{indicator.indicator_index}" успешно обновлен',
+                        'indicator_id': indicator.id,
+                        'indicator_index': indicator.indicator_index,
+                        'updated': True
+                    })
+
+                first_indicator = LinesIndicators.objects.filter(
+                    planlineid__plan=plan,
+                    competence_index=competence_index
+                ).first()
+                
+                if first_indicator:
+                    new_indicator_index = f"{first_indicator.indicator_index} (Итоговый индикатор)"
+                    
+                    indicator = LinesIndicators.objects.create(
+                        planlineid=first_indicator.planlineid,
+                        competence_index=competence_index,
+                        competence=first_indicator.competence,
+                        indicator_index=new_indicator_index,
+                        indicator=final_indicator_text
+                    )
+                    
+                    return Response({
+                        'success': True,
+                        'message': f'Создан новый итоговый индикатор "{new_indicator_index}"',
+                        'indicator_id': indicator.id,
+                        'indicator_index': indicator.indicator_index,
+                        'created': True
+                    })
+
+                return Response(
+                    {'error': 'Для этой компетенции нет индикаторов в учебном плане'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+                    
+        except Exception as e:
+            #logger.error(f"Error updating competence final indicators: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при обновлении итоговых индикаторов: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    @action(methods=['GET'], detail=False, url_path='competence-indicator-disciplines')
+    def get_competence_indicator_disciplines(self, request):
+        """Получение индикаторов компетенции с привязкой к дисциплинами"""
+        try:
+            plan_id = self.request.query_params.get('plan_id')
+            competence_index = self.request.query_params.get('competence_index')
+            
+            if not plan_id or not competence_index:
+                return Response(
+                    {'error': 'ID плана и индекс компетенции обязательны'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            plan, error_response = self._get_plan_or_error_response(plan_id)
+            if error_response:
+                return error_response
+
+            # Определяем группы, которые нужно исключить
+            groups_to_exclude = {
+                'Б1',
+                'Б1.Б',
+                'Б1.Б.01',
+                'Б1.Б.02',
+                'Б1.Б.03',
+                'Б1.Б.04',
+                'Б1.Б.05',
+                'Б1.В',
+                'Б1.В.01',
+                'Б1.В.02',
+                'Б1.В.02.ДВ.01',
+                'Б1.В.02.ДВ.02',
+                'Б1.В.03',
+                'Б2',
+                'Б2.Б',
+                'Б2.В'
+            }
+            groups_to_exclude_with_children = {
+                'Б3',
+                'ФТД', 
+                'Б1.Б.05.02.ДВ.01'
+            }
+            
+            # Получаем все индикаторы для этой компетенции с информацией о дисциплинах
+            indicators = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).select_related('planlineid').order_by('indicator_index')
+            
+            # Фильтруем индикаторы: исключаем обобщающие группы и итоговые индикаторы
+            filtered_indicators = []
+            
+            for indicator in indicators:
+                is_final_indicator = 'Итоговый индикатор' in indicator.indicator_index
+
+                if is_final_indicator:
+                    continue
+
+                discipline_index = indicator.planlineid.newdisid or ''
+                should_exclude = False
+                    
+                if discipline_index:
+                    if discipline_index in groups_to_exclude:
+                        should_exclude = True
+
+                    for group in groups_to_exclude_with_children:
+                        if discipline_index.startswith(group + '.'): 
+                            should_exclude = True
+                            break
+                        elif discipline_index == group: 
+                            should_exclude = True
+                            break
+                    
+                if should_exclude:
+                    continue
+                    
+                filtered_indicators.append(indicator)
+            
+            # Формируем таблицу данных из отфильтрованных индикаторов
+            table_data = []
+            for indicator in filtered_indicators:
+                table_data.append({
+                    'id': indicator.id,
+                    'indicator_index': indicator.indicator_index,
+                    'indicator_content': indicator.indicator,
+                    'discipline_index': indicator.planlineid.newdisid or '',
+                    'discipline_name': indicator.planlineid.dis,
+                    'discipline_id': indicator.planlineid.id,
+                })
+            
+            competence_data = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).first()
+            
+            return Response({
+                'plan_id': plan.id,
+                'plan_mira_id': plan.mira_id,
+                'plan_name': plan.planname,
+                'competence_index': competence_index,
+                'competence': competence_data.competence if competence_data else '',
+                'table_data': table_data,
+            })
+            
+        except Exception as e:
+            #logger.error(f"Error fetching competence indicator disciplines: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при получении индикаторов с дисциплинами: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    @action(methods=['POST'], detail=False, url_path='update-indicator-content')
+    def update_indicator_content(self, request):
+        """Обновление содержания индикатора"""
+        try:
+            indicator_id = request.data.get('indicator_id')
+            new_content = request.data.get('indicator_content', '').strip()
+            
+            if not indicator_id:
+                return Response(
+                    {'error': 'ID индикатора обязателен'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            with transaction.atomic():
+                try:
+                    indicator = LinesIndicators.objects.get(id=indicator_id)
+
+                    indicator.indicator = new_content
+                    indicator.save()
+                    
+                    plan = indicator.planlineid.plan
+                    
+                    return Response({
+                        'success': True,
+                        'message': 'Содержание индикатора успешно обновлено',
+                        'indicator': {
+                            'id': indicator.id,
+                            'indicator_index': indicator.indicator_index,
+                            'indicator_content': indicator.indicator,
+                            'competence_index': indicator.competence_index,
+                            'discipline_id': indicator.planlineid.id,
+                            'discipline_name': indicator.planlineid.dis,
+                            'discipline_index': indicator.planlineid.newdisid,
+                        },
+                        'plan_id': plan.id,
+                        'plan_mira_id': plan.mira_id,
+                        'plan_name': plan.planname
+                    })
+                    
+                except LinesIndicators.DoesNotExist:
+                    return Response(
+                        {'error': 'Индикатор не найден'}, 
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                    
+        except Exception as e:
+            #logger.error(f"Error updating indicator content: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при обновлении содержания индикатора: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    @action(methods=['GET'], detail=False, url_path='indicator-details')
+    def get_indicator_details(self, request):
+        """Получение деталей индикатора (знать/уметь/владеть)"""
+        try:
+            indicator_id = self.request.query_params.get('indicator_id')
+            
+            if not indicator_id:
+                return Response(
+                    {'error': 'ID индикатора обязателен'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            try:
+                indicator = LinesIndicators.objects.get(id=indicator_id)
+            except LinesIndicators.DoesNotExist:
+                return Response(
+                    {'error': 'Индикатор не найден'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            discipline_indicator = DisciplineIndicators.objects.filter(
+                indicator=indicator
+            ).first()
+            
+            if discipline_indicator:
+                response_data = {
+                    'know': discipline_indicator.know or '',
+                    'able': discipline_indicator.able or '',
+                    'own': discipline_indicator.own or '',
+                    'criteria': discipline_indicator.criteria or '',
+                    'methods': discipline_indicator.methods or '',
+                }
+            else:
+                response_data = {
+                    'know': '',
+                    'able': '',
+                    'own': '',
+                    'criteria': '',
+                    'methods': '',
+                }
+
+            response_data.update({
+                'indicator_id': indicator.id,
+                'indicator_index': indicator.indicator_index,
+                'indicator_content': indicator.indicator,
+                'competence_index': indicator.competence_index,
+                'discipline_id': indicator.planlineid.id,
+                'discipline_name': indicator.planlineid.dis,
+                'discipline_index': indicator.planlineid.newdisid,
+            })
+            
+            return Response(response_data)
+            
+        except Exception as e:
+            #logger.error(f"Error fetching indicator details: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при получении деталей индикатора: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(methods=['POST'], detail=False, url_path='save-indicator-details')
+    def save_indicator_details(self, request):
+        """Сохранение деталей индикатора (знать/уметь/владеть)"""
+        try:
+            indicator_id = request.data.get('indicator_id')
+            know = request.data.get('know', '')
+            able = request.data.get('able', '')
+            own = request.data.get('own', '')
+            criteria = request.data.get('criteria', '')
+            methods = request.data.get('methods', '')
+            
+            if not indicator_id:
+                return Response(
+                    {'error': 'ID индикатора обязателен'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            with transaction.atomic():
+                try:
+                    indicator = LinesIndicators.objects.get(id=indicator_id)
+                except LinesIndicators.DoesNotExist:
+                    return Response(
+                        {'error': 'Индикатор не найден'}, 
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
+                discipline_indicator, created = DisciplineIndicators.objects.update_or_create(
+                    indicator=indicator,
+                    defaults={
+                        'planlineid': indicator.planlineid,
+                        'know': know,
+                        'able': able,
+                        'own': own,
+                        'criteria': criteria,
+                        'methods': methods
+                    }
+                )
+                
+                return Response({
+                    'success': True,
+                    'message': 'Данные индикатора успешно сохранены',
+                    'created': created,
+                    'indicator': {
+                        'id': indicator.id,
+                        'indicator_index': indicator.indicator_index,
+                        'indicator_content': indicator.indicator,
+                        'competence_index': indicator.competence_index,
+                        'know': discipline_indicator.know,
+                        'able': discipline_indicator.able,
+                        'own': discipline_indicator.own,
+                        'criteria': discipline_indicator.criteria,
+                        'methods': discipline_indicator.methods,
+                        'updated_at': discipline_indicator.updated_at
+                    }
+                })
+                
+        except Exception as e:
+            #logger.error(f"Error saving indicator details: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при сохранении данных индикатора: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

@@ -190,7 +190,6 @@
             </template>
           </q-table>
           
-          <!-- Подсказка -->
           <div class="text-caption text-grey q-mt-sm">
             <q-icon name="info" />
             <template v-if="filteredCompetences.length === allCompetences.length">
@@ -212,7 +211,7 @@
           :disabled="saving"
         />
         <q-btn 
-          label="Сохранить изменения" 
+          label="Сохранить" 
           color="positive" 
           @click="saveChanges"
           :loading="saving"
@@ -227,9 +226,10 @@
   </q-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 import { useQuasar } from 'quasar'
 
 const props = defineProps({
@@ -259,23 +259,24 @@ const emit = defineEmits(['update:show', 'saved'])
 
 const $q = useQuasar()
 const store = useCompetencePassportStore()
+const {
+  saving,
+  currentPlanId,
+  loading
+} = storeToRefs(store)
+
 const showDialog = ref(false)
-const saving = ref(false)
-const loading = ref(false)
 const showDetailsDialog = ref(false)
 const selectedCompetence = ref(null)
 
-// Фильтры
 const searchQuery = ref('')
 const selectedTypeFilter = ref(null)
 const selectedStatusFilter = ref(null)
 
-// Данные
 const discipline = ref(null)
 const allCompetences = ref([])
 const originalCompetences = ref([])
 
-// Сообщение при отсутствии данных
 const noDataMessage = computed(() => {
   if (allCompetences.value.length === 0) {
     return 'Нет данных о компетенциях'
@@ -352,7 +353,7 @@ const filteredCompetences = computed(() => {
   return filtered
 })
 
-// Колонки таблицы (без сортировки)
+// Колонки таблицы
 const columns = [
   {
     name: 'selected',
@@ -404,34 +405,18 @@ function getShortType(type) {
   return shorts[type] || 'Др'
 }
 
-function getCompetenceType(competenceIndex) {
-  if (!competenceIndex) return 'Другая'
-  
-  if (competenceIndex.includes('УК') || competenceIndex.startsWith('УК')) return 'Универсальная'
-  if (competenceIndex.includes('ОПК') || competenceIndex.startsWith('ОПК')) return 'Общепрофессиональная'
-  if (competenceIndex.includes('ПК') || competenceIndex.startsWith('ПК')) return 'Профессиональная'
-  if (competenceIndex.includes('ДК') || competenceIndex.startsWith('ДК')) return 'Дополнительная'
-  
-  return 'Другая'
-}
-
 async function loadCompetenceData() {
   loading.value = true
   try {
-    // Используем метод из стора для получения детальной информации о компетенциях
     const response = await store.fetchDisciplineCompetencesDetailed(props.planId, props.disciplineId)
     
-    // Данные уже отсортированы на бэкенде в методе get_discipline_competences_detailed
-    // через вызов _sort_competences
     allCompetences.value = response.competences.map(comp => ({
       ...comp,
       type_short: getShortType(comp.type),
-      // Убедимся, что indicators есть как массив
       indicators: comp.indicators || [],
       indicators_count: comp.indicators_count || 0
     }))
-    
-    // Сохраняем оригинальные данные для сравнения
+
     originalCompetences.value = JSON.parse(JSON.stringify(allCompetences.value))
     
     discipline.value = {
@@ -455,7 +440,6 @@ async function loadCompetenceData() {
 
 function onToggleCompetence(competence) {
   if (competence.selected) {
-    // При выборе компетенции создаем пустые индикаторы, если их нет
     if (!competence.indicators || competence.indicators.length === 0) {
       competence.indicators = [
         { index: `${competence.competence_index}.1`, name: '' }
@@ -513,7 +497,6 @@ async function saveChanges() {
         indicators: comp.indicators || []
       }))
     
-    // Используем метод из стора для сохранения
     await store.updateDisciplineCompetences(selectedCompetencesData)
     
     $q.notify({
@@ -523,7 +506,6 @@ async function saveChanges() {
       timeout: 3000
     })
     
-    // Обновляем оригинальные данные
     originalCompetences.value = JSON.parse(JSON.stringify(allCompetences.value))
     
     emit('saved')
@@ -546,7 +528,6 @@ watch(() => props.show, (newVal) => {
     resetFilters()
     loadCompetenceData()
   } else {
-    // Сбрасываем состояние при закрытии
     discipline.value = null
     allCompetences.value = []
     originalCompetences.value = []

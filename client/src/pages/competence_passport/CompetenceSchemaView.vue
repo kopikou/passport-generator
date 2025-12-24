@@ -109,7 +109,6 @@
                   </td>
                 </tr>
                 
-                <!-- Разделитель -->
                 <tr v-else-if="row.type === 'divider'" class="divider-row">
                   <td :colspan="10" style="background-color: #fff3cd; font-weight: bold; border-top: 2px solid #ffeaa7; border-bottom: 2px solid #ffeaa7;">
                     <div class="text-center text-warning q-py-xs">
@@ -119,9 +118,8 @@
                   </td>
                 </tr>
               </template>
-              
-              <!-- Нет данных -->
-              <tr v-if="visibleRows.length === 0 && !store.schemaLoading">
+
+              <tr v-if="visibleRows.length === 0 && !schemaLoading">
                 <td :colspan="10" class="text-center q-py-xl">
                   <div class="full-width row flex-center q-gutter-sm">
                     <q-icon name="info" size="2em" color="grey" />
@@ -130,8 +128,7 @@
                 </td>
               </tr>
               
-              <!-- Загрузка -->
-              <tr v-if="store.schemaLoading">
+              <tr v-if="schemaLoading">
                 <td :colspan="10" class="text-center q-py-xl">
                   <div class="full-width row flex-center q-gutter-sm">
                     <q-spinner color="primary" size="2em" />
@@ -148,7 +145,7 @@
           <div class="col">
             <div class="text-caption text-grey">
               Показано: {{ visibleRows.length }} строк ({{ competenceCount }} компетенций, {{ disciplineCount }} дисциплин)
-              <span v-if="store.schemaLoading" class="q-ml-sm">
+              <span v-if="schemaLoading" class="q-ml-sm">
                 <q-spinner color="primary" size="1em" /> Загрузка...
               </span>
             </div>
@@ -165,31 +162,37 @@
   </top-navigation-menu>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
 import { useRouter } from 'vue-router'
 import TopNavigationMenu from './components/TopNavigationMenu.vue'
 import EditSemesterFormsDialog from './components/EditSemesterFormsDialog.vue'
 import { useQuasar } from 'quasar'
+import { storeToRefs } from 'pinia'
 
 const $q = useQuasar()
 const router = useRouter()
 const store = useCompetencePassportStore()
 
-const searchFilter = ref('')
+const {
+  schemaData,
+  schemaLoading,
+  currentPlanId
+} = storeToRefs(store)
 
+
+const searchFilter = ref('')
 const editDialogVisible = ref(false)
 const editingData = ref({})
 
-// Вычисляемые свойства
 const filteredRows = computed(() => {
   if (!searchFilter.value) {
-    return store.schemaData || []
+    return schemaData.value || []
   }
   
   const searchLower = searchFilter.value.toLowerCase()
-  return (store.schemaData || []).filter(row => {
+  return (schemaData.value || []).filter(row => {
     if (row.type === 'competence') {
       return row.competence_index.toLowerCase().includes(searchLower) ||
              row.competence_name.toLowerCase().includes(searchLower) ||
@@ -207,23 +210,22 @@ const visibleRows = computed(() => {
 })
 
 const competenceCount = computed(() => {
-  return (store.schemaData || []).filter(row => row.type === 'competence').length
+  return (schemaData.value || []).filter(row => row.type === 'competence').length
 })
 
 const disciplineCount = computed(() => {
-  return (store.schemaData || []).filter(row => row.type === 'discipline').length
+  return (schemaData.value|| []).filter(row => row.type === 'discipline').length
 })
 
 async function loadCompetenceSchema() {
   try {
-    if (!store.currentPlanId) {
+    if (!currentPlanId.value) {
       throw new Error('План не выбран')
     }
     
-    await store.fetchCompetenceSchema(store.currentPlanId)
+    await store.fetchCompetenceSchema(currentPlanId.value)
     
   } catch (error) {
-    console.error('Error loading competence schema:', error)
     $q.notify({
       type: 'negative',
       message: `Ошибка загрузки схемы компетенций: ${error.message}`,
@@ -241,15 +243,15 @@ function openEditDialog(row, semester) {
     competence: getCompetenceName(row.parent_competence),
     semester: semester,
     forms: row[`semester_${semester}`]?.forms || [],
-    planId: store.currentPlanId
+    planId: currentPlanId.value
   }
   
   editDialogVisible.value = true
 }
 
 function getCompetenceName(competenceIndex) {
-  const schemaData = store.schemaData || []
-  const competence = schemaData.find(item => 
+  const currentSchemaData = schemaData.value || []
+  const competence = currentSchemaData.find(item => 
     item.type === 'competence' && item.competence_index === competenceIndex
   )
   return competence ? competence.competence_name : ''
@@ -259,15 +261,14 @@ function handleFormsSaved() {
   loadCompetenceSchema()
 }
 
-// Хуки жизненного цикла
-watch(() => store.currentPlanId, (newPlanId) => {
+watch(() => currentPlanId.value, (newPlanId) => {
   if (newPlanId) {
     loadCompetenceSchema()
   }
 })
 
 onMounted(() => {
-  if (store.currentPlanId) {
+  if (currentPlanId.value) {
     loadCompetenceSchema()
   } else {
     $q.notify({

@@ -42,14 +42,20 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 
 const route = useRoute()
 const router = useRouter()
 const store = useCompetencePassportStore()
+const {
+  matrixValidation,
+  currentPlanId
+} = storeToRefs(store)
+
 const currentTab = ref('reference')
 
 const schemaRoute = computed(() => {
@@ -61,18 +67,18 @@ const passportRoute = computed(() => {
 })
 
 const isMatrixValid = computed(() => {
-  if (!store.currentPlanId) return false
+  if (!currentPlanId.value) return false
   
-  if (store.matrixValidation.isValid) return true
+  if (matrixValidation.value.isValid) return true
 
-  return localStorage.getItem(`matrix_valid_${store.currentPlanId}`) === 'true'
+  return localStorage.getItem(`matrix_valid_${currentPlanId.value}`) === 'true'
 })
 
 watch(
-  () => store.matrixValidation.isValid,
+  () => matrixValidation.value.isValid,
   (isValid) => {
-    if (isValid && store.currentPlanId) {
-      localStorage.setItem(`matrix_valid_${store.currentPlanId}`, 'true')
+    if (isValid && currentPlanId.value) {
+      localStorage.setItem(`matrix_valid_${currentPlanId.value}`, 'true')
     }
   }
 )
