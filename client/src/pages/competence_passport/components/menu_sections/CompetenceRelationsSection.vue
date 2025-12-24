@@ -1,24 +1,23 @@
 <template>
-  <div class="competence-relations-section">
-    <div class="text-h5 q-mb-sm">{{ sectionTitle }}</div>
-    <div class="section-details">
-      <div class="text-subtitle1 text-grey">Для чего необходимо формирование компетенции</div>
-      <div class="q-gutter-y-md">
-        <q-input
-          v-model="relationsText"
-          filled
-          type="textarea"
-          placeholder="Связь компетенции с иными компетенциями"
-          rows="10"
-          bg-color="grey-4"
-          :readonly="disabled"
-          :loading="loading"
-          debounce="1000"
-          @update:model-value="saveData"
-        />
-      </div>
-    </div>
+  <div class="text-h6">{{ sectionTitle }}</div>
+  <div class="text-grey q-mb-sm">Для чего необходимо формирование компетенции</div>
+
+  <div class="q-gutter-y-md">
+    <q-input
+      v-model="relationsText"
+      filled
+      type="textarea"
+      label="Связь компетенции с иными компетенциями"
+      stack-label
+      rows="10"
+      bg-color="grey-4"
+      :readonly="disabled"
+      :loading="loading"
+      debounce="1000"
+      @update:model-value="saveData"
+    />
   </div>
+
 </template>
 
 <script setup lang="ts">
@@ -48,8 +47,6 @@ const props = defineProps({
     default: ''
   }
 })
-
-const emit = defineEmits(['data-saved'])
 
 const sectionTitle = '1.1. Связь компетенции с иными компетенциями'
 const relationsText = ref('')
@@ -99,13 +96,21 @@ const saveData = async () => {
       relationsText.value || ''
     )
     
-    emit('data-saved', 'Связи компетенции успешно сохранены')
+    $q.notify({
+      message: 'Связи компетенций успешно сохранены',
+      color: 'positive',
+      position: 'bottom-right',
+      timeout: 2000,
+      html: true
+    })
   } catch (error) {
     console.error('Ошибка сохранения связей компетенции:', error)
     $q.notify({
       message: 'Ошибка сохранения связей компетенции',
       color: 'negative',
-      position: 'bottom-right'
+      position: 'bottom-right',
+      timeout: 3000,
+      html: true
     })
   } finally {
     saving.value = false
@@ -132,30 +137,5 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.competence-relations-section {
-  .section-details {
-    margin-top: 16px;
-    
-    .text-subtitle1 {
-      margin-bottom: 8px;
-    }
-    
-    .q-card {
-      min-height: 100px;
-      margin-top: 8px;
-    }
-    
-    .q-input {
-      .q-field__control {
-        background: #f5f5f5;
-      }
-      
-      &.q-field--loading {
-        .q-field__control:after {
-          background: rgba(255, 255, 255, 0.7);
-        }
-      }
-    }
-  }
-}
+
 </style>

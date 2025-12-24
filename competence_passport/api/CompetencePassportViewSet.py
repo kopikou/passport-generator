@@ -234,7 +234,7 @@ class CompetencePassportViewSet(
             }))
             
         except Exception as e:
-            logger.error(f"Error fetching competences for plan {plan_id}: {str(e)}")
+            #logger.error(f"Error fetching competences for plan {plan_id}: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении компетенций: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -317,7 +317,7 @@ class CompetencePassportViewSet(
             }))
             
         except Exception as e:
-            logger.error(f"Error fetching disciplines for plan {plan_id}: {str(e)}")
+            #logger.error(f"Error fetching disciplines for plan {plan_id}: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении дисциплин: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -439,7 +439,7 @@ class CompetencePassportViewSet(
             }))
             
         except Exception as e:
-            logger.error(f"Error fetching competence matrix for plan {plan_id}: {str(e)}")
+            #logger.error(f"Error fetching competence matrix for plan {plan_id}: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении матрицы компетенций: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -517,7 +517,7 @@ class CompetencePassportViewSet(
             })
             
         except Exception as e:
-            logger.error(f"Error fetching detailed discipline competences: {str(e)}")
+            #logger.error(f"Error fetching detailed discipline competences: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении детальной информации: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -653,7 +653,7 @@ class CompetencePassportViewSet(
                 })
                 
         except Exception as e:
-            logger.error(f"Error updating discipline competences: {str(e)}")
+            #logger.error(f"Error updating discipline competences: {str(e)}")
             return Response(
                 {'error': f'Ошибка при обновлении компетенций: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -765,7 +765,7 @@ class CompetencePassportViewSet(
                 })
                 
         except Exception as e:
-            logger.error(f"Error updating semester scheme: {str(e)}", exc_info=True)
+            #logger.error(f"Error updating semester scheme: {str(e)}", exc_info=True)
             return Response(
                 {'error': f'Ошибка при обновлении схемы: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -940,7 +940,7 @@ class CompetencePassportViewSet(
             }))
             
         except Exception as e:
-            logger.error(f"Error fetching competence schema data for plan {plan_id}: {str(e)}")
+            #logger.error(f"Error fetching competence schema data for plan {plan_id}: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении данных схемы компетенций: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -991,7 +991,7 @@ class CompetencePassportViewSet(
             return Response(response_data)
             
         except Exception as e:
-            logger.error(f"Error fetching plan details for plan {plan_id}: {str(e)}", exc_info=True)
+            #logger.error(f"Error fetching plan details for plan {plan_id}: {str(e)}", exc_info=True)
             return Response(
                 {'error': f'Ошибка при получении данных плана: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -1051,7 +1051,7 @@ class CompetencePassportViewSet(
             })
             
         except Exception as e:
-            logger.error(f"Error fetching competence relations: {str(e)}")
+            #logger.error(f"Error fetching competence relations: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении связей компетенции: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -1107,7 +1107,7 @@ class CompetencePassportViewSet(
                 })
                 
         except Exception as e:
-            logger.error(f"Error updating competence relations: {str(e)}")
+            #logger.error(f"Error updating competence relations: {str(e)}")
             return Response(
                 {'error': f'Ошибка при обновлении связей компетенции: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -1180,7 +1180,7 @@ class CompetencePassportViewSet(
             })
             
         except Exception as e:
-            logger.error(f"Error fetching competence final indicators: {str(e)}")
+            #logger.error(f"Error fetching competence final indicators: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении итоговых индикаторов компетенции: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -1291,7 +1291,7 @@ class CompetencePassportViewSet(
                 )
                     
         except Exception as e:
-            logger.error(f"Error updating competence final indicators: {str(e)}")
+            #logger.error(f"Error updating competence final indicators: {str(e)}")
             return Response(
                 {'error': f'Ошибка при обновлении итоговых индикаторов: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -1401,7 +1401,7 @@ class CompetencePassportViewSet(
             })
             
         except Exception as e:
-            logger.error(f"Error fetching competence indicator disciplines: {str(e)}")
+            #logger.error(f"Error fetching competence indicator disciplines: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении индикаторов с дисциплинами: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -1453,7 +1453,7 @@ class CompetencePassportViewSet(
                     )
                     
         except Exception as e:
-            logger.error(f"Error updating indicator content: {str(e)}")
+            #logger.error(f"Error updating indicator content: {str(e)}")
             return Response(
                 {'error': f'Ошибка при обновлении содержания индикатора: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -1513,7 +1513,7 @@ class CompetencePassportViewSet(
             return Response(response_data)
             
         except Exception as e:
-            logger.error(f"Error fetching indicator details: {str(e)}")
+            #logger.error(f"Error fetching indicator details: {str(e)}")
             return Response(
                 {'error': f'Ошибка при получении деталей индикатора: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -1576,7 +1576,7 @@ class CompetencePassportViewSet(
                 })
                 
         except Exception as e:
-            logger.error(f"Error saving indicator details: {str(e)}")
+            #logger.error(f"Error saving indicator details: {str(e)}")
             return Response(
                 {'error': f'Ошибка при сохранении данных индикатора: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

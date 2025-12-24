@@ -66,8 +66,6 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['data-saved'])
-
 const sectionTitle = 'Титульный лист'
 
 const getSpecNapr = (name) => {

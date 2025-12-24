@@ -1,109 +1,62 @@
 <template>
-  <div class="indicator-disciplines-section">
-    <div class="text-h5 q-mb-sm">{{ sectionTitle }}</div>
-    <div class="section-details">
-      <div class="text-subtitle1 text-grey">
-        Индикаторы и их содержание автоматически получены из учебного плана.
-      </div>
+  <div class="q-mb-lg">
+    <div class="text-h6">{{ sectionTitle }}</div>  
+    <div class="text-grey q-mb-sm">Индикаторы и их содержание автоматически получены из учебного плана</div>
 
-      <div class="q-mt-md">
-        <q-table
-          :rows="tableData"
-          :columns="columns"
-          row-key="id"
-          :loading="loading"
-          :pagination="pagination"
-          flat
-          bordered
-          :no-data-label="noDataMessage"
-          class="competence-table"
-          :style="{ 'table-layout': 'fixed', 'width': '100%' }"
-        >
+    <div v-if="!competence" class="text-body1 text-grey text-center q-py-xl">
+      <div>Выберите компетенцию для просмотра индикаторов</div>
+    </div>
 
-          <template v-slot:top>
-            <div class="text-h6">
-              Всего индикаторов: {{ tableData.length }}
-            </div>
-          </template>
-
-          <template v-slot:body-cell-indicator_index="props">
-            <q-td :props="props" class="indicator-index-cell">
-              <div class="text-weight-bold text-primary">
-                {{ props.value }}
-              </div>
-            </q-td>
-          </template>
-
-          <template v-slot:body-cell-indicator_content="props">
-            <q-td :props="props" class="indicator-content-cell">
-              <div v-if="!props.row.editing" class="indicator-text" @dblclick="startEditing(props.row)">
-                {{ props.value }}
-                <q-icon 
-                  name="edit" 
-                  size="xs" 
-                  class="q-ml-xs edit-icon"
-                  @click="startEditing(props.row)"
-                />
-              </div>
-              <div v-else class="edit-container">
-                <q-input
-                  v-model="props.row.editingContent"
-                  type="textarea"
-                  autogrow
-                  dense
-                  outlined
-                  class="edit-input"
-                  @keyup.enter="saveIndicatorContent(props.row)"
-                  @keyup.esc="cancelEditing(props.row)"
-                />
-                <div class="edit-actions q-mt-sm">
-                  <q-btn 
-                    size="sm" 
-                    color="primary" 
-                    @click="saveIndicatorContent(props.row)"
-                    :loading="saving"
-                  >
-                    Сохранить
-                  </q-btn>
-                  <q-btn 
-                    size="sm" 
-                    flat 
-                    color="grey" 
-                    @click="cancelEditing(props.row)"
-                    class="q-ml-sm"
-                  >
-                    Отмена
-                  </q-btn>
+    <div v-else>
+      <!-- Список индикаторов -->
+      <div v-if="indicators.length > 0">
+        <q-list bordered>
+          <div v-for="(indicator, index) in indicators" :key="indicator.id">
+            <q-expansion-item
+              :label="`${indicator.indicator_index} ${indicator.indicator_content || ''}`"
+              :default-opened="index === 0"
+              group="indicators"
+            >
+              <div class="q-pa-sm">
+                <div class="q-mb-md">
+                  <div class="text-subtitle3 text-grey">
+                    Дисциплина: {{ indicator.discipline_index }} {{ indicator.discipline_name }}
+                  </div>
+                </div>
+                
+                <div class="indicators-form row justify-between q-gutter-md">
+                  <q-input
+                    filled
+                    label="Содержание индикатора"
+                    stack-label
+                    type="textarea"
+                    class="col"
+                    v-model="indicator.editingContent"
+                    bg-color="grey-4"
+                    :readonly="indicator.saving"
+                    debounce="1000"
+                    @update:model-value="saveIndicatorContent(indicator)"
+                  />
                 </div>
               </div>
-            </q-td>
-          </template>
+            </q-expansion-item>
+          </div>
+        </q-list>
+      </div>
 
-          <template v-slot:body-cell-discipline="props">
-            <q-td :props="props" class="discipline-cell">
-              <div class="discipline-text">
-                {{ props.value }}
-              </div>
-            </q-td>
-          </template>
-        </q-table>
+      <div v-else class="text-body1 text-grey text-center q-py-xl">
+        <div v-if="loading">Загрузка...</div>
+        <div v-else>Для данной компетенции нет индикаторов в конкретных дисциплинах</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
 import { storeToRefs } from 'pinia'
-
-const $q = useQuasar()
-const store = useCompetencePassportStore()
-const {
-  saving,
-  loading
-} = storeToRefs(store)
 
 const props = defineProps({
   planData: {
@@ -120,137 +73,45 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['data-saved'])
+const $q = useQuasar()
+const store = useCompetencePassportStore()
+const {
+  loading
+} = storeToRefs(store)
 
 const sectionTitle = '2.1. Соотнесение индикаторов с дисциплинами'
-const tableData = ref([])
-const finalIndicatorsCount = ref(0)
 
-const editingRowId = ref(null)
+const error = ref(null)
+const indicators = ref([])
 
-const columns = [
-  {
-    name: 'indicator_index',
-    required: true,
-    label: 'Код',
-    align: 'left',
-    field: row => row.indicator_index,
-    style: 'width: 100px !important; min-width: 100px !important; max-width: 100px !important;'
-  },
-  {
-    name: 'indicator_content',
-    required: true,
-    label: 'Содержание индикатора',
-    align: 'left',
-    field: row => row.editing ? row.editingContent : row.indicator_content,
-    style: 'width: 800px !important; min-width: 800px !important; max-width: 800px !important;'
-  },
-  {
-    name: 'discipline',
-    required: true,
-    label: 'Дисциплины',
-    align: 'left',
-    field: row => row.discipline_name,
-    style: 'width: 300px !important; min-width: 300px !important; max-width: 300px !important;'
-  }
-]
-
-const pagination = {
-  sortBy: 'indicator_index',
-  descending: false,
-  page: 1,
-  rowsPerPage: 0
-}
-
-const noDataMessage = computed(() => {
-  if (loading.value) return 'Загрузка...'
-  if (!props.competence) return 'Выберите компетенцию'
-  if (tableData.value.length === 0) return 'Для этой компетенции нет индикаторов'
-  return 'Нет данных'
+const hasCompetenceData = computed(() => {
+  return props.competence && props.competence.competence_index
 })
 
-const startEditing = (row) => {
-  if (editingRowId.value && editingRowId.value !== row.id) {
-    const previousRow = tableData.value.find(r => r.id === editingRowId.value)
-    if (previousRow) {
-      cancelEditing(previousRow)
-    }
-  }
-  
-  row.editing = true
-  row.editingContent = row.indicator_content
-  editingRowId.value = row.id
-}
-
-const cancelEditing = (row) => {
-  row.editing = false
-  delete row.editingContent
-  if (editingRowId.value === row.id) {
-    editingRowId.value = null
-  }
-}
-
-const saveIndicatorContent = async (row) => {
-  if (!row.editingContent || row.editingContent.trim() === row.indicator_content) {
-    cancelEditing(row)
+async function loadIndicators() {
+  if (!props.planId || !hasCompetenceData.value) {
+    indicators.value = []
     return
   }
   
-  saving.value = true
-  try {
-    const result = await store.updateIndicatorContent(row.id, row.editingContent.trim())
-    
-    if (result.success) {
-      row.indicator_content = result.indicator.indicator_content
-      row.is_final = result.indicator.is_final
-      
-      $q.notify({
-        message: 'Содержание индикатора успешно обновлено',
-        color: 'positive',
-        position: 'bottom-right'
-      })
-      
-      emit('data-saved', {
-        indicatorId: row.id,
-        newContent: row.indicator_content
-      })
-    }
-  } catch (error) {
-    console.error('Ошибка при сохранении индикатора:', error)
-    $q.notify({
-      message: 'Ошибка при сохранении индикатора',
-      color: 'negative',
-      position: 'bottom-right'
-    })
-  } finally {
-    saving.value = false
-    cancelEditing(row)
-  }
-}
-
-const loadData = async () => {
-  if (!props.planId || !props.competence?.competence_index) {
-    tableData.value = []
-    finalIndicatorsCount.value = 0
-    return
-  }
-
   loading.value = true
+  error.value = null
+  
   try {
     const data = await store.fetchCompetenceIndicatorDisciplines(
       props.planId, 
       props.competence.competence_index
     )
 
-    tableData.value = (data.table_data || []).map(item => ({
+    indicators.value = (data.table_data || []).map(item => ({
       ...item,
-      editing: false
+      editingContent: item.indicator_content,
+      saving: false,
+      saved: false
     }))
-    finalIndicatorsCount.value = data.final_indicators_count || 0
-  } catch (error) {
-    console.error('Ошибка загрузки индикаторов с дисциплинами:', error)
-    tableData.value = []
-    finalIndicatorsCount.value = 0
+  } catch (err) {
+    error.value = err.response?.data?.error || 'Ошибка при загрузке индикаторов с дисциплинами'
+    indicators.value = []
     $q.notify({
       message: 'Ошибка загрузки индикаторов с дисциплинами',
       color: 'negative',
@@ -261,130 +122,72 @@ const loadData = async () => {
   }
 }
 
+async function saveIndicatorContent(indicator) {
+  if (!indicator.id || !indicator.editingContent || 
+      indicator.editingContent.trim() === indicator.indicator_content) {
+    return
+  }
+  
+  indicator.saving = true
+  indicator.saved = false
+  
+  try {
+    const result = await store.updateIndicatorContent(indicator.id, indicator.editingContent.trim())
+    
+    if (result.success) {
+      indicator.indicator_content = result.indicator.indicator_content
+      indicator.is_final = result.indicator.is_final
+      indicator.saved = true
+
+      $q.notify({
+        message: 'Содержание индикатора успешно обновлено',
+        color: 'positive',
+        position: 'bottom-right',
+        timeout: 2000,
+        html: true
+      })
+
+      setTimeout(() => {
+        indicator.saved = false
+      }, 3000)
+    }
+  } catch (err) {
+    console.error('Ошибка при сохранении индикатора:', err)
+    $q.notify({
+      message: 'Ошибка при сохранении индикатора',
+      color: 'negative',
+      position: 'bottom-right',
+      timeout: 3000,
+      html: true
+    })
+  } finally {
+    indicator.saving = false
+  }
+}
+
 watch(() => props.competence, (newCompetence) => {
-  if (newCompetence) {
-    loadData()
+  if (newCompetence && newCompetence.competence_index) {
+    loadIndicators()
   }
 }, { immediate: true })
 
 watch(() => props.planId, (newPlanId) => {
-  if (newPlanId && props.competence) {
-    loadData()
+  if (newPlanId && hasCompetenceData.value) {
+    loadIndicators()
   }
 })
 
 onMounted(() => {
-  if (props.planId && props.competence) {
-    loadData()
+  if (props.planId && hasCompetenceData.value) {
+    loadIndicators()
   }
 })
 </script>
 
 <style scoped lang="scss">
-.indicator-disciplines-section {
-  .section-details {
-    margin-top: 16px;
-    
-    .text-subtitle1 {
-      margin-bottom: 8px;
-    }
-    
-    .competence-table {
-      margin-top: 1rem;
-    }
+.indicators-form {
+  > .col {
+    flex-basis: 400px;
   }
-}
-
-:deep(.competence-table) {
-  table-layout: fixed !important;
-  width: 100% !important;
-  
-  th:nth-child(1),
-  td:nth-child(1) {
-    width: 100px !important;
-    min-width: 100px !important;
-    max-width: 100px !important;
-  }
-  
-  th:nth-child(2),
-  td:nth-child(2) {
-    width: 800px !important;
-    min-width: 800px !important;
-    max-width: 800px !important;
-  }
-  
-  th:nth-child(3),
-  td:nth-child(3) {
-    width: 300px !important;
-    min-width: 300px !important;
-    max-width: 300px !important;
-  }
-}
-
-:deep(.indicator-content-cell) {
-  .indicator-text {
-    word-wrap: break-word !important;
-    white-space: normal !important;
-    line-height: 1.4;
-    cursor: pointer;
-    padding: 4px 0;
-    
-    &:hover {
-      background-color: #f5f5f5;
-      border-radius: 4px;
-      padding: 4px 8px;
-    }
-  }
-  
-  .edit-icon {
-    opacity: 0.4;
-    cursor: pointer;
-    
-    &:hover {
-      opacity: 1;
-      color: #1976d2;
-    }
-  }
-  
-  .edit-container {
-    .edit-input {
-      width: 100%;
-    }
-    
-    .edit-actions {
-      display: flex;
-      justify-content: flex-start;
-    }
-  }
-}
-
-:deep(.discipline-cell) {
-  .discipline-text {
-    word-wrap: break-word !important;
-    white-space: normal !important;
-    line-height: 1.4;
-  }
-}
-
-.text-weight-bold {
-  font-weight: 600;
-}
-
-.text-primary {
-  color: #1976d2;
-}
-
-:deep(.q-table) {
-  table-layout: fixed;
-}
-
-:deep(.q-table th),
-:deep(.q-table td) {
-  vertical-align: top;
-  padding: 12px 16px;
-}
-
-:deep(.q-table__card) {
-  overflow-x: auto;
 }
 </style>

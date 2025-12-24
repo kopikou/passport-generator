@@ -1,6 +1,6 @@
 <template>
-  <div class="q-pa-md">
-    <div class="row items-center q-mb-md">
+  <div class="q-mb-lg">
+    <div class="row items-center">
       <div class="col">
         <h2 class="text-h4 q-ma-none">Компетенции</h2>
         <div class="text-subtitle1 text-grey">
@@ -110,7 +110,7 @@ const columns = [
     label: 'Индекс компетенции',
     align: 'left',
     field: row => row.competence_index,
-    style: 'width: 150px; min-width: 150px;'
+    sortable: true
   },
   {
     name: 'competence',
@@ -118,14 +118,14 @@ const columns = [
     label: 'Содержание компетенции',
     align: 'left',
     field: row => row.competence,
-    style: 'min-width: 800px;'
+    sortable: true
   },
   {
     name: 'type',
     label: 'Тип',
     align: 'center',
     field: row => getCompetenceType(row.competence_index),
-    style: 'width: 180px; min-width: 180px;'
+    sortable: true
   }
 ]
 

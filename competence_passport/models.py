@@ -1,9 +1,5 @@
-from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models.enums import TextChoices, IntegerChoices
 
-from auths.models import UserProfile
 from rpd.models import LinesData, LinesIndicators, PlanData
 from app.utils import TimestampsModel, OverwriteStorage
 

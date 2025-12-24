@@ -5,17 +5,55 @@
       <div v-if="currentCompetence" class="text-subtitle1 text-grey">
         {{ currentCompetence.competence_index }} - {{ currentCompetence.competence }}
       </div>
+      <div v-else-if="selectedSection === 'title-page'" class="text-subtitle1 text-grey">
+        Титульный лист паспорта компетенций
+      </div>
     </div>
 
     <div v-if="!selectedSection" class="empty-state q-pa-xl text-center">
-      <span
-        style="align-content: center; text-align: center; font-size: 20px; font-weight: bold"
-      >
+      <span style="align-content: center; text-align: center; font-size: 20px; font-weight: bold">
         Выберите нужный раздел слева
       </span>
     </div>
 
     <div v-else class="passport-content">
+      <!-- Вкладки для разделов компетенции -->
+      <div v-if="selectedSection && selectedSection !== 'title-page'" class="competence-tabs q-mb-lg">
+        <q-tabs
+          v-model="activeTab"
+          align="left"
+          class="q-mb-md"
+          active-bg-color="teal-1"
+          @update:model-value="onTabChange"
+        >
+          <q-tab
+            class="text-teal"
+            name="competence-relations"
+            label="1.1. Связь с компетенциями"
+          />
+          <q-tab
+            class="text-teal"
+            name="competence-indicators"
+            label="2. Индикаторы достижения"
+          />
+          <q-tab
+            class="text-teal"
+            name="indicator-disciplines"
+            label="2.1. Индикаторы и дисциплины"
+          />
+          <q-tab
+            class="text-teal"
+            name="indicator-results"
+            label="2.2. Результаты обучения"
+          />
+          <q-tab
+            class="text-teal"
+            name="assessment-criteria"
+            label="3. Критерии оценивания"
+          />
+        </q-tabs>
+      </div>
+
       <!-- Динамический контент по разделам -->
       <div v-if="loading" class="text-center q-pa-lg">
         <q-spinner color="primary" size="2em" />
@@ -24,25 +62,31 @@
 
       <div v-else class="section-content">
         <component
+          v-if="currentSectionComponent"
           :is="currentSectionComponent"
           :plan-data="planData"
           :competence="currentCompetence"
           :plan-id="currentPlanId"
-          @data-saved="handleDataSaved"
         />
+        <div v-else class="text-center q-pa-xl text-grey">
+          <q-icon name="error_outline" size="xl" class="q-mb-md" />
+          <div class="text-h6">Раздел не найден</div>
+          <div class="text-body2 q-mt-sm">Пожалуйста, выберите другой раздел</div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, defineAsyncComponent } from 'vue'
+import { ref, computed, watch, onMounted, defineAsyncComponent, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
 import { storeToRefs } from 'pinia'
 import { useQuasar } from 'quasar'
 
 const route = useRoute()
+const router = useRouter()
 const store = useCompetencePassportStore()
 const $q = useQuasar()
 
@@ -52,10 +96,10 @@ const {
 } = storeToRefs(store)
 
 const loading = ref(false)
-const currentCompetence = ref(null)
-const planData = ref(null)
+const currentCompetence = ref<any>(null)
+const planData = ref<any>(null)
+const activeTab = ref('competence-relations')
 
-// импорты компонентов
 const sectionComponents = {
   'title-page': defineAsyncComponent(() => 
     import('./components/menu_sections/TitlePageSection.vue')
@@ -78,16 +122,38 @@ const sectionComponents = {
 }
 
 const selectedSection = computed(() => {
-  return route.query.section
+  return (route.query.section as string) || ''
+})
+
+const currentCompetenceIndex = computed(() => {
+  return (route.query.competence as string) || ''
 })
 
 const pageTitle = computed(() => {
-  return route.meta.title || 'Паспорт компетенций'
+  return route.meta?.title || 'Паспорт компетенций'
 })
 
 const currentSectionComponent = computed(() => {
-  return sectionComponents[selectedSection.value]
+  if (!selectedSection.value) return null
+  return sectionComponents[selectedSection.value] || null
 })
+
+const onTabChange = (tabName: string) => {
+  if (!currentCompetenceIndex.value || !currentPlanId.value || tabName === selectedSection.value) {
+    return
+  }
+  
+  router.push({
+    name: 'competencePassport',
+    params: { 
+      planId: currentPlanId.value
+    },
+    query: { 
+      section: tabName,
+      competence: currentCompetenceIndex.value
+    }
+  })
+}
 
 const loadPlanData = async () => {
   if (!currentPlanId.value) {
@@ -109,7 +175,6 @@ const loadPlanData = async () => {
           cadmkind: 1, 
           spec_name: competencesData.plan_name,
           direct_name: competencesData.abbrprofile,
-          cfac__name: 'Не указано'
         },
       }
       try {
@@ -132,7 +197,7 @@ const loadPlanData = async () => {
   }
 }
 
-const loadCompetenceData = async (competenceIndex) => {
+const loadCompetenceData = async (competenceIndex: string) => {
   if (!competenceIndex || !currentPlanId.value) {
     currentCompetence.value = null
     return
@@ -143,7 +208,7 @@ const loadCompetenceData = async (competenceIndex) => {
     const data = await store.fetchAllCompetences(currentPlanId.value)
     
     const competence = data?.competences?.find(
-      comp => comp.competence_index === competenceIndex
+      (comp: any) => comp.competence_index === competenceIndex
     )
     
     if (competence) {
@@ -160,52 +225,76 @@ const loadCompetenceData = async (competenceIndex) => {
   }
 }
 
-const handleDataSaved = (message) => {
-  $q.notify({
-    message: message,
-    color: "secondary",
-    position: "bottom-right",
-    html: true,
-  })
+const updateActiveTab = () => {
+  if (selectedSection.value && selectedSection.value !== 'title-page') {
+    activeTab.value = selectedSection.value
+  }
 }
 
 watch(
   () => route.query,
-  (newQuery) => {
+  async (newQuery) => {
+    
     if (newQuery.section === 'title-page') {
-      loadPlanData()
+      await loadPlanData()
       currentCompetence.value = null
     } else if (newQuery.competence) {
-      loadCompetenceData(newQuery.competence)
+      await loadCompetenceData(newQuery.competence as string)
     } else {
       currentCompetence.value = null
     }
+
+    await nextTick()
+    updateActiveTab()
   },
   { immediate: true, deep: true }
 )
 
 watch(
+  () => currentCompetenceIndex.value,
+  async (newCompetenceIndex) => {
+    if (newCompetenceIndex && currentPlanId.value) {
+      await loadCompetenceData(newCompetenceIndex)
+    }
+  }
+)
+
+watch(
+  () => selectedSection.value,
+  () => {
+    updateActiveTab()
+  }
+)
+
+watch(
   () => currentPlanId.value,
-  (newPlanId) => {
+  async (newPlanId) => {
     if (newPlanId) {
       if (route.query.section === 'title-page') {
-        loadPlanData()
+        await loadPlanData()
       } else if (route.query.competence) {
-        loadCompetenceData(route.query.competence)
+        await loadCompetenceData(route.query.competence as string)
       }
     } else {
       currentCompetence.value = null
       planData.value = null
     }
+    
+    await nextTick()
+    updateActiveTab()
   }
 )
 
-onMounted(() => {
+onMounted(async () => {
+  
   if (route.query.section === 'title-page' && currentPlanId.value) {
-    loadPlanData()
+    await loadPlanData()
   } else if (route.query.competence && currentPlanId.value) {
-    loadCompetenceData(route.query.competence)
+    await loadCompetenceData(route.query.competence as string)
   }
+  
+  await nextTick()
+  updateActiveTab()
 })
 </script>
 
@@ -220,6 +309,14 @@ onMounted(() => {
     .text-subtitle1 {
       font-size: 16px;
       line-height: 1.4;
+    }
+  }
+  
+  .competence-tabs {
+    .q-tabs {
+      .q-tab {
+        text-transform: none;
+      }
     }
   }
   

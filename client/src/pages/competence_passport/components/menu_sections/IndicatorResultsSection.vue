@@ -1,82 +1,76 @@
 <template>
-  <div class="text-h5 q-mb-sm">{{ sectionTitle }}</div>  
-  <div class="text-subtitle1 text-grey">Раскройте для заполнения </div>
+  <div class="q-mb-lg">
+    <div class="text-h6">{{ sectionTitle }}</div>  
+    <div class="text-grey q-mb-sm">Раскройте для заполнения </div>
 
-    <div v-if="error" class="q-pa-md">
-      <q-banner dense class="bg-negative text-white">
-        {{ error }}
-      </q-banner>
+    <div v-if="!competence" class="text-body1 text-grey text-center q-py-xl">
+      <div>Выберите компетенцию для просмотра индикаторов</div>
     </div>
-    
+
     <div v-else>
-      <div v-if="!competence" class="text-body1 text-grey text-center q-py-xl">
-        <div>Выберите компетенцию для просмотра индикаторов</div>
+      <!-- Список индикаторов -->
+      <div v-if="indicators.length > 0">
+        <q-list bordered>
+          <div v-for="(indicator, index) in indicators" :key="indicator.id">
+            <q-expansion-item
+              :label="`${indicator.indicator_index} ${indicator.indicator_content || ''}`"
+              :default-opened="index === 0"
+              group="indicators"
+            >
+              <div class="q-pa-sm">
+                <div class="q-mb-md">
+                  <div class="text-subtitle3 text-grey">Дисциплина: {{ indicator.discipline_index }} {{ indicator.discipline_name }}</div>
+                </div>
+                
+                <div class="indicators-form row justify-between q-gutter-md">
+                  <q-input
+                    filled
+                    label="Знать"
+                    stack-label
+                    type="textarea"
+                    class="col"
+                    v-model="indicator.know"
+                    bg-color="grey-4"
+                    :readonly="indicator.saving"
+                    debounce="1000"
+                    @update:model-value="saveIndicator(indicator)"
+                  />
+                  <q-input
+                    filled
+                    label="Уметь"
+                    stack-label
+                    type="textarea"
+                    class="col"
+                    v-model="indicator.able"
+                    bg-color="grey-4"
+                    :readonly="indicator.saving"
+                    debounce="1000"
+                    @update:model-value="saveIndicator(indicator)"
+                  />
+                  <q-input
+                    filled
+                    label="Владеть"
+                    stack-label
+                    type="textarea"
+                    class="col"
+                    v-model="indicator.own"
+                    bg-color="grey-4"
+                    :readonly="indicator.saving"
+                    debounce="1000"
+                    @update:model-value="saveIndicator(indicator)"
+                  />
+                </div>
+              </div>
+            </q-expansion-item>
+          </div>
+        </q-list>
       </div>
 
-      <div v-else>
-        <!-- Список индикаторов -->
-        <div v-if="indicators.length > 0">
-          <q-list bordered>
-            <div v-for="(indicator, index) in indicators" :key="indicator.id">
-              <q-expansion-item
-                :label="`${indicator.indicator_index} ${indicator.indicator_content || ''}`"
-                :default-opened="index === 0"
-                group="indicators"
-              >
-                <div class="q-pa-sm">
-                  <div class="q-mb-md">
-                    <div class="text-subtitle3 text-grey">Дисциплина: {{ indicator.discipline_index }} {{ indicator.discipline_name }}</div>
-                  </div>
-                  
-                  <div class="indicators-form row justify-between q-gutter-md">
-                    <q-input
-                      filled
-                      label="Знать"
-                      stack-label
-                      type="textarea"
-                      class="col"
-                      v-model="indicator.know"
-                      bg-color="grey-4"
-                      :readonly="indicator.saving"
-                      debounce="1000"
-                      @update:model-value="saveIndicator(indicator)"
-                    />
-                    <q-input
-                      filled
-                      label="Уметь"
-                      stack-label
-                      type="textarea"
-                      class="col"
-                      v-model="indicator.able"
-                      bg-color="grey-4"
-                      :readonly="indicator.saving"
-                      debounce="1000"
-                      @update:model-value="saveIndicator(indicator)"
-                    />
-                    <q-input
-                      filled
-                      label="Владеть"
-                      stack-label
-                      type="textarea"
-                      class="col"
-                      v-model="indicator.own"
-                      bg-color="grey-4"
-                      :readonly="indicator.saving"
-                      debounce="1000"
-                      @update:model-value="saveIndicator(indicator)"
-                    />
-                  </div>
-                </div>
-              </q-expansion-item>
-            </div>
-          </q-list>
-        </div>
-
-        <div v-else class="text-body1 text-grey text-center q-py-xl">
-          <div>Для данной компетенции нет индикаторов в конкретных дисциплинах</div>
-        </div>
+      <div v-else class="text-body1 text-grey text-center q-py-xl">
+        <div>Для данной компетенции нет индикаторов в конкретных дисциплинах</div>
       </div>
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -99,8 +93,6 @@ const props = defineProps({
     default: ''
   }
 })
-
-const emit = defineEmits(['data-saved'])
 
 const $q = useQuasar()
 const store = useCompetencePassportStore()
@@ -154,8 +146,6 @@ async function saveIndicator(indicator) {
       timeout: 2000,
       html: true
     })
-    
-    emit('data-saved', indicator)
 
     setTimeout(() => {
       indicator.saved = false

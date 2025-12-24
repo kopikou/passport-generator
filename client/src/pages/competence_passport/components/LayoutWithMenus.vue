@@ -54,11 +54,10 @@ const showSidebar = computed(() => {
 }
 
 .sidebar {
-  width: 280px;
-  background: #f8f9fa;
-  border-right: 1px solid #e0e0e0;
+  width: 20%;
+  border-right: 2px solid silver;
+  box-shadow: 0 0 8px silver;
   overflow-y: auto;
-  flex-shrink: 0;
 }
 
 .main-content {

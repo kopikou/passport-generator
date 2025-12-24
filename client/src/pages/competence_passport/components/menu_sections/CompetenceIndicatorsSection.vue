@@ -1,23 +1,21 @@
 <template>
-  <div class="competence-indicators-section">
-    <div class="text-h5 q-mb-sm">{{ sectionTitle }}</div>
-    <div class="section-details">
-      <div class="text-subtitle1 text-grey">Итоговый индикатор достижения компетенции.  Данные автоматически получены из учебного плана.</div>
-      <div class="q-gutter-y-md">
-        <q-input
-          v-model="finalIndicatorText"
-          filled
-          type="textarea"
-          placeholder="Итоговый индикатор достижения компетенции"
-          rows="10"
-          bg-color="grey-4"
-          :readonly="disabled"
-          :loading="loading"
-          debounce="1000"
-          @update:model-value="saveData"
-        />
-      </div>
-    </div>
+  <div class="text-h6">{{ sectionTitle }}</div>
+  <div class="text-grey q-mb-sm">Итоговый индикатор достижения компетенции.  Данные автоматически получены из учебного плана</div>
+
+  <div class="q-gutter-y-md">
+    <q-input
+      v-model="finalIndicatorText"
+      filled
+      label="Итоговый индикатор достижения компетенции"
+      type="textarea"
+      stack-label
+      rows="10"
+      bg-color="grey-4"
+      :readonly="disabled"
+      :loading="loading"
+      debounce="1000"
+      @update:model-value="saveData"
+    />
   </div>
 </template>
 
@@ -48,8 +46,6 @@ const props = defineProps({
     default: ''
   }
 })
-
-const emit = defineEmits(['data-saved'])
 
 const sectionTitle = '2. Индикаторы достижения компетенции'
 const finalIndicatorText = ref('')
@@ -93,21 +89,27 @@ const saveData = async () => {
 
   saving.value = true
   try {
-    const result = await store.updateCompetenceFinalIndicators(
+    await store.updateCompetenceFinalIndicators(
       props.planId,
       props.competence.competence_index,
       finalIndicatorText.value || ''
     )
-    
-    if (result.success) {
-      emit('data-saved', result.message || 'Итоговый индикатор успешно сохранен')
-    }
+
+    $q.notify({
+      message: 'Данные итогового индикатора успешно обновлены',
+      color: 'positive',
+      position: 'bottom-right',
+      timeout: 2000,
+      html: true
+    })
   } catch (error) {
     console.error('Ошибка сохранения итогового индикатора:', error)
     $q.notify({
       message: 'Ошибка сохранения итогового индикатора',
       color: 'negative',
-      position: 'bottom-right'
+      position: 'bottom-right',
+      timeout: 3000,
+      html: true
     })
   } finally {
     saving.value = false
@@ -134,25 +136,5 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.competence-indicators-section {
-  .section-details {
-    margin-top: 16px;
-    
-    .text-subtitle1 {
-      margin-bottom: 8px;
-    }
-    
-    .q-input {
-      .q-field__control {
-        background: #f5f5f5;
-      }
-      
-      &.q-field--loading {
-        .q-field__control:after {
-          background: rgba(255, 255, 255, 0.7);
-        }
-      }
-    }
-  }
-}
+
 </style>

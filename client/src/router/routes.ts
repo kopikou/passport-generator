@@ -440,7 +440,12 @@ const routes: RouteRecordRaw[] = [
             meta: {
               title: 'Паспорт компетенций',
               requiresValidMatrix: true
-            }
+            },
+            props: (route) => ({
+              planId: route.params.planId,
+              competenceId: route.params.competenceId,
+              section: route.query.section
+            })
           }
         ]
       },
