@@ -1,12 +1,15 @@
 <template>
   <top-navigation-menu>
     <template #content>
-      <div class="q-pa-md">
+      <div class="q-pa-md q-mb-lg">
         <div class="row items-center q-mb-md">
           <div class="col">
             <h2 class="text-h4 q-ma-none">Схема компетенций</h2>
             <div class="text-subtitle1 text-grey">
               Соответствие компетенций, дисциплины и семестров изучения
+            </div>
+            <div class="text-subtitle1 text-grey">
+              Окно редактора вызывается щелчком мыши в необходимой ячейке
             </div>
           </div>
           
@@ -27,7 +30,7 @@
         </div>
 
         <!-- Таблица схемы компетенций -->
-        <div class="competence-schema-table-container">
+        <div class="competence-schema-table-container q-mb-lg">
           <table class="q-table">
             <thead>
               <!-- Первая строка заголовков -->
@@ -69,7 +72,7 @@
               <template v-for="(row, index) in visibleRows" :key="row.id">
                 <!-- Строка компетенции -->
                 <tr v-if="row.type === 'competence'" class="competence-row">
-                  <td :colspan="10" style="background-color: #e3f2fd; border-bottom: 2px solid #bbdefb;">
+                  <td :colspan="10">
                     <div class="text-center q-pa-sm">
                       <div class="text-weight-bold text-primary text-h6">
                         {{ row.competence_index }}
@@ -140,18 +143,6 @@
           </table>
         </div>
 
-        <!-- Статистика -->
-        <div class="row q-mt-md">
-          <div class="col">
-            <div class="text-caption text-grey">
-              Показано: {{ visibleRows.length }} строк ({{ competenceCount }} компетенций, {{ disciplineCount }} дисциплин)
-              <span v-if="schemaLoading" class="q-ml-sm">
-                <q-spinner color="primary" size="1em" /> Загрузка...
-              </span>
-            </div>
-          </div>
-        </div>
-
         <edit-semester-forms-dialog
           v-model="editDialogVisible"
           :editing-data="editingData"
@@ -192,17 +183,58 @@ const filteredRows = computed(() => {
   }
   
   const searchLower = searchFilter.value.toLowerCase()
-  return (schemaData.value || []).filter(row => {
+  const rows = schemaData.value || []
+  const result = []
+  
+  const foundCompetences = new Set()
+  const foundDisciplines = new Map()
+
+  rows.forEach(row => {
     if (row.type === 'competence') {
-      return row.competence_index.toLowerCase().includes(searchLower) ||
-             row.competence_name.toLowerCase().includes(searchLower) ||
-             (row.competence_type && row.competence_type.toLowerCase().includes(searchLower))
+      if (row.competence_index.toLowerCase().includes(searchLower) ||
+          row.competence_name.toLowerCase().includes(searchLower)) {
+        foundCompetences.add(row.competence_index)
+      }
     } else if (row.type === 'discipline') {
-      return (row.discipline_index && row.discipline_index.toLowerCase().includes(searchLower)) ||
-             (row.discipline_name && row.discipline_name.toLowerCase().includes(searchLower))
+      if ((row.discipline_index && row.discipline_index.toLowerCase().includes(searchLower)) ||
+          (row.discipline_name && row.discipline_name.toLowerCase().includes(searchLower))) {
+        const compKey = row.parent_competence
+        if (!foundDisciplines.has(compKey)) {
+          foundDisciplines.set(compKey, [])
+        }
+        foundDisciplines.get(compKey).push(row)
+        
+        if (compKey) {
+          foundCompetences.add(compKey)
+        }
+      }
     }
-    return true
   })
+  
+  rows.forEach(row => {
+    if (row.type === 'competence') {
+      const compIndex = row.competence_index
+      if (foundCompetences.has(compIndex)) {
+        result.push(row)
+      }
+    } else if (row.type === 'discipline') {
+      const compIndex = row.parent_competence
+
+      if (foundDisciplines.has(compIndex) && 
+          foundDisciplines.get(compIndex).some(d => d.discipline_id === row.discipline_id)) {
+        result.push(row)
+      } else if (foundCompetences.has(compIndex) && 
+                !foundDisciplines.has(compIndex)) {
+        result.push(row)
+      }
+    } else if (row.type === 'divider') {
+      if (result.length > 0) {
+        result.push(row)
+      }
+    }
+  })
+  
+  return result
 })
 
 const visibleRows = computed(() => {
@@ -401,6 +433,8 @@ onMounted(() => {
   .competence-row {
     td {
       padding: 12px !important;
+      background-color: #e0f2f1;
+      border-bottom: 2px solid #7abdb7;
     }
     
     .text-h6 {

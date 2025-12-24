@@ -380,7 +380,7 @@ const columns = [
 
 const pagination = ref({
   page: 1,
-  rowsPerPage: 20
+  rowsPerPage: 0
 })
 
 function getTypeColor(type) {

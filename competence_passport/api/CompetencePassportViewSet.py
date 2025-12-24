@@ -361,9 +361,12 @@ class CompetencePassportViewSet(
                 'Б1.Б.03': 'Базовый модуль направления',
                 'Б1.Б.04': 'Модуль проектной деятельности',
                 'Б1.Б.05': 'Модуль по физической культуре и спорту',
+                'Б1.Б.05.02.ДВ.01': 'Дисциплины по выбору',
                 'Б1.В': 'Вариативная часть',
                 'Б1.В.01': 'Модуль проектной деятельности',
                 'Б1.В.02': 'Модуль профильной подготовки',
+                'Б1.В.02.ДВ.01': 'Дисциплины по выбору Б1.В.ДВ.1',
+                'Б1.В.02.ДВ.02': 'Дисциплины по выбору Б1.В.ДВ.2',
                 'Б1.В.03': 'Модуль дополнительного профиля',
                 'Б2': 'Практика',
                 'Б2.Б': 'Обязательная часть',
@@ -384,13 +387,25 @@ class CompetencePassportViewSet(
                 
                 disc_key = discipline.newdisid
                 if disc_key not in groups:
-                    groups[disc_key] = {
-                        'type': 'discipline',
-                        'index': disc_key,
-                        'name': discipline.dis,
-                        'competences': discipline_competences,
-                        'level': disc_key.count('.') + 1 if '.' in disc_key else 1
-                    }
+                    # Проверяем, является ли этот индекс группой
+                    if disc_key in group_names:
+                        # Это группа
+                        groups[disc_key] = {
+                            'type': 'group',
+                            'index': disc_key,
+                            'name': group_names[disc_key],
+                            'competences': discipline_competences,
+                            'level': disc_key.count('.') + 1 if '.' in disc_key else 1
+                        }
+                    else:
+                        # Это дисциплина
+                        groups[disc_key] = {
+                            'type': 'discipline',
+                            'index': disc_key,
+                            'name': discipline.dis,
+                            'competences': discipline_competences,
+                            'level': disc_key.count('.') + 1 if '.' in disc_key else 1
+                        }
                 
                 parts = disc_key.split('.')
                 for i in range(len(parts)):
