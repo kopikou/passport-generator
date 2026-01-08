@@ -79,7 +79,7 @@ const {
   loading
 } = storeToRefs(store)
 
-const sectionTitle = '2.1. Соотнесение индикаторов с дисциплинами'
+const sectionTitle = '2.1 Соотнесение индикаторов достижения компетенций с дисциплинами  (модулями), практиками'
 
 const error = ref(null)
 const indicators = ref([])
