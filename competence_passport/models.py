@@ -1,10 +1,6 @@
-from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models.enums import TextChoices, IntegerChoices
 
-from auths.models import UserProfile
-from rpd.models import LinesData, LinesIndicators
+from rpd.models import LinesData, LinesIndicators, PlanData
 from app.utils import TimestampsModel, OverwriteStorage
 
 # Create your models here.
@@ -21,3 +17,10 @@ class Scheme(TimestampsModel):
     kr = models.BooleanField(null=True)
     
     #indicator = models.OneToOneField(LinesIndicators, on_delete=models.SET_NULL, null=True, blank=True,)
+
+class CompetenceRelations(TimestampsModel):
+    """Модель для хранения связи компетенции с иными компетенциями"""
+    plan = models.ForeignKey(PlanData, on_delete=models.CASCADE, db_column="plan_id", related_name="competence_relations")
+    competence_index = models.TextField(null=True, blank=True)
+    competence = models.TextField(null=True, blank=True)
+    relations = models.TextField(null=True, blank=True)

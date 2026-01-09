@@ -431,12 +431,23 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'passport',
-        name: 'competencePassport',
-        component: CompetencePassportView,
-        meta: {
-          title: 'Паспорт компетенций',
-          requiresValidMatrix: true
-        }
+        component: LayoutWithMenus,
+        children: [
+          {
+            path: ':planId?',
+            name: 'competencePassport',
+            component: CompetencePassportView,
+            meta: {
+              title: 'Паспорт компетенций',
+              requiresValidMatrix: true
+            },
+            props: (route) => ({
+              planId: route.params.planId,
+              competenceId: route.params.competenceId,
+              section: route.query.section
+            })
+          }
+        ]
       },
     ]
   },

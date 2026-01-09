@@ -2,9 +2,9 @@
   <div class="top-navigation-layout">
     <q-tabs
       v-model="currentTab"
-      class="bg-primary text-white shadow-2"
+      class="text-black"
       align="left"
-      indicator-color="white"
+      indicator-color="primary"
     >
       <q-route-tab
         name="reference"
@@ -42,14 +42,20 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 
 const route = useRoute()
 const router = useRouter()
 const store = useCompetencePassportStore()
+const {
+  matrixValidation,
+  currentPlanId
+} = storeToRefs(store)
+
 const currentTab = ref('reference')
 
 const schemaRoute = computed(() => {
@@ -61,18 +67,18 @@ const passportRoute = computed(() => {
 })
 
 const isMatrixValid = computed(() => {
-  if (!store.currentPlanId) return false
+  if (!currentPlanId.value) return false
   
-  if (store.matrixValidation.isValid) return true
+  if (matrixValidation.value.isValid) return true
 
-  return localStorage.getItem(`matrix_valid_${store.currentPlanId}`) === 'true'
+  return localStorage.getItem(`matrix_valid_${currentPlanId.value}`) === 'true'
 })
 
 watch(
-  () => store.matrixValidation.isValid,
+  () => matrixValidation.value.isValid,
   (isValid) => {
-    if (isValid && store.currentPlanId) {
-      localStorage.setItem(`matrix_valid_${store.currentPlanId}`, 'true')
+    if (isValid && currentPlanId.value) {
+      localStorage.setItem(`matrix_valid_${currentPlanId.value}`, 'true')
     }
   }
 )
@@ -114,5 +120,11 @@ defineExpose({ currentTab, isMatrixValid })
   opacity: 0.5;
   cursor: not-allowed;
 
+}
+
+.q-tabs{
+  background: $grey-4;
+  border-bottom: 2px solid silver;
+  box-shadow: 0 0 8px silver;
 }
 </style>

@@ -1,12 +1,15 @@
 <template>
   <top-navigation-menu>
     <template #content>
-      <div class="q-pa-md">
+      <div class="q-pa-md q-mb-lg">
         <div class="row items-center q-mb-md">
           <div class="col">
             <h2 class="text-h4 q-ma-none">Схема компетенций</h2>
             <div class="text-subtitle1 text-grey">
               Соответствие компетенций, дисциплины и семестров изучения
+            </div>
+            <div class="text-subtitle1 text-grey">
+              Окно редактора вызывается щелчком мыши в необходимой ячейке
             </div>
           </div>
           
@@ -27,7 +30,7 @@
         </div>
 
         <!-- Таблица схемы компетенций -->
-        <div class="competence-schema-table-container">
+        <div class="competence-schema-table-container q-mb-lg">
           <table class="q-table">
             <thead>
               <!-- Первая строка заголовков -->
@@ -69,7 +72,7 @@
               <template v-for="(row, index) in visibleRows" :key="row.id">
                 <!-- Строка компетенции -->
                 <tr v-if="row.type === 'competence'" class="competence-row">
-                  <td :colspan="10" style="background-color: #e3f2fd; border-bottom: 2px solid #bbdefb;">
+                  <td :colspan="10">
                     <div class="text-center q-pa-sm">
                       <div class="text-weight-bold text-primary text-h6">
                         {{ row.competence_index }}
@@ -109,7 +112,6 @@
                   </td>
                 </tr>
                 
-                <!-- Разделитель -->
                 <tr v-else-if="row.type === 'divider'" class="divider-row">
                   <td :colspan="10" style="background-color: #fff3cd; font-weight: bold; border-top: 2px solid #ffeaa7; border-bottom: 2px solid #ffeaa7;">
                     <div class="text-center text-warning q-py-xs">
@@ -119,9 +121,8 @@
                   </td>
                 </tr>
               </template>
-              
-              <!-- Нет данных -->
-              <tr v-if="visibleRows.length === 0 && !store.schemaLoading">
+
+              <tr v-if="visibleRows.length === 0 && !schemaLoading">
                 <td :colspan="10" class="text-center q-py-xl">
                   <div class="full-width row flex-center q-gutter-sm">
                     <q-icon name="info" size="2em" color="grey" />
@@ -130,8 +131,7 @@
                 </td>
               </tr>
               
-              <!-- Загрузка -->
-              <tr v-if="store.schemaLoading">
+              <tr v-if="schemaLoading">
                 <td :colspan="10" class="text-center q-py-xl">
                   <div class="full-width row flex-center q-gutter-sm">
                     <q-spinner color="primary" size="2em" />
@@ -141,18 +141,6 @@
               </tr>
             </tbody>
           </table>
-        </div>
-
-        <!-- Статистика -->
-        <div class="row q-mt-md">
-          <div class="col">
-            <div class="text-caption text-grey">
-              Показано: {{ visibleRows.length }} строк ({{ competenceCount }} компетенций, {{ disciplineCount }} дисциплин)
-              <span v-if="store.schemaLoading" class="q-ml-sm">
-                <q-spinner color="primary" size="1em" /> Загрузка...
-              </span>
-            </div>
-          </div>
         </div>
 
         <edit-semester-forms-dialog
@@ -165,41 +153,88 @@
   </top-navigation-menu>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
 import { useRouter } from 'vue-router'
 import TopNavigationMenu from './components/TopNavigationMenu.vue'
 import EditSemesterFormsDialog from './components/EditSemesterFormsDialog.vue'
 import { useQuasar } from 'quasar'
+import { storeToRefs } from 'pinia'
 
 const $q = useQuasar()
 const router = useRouter()
 const store = useCompetencePassportStore()
 
-const searchFilter = ref('')
+const {
+  schemaData,
+  schemaLoading,
+  currentPlanId
+} = storeToRefs(store)
 
+
+const searchFilter = ref('')
 const editDialogVisible = ref(false)
 const editingData = ref({})
 
-// Вычисляемые свойства
 const filteredRows = computed(() => {
   if (!searchFilter.value) {
-    return store.schemaData || []
+    return schemaData.value || []
   }
   
   const searchLower = searchFilter.value.toLowerCase()
-  return (store.schemaData || []).filter(row => {
+  const rows = schemaData.value || []
+  const result = []
+  
+  const foundCompetences = new Set()
+  const foundDisciplines = new Map()
+
+  rows.forEach(row => {
     if (row.type === 'competence') {
-      return row.competence_index.toLowerCase().includes(searchLower) ||
-             row.competence_name.toLowerCase().includes(searchLower) ||
-             (row.competence_type && row.competence_type.toLowerCase().includes(searchLower))
+      if (row.competence_index.toLowerCase().includes(searchLower) ||
+          row.competence_name.toLowerCase().includes(searchLower)) {
+        foundCompetences.add(row.competence_index)
+      }
     } else if (row.type === 'discipline') {
-      return (row.discipline_index && row.discipline_index.toLowerCase().includes(searchLower)) ||
-             (row.discipline_name && row.discipline_name.toLowerCase().includes(searchLower))
+      if ((row.discipline_index && row.discipline_index.toLowerCase().includes(searchLower)) ||
+          (row.discipline_name && row.discipline_name.toLowerCase().includes(searchLower))) {
+        const compKey = row.parent_competence
+        if (!foundDisciplines.has(compKey)) {
+          foundDisciplines.set(compKey, [])
+        }
+        foundDisciplines.get(compKey).push(row)
+        
+        if (compKey) {
+          foundCompetences.add(compKey)
+        }
+      }
     }
-    return true
   })
+  
+  rows.forEach(row => {
+    if (row.type === 'competence') {
+      const compIndex = row.competence_index
+      if (foundCompetences.has(compIndex)) {
+        result.push(row)
+      }
+    } else if (row.type === 'discipline') {
+      const compIndex = row.parent_competence
+
+      if (foundDisciplines.has(compIndex) && 
+          foundDisciplines.get(compIndex).some(d => d.discipline_id === row.discipline_id)) {
+        result.push(row)
+      } else if (foundCompetences.has(compIndex) && 
+                !foundDisciplines.has(compIndex)) {
+        result.push(row)
+      }
+    } else if (row.type === 'divider') {
+      if (result.length > 0) {
+        result.push(row)
+      }
+    }
+  })
+  
+  return result
 })
 
 const visibleRows = computed(() => {
@@ -207,23 +242,22 @@ const visibleRows = computed(() => {
 })
 
 const competenceCount = computed(() => {
-  return (store.schemaData || []).filter(row => row.type === 'competence').length
+  return (schemaData.value || []).filter(row => row.type === 'competence').length
 })
 
 const disciplineCount = computed(() => {
-  return (store.schemaData || []).filter(row => row.type === 'discipline').length
+  return (schemaData.value|| []).filter(row => row.type === 'discipline').length
 })
 
 async function loadCompetenceSchema() {
   try {
-    if (!store.currentPlanId) {
+    if (!currentPlanId.value) {
       throw new Error('План не выбран')
     }
     
-    await store.fetchCompetenceSchema(store.currentPlanId)
+    await store.fetchCompetenceSchema(currentPlanId.value)
     
   } catch (error) {
-    console.error('Error loading competence schema:', error)
     $q.notify({
       type: 'negative',
       message: `Ошибка загрузки схемы компетенций: ${error.message}`,
@@ -241,15 +275,15 @@ function openEditDialog(row, semester) {
     competence: getCompetenceName(row.parent_competence),
     semester: semester,
     forms: row[`semester_${semester}`]?.forms || [],
-    planId: store.currentPlanId
+    planId: currentPlanId.value
   }
   
   editDialogVisible.value = true
 }
 
 function getCompetenceName(competenceIndex) {
-  const schemaData = store.schemaData || []
-  const competence = schemaData.find(item => 
+  const currentSchemaData = schemaData.value || []
+  const competence = currentSchemaData.find(item => 
     item.type === 'competence' && item.competence_index === competenceIndex
   )
   return competence ? competence.competence_name : ''
@@ -259,15 +293,14 @@ function handleFormsSaved() {
   loadCompetenceSchema()
 }
 
-// Хуки жизненного цикла
-watch(() => store.currentPlanId, (newPlanId) => {
+watch(() => currentPlanId.value, (newPlanId) => {
   if (newPlanId) {
     loadCompetenceSchema()
   }
 })
 
 onMounted(() => {
-  if (store.currentPlanId) {
+  if (currentPlanId.value) {
     loadCompetenceSchema()
   } else {
     $q.notify({
@@ -400,6 +433,8 @@ onMounted(() => {
   .competence-row {
     td {
       padding: 12px !important;
+      background-color: #e0f2f1;
+      border-bottom: 2px solid #7abdb7;
     }
     
     .text-h6 {

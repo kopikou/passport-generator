@@ -1,6 +1,6 @@
 <template>
-  <div class="q-pa-md">
-    <div class="row items-center q-mb-md">
+  <div class="q-mb-lg">
+    <div class="row items-center">
       <div class="col">
         <h2 class="text-h4 q-ma-none">Компетенции</h2>
         <div class="text-subtitle1 text-grey">
@@ -80,18 +80,22 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
 
 const store = useCompetencePassportStore()
-const loading = ref(false)
+const {
+  currentPlanId,
+  loading
+} = storeToRefs(store)
+
 const competences = ref([])
 const competenceTypeFilter = ref(null)
 const searchFilter = ref('')
 const currentPlan = ref(null)
 
-// Опции для фильтра по типам компетенций
 const competenceTypeOptions = [
   { label: 'Универсальные компетенции', value: 'Универсальная' },
   { label: 'Общепрофессиональные компетенции', value: 'Общепрофессиональная' },
@@ -106,7 +110,7 @@ const columns = [
     label: 'Индекс компетенции',
     align: 'left',
     field: row => row.competence_index,
-    style: 'width: 150px; min-width: 150px;'
+    sortable: true
   },
   {
     name: 'competence',
@@ -114,20 +118,20 @@ const columns = [
     label: 'Содержание компетенции',
     align: 'left',
     field: row => row.competence,
-    style: 'min-width: 800px;'
+    sortable: true
   },
   {
     name: 'type',
     label: 'Тип',
     align: 'center',
     field: row => getCompetenceType(row.competence_index),
-    style: 'width: 180px; min-width: 180px;'
+    sortable: true
   }
 ]
 
 const pagination = ref({
   page: 1,
-  rowsPerPage: 25
+  rowsPerPage: 0
 })
 
 const noDataMessage = computed(() => {
@@ -193,7 +197,7 @@ const filteredCompetences = computed(() => {
 async function loadCompetences() {
   loading.value = true
   try {
-    const planId = store.currentPlanId
+    const planId = currentPlanId.value
     
     if (!planId) {
       throw new Error('Plan ID is not available. Please select a plan first.')
@@ -216,7 +220,7 @@ async function loadCompetences() {
   }
 }
 
-watch(() => store.currentPlanId, (newPlanId) => {
+watch(() => currentPlanId.value, (newPlanId) => {
   if (newPlanId) {
     loadCompetences()
   } else {
@@ -226,7 +230,7 @@ watch(() => store.currentPlanId, (newPlanId) => {
 })
 
 onMounted(() => {
-  if (store.currentPlanId) {
+  if (currentPlanId.value) {
     loadCompetences()
   }
 })
