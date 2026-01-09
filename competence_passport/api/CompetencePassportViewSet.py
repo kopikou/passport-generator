@@ -590,3 +590,31 @@ class CompetencePassportViewSet(
                 {'error': f'Ошибка при сохранении данных индикатора: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+    @action(methods=['GET'], detail=False, url_path='validate-scheme-indicators')
+    def validate_scheme_indicators(self, request):
+        """Проверка соответствия промежуточных аттестаций и индикаторов"""
+        try:
+            plan_id = self.request.query_params.get('plan_id')
+            
+            result, error_response = CompetencePassportService.validate_scheme_indicators(plan_id)
+            if error_response:
+                return Response(
+                    {'error': error_response['error']}, 
+                    status=error_response['status']
+                )
+            
+            plan = result['plan']
+            
+            return Response(CompetencePassportService.get_plan_response_data(plan, {
+                'validation_errors': result['validation_errors'],
+                'has_errors': result['has_errors'],
+                'errors_count': result['errors_count'],
+                'checked_at': result['checked_at']
+            }))
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Ошибка при проверке схемы компетенций: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

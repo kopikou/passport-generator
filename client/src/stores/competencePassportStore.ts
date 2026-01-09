@@ -4,6 +4,21 @@ import { api } from 'boot/axios'
 import _ from 'lodash'
 import { LocalStorage, useQuasar } from 'quasar';
 
+interface ValidationError {
+  id: string
+  competence_index: string
+  competence_name: string
+  discipline_index: string
+  discipline_name: string
+  discipline_id: number
+  scheme_forms_count: number
+  indicators_count: number
+  semester: number
+  error_type: 'forms_mismatch' | 'missing_forms' | 'missing_indicators'
+  message: string
+  advice: string
+}
+
 export const useCompetencePassportStore = defineStore('competencePassport', () => {
   const programList = ref([])
   const groupsList = ref([])
@@ -44,6 +59,9 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   const competenceIndicatorsData = ref([])
   const competenceIndicatorsCreteria = ref([])
   const indicatorsLoading = ref(false)
+
+  const validationErrors = ref<ValidationError[]>([])
+  const validationLoading = ref(false)
 
 
   // Вспомогательные функции
@@ -683,6 +701,45 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
+  async function validateSchemeIndicators(planId: string) {
+    setLoadingState(true, validationLoading)
+    try {
+      if (!planId) {
+        if (!currentPlanId.value) {
+          throw new Error('Plan ID is required for validation')
+        }
+        planId = currentPlanId.value
+      }
+      
+      const response = await api.get('/api/competence/validate-scheme-indicators/', {
+        params: { plan_id: planId }
+      })
+      
+      validationErrors.value = response.data.validation_errors || []
+      
+      return {
+        hasErrors: validationErrors.value.length > 0,
+        errors: validationErrors.value,
+        checkedAt: new Date()
+      }
+      
+    } catch (error) {
+      console.error('Error validating scheme indicators:', error)
+      validationErrors.value = []
+      throw error
+    } finally {
+      setLoadingState(false, validationLoading)
+    }
+  }
+
+  function clearValidationErrors() {
+    validationErrors.value = []
+  }
+
+  function getValidationErrors() {
+    return validationErrors.value
+  }
+
 
   return {
     programList,
@@ -712,6 +769,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     competenceIndicatorsData,
     competenceIndicatorsCreteria,
     indicatorsLoading,
+    validationErrors,
+    validationLoading,
 
     setCurrentPlanId,
     filteredPrograms,
@@ -743,5 +802,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     updateIndicatorContent,
     fetchCompetenceIndicators,
     saveIndicatorDetails,
+    validateSchemeIndicators,
+    clearValidationErrors,
+    getValidationErrors,
   }
 })

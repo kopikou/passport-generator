@@ -3,12 +3,13 @@ import logging
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Prefetch, Max
+from django.db.models.functions import Lower
 from app.disable_mira_dumps import DATA_GROUP_LIST, DATA_GROUPS_PROGRAM
 from generator.services.generator_service import GeneratorService
 from rpd.models.rpd_models import PlanData, LinesData, LinesIndicators, SemesterData
 from competence_passport.models import Scheme, CompetenceRelations
 from generator.models import DisciplineIndicators, PlanLinesLink
-
+from datetime import datetime
 logger = logging.getLogger(__name__)
 
 
@@ -97,9 +98,29 @@ class CompetencePassportService:
         ).values(
             'competence_index',
             'competence'
-        ).distinct()
+        ).distinct('competence_index')
         
         return list(competences)
+
+    @staticmethod
+    def get_distinct_lines_indicators(queryset=None, **filters):
+        """Получение уникальных индикаторов"""
+        if queryset is None:
+            queryset = LinesIndicators.objects.all()
+        
+        if filters:
+            queryset = queryset.filter(**filters)
+
+        return queryset.order_by(
+            'planlineid',
+            'competence_index',
+            'indicator_index',
+            'indicator'
+        ).distinct(
+            'planlineid',
+            'competence_index',
+            'indicator_index'
+        )
 
     @staticmethod
     def get_competence_type(competence_index):
@@ -117,6 +138,18 @@ class CompetencePassportService:
             return 'Дополнительная'
         else:
             return 'Другая'
+        
+    @classmethod
+    def get_competence_by_index(cls, plan, competence_index):
+        """Получение названия компетенции по индексу"""
+        try:
+            indicator = LinesIndicators.objects.filter(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).first()
+            return indicator.competence if indicator else competence_index
+        except:
+            return competence_index
 
     @staticmethod
     def extract_competence_parts(competence_index):
@@ -169,18 +202,23 @@ class CompetencePassportService:
         
         return sorted(competences_list, key=sort_key)
 
-    @staticmethod
-    def update_kompetences_cache(discipline):
+    @classmethod
+    def update_kompetences_cache(cls, discipline):
         """Обновляет поле kompetences в LinesData"""
         # Получаем все индикаторы дисциплины
-        indicators = LinesIndicators.objects.filter(
+        indicators = cls.get_distinct_lines_indicators(
             planlineid=discipline,
             competence_index__isnull=False
         ).order_by('indicator_index')
         
         if indicators.exists():
-            # Формируем строку индикаторов через запятую
-            indicator_list = [ind.indicator_index for ind in indicators]
+            # Формируем строку уникальных индикаторов через запятую
+            seen_indices = set()
+            indicator_list = []
+            for ind in indicators:
+                if ind.indicator_index not in seen_indices:
+                    seen_indices.add(ind.indicator_index)
+                    indicator_list.append(ind.indicator_index)
             kompetences_str = ",".join(indicator_list)
         else:
             kompetences_str = ""
@@ -309,7 +347,7 @@ class CompetencePassportService:
                 queryset=LinesIndicators.objects.filter(
                     competence__isnull=False,
                     competence_index__isnull=False
-                ).only('competence_index', 'competence')
+                ).only('competence_index', 'competence').distinct('competence_index', 'planlineid')
             )
         ).order_by('newdisid')
 
@@ -409,7 +447,7 @@ class CompetencePassportService:
         all_competences = cls.get_all_competences_for_plan(plan)
         sorted_competences = cls.sort_competences(all_competences)
         
-        discipline_indicators = LinesIndicators.objects.filter(
+        discipline_indicators = cls.get_distinct_lines_indicators(
             planlineid=discipline
         ).order_by('indicator_index')
         
@@ -470,7 +508,7 @@ class CompetencePassportService:
         
         with transaction.atomic():
             # Получаем текущие компетенции дисциплины
-            current_indicators = LinesIndicators.objects.filter(
+            current_indicators = cls.get_distinct_lines_indicators(
                 planlineid=discipline
             )
             
@@ -497,7 +535,7 @@ class CompetencePassportService:
             added_count = 0
             kept_count = 0
             
-            # 1. Удляем компетенции, которые не выбраны
+            # 1. Удаляем компетенции, которые не выбраны
             for comp_index in comp_to_delete:
                 deleted = LinesIndicators.objects.filter(
                     planlineid=discipline,
@@ -513,50 +551,23 @@ class CompetencePassportService:
                     continue
                 
                 competence_name = comp_data.get('competence')
-                indicators_data = comp_data.get('indicators', [])
                 
-                # Получаем исходное количество индикаторов для этой компетенции в других дисциплинах или используем количество из запроса, если есть
-                if indicators_data:
-                    for idx, indicator_data in enumerate(indicators_data, 1):
-                        indicator = LinesIndicators(
-                            planlineid=discipline,
-                            competence_index=comp_index,
-                            competence=competence_name,
-                            indicator_index=indicator_data.get('index', f"{comp_index}.{idx}"),
-                            indicator=indicator_data.get('name', '')
-                        )
-                        indicator.save()
-                        added_count += 1
-                else:
-                    # Создаем один индикатор по умолчанию
-                    max_indicator = LinesIndicators.objects.filter(
-                        planlineid__plan=plan,
-                        competence_index=comp_index
-                    ).aggregate(Max('indicator_index'))['indicator_index__max']
-                    
-                    if max_indicator:
-                        try:
-                            last_num = int(max_indicator.split('.')[-1])
-                            indicator_num = last_num + 1
-                        except (ValueError, IndexError):
-                            indicator_num = 1
-                    else:
-                        indicator_num = 1
-                    
-                    indicator = LinesIndicators(
-                        planlineid=discipline,
-                        competence_index=comp_index,
-                        competence=competence_name,
-                        indicator_index=f"{comp_index}.{indicator_num}",
-                        indicator=""
-                    )
-                    indicator.save()
-                    added_count += 1
+                # Создаем один индикатор 
+                indicator = LinesIndicators(
+                    planlineid=discipline,
+                    competence_index=comp_index,
+                    competence=competence_name,
+                    indicator_index='', 
+                    indicator=''  
+                )
+                indicator.save()
+                added_count += 1
             
             # 3. Считаем компетенции, которые остались без изменений
             for comp_index in comp_to_keep:
                 kept_count += len(current_competences[comp_index])
             
+            # Обновляем кэш компетенций дисциплины
             cls.update_kompetences_cache(discipline)
             
             comp_to_delete_sorted = cls.sort_competence_list(comp_to_delete)
@@ -595,7 +606,7 @@ class CompetencePassportService:
         has_any_form = any(forms_converted.values())
         
         with transaction.atomic():
-            competence_exists = LinesIndicators.objects.filter(
+            competence_exists = cls.get_distinct_lines_indicators(
                 planlineid=discipline,
                 competence_index=competence_index
             ).exists()
@@ -618,12 +629,11 @@ class CompetencePassportService:
                 }
             
             competence_name = None
-            competence_obj = LinesIndicators.objects.filter(
+            competence_obj = cls.get_distinct_lines_indicators(
                 planlineid=discipline,
                 competence_index=competence_index
             ).first()
-            if competence_obj:
-                competence_name = competence_obj.competence
+            competence_name = competence_obj.competence if competence_obj else competence_index
             
             if has_any_form:
                 # Создаем или обновляем запись
@@ -690,7 +700,7 @@ class CompetencePassportService:
             ),
             Prefetch(
                 'indicators',
-                queryset=LinesIndicators.objects.filter(
+                queryset=cls.get_distinct_lines_indicators(
                     competence__isnull=False,
                     competence_index__isnull=False
                 )
@@ -828,8 +838,8 @@ class CompetencePassportService:
         
         return response_data, None
 
-    @staticmethod
-    def get_competence_relations(plan_id, competence_index):
+    @classmethod
+    def get_competence_relations(cls, plan_id, competence_index):
         """Получение связей компетенции с другими компетенциями"""
         if not plan_id or not competence_index:
             return None, {
@@ -841,7 +851,7 @@ class CompetencePassportService:
         if error_response:
             return None, error_response
 
-        competence_exists = LinesIndicators.objects.filter(
+        competence_exists = cls.get_distinct_lines_indicators(
             planlineid__plan=plan,
             competence_index=competence_index
         ).exists()
@@ -852,7 +862,7 @@ class CompetencePassportService:
                 'status': 404
             }
 
-        competence_data = LinesIndicators.objects.filter(
+        competence_data = cls.get_distinct_lines_indicators(
             planlineid__plan=plan,
             competence_index=competence_index
         ).first()
@@ -888,7 +898,7 @@ class CompetencePassportService:
         if error_response:
             return None, error_response
 
-        competence_data = LinesIndicators.objects.filter(
+        competence_data = cls.get_distinct_lines_indicators(
             planlineid__plan=plan,
             competence_index=competence_index
         ).first()
@@ -930,7 +940,7 @@ class CompetencePassportService:
         if error_response:
             return None, error_response
 
-        all_indicators = LinesIndicators.objects.filter(
+        all_indicators = cls.get_distinct_lines_indicators(
             planlineid__plan=plan,
             competence_index=competence_index
         ).order_by('indicator_index')
@@ -962,7 +972,7 @@ class CompetencePassportService:
         elif other_indicators:
             primary_indicator = other_indicators[0]
         
-        competence_data = LinesIndicators.objects.filter(
+        competence_data = cls.get_distinct_lines_indicators(
             planlineid__plan=plan,
             competence_index=competence_index
         ).first()
@@ -991,7 +1001,7 @@ class CompetencePassportService:
             return None, error_response
 
         with transaction.atomic():
-            competence_exists = LinesIndicators.objects.filter(
+            competence_exists = cls.get_distinct_lines_indicators(
                 planlineid__plan=plan,
                 competence_index=competence_index
             ).exists()
@@ -1042,7 +1052,7 @@ class CompetencePassportService:
                     'created': False
                 }, None
 
-            first_indicator = LinesIndicators.objects.filter(
+            first_indicator = cls.get_distinct_lines_indicators(
                 planlineid__plan=plan,
                 competence_index=competence_index
             ).first()
@@ -1083,7 +1093,7 @@ class CompetencePassportService:
             return None, error_response
         
         # Получаем все индикаторы для этой компетенции с информацией о дисциплинах
-        indicators = LinesIndicators.objects.filter(
+        indicators = cls.get_distinct_lines_indicators(
             planlineid__plan=plan,
             competence_index=competence_index
         ).select_related('planlineid').order_by('indicator_index')
@@ -1129,7 +1139,7 @@ class CompetencePassportService:
                 'discipline_id': indicator.planlineid.id,
             })
         
-        competence_data = LinesIndicators.objects.filter(
+        competence_data = cls.get_distinct_lines_indicators(
             planlineid__plan=plan,
             competence_index=competence_index
         ).first()
@@ -1249,3 +1259,128 @@ class CompetencePassportService:
                 'indicator': indicator,
                 'created': created
             }, None
+        
+    @classmethod
+    def validate_scheme_indicators(cls, plan_id):
+        """Проверка соответствия числа промежуточных аттестаций и индикаторов"""
+        error_response = cls.validate_plan_id(plan_id)
+        if error_response:
+            return None, error_response
+        
+        plan, error_response = cls.get_plan_or_error_response(plan_id)
+        if error_response:
+            return None, error_response
+        
+        schemes = Scheme.objects.filter(
+            planlineid__plan=plan
+        ).select_related('planlineid').order_by(
+            'competence_index', 'planlineid__newdisid', 'semester'
+        )
+        
+        indicators = cls.get_distinct_lines_indicators(
+            planlineid__plan=plan,
+            competence_index__isnull=False
+        ).select_related('planlineid').exclude(
+            indicator_index__icontains='Итоговый индикатор'
+        )
+        
+        # Группируем по компетенции и дисциплине
+        indicators_by_competence_discipline = {}
+        for indicator in indicators:
+            key = (indicator.competence_index, indicator.planlineid.id)
+            if key not in indicators_by_competence_discipline:
+                indicators_by_competence_discipline[key] = []
+            indicators_by_competence_discipline[key].append(indicator)
+
+        schemes_by_competence_discipline = {}
+        for scheme in schemes:
+            key = (scheme.competence_index, scheme.planlineid.id)
+            if key not in schemes_by_competence_discipline:
+                schemes_by_competence_discipline[key] = []
+            schemes_by_competence_discipline[key].append(scheme)
+        
+        # Проверяем схемы на соответствие
+        validation_errors = []
+        
+        for scheme in schemes:
+            competence_index = scheme.competence_index
+            discipline = scheme.planlineid
+
+            should_exclude = False
+            if discipline.newdisid:
+                if discipline.newdisid in cls.GROUPS_TO_EXCLUDE:
+                    should_exclude = True
+                
+                for group in cls.GROUPS_TO_EXCLUDE_WITH_CHILDREN:
+                    if discipline.newdisid.startswith(group + '.'):
+                        should_exclude = True
+                        break
+                    elif discipline.newdisid == group:
+                        should_exclude = True
+                        break
+            
+            if should_exclude:
+                continue
+            
+            # Получаем схемы и индикаторы для этой компетенции и дисциплины
+            key = (competence_index, discipline.id)
+            discipline_indicators = indicators_by_competence_discipline.get(key, [])
+            discipline_scheme = schemes_by_competence_discipline.get(key, [])
+
+            forms_count = len(discipline_scheme)
+            indicators_count = len(discipline_indicators)
+            
+            if forms_count != indicators_count:
+                error_id = f"{competence_index}_{discipline.id}_{scheme.semester}"
+                competence_name = scheme.competence or cls.get_competence_by_index(plan, competence_index)
+                
+                if forms_count > 0 and indicators_count == 0:
+                    error_type = 'missing_indicators'
+                    message = f'Указаны формы аттестации, но отсутствуют индикаторы'
+                    advice = 'Добавьте индикаторы формирования компетенции в паспорте компетенций для этой дисциплины'
+                elif forms_count == 0 and indicators_count > 0:
+                    error_type = 'missing_forms'
+                    message = f'ДУказаны индикаторы, но отсутствуют формы аттестации'
+                    advice = 'Добавьте формы аттестации в схеме компетенций для этого семестра'
+                else:
+                    error_type = 'forms_mismatch'
+                    message = f'Не совпадает число форм аттестации ({forms_count}) и индикаторов ({indicators_count})'
+                    advice = 'Скорректируйте либо число форм аттестации в схеме, либо число индикаторов в паспорте компетенций'
+                
+                validation_errors.append({
+                    'id': error_id,
+                    'competence_index': competence_index,
+                    'competence_name': competence_name,
+                    'discipline_index': discipline.newdisid or '',
+                    'discipline_name': discipline.dis,
+                    'discipline_id': discipline.id,
+                    'scheme_forms_count': forms_count,
+                    'indicators_count': indicators_count,
+                    'semester': scheme.semester,
+                    'error_type': error_type,
+                    'message': message,
+                    'advice': advice
+                })
+        
+        temp_errors = {}
+        for error in validation_errors:
+            comp_index = error['competence_index']
+            if comp_index not in temp_errors:
+                temp_errors[comp_index] = []
+            temp_errors[comp_index].append(error)
+        
+        # Сортируем компетенции
+        sorted_competence_indices = cls.sort_competence_list(list(temp_errors.keys()))
+        sorted_errors = []
+        for comp_index in sorted_competence_indices:
+            errors_for_competence = sorted(temp_errors[comp_index], 
+                                        key=lambda x: (x['discipline_index'], x['semester']))
+            sorted_errors.extend(errors_for_competence)
+        
+        return {
+            'plan': plan,
+            'validation_errors': sorted_errors,
+            'has_errors': len(sorted_errors) > 0,
+            'errors_count': len(sorted_errors),
+            'checked_at': datetime.now().isoformat()
+        }, None
