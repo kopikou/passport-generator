@@ -552,12 +552,41 @@ class CompetencePassportService:
                 
                 competence_name = comp_data.get('competence')
                 
-                # Создаем один индикатор 
+                # Получаем существующие индикаторы
+                existing_indicators = cls.get_distinct_lines_indicators(
+                    planlineid=discipline,
+                    competence_index=comp_index
+                ).exclude(
+                    indicator_index__icontains='Итоговый индикатор'
+                ).order_by('indicator_index')
+                
+                # Определяем следующий доступный номер индикатора
+                last_indicator_index = 0
+                if existing_indicators.exists():
+                    last_indicator = existing_indicators.last()
+                    if last_indicator and last_indicator.indicator_index:
+                        match = re.search(r'\d+', last_indicator.indicator_index)
+                        if match:
+                            last_indicator_index = int(match.group())
+                
+                new_index_number = last_indicator_index + 1
+                base_comp_index = comp_index.replace(' ', '-')
+                indicator_index = f"{base_comp_index}.{new_index_number}"
+                с
+                while LinesIndicators.objects.filter(
+                    planlineid=discipline,
+                    competence_index=comp_index,
+                    indicator_index=indicator_index
+                ).exists():
+                    new_index_number += 1
+                    indicator_index = f"{base_comp_index}.{new_index_number}"
+                
+                # Создаем один индикатор
                 indicator = LinesIndicators(
                     planlineid=discipline,
                     competence_index=comp_index,
                     competence=competence_name,
-                    indicator_index='', 
+                    indicator_index=indicator_index, 
                     indicator=''  
                 )
                 indicator.save()
@@ -625,6 +654,32 @@ class CompetencePassportService:
             if not semester_exists:
                 return None, {
                     'error': 'Указанный семестр не существует для данной дисциплины',
+                    'status': 400
+                }
+            
+            semester_data = SemesterData.objects.filter(
+                planlineid=discipline,
+                num=semester
+            ).first()
+            
+            # Проверяем, чтобы пользователь не мог выбрать формы, которые недоступны по учебному плану
+            unavailable_forms = []
+            
+            if semester_data:
+                if forms_converted['ekz'] and not semester_data.ekz:
+                    unavailable_forms.append('ekz')
+                if forms_converted['zach'] and not semester_data.zach:
+                    unavailable_forms.append('zach')
+                if forms_converted['zacho'] and not semester_data.zacho:
+                    unavailable_forms.append('zacho')
+                if forms_converted['kp'] and not semester_data.kp:
+                    unavailable_forms.append('kp')
+                if forms_converted['kr'] and not semester_data.kr:
+                    unavailable_forms.append('kr')
+
+            if unavailable_forms:
+                return None, {
+                    'error': 'Указанная форма аттестации не доступна для данной дисциплины в данном семестре',
                     'status': 400
                 }
             
@@ -1384,3 +1439,119 @@ class CompetencePassportService:
             'errors_count': len(sorted_errors),
             'checked_at': datetime.now().isoformat()
         }, None
+
+    @classmethod
+    def fix_scheme_indicators(cls, plan_id, discipline_id, competence_index, 
+                            scheme_forms_count, indicators_count, semester):
+        """Автоматическое исправление индикаторов - создание или удаление"""
+        if not all([plan_id, discipline_id, competence_index]):
+            return None, {
+                'error': 'ID плана, дисциплины и индекс компетенции обязательны',
+                'status': 400
+            }
+        
+        plan, error_response = cls.get_plan_or_error_response(plan_id)
+        if error_response:
+            return None, error_response
+        
+        discipline, error_response = cls.get_discipline_or_error_response(plan, discipline_id)
+        if error_response:
+            return None, error_response
+        
+        with transaction.atomic():
+            # Получаем существующие индикаторы 
+            existing_indicators = cls.get_distinct_lines_indicators(
+                planlineid=discipline,
+                competence_index=competence_index
+            ).exclude(
+                indicator_index__icontains='Итоговый индикатор'
+            ).order_by('indicator_index')
+
+            competence_data = cls.get_distinct_lines_indicators(
+                planlineid__plan=plan,
+                competence_index=competence_index
+            ).first()
+            
+            if not competence_data:
+                return None, {
+                    'error': 'Компетенция не найдена в плане',
+                    'status': 404
+                }
+            
+            current_indicators_count = existing_indicators.count()
+            needed_count = scheme_forms_count
+            
+            indicators_created = 0
+            indicators_removed = 0
+            
+            # Если нужно создать индикаторы (форм аттестации больше, чем индикаторов)
+            if needed_count > current_indicators_count:
+                indicators_to_create = needed_count - current_indicators_count
+                
+                # Определяем следующий доступный номер индикатора
+                last_indicator_index = 0
+                if current_indicators_count > 0:
+                    last_indicator = existing_indicators.last()
+                    if last_indicator and last_indicator.indicator_index:
+                        match = re.search(r'\d+', last_indicator.indicator_index)
+                        if match:
+                            last_indicator_index = int(match.group())
+                
+                # Создаем недостающие индикаторы 
+                for i in range(indicators_to_create):
+                    new_index_number = last_indicator_index + i + 1
+                    base_comp_index = competence_index.replace(' ', '-')
+                    indicator_index = f"{base_comp_index}.{new_index_number}"
+                    
+                    while LinesIndicators.objects.filter(
+                        planlineid=discipline,
+                        competence_index=competence_index,
+                        indicator_index=indicator_index
+                    ).exists():
+                        new_index_number += 1
+                        indicator_index = f"{base_comp_index}.{new_index_number}"
+                    
+                    indicator = LinesIndicators.objects.create(
+                        planlineid=discipline,
+                        competence_index=competence_index,
+                        competence=competence_data.competence,
+                        indicator_index=indicator_index,
+                        indicator=''
+                    )
+                    indicators_created += 1
+            
+            # Если нужно удалить индикаторы (форм аттестации меньше, чем индикаторов)
+            elif needed_count < current_indicators_count:
+                indicators_to_remove = current_indicators_count - needed_count
+
+                indicators_to_delete = existing_indicators.order_by(
+                    '-indicator_index' 
+                )[:indicators_to_remove]
+                
+                for indicator in indicators_to_delete:
+                    indicator.delete()
+                    indicators_removed += 1
+            
+            cls.update_kompetences_cache(discipline)
+
+            final_indicators = cls.get_distinct_lines_indicators(
+                planlineid=discipline,
+                competence_index=competence_index
+            ).exclude(
+                indicator_index__icontains='Итоговый индикатор'
+            ).count()
+            
+            message_parts = []
+            if indicators_created > 0:
+                message_parts.append(f'создано {indicators_created} индикаторов')
+            if indicators_removed > 0:
+                message_parts.append(f'удалено {indicators_removed} индикаторов')
+            if not message_parts:
+                message_parts.append('количество индикаторов уже соответствует формам аттестации')
+            
+            return {
+                'indicators_created': indicators_created,
+                'indicators_removed': indicators_removed,
+                'final_indicators_count': final_indicators,
+                'message': 'Исправление выполнено: ' + ', '.join(message_parts)
+            }, None

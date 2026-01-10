@@ -101,6 +101,7 @@
                             icon="edit"
                             @click="navigateToFix(props.row)"
                             title="Исправить в схеме"
+                            :loading="validationLoading"
                           />
                           <q-btn
                             size="sm"
@@ -108,6 +109,7 @@
                             icon="open_in_new"
                             @click="navigateToPassport(props.row)"
                             title="Исправить в паспорте"
+                            :loading="fixingIndicatorsLoading"
                           />
                         </div>
                       </q-td>
@@ -285,6 +287,7 @@ const {
 } = storeToRefs(store)
 const showValidationErrors = ref(false)
 const lastChecked = ref(null)
+const fixingIndicatorsLoading = ref(false)
 
 const validationColumns = [
   {
@@ -557,15 +560,84 @@ function navigateToFix(errorRow) {
   }
 }
 
-function navigateToPassport(errorRow) {
-  router.push({
-    name: 'competencePassport',
-    query: {
+async function navigateToPassport(errorRow) {
+  try {
+    fixingIndicatorsLoading.value = true
+
+    const rows = schemaData.value || []
+    const disciplineRow = rows.find(row => 
+      row.type === 'discipline' && 
+      row.discipline_id === errorRow.discipline_id &&
+      row.parent_competence === errorRow.competence_index
+    )
+    
+    if (!disciplineRow) {
+      throw new Error('Дисциплина не найдена в текущей схеме')
+    }
+    
+    const result = await store.fixSchemeIndicators({
       plan_id: currentPlanId.value,
       discipline_id: errorRow.discipline_id,
-      highlight_competence: errorRow.competence_index
+      competence_index: errorRow.competence_index,
+      scheme_forms_count: errorRow.scheme_forms_count,
+      indicators_count: errorRow.indicators_count,
+      semester: errorRow.semester
+    })
+    
+    if (result.success) {
+      let message = 'Индикаторы успешно скорректированы: '
+      const actions = []
+      
+      if (result.indicators_created > 0) {
+        actions.push(`создано ${result.indicators_created} индикаторов`)
+      }
+      if (result.indicators_removed > 0) {
+        actions.push(`удалено ${result.indicators_removed} индикаторов`)
+      }
+      
+      $q.notify({
+        type: 'positive',
+        message: message,
+        position: 'top-right',
+        timeout: 5000
+      })
+
+      await loadCompetenceSchema()
+      await validateScheme()
+
+      router.push({
+        name: 'competencePassport',
+        query: {
+          plan_id: currentPlanId.value,
+          discipline_id: errorRow.discipline_id,
+          highlight_competence: errorRow.competence_index
+        }
+      })
+    } else {
+      throw new Error(result.error || 'Не удалось скорректировать индикаторы')
     }
-  })
+    
+  } catch (error) {
+    console.error('Error fixing indicators:', error)
+
+    $q.notify({
+      type: 'warning',
+      message: `Не удалось автоматически скорректировать индикаторы: ${error.message}`,
+      position: 'top-right',
+      timeout: 5000
+    })
+
+    // router.push({
+    //   name: 'competencePassport',
+    //   query: {
+    //     plan_id: currentPlanId.value,
+    //     discipline_id: errorRow.discipline_id,
+    //     highlight_competence: errorRow.competence_index
+    //   }
+    // })
+  } finally {
+    fixingIndicatorsLoading.value = false
+  }
 }
 
 watch(() => store.validationErrors, (newErrors) => {

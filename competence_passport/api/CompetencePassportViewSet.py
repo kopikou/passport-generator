@@ -618,3 +618,40 @@ class CompetencePassportViewSet(
                 {'error': f'Ошибка при проверке схемы компетенций: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+    @action(methods=['POST'], detail=False, url_path='fix-scheme-indicators')
+    def fix_scheme_indicators(self, request):
+        """Автоматическое исправление индикаторов при несоответствии с формами аттестации"""
+        try:
+            plan_id = request.data.get('plan_id')
+            discipline_id = request.data.get('discipline_id')
+            competence_index = request.data.get('competence_index')
+            scheme_forms_count = request.data.get('scheme_forms_count', 0)
+            indicators_count = request.data.get('indicators_count', 0)
+            semester = request.data.get('semester')
+            
+            result, error_response = CompetencePassportService.fix_scheme_indicators(
+                plan_id, discipline_id, competence_index, 
+                scheme_forms_count, indicators_count, semester
+            )
+            if error_response:
+                return Response(
+                    {'error': error_response['error']}, 
+                    status=error_response['status']
+                )
+            
+            return Response({
+                'success': True,
+                'indicators_created': result['indicators_created'],
+                'indicators_removed': result['indicators_removed'],
+                'message': result['message'],
+                'discipline_id': discipline_id,
+                'competence_index': competence_index,
+                'final_indicators_count': result['final_indicators_count']
+            })
+                
+        except Exception as e:
+            return Response(
+                {'error': f'Ошибка при исправлении индикаторов: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
