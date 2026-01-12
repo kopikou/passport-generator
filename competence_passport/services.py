@@ -977,7 +977,7 @@ class CompetencePassportService:
             
             return {
                 'competence_index': competence_index,
-                'relations': relations_text,
+                'relations': relations,
                 'created': created,
                 'updated_at': relations.updated_at
             }, None

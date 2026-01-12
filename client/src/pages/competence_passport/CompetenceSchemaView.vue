@@ -94,21 +94,21 @@
                   >
                     <template v-slot:body-cell-actions="props">
                       <q-td :props="props">
-                        <div class="row q-gutter-xs">
+                        <div class="column items-center q-gutter-y-xs">
                           <q-btn
                             size="sm"
                             color="primary"
-                            icon="edit"
+                            label="Исправить в схеме"
                             @click="navigateToFix(props.row)"
-                            title="Исправить в схеме"
+                            title="Изменить формы аттестации"
                             :loading="validationLoading"
                           />
                           <q-btn
                             size="sm"
                             color="primary"
-                            icon="open_in_new"
+                            label="Исправить в паспорте"
                             @click="navigateToPassport(props.row)"
-                            title="Исправить в паспорте"
+                            title="Изменить число индикаторов"
                             :loading="fixingIndicatorsLoading"
                           />
                         </div>
