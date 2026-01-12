@@ -55,9 +55,9 @@
           <div class="text-h5 q-mb-md">Выберите действие для группы</div>
           
           <!-- Карточки выбора действия -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <!-- Загрузка нового учебного плана -->
-            <q-card class="cursor-pointer" @click="selectAction('upload')" :class="{ 'selected-card': selectedAction === 'upload' }">
+            <q-card class="cursor-pointer" @click="uploadPlan">
               <q-card-section>
                 <div class="text-h6">Загрузить учебный план</div>
                 <div class="text-caption text-grey">
@@ -70,85 +70,17 @@
             </q-card>
 
             <!-- Выбор существующего учебного плана -->
-            <q-card class="cursor-pointer" @click="selectAction('select')" :class="{ 'selected-card': selectedAction === 'select' }">
+            <q-card class="cursor-pointer" @click="selectExistingPlan">
               <q-card-section>
-                <div class="text-h6">Выбрать существующий</div>
+                <div class="text-h6">Выбрать прошлогодний учебный план</div>
                 <div class="text-caption text-grey">
-                  Выберите прошлогодний учебный план
+                  Данные автоматически подгрузятся из прошлогоднего учебного плана
                 </div>
               </q-card-section>
               <q-card-actions>
                 <q-btn color="primary" label="Выбрать" @click.stop="selectExistingPlan" />
               </q-card-actions>
             </q-card>
-          </div>
-
-          <div v-if="selectedAction">
-            <q-separator class="q-my-lg" />
-            
-            <!-- Загрузка плана -->
-            <div v-if="selectedAction === 'upload'">
-              <div class="text-h6 q-mb-md">Загрузка учебного плана</div>
-              <q-file
-                v-model="uploadedFile"
-                label="Выберите файл учебного плана (.plx)"
-                accept=".plx"
-                outlined
-                class="q-mb-md"
-              />
-              <q-btn 
-                color="primary" 
-                label="Загрузить файл" 
-                :disable="!uploadedFile"
-                @click="uploadPlanFile"
-              />
-            </div>
-
-            <!-- Выбор существующего плана -->
-            <div v-if="selectedAction === 'select'">
-              <div class="text-h6 q-mb-md">Доступные учебные планы:</div>
-              
-              <!-- Список доступных файлов -->
-              <div v-if="availablePlanFiles.length > 0">
-                <q-list bordered>
-                  <q-item 
-                    v-for="(file, index) in availablePlanFiles" 
-                    :key="index"
-                    clickable
-                    @click="selectPlanFile(file)"
-                    :class="{ 'bg-blue-1': selectedPlanFile === file }"
-                  >
-                    <q-item-section>
-                      <q-item-label>{{ file.name }}</q-item-label>
-                      <q-item-label caption>{{ file.date }}</q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                      <q-btn 
-                        icon="file_download" 
-                        color="primary" 
-                        flat 
-                        dense
-                        :href="file.url"
-                        download
-                        @click.stop
-                      />
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-                
-                <q-btn 
-                  color="primary" 
-                  label="Выбрать план" 
-                  class="q-mt-md"
-                  :disable="!selectedPlanFile"
-                  @click="confirmPlanSelection"
-                />
-              </div>
-
-              <div v-else class="text-grey text-center q-pa-lg">
-                Нет доступных учебных планов
-              </div>
-            </div>
           </div>
         </div>
 
@@ -186,10 +118,6 @@ const {
 } = storeToRefs(store)
 const router = useRouter()
 const $q = useQuasar()
-
-const selectedAction = ref('')
-const uploadedFile = ref(null)
-const selectedPlanFile = ref(null)
 
 const yearsList = computed(() => {
   let year = 2025;
@@ -256,40 +184,6 @@ function getFirstPlxFile(plxFile) {
   return plxFile;
 }
 
-// Текущий файл учебного плана для выбранной группы
-const currentGroupPlxFile = computed(() => {
-  if (!currentPlanId.value) return null;
-  const currentGroup = groupsList.value.find(group => group.plan_id === currentPlanId.value);
-  return getFirstPlxFile(currentGroup?.plx_file);
-});
-const availablePlanFiles = computed(() => {
-  if (!currentGroupPlxFile.value) return [];
-  
-  return [
-    {
-      name: getFileName(currentGroupPlxFile.value),
-      url: currentGroupPlxFile.value,
-      date: new Date().toLocaleDateString()
-    }
-  ];
-});
-
-function getFileName(url) {
-  if (!url) return '';
-  if (typeof url !== 'string') {
-    console.warn('getFileName received non-string:', url);
-    return 'Учебный план';
-  }
-  
-  try {
-    const fileName = url.split('/').pop() || 'Учебный план';
-    return decodeURIComponent(fileName);
-  } catch (error) {
-    console.warn('Error decoding filename:', error);
-    return url.split('/').pop() || 'Учебный план';
-  }
-}
-
 function handleSearchChange() {
   if (groupTextFilter.value && groupTextFilter.value.trim() !== '') {
     LocalStorage.set('surp_rpdgroupfilter', groupTextFilter.value);
@@ -309,76 +203,25 @@ const debouncedFetchGroupsList = _.debounce(async () => {
 
 async function selectGroup(planId) {
   store.setCurrentPlanId(planId);
-  selectedAction.value = '';
-  selectedPlanFile.value = null;
-  uploadedFile.value = null;
-
-  await store.fetchAllDisciplines(planId);
-}
-
-function selectAction(action) {
-  selectedAction.value = action;
 }
 
 function uploadPlan() {
-  selectedAction.value = 'upload';
+  $q.notify({
+    type: 'info',
+    message: 'Функция загрузки будет реализована позже'
+  });
 }
 
 function selectExistingPlan() {
-  selectedAction.value = 'select';
-}
-
-function selectPlanFile(file) {
-  selectedPlanFile.value = file;
-}
-
-async function uploadPlanFile() {
-  if (!uploadedFile.value) {
+  if (!currentPlanId.value) {
     $q.notify({
       type: 'warning',
-      message: 'Выберите файл для загрузки'
+      message: 'Выберите группу'
     });
     return;
   }
-
-  try {
-    $q.notify({
-      type: 'info',
-      message: 'Функция загрузки будет реализована позже'
-    });
-    
-    uploadedFile.value = null;
-    
-  } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Ошибка при загрузке файла'
-    });
-  }
-}
-
-async function confirmPlanSelection() {
-  if (!selectedPlanFile.value) {
-    $q.notify({
-      type: 'warning',
-      message: 'Выберите учебный план'
-    });
-    return;
-  }
-
-  try {
-    router.push(`/competence/reference`);
-    $q.notify({
-      type: 'positive',
-      message: `Выбран учебный план: ${selectedPlanFile.value.name}`
-    });
-    
-  } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Ошибка при выборе учебного плана'
-    });
-  }
+  
+  router.push(`/competence/reference`);
 }
 
 onMounted(async () => {
@@ -412,9 +255,5 @@ watch([
 
 :deep(.my-active-item) {
   background: $blue-grey-2;
-}
-
-.selected-card {
-  border: 2px solid $primary;
 }
 </style>

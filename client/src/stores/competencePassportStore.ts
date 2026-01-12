@@ -4,6 +4,38 @@ import { api } from 'boot/axios'
 import _ from 'lodash'
 import { LocalStorage, useQuasar } from 'quasar';
 
+interface ValidationError {
+  id: string
+  competence_index: string
+  competence_name: string
+  discipline_index: string
+  discipline_name: string
+  discipline_id: number
+  scheme_forms_count: number
+  indicators_count: number
+  semester: number
+  error_type: 'forms_mismatch' | 'missing_forms' | 'missing_indicators'
+  message: string
+  advice: string
+}
+
+interface FixIndicatorsRequest {
+  plan_id: string
+  discipline_id: number
+  competence_index: string
+  scheme_forms_count: number
+  indicators_count: number
+  semester: number
+}
+
+interface FixIndicatorsResponse {
+  success: boolean
+  indicators_created?: number
+  indicators_removed?: number
+  error?: string
+  message?: string
+}
+
 export const useCompetencePassportStore = defineStore('competencePassport', () => {
   const programList = ref([])
   const groupsList = ref([])
@@ -45,9 +77,13 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   const competenceIndicatorsCreteria = ref([])
   const indicatorsLoading = ref(false)
 
+  const validationErrors = ref<ValidationError[]>([])
+  const validationLoading = ref(false)
+
+  const fixingIndicators = ref(false)
 
   // Вспомогательные функции
-  const _getGroupListParams = () => {
+  const getGroupListParams = () => {
     return {
       year: selectedYear.value,
       text: textFilter.value,
@@ -57,12 +93,12 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
-  const _handleApiError = (error, operation) => {
+  const handleApiError = (error, operation) => {
     console.error(`Error ${operation}:`, error)
     throw error
   }
 
-  const _setLoadingState = (isLoading, target = null) => {
+  const setLoadingState = (isLoading, target = null) => {
     if (target) {
       target.value = isLoading
     } else {
@@ -70,27 +106,27 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
-  const _fetchWithPlanId = async (endpoint, planId, params = {}, loadingTarget = null) => {
+  const fetchWithPlanId = async (endpoint, planId, params = {}, loadingTarget = null) => {
     if (!planId) {
       throw new Error('Plan ID is required')
     }
     
-    _setLoadingState(true, loadingTarget)
+    setLoadingState(true, loadingTarget)
     try {
       const response = await api.get(endpoint, { params: { plan_id: planId, ...params } })
       return response.data
     } catch (error) {
-      _handleApiError(error, `fetching from ${endpoint}`)
+      handleApiError(error, `fetching from ${endpoint}`)
     } finally {
-      _setLoadingState(false, loadingTarget)
+      setLoadingState(false, loadingTarget)
     }
   }
 
-  const _resetData = (dataRef, defaultValue = []) => {
+  const resetData = (dataRef, defaultValue = []) => {
     dataRef.value = defaultValue
   }
 
-  const _updateMatrixValidation = (isValid, disciplinesWithoutCompetences = [], competencesWithoutDisciplines = []) => {
+  const updateMatrixValidation = (isValid, disciplinesWithoutCompetences = [], competencesWithoutDisciplines = []) => {
     matrixValidation.value = {
       isValid,
       disciplinesWithoutCompetences,
@@ -141,31 +177,31 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
 
 
   async function fetchGroupsList() {
-    _setLoadingState(true)
+    setLoadingState(true)
     try {
       const response = await api.get('/api/competence/group-list/', { 
-        params: _getGroupListParams() 
+        params: getGroupListParams() 
       })
       groupsList.value = response.data
     } catch (error) {
-      _handleApiError(error, 'fetching groups list')
-      _resetData(groupsList)
+      handleApiError(error, 'fetching groups list')
+      resetData(groupsList)
     } finally {
-      _setLoadingState(false)
+      setLoadingState(false)
     }
   }
 
   async function fetchGroupPrograms(planId) {
-    _setLoadingState(true)
+    setLoadingState(true)
     try {
       setCurrentPlanId(planId);
       const response = await api.get(`/api/competence/${planId}/group-program/`)
       currentGroupPrograms.value = response.data
     } catch (error) {
-      _handleApiError(error, 'fetching group programs')
-      _resetData(currentGroupPrograms)
+      handleApiError(error, 'fetching group programs')
+      resetData(currentGroupPrograms)
     } finally {
-      _setLoadingState(false)
+      setLoadingState(false)
     }
   }
 
@@ -178,33 +214,33 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       const response = await api.get(`/api/competence/${programId}/`)
       return response.data
     } catch (error) {
-      _handleApiError(error, 'fetching program detail')
+      handleApiError(error, 'fetching program detail')
     }
   }
 
   async function fetchAllCompetences(planId) {
     try {
-      const data = await _fetchWithPlanId('/api/competence/all-competences/', planId)
+      const data = await fetchWithPlanId('/api/competence/all-competences/', planId)
       currentPlanCompetences.value = data.competences
       return data
     } catch (error) {
-      _resetData(currentPlanCompetences)
+      resetData(currentPlanCompetences)
     }
   }
 
   async function fetchAllDisciplines(planId) {
     try {
-      const data = await _fetchWithPlanId('/api/competence/all-disciplines/', planId)
+      const data = await fetchWithPlanId('/api/competence/all-disciplines/', planId)
       currentPlanDisciplines.value = data.disciplines
       return data
     } catch (error) {
-      _resetData(currentPlanDisciplines)
+      resetData(currentPlanDisciplines)
     }
   }
 
   async function fetchCompetenceMatrix(planId) {
     try {
-      const data = await _fetchWithPlanId(
+      const data = await fetchWithPlanId(
         '/api/competence/competence-matrix/', 
         planId, 
         {}, 
@@ -213,12 +249,12 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       competenceMatrix.value = data.matrix || []
       return data
     } catch (error) {
-      _resetData(competenceMatrix)
+      resetData(competenceMatrix)
     }
   }
 
   async function fetchDisciplineCompetencesDetailed(planId, disciplineId) {
-    _setLoadingState(true)
+    setLoadingState(true)
     try {
       if (!planId || !disciplineId) {
         throw new Error('Plan ID and Discipline ID are required')
@@ -241,14 +277,14 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       
       return response.data
     } catch (error) {
-      _handleApiError(error, 'fetching detailed discipline competences')
+      handleApiError(error, 'fetching detailed discipline competences')
     } finally {
-      _setLoadingState(false)
+      setLoadingState(false)
     }
   }
   
   async function updateDisciplineCompetences(selectedCompetences) {
-    _setLoadingState(true, saving)
+    setLoadingState(true, saving)
     try {
       if (!editingDiscipline.value) {
         throw new Error('No discipline selected for editing')
@@ -271,9 +307,9 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       
       return response.data
     } catch (error) {
-      _handleApiError(error, 'updating discipline competences')
+      handleApiError(error, 'updating discipline competences')
     } finally {
-      _setLoadingState(false, saving)
+      setLoadingState(false, saving)
     }
   }
   
@@ -337,7 +373,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       const isValid = disciplinesWithoutCompetences.length === 0 && 
                      competencesWithoutDisciplines.length === 0
       
-      _updateMatrixValidation(isValid, disciplinesWithoutCompetences, competencesWithoutDisciplines)
+      updateMatrixValidation(isValid, disciplinesWithoutCompetences, competencesWithoutDisciplines)
       
       return matrixValidation.value
       
@@ -382,7 +418,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
 
   async function fetchCompetenceSchema(planId) {
     try {
-      const data = await _fetchWithPlanId(
+      const data = await fetchWithPlanId(
         '/api/competence/competence-schema-data/', 
         planId, 
         {}, 
@@ -391,17 +427,21 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       schemaData.value = data.schema_rows || []
       return data
     } catch (error) {
-      _resetData(schemaData)
+      resetData(schemaData)
     }
   }
 
   async function updateSemesterScheme(payload) {
-    _setLoadingState(true, saving)
+    setLoadingState(true, saving)
     try {
       const response = await api.post(
         '/api/competence/update-semester-scheme/', 
         payload
       )
+      
+      if (response.data && response.data.error) {
+        return { error: response.data.error }
+      }
       
       if (currentPlanId.value) {
         await fetchCompetenceSchema(currentPlanId.value)
@@ -409,9 +449,15 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       
       return response.data
     } catch (error) {
-      _handleApiError(error, 'updating semester scheme')
+      if (error.response && error.response.data && error.response.data.error) {
+        return { error: error.response.data.error }
+      } else if (error.message) {
+        return { error: error.message }
+      } else {
+        return { error: 'Ошибка при сохранении схемы' }
+      }
     } finally {
-      _setLoadingState(false, saving)
+      setLoadingState(false, saving)
     }
   }
 
@@ -424,7 +470,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   }
 
   async function fetchPlanDetails(planId) {
-    _setLoadingState(true)
+    setLoadingState(true)
     try {
       if (!planId) {
         throw new Error('Plan ID is required')
@@ -438,12 +484,12 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       console.error('Error fetching plan details:', error)
       return null
     } finally {
-      _setLoadingState(false)
+      setLoadingState(false)
     }
   }
 
   async function fetchCompetenceRelations(planId, competenceIndex) {
-    _setLoadingState(true)
+    setLoadingState(true)
     try {
       if (!planId || !competenceIndex) {
         throw new Error('Plan ID и индекс компетенции обязательны')
@@ -461,12 +507,12 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       console.error('Error fetching competence relations:', error)
       throw error
     } finally {
-      _setLoadingState(false)
+      setLoadingState(false)
     }
   }
 
   async function updateCompetenceRelations(planId, competenceIndex, relationsText) {
-    _setLoadingState(true, saving)
+    setLoadingState(true, saving)
     try {
       if (!planId || !competenceIndex) {
         throw new Error('Plan ID и индекс компетенции обязательны')
@@ -485,12 +531,12 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       console.error('Error updating competence relations:', error)
       throw error
     } finally {
-      _setLoadingState(false, saving)
+      setLoadingState(false, saving)
     }
   }
 
   async function fetchCompetenceFinalIndicators(planId, competenceIndex) {
-    _setLoadingState(true)
+    setLoadingState(true)
     try {
       if (!planId || !competenceIndex) {
         throw new Error('Plan ID и индекс компетенции обязательны')
@@ -508,12 +554,12 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       console.error('Error fetching competence final indicators:', error)
       throw error
     } finally {
-      _setLoadingState(false)
+      setLoadingState(false)
     }
   }
 
   async function updateCompetenceFinalIndicators(planId, competenceIndex, finalIndicatorText, indicatorId = null) {
-    _setLoadingState(true, saving)
+    setLoadingState(true, saving)
     try {
       if (!planId || !competenceIndex) {
         throw new Error('Plan ID и индекс компетенции обязательны')
@@ -536,12 +582,12 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       console.error('Error updating competence final indicators:', error)
       throw error
     } finally {
-      _setLoadingState(false, saving)
+      setLoadingState(false, saving)
     }
   }
 
   async function fetchCompetenceIndicatorDisciplines(planId, competenceIndex) {
-    _setLoadingState(true)
+    setLoadingState(true)
     try {
       if (!planId || !competenceIndex) {
         throw new Error('Plan ID и индекс компетенции обязательны')
@@ -559,12 +605,12 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       console.error('Error fetching competence indicator disciplines:', error)
       throw error
     } finally {
-      _setLoadingState(false)
+      setLoadingState(false)
     }
   }
 
   async function updateIndicatorContent(indicatorId, newContent) {
-    _setLoadingState(true, saving)
+    setLoadingState(true, saving)
     try {
       if (!indicatorId || typeof newContent !== 'string') {
         throw new Error('ID индикатора и новое содержание обязательны')
@@ -582,12 +628,12 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       console.error('Error updating indicator content:', error)
       throw error
     } finally {
-      _setLoadingState(false, saving)
+      setLoadingState(false, saving)
     }
   }
 
   async function fetchCompetenceIndicators(planId, competenceIndex) {
-    _setLoadingState(true, indicatorsLoading)
+    setLoadingState(true, indicatorsLoading)
     try {
       if (!planId || !competenceIndex) {
         throw new Error('Plan ID и индекс компетенции обязательны')
@@ -636,16 +682,16 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       return response.data
     } catch (error) {
       console.error('Error fetching competence indicators:', error)
-      _resetData(competenceIndicatorsData)
-      _resetData(competenceIndicatorsCreteria)
+      resetData(competenceIndicatorsData)
+      resetData(competenceIndicatorsCreteria)
       throw error
     } finally {
-      _setLoadingState(false, indicatorsLoading)
+      setLoadingState(false, indicatorsLoading)
     }
   }
 
   async function saveIndicatorDetails(indicatorData) {
-    _setLoadingState(true, saving)
+    setLoadingState(true, saving)
     try {
       const payload = {
         indicator_id: indicatorData.id,
@@ -679,7 +725,74 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       console.error('Error saving indicator details:', error)
       throw error
     } finally {
-      _setLoadingState(false, saving)
+      setLoadingState(false, saving)
+    }
+  }
+
+  async function validateSchemeIndicators(planId: string) {
+    setLoadingState(true, validationLoading)
+    try {
+      if (!planId) {
+        if (!currentPlanId.value) {
+          throw new Error('Plan ID is required for validation')
+        }
+        planId = currentPlanId.value
+      }
+      
+      const response = await api.get('/api/competence/validate-scheme-indicators/', {
+        params: { plan_id: planId }
+      })
+      
+      validationErrors.value = response.data.validation_errors || []
+      
+      return {
+        hasErrors: validationErrors.value.length > 0,
+        errors: validationErrors.value,
+        checkedAt: new Date()
+      }
+      
+    } catch (error) {
+      console.error('Error validating scheme indicators:', error)
+      validationErrors.value = []
+      throw error
+    } finally {
+      setLoadingState(false, validationLoading)
+    }
+  }
+
+  function clearValidationErrors() {
+    validationErrors.value = []
+  }
+
+  function getValidationErrors() {
+    return validationErrors.value
+  }
+
+  async function fixSchemeIndicators(request: FixIndicatorsRequest): Promise<FixIndicatorsResponse> {
+    setLoadingState(true, fixingIndicators)
+    try {
+      if (!request.plan_id || !request.discipline_id || !request.competence_index) {
+        throw new Error('Все обязательные параметры должны быть указаны')
+      }
+      
+      const response = await api.post('/api/competence/fix-scheme-indicators/', request)
+      
+      return {
+        success: true,
+        indicators_created: response.data.indicators_created || 0,
+        indicators_removed: response.data.indicators_removed || 0,
+        message: response.data.message
+      }
+      
+    } catch (error: any) {
+      console.error('Error fixing scheme indicators:', error)
+      
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Ошибка при исправлении индикаторов'
+      }
+    } finally {
+      setLoadingState(false, fixingIndicators)
     }
   }
 
@@ -712,6 +825,9 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     competenceIndicatorsData,
     competenceIndicatorsCreteria,
     indicatorsLoading,
+    validationErrors,
+    validationLoading,
+    fixingIndicators,
 
     setCurrentPlanId,
     filteredPrograms,
@@ -743,5 +859,9 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     updateIndicatorContent,
     fetchCompetenceIndicators,
     saveIndicatorDetails,
+    validateSchemeIndicators,
+    clearValidationErrors,
+    getValidationErrors,
+    fixSchemeIndicators,
   }
 })

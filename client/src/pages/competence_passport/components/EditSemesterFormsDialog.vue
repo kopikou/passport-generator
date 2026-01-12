@@ -38,6 +38,7 @@
                 color="positive"
                 size="lg"
                 label-color="dark"
+                :disable="saving"
               />
             </div>
             <div class="col">
@@ -54,6 +55,7 @@
                 color="positive"
                 size="lg"
                 label-color="dark"
+                :disable="saving"
               />
             </div>
             <div class="col">
@@ -70,6 +72,7 @@
                 color="positive"
                 size="lg"
                 label-color="dark"
+                :disable="saving"
               />
             </div>
             <div class="col">
@@ -86,6 +89,7 @@
                 color="positive"
                 size="lg"
                 label-color="dark"
+                :disable="saving"
               />
             </div>
             <div class="col">
@@ -102,6 +106,7 @@
                 color="positive"
                 size="lg"
                 label-color="dark"
+                :disable="saving"
               />
             </div>
             <div class="col">
@@ -112,13 +117,13 @@
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Закрыть" color="negative" @click="closeDialog" />
+        <q-btn flat label="Закрыть" color="negative" @click="closeDialog" :disable="saving" />
         <q-btn 
           label="Сохранить" 
           color="positive" 
           @click="saveForms" 
           :loading="saving"
-          :disable="!hasChanges"
+          :disable="!hasChanges || saving"
         >
           <q-tooltip v-if="!hasChanges">
             Нет изменений для сохранения
@@ -133,6 +138,9 @@
 import { ref, watch, computed } from 'vue'
 import { useCompetencePassportStore } from 'stores/competencePassportStore'
 import { storeToRefs } from 'pinia'
+import { useQuasar } from 'quasar'
+
+const $q = useQuasar()
 
 const props = defineProps({
   modelValue: Boolean,
@@ -158,6 +166,7 @@ const forms = ref({
   kp: false,
   kr: false
 })
+const errorMessage = ref('')
 
 const originalForms = ref({})
 
@@ -197,10 +206,12 @@ watch(() => props.editingData, (data) => {
     forms.value = newForms
     originalForms.value = { ...newForms }
   }
+  errorMessage.value = ''
 }, { deep: true, immediate: true })
 
 function closeDialog() {
   showDialog.value = false
+  errorMessage.value = ''
   if (originalForms.value) {
     forms.value = { ...originalForms.value }
   } else {
@@ -215,6 +226,8 @@ function closeDialog() {
 }
 
 async function saveForms() {
+  errorMessage.value = ''
+  
   try {
     const payload = {
       plan_id: props.editingData.planId || currentPlanId.value,
@@ -224,14 +237,31 @@ async function saveForms() {
       forms: forms.value
     }
 
-    await store.updateSemesterScheme(payload)
+    const result = await store.updateSemesterScheme(payload)
+    
+    if (result && result.error) {
+      errorMessage.value = result.error
+      $q.notify({
+        type: 'negative',
+        message: result.error, 
+        position: 'top-right',
+        timeout: 5000,
+      })
+      return
+    }
     
     originalForms.value = { ...forms.value }
     
     emit('saved')
     closeDialog()
+
+    $q.notify({
+      type: 'positive',
+      message: 'Формы аттестации успешно сохранены',
+      position: 'top-right',
+      timeout: 2000
+    })
   } catch (error) {
-    console.error('Error saving forms:', error)
   }
 }
 </script>

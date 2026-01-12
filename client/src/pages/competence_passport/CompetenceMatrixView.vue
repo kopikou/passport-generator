@@ -1,7 +1,7 @@
 <template>
   <top-navigation-menu>
     <template #content>
-      <div class="q-pa-md">
+      <div class="q-pa-md q-mb-lg">
         <!-- Блок с валидацией матрицы -->
         <div v-if="validationStatus" class="q-mb-md validation-container">
           <q-banner 
@@ -108,20 +108,11 @@
               Соответствие дисциплины и формируемых компетенций
             </div>
             <div class="text-subtitle1 text-grey">
-              Окно редактора вызывается двойным щелчком мыши в необходимой строке
+              Окно редактора вызывается щелчком мыши в необходимой строке
             </div>
             
             <!-- Статус валидации в шапке -->
-            <div v-if="validationStatus" class="validation-status-indicator q-mt-sm">
-              <q-chip 
-                :color="validationStatus.type === 'error' ? 'negative' : 'positive'" 
-                text-color="white"
-                :icon="validationStatus.type === 'error' ? 'error' : 'check_circle'"
-                size="sm"
-              >
-                {{ validationStatus.type === 'error' ? 'Требуется исправление' : 'Матрица проверена' }}
-              </q-chip>
-              
+            <div v-if="validationStatus" class="validation-status-indicator q-mt-sm">   
               <span class="q-ml-sm text-caption">
                 <span v-if="matrixValidation.disciplinesWithoutCompetences.length > 0">
                   {{ matrixValidation.disciplinesWithoutCompetences.length }} дисциплин без компетенций
@@ -219,7 +210,7 @@
                 { 'row-without-competences': props.row.type === 'discipline' && isDisciplineWithoutCompetences(props.row.index) },
                 { 'highlighted-row': props.row.index === highlightedDiscipline }
               ]"
-              @dblclick="onRowDoubleClick(props.row)"
+              @click="onRowClick(props.row)"
               :data-index="props.row.index"
             >
               <q-td key="index" :props="props">
@@ -270,7 +261,7 @@
                 <div 
                   :class="[
                     props.row.type === 'group' ? 'text-bold' : '',
-                    `level-${props.row.level}`,
+                    `level-${props.row.level} ${props.row.type}-type`,
                     { 'text-negative': props.row.type === 'discipline' && isDisciplineWithoutCompetences(props.row.index) }
                   ]"
                 >
@@ -614,7 +605,7 @@ async function loadDisciplines() {
   }
 }
 
-async function onRowDoubleClick(row) {
+async function onRowClick(row) {
   if (row.type !== 'discipline') {
     return
   }
@@ -849,7 +840,9 @@ onUnmounted(() => {
 .level-5 {
   font-size: 12px;
 }
-
+.discipline-type {
+  font-weight: normal !important;
+}
 .clickable-row {
   cursor: pointer;
   

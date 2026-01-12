@@ -1,5 +1,5 @@
 <template>
-  <div class="competence-menu">
+  <div class="competence-menu" style="overflow-y: auto; flex: 1;">
     <div class="menu-header q-pa-sm bg-grey-3">
       <div class="text-weight-bold">Компетенции</div>
       <div class="text-caption text-grey q-mb-sm">
@@ -43,7 +43,7 @@
     </div>
 
     <!-- Список компетенций -->
-    <q-list class="competence-list" dense>
+    <q-list class="competence-list q-mb-xl" dense>
       <div v-if="filteredCompetences.length === 0" class="text-center q-py-lg text-grey">
         <div v-if="searchText || selectedType">Компетенции не найдены</div>
         <div v-else>Компетенции не загружены</div>
@@ -192,14 +192,6 @@ const filteredCompetences = computed(() => {
   return competences
 })
 
-// const handleSearch = () => {
-//   // Поиск не требует дополнительных действий
-// }
-
-// const handleTypeFilter = () => {
-//   // Фильтрация не требует дополнительных действий
-// }
-
 const navigateToTitlePage = () => {
   router.push({
     name: 'competencePassport',
@@ -285,6 +277,7 @@ watch(() => currentPlanCompetences.value, (newCompetences) => {
   }
   
   .competence-list {
+
     .title-page-header {
       border-bottom: 1px solid rgba(0,0,0,0.05);
       min-height: 50px;

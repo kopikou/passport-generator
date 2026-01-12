@@ -2,9 +2,9 @@
   <div class="top-navigation-layout">
     <q-tabs
       v-model="currentTab"
-      class="bg-primary text-white shadow-2"
+      class="text-black"
       align="left"
-      indicator-color="white"
+      indicator-color="primary"
     >
       <q-route-tab
         name="reference"
@@ -120,5 +120,11 @@ defineExpose({ currentTab, isMatrixValid })
   opacity: 0.5;
   cursor: not-allowed;
 
+}
+
+.q-tabs{
+  background: $grey-4;
+  border-bottom: 2px solid silver;
+  box-shadow: 0 0 8px silver;
 }
 </style>
