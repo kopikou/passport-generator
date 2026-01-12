@@ -112,16 +112,7 @@
             </div>
             
             <!-- Статус валидации в шапке -->
-            <div v-if="validationStatus" class="validation-status-indicator q-mt-sm">
-              <q-chip 
-                :color="validationStatus.type === 'error' ? 'negative' : 'positive'" 
-                text-color="white"
-                :icon="validationStatus.type === 'error' ? 'error' : 'check_circle'"
-                size="sm"
-              >
-                {{ validationStatus.type === 'error' ? 'Требуется исправление' : 'Матрица проверена' }}
-              </q-chip>
-              
+            <div v-if="validationStatus" class="validation-status-indicator q-mt-sm">   
               <span class="q-ml-sm text-caption">
                 <span v-if="matrixValidation.disciplinesWithoutCompetences.length > 0">
                   {{ matrixValidation.disciplinesWithoutCompetences.length }} дисциплин без компетенций

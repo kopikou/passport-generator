@@ -4,6 +4,17 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.mixins import RetrieveModelMixin, ListModelMixin
 from rest_framework import status
 from competence_passport.services import CompetencePassportService
+from competence_passport.serializer import (
+    UpdateDisciplineCompetencesSerializer,
+    SchemeUpdateSerializer,
+    CompetenceRelationsUpdateSerializer,
+    FinalIndicatorUpdateSerializer,
+    UpdateIndicatorContentSerializer,
+    IndicatorDetailsSerializer,
+    FixSchemeRequestSerializer,
+    SchemeSerializer,
+    CompetenceRelationsSerializer
+)
 from app.utils import UserProfileHasPermission
 from auths.models import Permissions
 from generator.permissions import CanViewRPDProgram
@@ -170,12 +181,19 @@ class CompetencePassportViewSet(
     def update_discipline_competences(self, request):
         """Обновление компетенций для дисциплины с выбранными компетенциями"""
         try:
-            plan_id = request.data.get('plan_id')
-            discipline_id = request.data.get('discipline_id')
-            selected_competences = request.data.get('selected_competences', [])
+            serializer = UpdateDisciplineCompetencesSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(
+                    {'error': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
+            validated_data = serializer.validated_data
+
             result, error_response = CompetencePassportService.update_discipline_competences(
-                plan_id, discipline_id, selected_competences
+                validated_data['plan_id'],
+                validated_data['discipline_id'],
+                validated_data['selected_competences']
             )
             if error_response:
                 return Response(
@@ -198,8 +216,9 @@ class CompetencePassportViewSet(
             })
                 
         except Exception as e:
+            logger.error(f'Ошибка при обновлении компетенций: {str(e)}')
             return Response(
-                {'error': f'Ошибка при обновлении компетенций: {str(e)}'}, 
+                {'error': 'Ошибка при обновлении компетенций'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
@@ -207,14 +226,21 @@ class CompetencePassportViewSet(
     def update_semester_scheme(self, request):
         """Обновление схемы формы аттестации для компетенции в семестре"""
         try:
-            plan_id = request.data.get('plan_id')
-            discipline_id = request.data.get('discipline_id')
-            competence_index = request.data.get('competence_index')
-            semester = request.data.get('semester')
-            forms = request.data.get('forms', {})
+            serializer = SchemeUpdateSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(
+                    {'error': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            validated_data = serializer.validated_data
             
             result, error_response = CompetencePassportService.update_semester_scheme(
-                plan_id, discipline_id, competence_index, semester, forms
+                validated_data['plan_id'],
+                validated_data['discipline_id'],
+                validated_data['competence_index'],
+                validated_data['semester'],
+                validated_data['forms']
             )
             if error_response:
                 return Response(
@@ -232,8 +258,9 @@ class CompetencePassportViewSet(
             })
                 
         except Exception as e:
+            logger.error(f'Ошибка при обновлении схемы: {str(e)}')
             return Response(
-                {'error': f'Ошибка при обновлении схемы: {str(e)}'},
+                {'error': 'Ошибка при обновлении схемы'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
@@ -330,31 +357,41 @@ class CompetencePassportViewSet(
     def update_competence_relations(self, request):
         """Обновление связей компетенции с другими компетенциями"""
         try:
-            plan_id = request.data.get('plan_id')
-            competence_index = request.data.get('competence_index')
-            relations_text = request.data.get('relations_text', '')
+            serializer = CompetenceRelationsUpdateSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(
+                    {'error': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            validated_data = serializer.validated_data
             
             result, error_response = CompetencePassportService.update_competence_relations(
-                plan_id, competence_index, relations_text
+                validated_data['plan_id'],
+                validated_data['competence_index'],
+                validated_data['relations_text']
             )
             if error_response:
                 return Response(
                     {'error': error_response['error']}, 
                     status=error_response['status']
                 )
+
+            relations_serializer = CompetenceRelationsSerializer(result['relations'])
             
             return Response({
                 'success': True,
                 'message': 'Связи компетенции успешно обновлены',
                 'competence_index': result['competence_index'],
-                'relations': result['relations'],
+                'relations': relations_serializer.data,
                 'created': result['created'],
                 'updated_at': result['updated_at']
             })
                 
         except Exception as e:
+            logger.error(f'Ошибка при обновлении связей компетенции: {str(e)}')
             return Response(
-                {'error': f'Ошибка при обновлении связей компетенции: {str(e)}'}, 
+                {'error': 'Ошибка при обновлении связей компетенции'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -396,13 +433,20 @@ class CompetencePassportViewSet(
     def update_competence_final_indicators(self, request):
         """Обновление итоговых индикаторов компетенции"""
         try:
-            plan_id = request.data.get('plan_id')
-            competence_index = request.data.get('competence_index')
-            final_indicator_text = request.data.get('final_indicator_text', '')
-            indicator_id = request.data.get('indicator_id') 
+            serializer = FinalIndicatorUpdateSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(
+                    {'error': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            validated_data = serializer.validated_data
             
             result, error_response = CompetencePassportService.update_competence_final_indicators(
-                plan_id, competence_index, final_indicator_text, indicator_id
+                validated_data['plan_id'],
+                validated_data['competence_index'],
+                validated_data['final_indicator_text'],
+                validated_data.get('indicator_id')
             )
             if error_response:
                 return Response(
@@ -427,8 +471,9 @@ class CompetencePassportViewSet(
             })
                     
         except Exception as e:
+            logger.error(f'Ошибка при обновлении итоговых индикаторов: {str(e)}')
             return Response(
-                {'error': f'Ошибка при обновлении итоговых индикаторов: {str(e)}'}, 
+                {'error': 'Ошибка при обновлении итоговых индикаторов'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
@@ -467,10 +512,19 @@ class CompetencePassportViewSet(
     def update_indicator_content(self, request):
         """Обновление содержания индикатора"""
         try:
-            indicator_id = request.data.get('indicator_id')
-            new_content = request.data.get('indicator_content', '').strip()
+            serializer = UpdateIndicatorContentSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(
+                    {'error': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
-            result, error_response = CompetencePassportService.update_indicator_content(indicator_id, new_content)
+            validated_data = serializer.validated_data
+            
+            result, error_response = CompetencePassportService.update_indicator_content(
+                validated_data['indicator_id'],
+                validated_data['indicator_content']
+            )
             if error_response:
                 return Response(
                     {'error': error_response['error']}, 
@@ -498,8 +552,9 @@ class CompetencePassportViewSet(
             })
                     
         except Exception as e:
+            logger.error(f'Ошибка при обновлении содержания индикатора: {str(e)}')
             return Response(
-                {'error': f'Ошибка при обновлении содержания индикатора: {str(e)}'}, 
+                {'error': 'Ошибка при обновлении содержания индикатора'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
@@ -548,15 +603,22 @@ class CompetencePassportViewSet(
     def save_indicator_details(self, request):
         """Сохранение деталей индикатора (знать/уметь/владеть)"""
         try:
-            indicator_id = request.data.get('indicator_id')
-            know = request.data.get('know', '')
-            able = request.data.get('able', '')
-            own = request.data.get('own', '')
-            criteria = request.data.get('criteria', '')
-            methods = request.data.get('methods', '')
+            serializer = IndicatorDetailsSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(
+                    {'error': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            validated_data = serializer.validated_data
             
             result, error_response = CompetencePassportService.save_indicator_details(
-                indicator_id, know, able, own, criteria, methods
+                validated_data['indicator_id'],
+                validated_data.get('know', ''),
+                validated_data.get('able', ''),
+                validated_data.get('own', ''),
+                validated_data.get('criteria', ''),
+                validated_data.get('methods', '')
             )
             if error_response:
                 return Response(
@@ -586,7 +648,80 @@ class CompetencePassportViewSet(
             })
                 
         except Exception as e:
+            logger.error(f'Ошибка при сохранении данных индикатора: {str(e)}')
             return Response(
-                {'error': f'Ошибка при сохранении данных индикатора: {str(e)}'}, 
+                {'error': 'Ошибка при сохранении данных индикатора'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    @action(methods=['GET'], detail=False, url_path='validate-scheme-indicators')
+    def validate_scheme_indicators(self, request):
+        """Проверка соответствия промежуточных аттестаций и индикаторов"""
+        try:
+            plan_id = self.request.query_params.get('plan_id')
+            
+            result, error_response = CompetencePassportService.validate_scheme_indicators(plan_id)
+            if error_response:
+                return Response(
+                    {'error': error_response['error']}, 
+                    status=error_response['status']
+                )
+            
+            plan = result['plan']
+            
+            return Response(CompetencePassportService.get_plan_response_data(plan, {
+                'validation_errors': result['validation_errors'],
+                'has_errors': result['has_errors'],
+                'errors_count': result['errors_count'],
+                'checked_at': result['checked_at']
+            }))
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Ошибка при проверке схемы компетенций: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    @action(methods=['POST'], detail=False, url_path='fix-scheme-indicators')
+    def fix_scheme_indicators(self, request):
+        """Автоматическое исправление индикаторов при несоответствии с формами аттестации"""
+        try:
+            serializer = FixSchemeRequestSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(
+                    {'error': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            validated_data = serializer.validated_data
+            
+            result, error_response = CompetencePassportService.fix_scheme_indicators(
+                validated_data['plan_id'],
+                validated_data['discipline_id'],
+                validated_data['competence_index'],
+                validated_data['scheme_forms_count'],
+                validated_data['indicators_count'],
+                validated_data.get('semester')
+            )
+            if error_response:
+                return Response(
+                    {'error': error_response['error']}, 
+                    status=error_response['status']
+                )
+            
+            return Response({
+                'success': True,
+                'indicators_created': result['indicators_created'],
+                'indicators_removed': result['indicators_removed'],
+                'message': result['message'],
+                'discipline_id': validated_data['discipline_id'],
+                'competence_index': validated_data['competence_index'],
+                'final_indicators_count': result['final_indicators_count']
+            })
+                
+        except Exception as e:
+            logger.error(f'Ошибка при исправлении индикаторов: {str(e)}')
+            return Response(
+                {'error': 'Ошибка при исправлении индикаторов'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

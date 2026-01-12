@@ -14,24 +14,126 @@
           </div>
           
           <div class="col-auto">
-            <q-input
-              v-model="searchFilter"
-              placeholder="Поиск по компетенциям, дисциплинам..."
-              dense
-              outlined
-              clearable
-              style="min-width: 250px;"
-            >
-              <template v-slot:append>
-                <q-icon name="search" />
-              </template>
-            </q-input>
+            <div class="row items-center q-gutter-md">
+              <!-- Кнопка проверки -->
+              <q-btn
+                flat
+                dense
+                color="primary"
+                icon="check_circle"
+                label="Проверить"
+                @click="validateScheme"
+                :loading="validationLoading"
+                class="q-mr-sm"
+              >
+                <q-tooltip>Проверить соответствие форм аттестации и индикаторов компетенций</q-tooltip>
+              </q-btn>
+              
+              <q-input
+                v-model="searchFilter"
+                placeholder="Поиск по компетенциям, дисциплинам..."
+                dense
+                outlined
+                clearable
+                style="min-width: 250px;"
+              >
+                <template v-slot:append>
+                  <q-icon name="search" />
+                </template>
+              </q-input>
+            </div>
           </div>
+        </div>
+
+        <!-- Блок с валидацией схемы -->
+        <div v-if="validationStatus" class="q-mb-md validation-container">
+          <q-banner 
+            :class="validationStatus.type === 'error' ? 'bg-negative text-white' : 'bg-positive text-white'"
+            rounded
+          >
+            <template v-slot:avatar>
+              <q-icon :name="validationStatus.type === 'error' ? 'warning' : 'check_circle'" size="24px" />
+            </template>
+            
+            <div class="text-body1 q-mb-xs">{{ validationStatus.title }}</div>
+            <div class="text-body2">{{ validationStatus.message }}</div>
+            
+            <template v-if="validationStatus.details" v-slot:action>
+              <q-btn 
+                flat 
+                :color="validationStatus.type === 'error' ? 'white' : 'dark'" 
+                :label="showValidationErrors ? 'Скрыть детали' : 'Показать детали'" 
+                @click="showValidationErrors = !showValidationErrors"
+                class="q-mr-sm"
+              />
+              <q-btn 
+                v-if="validationStatus.type === 'error'"
+                flat 
+                :color="validationStatus.type === 'error' ? 'white' : 'dark'" 
+                label="Обновить проверку" 
+                @click="validateScheme"
+                :loading="validationLoading"
+                icon="refresh"
+              />
+            </template>
+          </q-banner>
+          
+          <!-- Детали валидации -->
+          <q-slide-transition>
+            <div v-if="showValidationErrors && validationErrors.length > 0" class="validation-details q-pa-md bg-grey-2 q-mt-sm">
+              <!-- Таблица с ошибками -->
+              <q-card class="q-mb-md">
+                <q-card-section class="q-pa-none">
+                  <q-table
+                    :rows="validationErrors"
+                    :columns="validationColumns"
+                    row-key="id"
+                    dense
+                    flat
+                    bordered
+                  >
+                    <template v-slot:body-cell-actions="props">
+                      <q-td :props="props">
+                        <div class="column items-center q-gutter-y-xs">
+                          <q-btn
+                            size="sm"
+                            color="primary"
+                            label="Исправить в схеме"
+                            @click="navigateToFix(props.row)"
+                            title="Изменить формы аттестации"
+                            :loading="validationLoading"
+                          />
+                          <q-btn
+                            size="sm"
+                            color="primary"
+                            label="Исправить в паспорте"
+                            @click="navigateToPassport(props.row)"
+                            title="Изменить число индикаторов"
+                            :loading="fixingIndicatorsLoading"
+                          />
+                        </div>
+                      </q-td>
+                    </template>
+                  </q-table>
+                </q-card-section>
+              </q-card>
+              
+              <!-- Сводка -->
+              <div class="row items-center justify-between q-mt-md">
+                <div class="col">
+                  <div class="text-caption">
+                    <q-icon name="info" class="q-mr-xs" />
+                    Проверка выполнена: {{ lastCheckedFormatted }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </q-slide-transition>
         </div>
 
         <!-- Таблица схемы компетенций -->
         <div class="competence-schema-table-container q-mb-lg">
-          <table class="q-table">
+          <table class="q-table" :class="{ 'has-validation-errors': validationErrors.length > 0 }">
             <thead>
               <!-- Первая строка заголовков -->
               <tr>
@@ -85,7 +187,10 @@
                 </tr>
                 
                 <!-- Строка дисциплины -->
-                <tr v-else-if="row.type === 'discipline'" class="discipline-row" :class="{ 'bg-grey-1': index % 2 === 0 }">
+                <tr v-else-if="row.type === 'discipline'" class="discipline-row" :class="{ 
+                  'bg-grey-1': index % 2 === 0,
+                  'row-with-error': hasValidationError(row)
+                }" :data-id="row.discipline_id" :data-competence="row.parent_competence">
                   <td class="text-center" style="font-weight: 500;">
                     {{ row.discipline_index }}
                   </td>
@@ -95,7 +200,7 @@
                   <td 
                     v-for="semester in [1,2,3,4,5,6,7,8]" 
                     :key="semester" 
-                    :class="`semester-${semester}`"
+                    :class="`semester-${semester} ${getSemesterCellClass(row, semester)}`"
                     @click="openEditDialog(row, semester)"
                     style="cursor: pointer; position: relative;"
                   >
@@ -104,6 +209,13 @@
                         <div class="semester-forms text-weight-medium" style="font-size: 0.9rem;">
                           {{ row[`semester_${semester}`].forms_display }}
                         </div>
+                        <q-icon 
+                          v-if="hasSemesterError(row.discipline_id, row.parent_competence, semester)"
+                          name="error" 
+                          color="negative" 
+                          size="12px"
+                          class="absolute-top-right q-ma-xs"
+                        />
                       </div>
                       <div v-else class="text-grey-6 text-caption">
                         <q-icon name="edit" size="xs" />
@@ -159,7 +271,7 @@ import { useCompetencePassportStore } from 'stores/competencePassportStore'
 import { useRouter } from 'vue-router'
 import TopNavigationMenu from './components/TopNavigationMenu.vue'
 import EditSemesterFormsDialog from './components/EditSemesterFormsDialog.vue'
-import { useQuasar } from 'quasar'
+import { useQuasar, date } from 'quasar'
 import { storeToRefs } from 'pinia'
 
 const $q = useQuasar()
@@ -169,13 +281,94 @@ const store = useCompetencePassportStore()
 const {
   schemaData,
   schemaLoading,
-  currentPlanId
+  currentPlanId,
+  validationErrors,
+  validationLoading
 } = storeToRefs(store)
+const showValidationErrors = ref(false)
+const lastChecked = ref(null)
+const fixingIndicatorsLoading = ref(false)
 
+const validationColumns = [
+  {
+    name: 'competence_index',
+    label: 'Код компетенции',
+    field: 'competence_index',
+    align: 'left',
+    sortable: true
+  },
+  {
+    name: 'discipline',
+    label: 'Дисциплина',
+    field: row => `${row.discipline_index} - ${row.discipline_name}`,
+    align: 'left',
+    sortable: true
+  },
+  {
+    name: 'semester',
+    label: 'Семестр',
+    field: 'semester',
+    align: 'center',
+    sortable: true
+  },
+  {
+    name: 'message',
+    label: 'Ошибка',
+    field: 'message',
+    align: 'left',
+    sortable: true
+  },
+  {
+    name: 'actions',
+    label: 'Действия',
+    align: 'center'
+  }
+]
 
 const searchFilter = ref('')
 const editDialogVisible = ref(false)
 const editingData = ref({})
+
+// Статус валидации
+const validationStatus = computed(() => {
+  if (validationLoading.value) {
+    return {
+      type: 'info',
+      title: 'Проверка схемы...',
+      message: 'Идет проверка соответствия форм аттестации и индикаторов компетенций',
+      details: false
+    }
+  }
+  
+  if (validationErrors.value.length === 0 && lastChecked.value) {
+    return {
+      type: 'success',
+      title: 'Схема компетенций проверена успешно!',
+      message: 'Все формы аттестации соответствуют индикаторам компетенций.',
+      details: true
+    }
+  } else if (validationErrors.value.length > 0) {
+    return {
+      type: 'error',
+      title: 'Найдены несоответствия в схеме компетенций',
+      message: `Число форм аттестации не совпадает с числом индикаторов в ${validationErrors.value.length} случаях`,
+      details: true
+    }
+  }
+  
+  return null
+})
+
+const lastCheckedFormatted = computed(() => {
+  if (!lastChecked.value) return 'еще не проверялась'
+  
+  const timeStamp = date.formatDate(
+    lastChecked.value, 
+    'DD.MM.YYYY HH:mm:ss'
+  )
+  
+  return timeStamp
+})
 
 const filteredRows = computed(() => {
   if (!searchFilter.value) {
@@ -241,13 +434,28 @@ const visibleRows = computed(() => {
   return filteredRows.value
 })
 
-const competenceCount = computed(() => {
-  return (schemaData.value || []).filter(row => row.type === 'competence').length
-})
+// Проверка наличия ошибок для строки дисциплины
+function hasValidationError(row) {
+  return validationErrors.value.some(error => 
+    error.discipline_id === row.discipline_id && 
+    error.competence_index === row.parent_competence
+  )
+}
 
-const disciplineCount = computed(() => {
-  return (schemaData.value|| []).filter(row => row.type === 'discipline').length
-})
+function hasSemesterError(disciplineId, competenceIndex, semester) {
+  return validationErrors.value.some(error => 
+    error.discipline_id === disciplineId && 
+    error.competence_index === competenceIndex &&
+    error.semester === semester
+  )
+}
+
+function getSemesterCellClass(row, semester) {
+  if (hasSemesterError(row.discipline_id, row.parent_competence, semester)) {
+    return 'error-highlight'
+  }
+  return ''
+}
 
 async function loadCompetenceSchema() {
   try {
@@ -291,7 +499,156 @@ function getCompetenceName(competenceIndex) {
 
 function handleFormsSaved() {
   loadCompetenceSchema()
+  validateScheme()
 }
+
+async function validateScheme() {
+  try {
+    if (!currentPlanId.value) {
+      $q.notify({
+        type: 'warning',
+        message: 'Сначала выберите учебный план',
+        position: 'top-right'
+      })
+      return
+    }
+    
+    validationLoading.value = true
+    const result = await store.validateSchemeIndicators(currentPlanId.value)
+    lastChecked.value = new Date()
+    
+    if (result.hasErrors) {
+      validationErrors.value = result.errors
+      showValidationErrors.value = true
+    } else {
+      validationErrors.value = []
+      $q.notify({
+        type: 'positive',
+        message: 'Проверка пройдена успешно! Несоответствий не найдено.',
+        position: 'top-right',
+        timeout: 3000
+      })
+    }
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: `Ошибка при проверке: ${error.message}`,
+      position: 'top-right'
+    })
+  } finally {
+    validationLoading.value = false
+  }
+}
+
+// Методы навигации для исправления
+function navigateToFix(errorRow) {
+  const rows = schemaData.value || []
+  const disciplineRow = rows.find(row => 
+    row.type === 'discipline' && 
+    row.discipline_id === errorRow.discipline_id &&
+    row.parent_competence === errorRow.competence_index
+  )
+  
+  if (disciplineRow) {
+    openEditDialog(disciplineRow, errorRow.semester)
+  } else {
+    $q.notify({
+      type: 'warning',
+      message: 'Дисциплина не найдена в текущей схеме',
+      position: 'top-right'
+    })
+  }
+}
+
+async function navigateToPassport(errorRow) {
+  try {
+    fixingIndicatorsLoading.value = true
+
+    const rows = schemaData.value || []
+    const disciplineRow = rows.find(row => 
+      row.type === 'discipline' && 
+      row.discipline_id === errorRow.discipline_id &&
+      row.parent_competence === errorRow.competence_index
+    )
+    
+    if (!disciplineRow) {
+      throw new Error('Дисциплина не найдена в текущей схеме')
+    }
+    
+    const result = await store.fixSchemeIndicators({
+      plan_id: currentPlanId.value,
+      discipline_id: errorRow.discipline_id,
+      competence_index: errorRow.competence_index,
+      scheme_forms_count: errorRow.scheme_forms_count,
+      indicators_count: errorRow.indicators_count,
+      semester: errorRow.semester
+    })
+    
+    if (result.success) {
+      let message = 'Индикаторы успешно скорректированы: '
+      const actions = []
+      
+      if (result.indicators_created > 0) {
+        actions.push(`создано ${result.indicators_created} индикаторов`)
+      }
+      if (result.indicators_removed > 0) {
+        actions.push(`удалено ${result.indicators_removed} индикаторов`)
+      }
+      
+      $q.notify({
+        type: 'positive',
+        message: message,
+        position: 'top-right',
+        timeout: 5000
+      })
+
+      await loadCompetenceSchema()
+      await validateScheme()
+
+      router.push({
+        name: 'competencePassport',
+        query: {
+          plan_id: currentPlanId.value,
+          discipline_id: errorRow.discipline_id,
+          highlight_competence: errorRow.competence_index
+        }
+      })
+    } else {
+      throw new Error(result.error || 'Не удалось скорректировать индикаторы')
+    }
+    
+  } catch (error) {
+    console.error('Error fixing indicators:', error)
+
+    $q.notify({
+      type: 'warning',
+      message: `Не удалось автоматически скорректировать индикаторы: ${error.message}`,
+      position: 'top-right',
+      timeout: 5000
+    })
+
+    // router.push({
+    //   name: 'competencePassport',
+    //   query: {
+    //     plan_id: currentPlanId.value,
+    //     discipline_id: errorRow.discipline_id,
+    //     highlight_competence: errorRow.competence_index
+    //   }
+    // })
+  } finally {
+    fixingIndicatorsLoading.value = false
+  }
+}
+
+watch(() => store.validationErrors, (newErrors) => {
+  validationErrors.value = newErrors
+})
+
+watch(() => schemaData.value, () => {
+  if (schemaData.value && schemaData.value.length > 0) {
+    validateScheme()
+  }
+})
 
 watch(() => currentPlanId.value, (newPlanId) => {
   if (newPlanId) {
@@ -313,6 +670,33 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+.validation-container {
+  .q-banner {
+    border-left: 4px solid;
+    
+    &.bg-negative {
+      border-left-color: darken(#f44336, 10%);
+    }
+    
+    &.bg-positive {
+      border-left-color: darken(#4CAF50, 10%);
+    }
+  }
+}
+
+.validation-details {
+  border-radius: 0 0 8px 8px;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-top: none;
+}
+
+.validation-status-indicator {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .competence-schema-table-container {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -320,6 +704,15 @@ onMounted(() => {
   background: white;
   max-width: 100%;
   overflow-x: auto;
+}
+
+.row-with-error {
+  background-color: rgba(244, 67, 54, 0.08) !important;
+  border-left: 4px solid #f44336 !important;
+  
+  &:hover {
+    background-color: rgba(244, 67, 54, 0.12) !important;
+  }
 }
 
 .q-table {
@@ -459,6 +852,51 @@ onMounted(() => {
   
   .bg-grey-1 {
     background-color: #fafafa !important;
+  }
+  
+  .error-highlight {
+    position: relative;
+    background-color: rgba(244, 67, 54, 0.15) !important;
+    border: 1px solid rgba(244, 67, 54, 0.3) !important;
+    
+    .semester-forms {
+      color: #f44336;
+      font-weight: bold;
+    }
+  }
+}
+
+.absolute-top-right {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
+.has-validation-errors {
+  .row-with-error {
+    animation: error-pulse 2s infinite;
+  }
+  
+  .error-highlight {
+    animation: cell-pulse 2s infinite;
+  }
+}
+
+@keyframes error-pulse {
+  0%, 100% { 
+    background-color: rgba(244, 67, 54, 0.08); 
+  }
+  50% { 
+    background-color: rgba(244, 67, 54, 0.15); 
+  }
+}
+
+@keyframes cell-pulse {
+  0%, 100% { 
+    background-color: rgba(244, 67, 54, 0.15); 
+  }
+  50% { 
+    background-color: rgba(244, 67, 54, 0.25); 
   }
 }
 

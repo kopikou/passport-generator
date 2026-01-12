@@ -4,6 +4,38 @@ import { api } from 'boot/axios'
 import _ from 'lodash'
 import { LocalStorage, useQuasar } from 'quasar';
 
+interface ValidationError {
+  id: string
+  competence_index: string
+  competence_name: string
+  discipline_index: string
+  discipline_name: string
+  discipline_id: number
+  scheme_forms_count: number
+  indicators_count: number
+  semester: number
+  error_type: 'forms_mismatch' | 'missing_forms' | 'missing_indicators'
+  message: string
+  advice: string
+}
+
+interface FixIndicatorsRequest {
+  plan_id: string
+  discipline_id: number
+  competence_index: string
+  scheme_forms_count: number
+  indicators_count: number
+  semester: number
+}
+
+interface FixIndicatorsResponse {
+  success: boolean
+  indicators_created?: number
+  indicators_removed?: number
+  error?: string
+  message?: string
+}
+
 export const useCompetencePassportStore = defineStore('competencePassport', () => {
   const programList = ref([])
   const groupsList = ref([])
@@ -45,6 +77,10 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   const competenceIndicatorsCreteria = ref([])
   const indicatorsLoading = ref(false)
 
+  const validationErrors = ref<ValidationError[]>([])
+  const validationLoading = ref(false)
+
+  const fixingIndicators = ref(false)
 
   // Вспомогательные функции
   const getGroupListParams = () => {
@@ -403,13 +439,23 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
         payload
       )
       
+      if (response.data && response.data.error) {
+        return { error: response.data.error }
+      }
+      
       if (currentPlanId.value) {
         await fetchCompetenceSchema(currentPlanId.value)
       }
       
       return response.data
     } catch (error) {
-      handleApiError(error, 'updating semester scheme')
+      if (error.response && error.response.data && error.response.data.error) {
+        return { error: error.response.data.error }
+      } else if (error.message) {
+        return { error: error.message }
+      } else {
+        return { error: 'Ошибка при сохранении схемы' }
+      }
     } finally {
       setLoadingState(false, saving)
     }
@@ -683,6 +729,73 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
+  async function validateSchemeIndicators(planId: string) {
+    setLoadingState(true, validationLoading)
+    try {
+      if (!planId) {
+        if (!currentPlanId.value) {
+          throw new Error('Plan ID is required for validation')
+        }
+        planId = currentPlanId.value
+      }
+      
+      const response = await api.get('/api/competence/validate-scheme-indicators/', {
+        params: { plan_id: planId }
+      })
+      
+      validationErrors.value = response.data.validation_errors || []
+      
+      return {
+        hasErrors: validationErrors.value.length > 0,
+        errors: validationErrors.value,
+        checkedAt: new Date()
+      }
+      
+    } catch (error) {
+      console.error('Error validating scheme indicators:', error)
+      validationErrors.value = []
+      throw error
+    } finally {
+      setLoadingState(false, validationLoading)
+    }
+  }
+
+  function clearValidationErrors() {
+    validationErrors.value = []
+  }
+
+  function getValidationErrors() {
+    return validationErrors.value
+  }
+
+  async function fixSchemeIndicators(request: FixIndicatorsRequest): Promise<FixIndicatorsResponse> {
+    setLoadingState(true, fixingIndicators)
+    try {
+      if (!request.plan_id || !request.discipline_id || !request.competence_index) {
+        throw new Error('Все обязательные параметры должны быть указаны')
+      }
+      
+      const response = await api.post('/api/competence/fix-scheme-indicators/', request)
+      
+      return {
+        success: true,
+        indicators_created: response.data.indicators_created || 0,
+        indicators_removed: response.data.indicators_removed || 0,
+        message: response.data.message
+      }
+      
+    } catch (error: any) {
+      console.error('Error fixing scheme indicators:', error)
+      
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Ошибка при исправлении индикаторов'
+      }
+    } finally {
+      setLoadingState(false, fixingIndicators)
+    }
+  }
+
 
   return {
     programList,
@@ -712,6 +825,9 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     competenceIndicatorsData,
     competenceIndicatorsCreteria,
     indicatorsLoading,
+    validationErrors,
+    validationLoading,
+    fixingIndicators,
 
     setCurrentPlanId,
     filteredPrograms,
@@ -743,5 +859,9 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     updateIndicatorContent,
     fetchCompetenceIndicators,
     saveIndicatorDetails,
+    validateSchemeIndicators,
+    clearValidationErrors,
+    getValidationErrors,
+    fixSchemeIndicators,
   }
 })
