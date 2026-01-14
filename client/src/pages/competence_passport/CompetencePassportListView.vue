@@ -236,11 +236,7 @@ onMounted(async () => {
   await store.fetchGroupsList();
 })
 
-watch([
-  () => textFilter.value,
-  () => statusFilter.value,
-  () => myFilter.value,
-], _.debounce(async () => {
+watch([textFilter, statusFilter, myFilter], _.debounce(async () => {
   await store.fetchGroupsList();
 }, 300))
 </script>

@@ -570,9 +570,9 @@ class CompetencePassportService:
                             last_indicator_index = int(match.group())
                 
                 new_index_number = last_indicator_index + 1
-                base_comp_index = comp_index.replace(' ', '-')
+                base_comp_index = comp_index.strip()
                 indicator_index = f"{base_comp_index}.{new_index_number}"
-                с
+
                 while LinesIndicators.objects.filter(
                     planlineid=discipline,
                     competence_index=comp_index,
@@ -1206,34 +1206,34 @@ class CompetencePassportService:
             'table_data': table_data,
         }, None
 
-    @staticmethod
-    def update_indicator_content(indicator_id, new_content):
-        """Обновление содержания индикатора"""
-        if not indicator_id:
-            return None, {
-                'error': 'ID индикатора обязателен',
-                'status': 400
-            }
+    # @staticmethod
+    # def update_indicator_content(indicator_id, new_content):
+    #     """Обновление содержания индикатора"""
+    #     if not indicator_id:
+    #         return None, {
+    #             'error': 'ID индикатора обязателен',
+    #             'status': 400
+    #         }
         
-        with transaction.atomic():
-            try:
-                indicator = LinesIndicators.objects.get(id=indicator_id)
+    #     with transaction.atomic():
+    #         try:
+    #             indicator = LinesIndicators.objects.get(id=indicator_id)
 
-                indicator.indicator = new_content
-                indicator.save()
+    #             indicator.indicator = new_content
+    #             indicator.save()
                 
-                plan = indicator.planlineid.plan
+    #             plan = indicator.planlineid.plan
                 
-                return {
-                    'indicator': indicator,
-                    'plan': plan
-                }, None
+    #             return {
+    #                 'indicator': indicator,
+    #                 'plan': plan
+    #             }, None
                 
-            except LinesIndicators.DoesNotExist:
-                return None, {
-                    'error': 'Индикатор не найден',
-                    'status': 404
-                }
+    #         except LinesIndicators.DoesNotExist:
+    #             return None, {
+    #                 'error': 'Индикатор не найден',
+    #                 'status': 404
+    #             }
 
     @staticmethod
     def get_indicator_details(indicator_id):
@@ -1500,7 +1500,7 @@ class CompetencePassportService:
                 # Создаем недостающие индикаторы 
                 for i in range(indicators_to_create):
                     new_index_number = last_indicator_index + i + 1
-                    base_comp_index = competence_index.replace(' ', '-')
+                    base_comp_index = competence_index.strip()
                     indicator_index = f"{base_comp_index}.{new_index_number}"
                     
                     while LinesIndicators.objects.filter(
@@ -1555,3 +1555,149 @@ class CompetencePassportService:
                 'final_indicators_count': final_indicators,
                 'message': 'Исправление выполнено: ' + ', '.join(message_parts)
             }, None
+        
+    @staticmethod
+    def create_indicator(plan_id, discipline_id, competence_index, indicator_index, 
+                        indicator_content, competence_name=None):
+        """Создание нового индикатора"""
+        if not all([plan_id, discipline_id, competence_index, indicator_index, indicator_content]):
+            return None, {
+                'error': 'Все обязательные поля должны быть заполнены',
+                'status': 400
+            }
+        
+        plan, error_response = CompetencePassportService.get_plan_or_error_response(plan_id)
+        if error_response:
+            return None, error_response
+        
+        discipline, error_response = CompetencePassportService.get_discipline_or_error_response(plan, discipline_id)
+        if error_response:
+            return None, error_response
+        
+        with transaction.atomic():
+            existing_indicator = LinesIndicators.objects.filter(
+                planlineid=discipline,
+                competence_index=competence_index,
+                indicator_index=indicator_index
+            ).first()
+            
+            if existing_indicator:
+                return None, {
+                    'error': f'Индикатор с индексом {indicator_index} уже существует',
+                    'status': 400
+                }
+
+            if not competence_name:
+                comp_data = CompetencePassportService.get_distinct_lines_indicators(
+                    planlineid__plan=plan,
+                    competence_index=competence_index
+                ).first()
+                competence_name = comp_data.competence if comp_data else ''
+
+            indicator = LinesIndicators.objects.create(
+                planlineid=discipline,
+                competence_index=competence_index,
+                competence=competence_name,
+                indicator_index=indicator_index,
+                indicator=indicator_content
+            )
+            
+            # Обновляем кэш компетенций дисциплины
+            CompetencePassportService.update_kompetences_cache(discipline)
+            
+            return {
+                'indicator': indicator
+            }, None
+
+    @staticmethod
+    def delete_indicator(indicator_id):
+        """Удаление индикатора"""
+        if not indicator_id:
+            return None, {
+                'error': 'ID индикатора обязателен',
+                'status': 400
+            }
+        
+        with transaction.atomic():
+            try:
+                indicator = LinesIndicators.objects.get(id=indicator_id)
+                discipline = indicator.planlineid
+
+                DisciplineIndicators.objects.filter(indicator=indicator).delete()
+
+                indicator.delete()
+                
+                # Обновляем кэш компетенций дисциплины
+                CompetencePassportService.update_kompetences_cache(discipline)
+                
+                return {
+                    'success': True
+                }, None
+                
+            except LinesIndicators.DoesNotExist:
+                return None, {
+                    'error': 'Индикатор не найден',
+                    'status': 404
+                }
+
+    @staticmethod
+    def update_indicator(indicator_id, discipline_id=None, indicator_index=None, 
+                            indicator_content=None):
+        """Полное обновление индикатора"""
+        if not indicator_id:
+            return None, {
+                'error': 'ID индикатора обязателен',
+                'status': 400
+            }
+        
+        with transaction.atomic():
+            try:
+                indicator = LinesIndicators.objects.get(id=indicator_id)
+                old_discipline = indicator.planlineid
+                
+                # Обновляем дисциплину 
+                if discipline_id and discipline_id != old_discipline.id:
+                    try:
+                        new_discipline = LinesData.objects.get(id=discipline_id)
+                        indicator.planlineid = new_discipline
+                    except LinesData.DoesNotExist:
+                        return None, {
+                            'error': 'Указанная дисциплина не найдена',
+                            'status': 404
+                        }
+                
+                # Обновляем индекс
+                if indicator_index:
+                    existing = LinesIndicators.objects.filter(
+                        planlineid=indicator.planlineid,
+                        competence_index=indicator.competence_index,
+                        indicator_index=indicator_index
+                    ).exclude(id=indicator_id).first()
+                    
+                    if existing:
+                        return None, {
+                            'error': f'Индикатор с индексом {indicator_index} уже существует в этой дисциплине',
+                            'status': 400
+                        }
+                    
+                    indicator.indicator_index = indicator_index
+                
+                if indicator_content is not None:
+                    indicator.indicator = indicator_content
+                
+                indicator.save()
+                
+                # Обновляем кэш для старой и новой дисциплины
+                CompetencePassportService.update_kompetences_cache(old_discipline)
+                if discipline_id and discipline_id != old_discipline.id:
+                    CompetencePassportService.update_kompetences_cache(indicator.planlineid)
+                
+                return {
+                    'indicator': indicator
+                }, None
+                
+            except LinesIndicators.DoesNotExist:
+                return None, {
+                    'error': 'Индикатор не найден',
+                    'status': 404
+                }
