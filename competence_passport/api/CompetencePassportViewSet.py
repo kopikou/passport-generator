@@ -9,11 +9,13 @@ from competence_passport.serializer import (
     SchemeUpdateSerializer,
     CompetenceRelationsUpdateSerializer,
     FinalIndicatorUpdateSerializer,
-    UpdateIndicatorContentSerializer,
+    #UpdateIndicatorContentSerializer,
     IndicatorDetailsSerializer,
     FixSchemeRequestSerializer,
     SchemeSerializer,
-    CompetenceRelationsSerializer
+    CompetenceRelationsSerializer,
+    CreateIndicatorSerializer,
+    UpdateIndicatorSerializer,
 )
 from app.utils import UserProfileHasPermission
 from auths.models import Permissions
@@ -508,55 +510,55 @@ class CompetencePassportViewSet(
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
-    @action(methods=['POST'], detail=False, url_path='update-indicator-content')
-    def update_indicator_content(self, request):
-        """Обновление содержания индикатора"""
-        try:
-            serializer = UpdateIndicatorContentSerializer(data=request.data)
-            if not serializer.is_valid():
-                return Response(
-                    {'error': serializer.errors},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+    # @action(methods=['POST'], detail=False, url_path='update-indicator-content')
+    # def update_indicator_content(self, request):
+    #     """Обновление содержания индикатора"""
+    #     try:
+    #         serializer = UpdateIndicatorContentSerializer(data=request.data)
+    #         if not serializer.is_valid():
+    #             return Response(
+    #                 {'error': serializer.errors},
+    #                 status=status.HTTP_400_BAD_REQUEST
+    #             )
             
-            validated_data = serializer.validated_data
+    #         validated_data = serializer.validated_data
             
-            result, error_response = CompetencePassportService.update_indicator_content(
-                validated_data['indicator_id'],
-                validated_data['indicator_content']
-            )
-            if error_response:
-                return Response(
-                    {'error': error_response['error']}, 
-                    status=error_response['status']
-                )
+    #         result, error_response = CompetencePassportService.update_indicator_content(
+    #             validated_data['indicator_id'],
+    #             validated_data['indicator_content']
+    #         )
+    #         if error_response:
+    #             return Response(
+    #                 {'error': error_response['error']}, 
+    #                 status=error_response['status']
+    #             )
             
-            indicator = result['indicator']
-            plan = result['plan']
+    #         indicator = result['indicator']
+    #         plan = result['plan']
             
-            return Response({
-                'success': True,
-                'message': 'Содержание индикатора успешно обновлено',
-                'indicator': {
-                    'id': indicator.id,
-                    'indicator_index': indicator.indicator_index,
-                    'indicator_content': indicator.indicator,
-                    'competence_index': indicator.competence_index,
-                    'discipline_id': indicator.planlineid.id,
-                    'discipline_name': indicator.planlineid.dis,
-                    'discipline_index': indicator.planlineid.newdisid,
-                },
-                'plan_id': plan.id,
-                'plan_mira_id': plan.mira_id,
-                'plan_name': plan.planname
-            })
+    #         return Response({
+    #             'success': True,
+    #             'message': 'Содержание индикатора успешно обновлено',
+    #             'indicator': {
+    #                 'id': indicator.id,
+    #                 'indicator_index': indicator.indicator_index,
+    #                 'indicator_content': indicator.indicator,
+    #                 'competence_index': indicator.competence_index,
+    #                 'discipline_id': indicator.planlineid.id,
+    #                 'discipline_name': indicator.planlineid.dis,
+    #                 'discipline_index': indicator.planlineid.newdisid,
+    #             },
+    #             'plan_id': plan.id,
+    #             'plan_mira_id': plan.mira_id,
+    #             'plan_name': plan.planname
+    #         })
                     
-        except Exception as e:
-            logger.error(f'Ошибка при обновлении содержания индикатора: {str(e)}')
-            return Response(
-                {'error': 'Ошибка при обновлении содержания индикатора'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+    #     except Exception as e:
+    #         logger.error(f'Ошибка при обновлении содержания индикатора: {str(e)}')
+    #         return Response(
+    #             {'error': 'Ошибка при обновлении содержания индикатора'}, 
+    #             status=status.HTTP_500_INTERNAL_SERVER_ERROR
+    #         )
         
     @action(methods=['GET'], detail=False, url_path='indicator-details')
     def get_indicator_details(self, request):
@@ -723,5 +725,131 @@ class CompetencePassportViewSet(
             logger.error(f'Ошибка при исправлении индикаторов: {str(e)}')
             return Response(
                 {'error': 'Ошибка при исправлении индикаторов'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+
+    @action(methods=['POST'], detail=False, url_path='create-indicator')
+    def create_indicator(self, request):
+        """Создание нового индикатора"""
+        try:
+            serializer = CreateIndicatorSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+  
+            validated_data = serializer.validated_data
+            
+            result, error_response = CompetencePassportService.create_indicator(
+                validated_data['plan_id'],
+                validated_data['discipline_id'],
+                validated_data['competence_index'],
+                validated_data['indicator_index'],
+                validated_data['indicator_content'],
+                validated_data.get('competence')
+            )
+            if error_response:
+                return Response(
+                    {'error': error_response['error']}, 
+                    status=error_response['status']
+                )
+            
+            indicator = result['indicator']
+            
+            return Response({
+                'success': True,
+                'message': 'Индикатор успешно создан',
+                'indicator': {
+                    'id': indicator.id,
+                    'indicator_index': indicator.indicator_index,
+                    'indicator_content': indicator.indicator,
+                    'indicator': indicator.indicator,  # для обратной совместимости
+                    'competence_index': indicator.competence_index,
+                    'competence': indicator.competence,
+                    'discipline_id': indicator.planlineid.id,
+                    'discipline_name': indicator.planlineid.dis,
+                    'discipline_index': indicator.planlineid.newdisid,
+                    'created_at': indicator.created_at,
+                    'updated_at': indicator.updated_at
+                }
+            })
+                
+        except Exception as e:
+            logger.error(f'Ошибка при создании индикатора: {str(e)}')
+            return Response(
+                {'error': 'Ошибка при создании индикатора'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(methods=['DELETE'], detail=True, url_path='delete-indicator')
+    def delete_indicator(self, request, pk=None):
+        """Удаление индикатора"""
+        try:
+            indicator_id = pk
+            
+            result, error_response = CompetencePassportService.delete_indicator(indicator_id)
+            if error_response:
+                return Response(
+                    {'error': error_response['error']}, 
+                    status=error_response['status']
+                )
+            
+            return Response({
+                'success': True,
+                'message': 'Индикатор успешно удален',
+                'indicator_id': indicator_id
+            })
+                
+        except Exception as e:
+            logger.error(f'Ошибка при удалении индикатора: {str(e)}')
+            return Response(
+                {'error': 'Ошибка при удалении индикатора'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(methods=['POST'], detail=False, url_path='update-indicator-full')
+    def update_indicator(self, request):
+        """Полное обновление индикатора"""
+        try:
+            serializer = UpdateIndicatorSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(
+                    {'error': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            validated_data = serializer.validated_data
+            
+            result, error_response = CompetencePassportService.update_indicator(
+                validated_data['indicator_id'],
+                validated_data.get('discipline_id'),
+                validated_data.get('indicator_index'),
+                validated_data.get('indicator_content')
+            )
+            if error_response:
+                return Response(
+                    {'error': error_response['error']}, 
+                    status=error_response['status']
+                )
+            
+            indicator = result['indicator']
+            
+            return Response({
+                'success': True,
+                'message': 'Индикатор успешно обновлен',
+                'indicator': {
+                    'id': indicator.id,
+                    'indicator_index': indicator.indicator_index,
+                    'indicator_content': indicator.indicator,
+                    'indicator': indicator.indicator,
+                    'competence_index': indicator.competence_index,
+                    'discipline_id': indicator.planlineid.id,
+                    'discipline_name': indicator.planlineid.dis,
+                    'discipline_index': indicator.planlineid.newdisid,
+                }
+            })
+                
+        except Exception as e:
+            logger.error(f'Ошибка при обновлении индикатора: {str(e)}')
+            return Response(
+                {'error': 'Ошибка при обновлении индикатора'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

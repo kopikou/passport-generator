@@ -138,7 +138,7 @@ const currentSectionComponent = computed(() => {
   return sectionComponents[selectedSection.value] || null
 })
 
-const onTabChange = (tabName: string) => {
+function onTabChange (tabName: string) {
   if (!currentCompetenceIndex.value || !currentPlanId.value || tabName === selectedSection.value) {
     return
   }
@@ -155,7 +155,7 @@ const onTabChange = (tabName: string) => {
   })
 }
 
-const loadPlanData = async () => {
+async function loadPlanData() {
   if (!currentPlanId.value) {
     planData.value = null
     return

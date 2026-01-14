@@ -220,7 +220,7 @@ async function loadCompetences() {
   }
 }
 
-watch(() => currentPlanId.value, (newPlanId) => {
+watch(currentPlanId, (newPlanId) => {
   if (newPlanId) {
     loadCompetences()
   } else {

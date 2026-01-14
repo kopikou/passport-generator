@@ -609,28 +609,28 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
-  async function updateIndicatorContent(indicatorId, newContent) {
-    setLoadingState(true, saving)
-    try {
-      if (!indicatorId || typeof newContent !== 'string') {
-        throw new Error('ID индикатора и новое содержание обязательны')
-      }
+  // async function updateIndicatorContent(indicatorId, newContent) {
+  //   setLoadingState(true, saving)
+  //   try {
+  //     if (!indicatorId || typeof newContent !== 'string') {
+  //       throw new Error('ID индикатора и новое содержание обязательны')
+  //     }
       
-      const payload = {
-        indicator_id: indicatorId,
-        indicator_content: newContent || ''
-      }
+  //     const payload = {
+  //       indicator_id: indicatorId,
+  //       indicator_content: newContent || ''
+  //     }
       
-      const response = await api.post('/api/competence/update-indicator-content/', payload)
+  //     const response = await api.post('/api/competence/update-indicator-content/', payload)
       
-      return response.data
-    } catch (error) {
-      console.error('Error updating indicator content:', error)
-      throw error
-    } finally {
-      setLoadingState(false, saving)
-    }
-  }
+  //     return response.data
+  //   } catch (error) {
+  //     console.error('Error updating indicator content:', error)
+  //     throw error
+  //   } finally {
+  //     setLoadingState(false, saving)
+  //   }
+  // }
 
   async function fetchCompetenceIndicators(planId, competenceIndex) {
     setLoadingState(true, indicatorsLoading)
@@ -796,7 +796,63 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
+  async function createIndicator(indicatorData) {
+    setLoadingState(true, saving)
+    try {
+      const payload = {
+        plan_id: indicatorData.plan_id,
+        discipline_id: indicatorData.discipline_id,
+        competence_index: indicatorData.competence_index,
+        indicator_index: indicatorData.indicator_index,
+        indicator_content: indicatorData.indicator_content,
+        competence: indicatorData.competence
+      }
+      
+      const response = await api.post('/api/competence/create-indicator/', payload)
+      
+      return response.data
+    } catch (error) {
+      console.error('Error creating indicator:', error)
+      throw error
+    } finally {
+      setLoadingState(false, saving)
+    }
+  }
 
+  async function deleteIndicator(indicatorId) {
+    setLoadingState(true, saving)
+    try {
+      const response = await api.delete(`/api/competence/delete-indicator/${indicatorId}/`)
+      
+      return response.data
+    } catch (error) {
+      console.error('Error deleting indicator:', error)
+      throw error
+    } finally {
+      setLoadingState(false, saving)
+    }
+  }
+
+  async function updateIndicator(indicatorData) {
+    setLoadingState(true, saving)
+    try {
+      const payload = {
+        indicator_id: indicatorData.indicator_id,
+        discipline_id: indicatorData.discipline_id,
+        indicator_index: indicatorData.indicator_index,
+        indicator_content: indicatorData.indicator_content
+      }
+      
+      const response = await api.post('/api/competence/update-indicator-full/', payload)
+      
+      return response.data
+    } catch (error) {
+      console.error('Error updating indicator full:', error)
+      throw error
+    } finally {
+      setLoadingState(false, saving)
+    }
+  }
   return {
     programList,
     groupsList,
@@ -856,12 +912,15 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     fetchCompetenceFinalIndicators,
     updateCompetenceFinalIndicators,
     fetchCompetenceIndicatorDisciplines,
-    updateIndicatorContent,
+    //updateIndicatorContent,
     fetchCompetenceIndicators,
     saveIndicatorDetails,
     validateSchemeIndicators,
     clearValidationErrors,
     getValidationErrors,
     fixSchemeIndicators,
+    createIndicator,
+    deleteIndicator,
+    updateIndicator,
   }
 })

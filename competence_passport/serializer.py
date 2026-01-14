@@ -46,10 +46,10 @@ class FinalIndicatorUpdateSerializer(serializers.Serializer):
     final_indicator_text = serializers.CharField(required=True)
     indicator_id = serializers.IntegerField(required=False, allow_null=True)
 
-class UpdateIndicatorContentSerializer(serializers.Serializer):
-    """Сериализатор для обновления содержания индикатора"""
-    indicator_id = serializers.IntegerField(required=True)
-    indicator_content = serializers.CharField(required=True)
+# class UpdateIndicatorContentSerializer(serializers.Serializer):
+#     """Сериализатор для обновления содержания индикатора"""
+#     indicator_id = serializers.IntegerField(required=True)
+#     indicator_content = serializers.CharField(required=True)
 
 
 class IndicatorDetailsSerializer(serializers.Serializer):
@@ -70,3 +70,19 @@ class FixSchemeRequestSerializer(serializers.Serializer):
     scheme_forms_count = serializers.IntegerField(required=True)
     indicators_count = serializers.IntegerField(required=True)
     semester = serializers.IntegerField(required=False, allow_null=True)
+
+class CreateIndicatorSerializer(serializers.Serializer):
+    """Сериализатор для создания нового индикатора"""
+    plan_id = serializers.CharField(required=True)
+    discipline_id = serializers.IntegerField(required=True)
+    competence_index = serializers.CharField(required=True)
+    indicator_index = serializers.CharField(required=True)
+    indicator_content = serializers.CharField(required=True)
+    competence = serializers.CharField(required=False, allow_blank=True)
+
+class UpdateIndicatorSerializer(serializers.Serializer):
+    """Сериализатор для полного обновления индикатора"""
+    indicator_id = serializers.IntegerField(required=True)
+    discipline_id = serializers.IntegerField(required=False, allow_null=True)
+    indicator_index = serializers.CharField(required=False, allow_null=True)
+    indicator_content = serializers.CharField(required=False, allow_null=True)
