@@ -1,10 +1,118 @@
+<script setup lang="ts">
+import { ref, computed, onBeforeMount} from 'vue'
+import { useCompetencePassportStore } from 'src/stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
+
+const store = useCompetencePassportStore()
+const {
+  currentPlanId,
+  competences: storeCompetences,
+  loading
+} = storeToRefs(store)
+
+// Фильтры
+const competenceTypeFilter = ref<string | null>(null)
+const searchFilter = ref('')
+
+// Опции фильтрации
+const competenceTypeOptions = [
+  { label: 'Универсальные компетенции', value: 'Универсальная' },
+  { label: 'Общепрофессиональные компетенции', value: 'Общепрофессиональная' },
+  { label: 'Профессиональные компетенции', value: 'Профессиональная' },
+  { label: 'Дополнительные компетенции', value: 'Дополнительная' }
+]
+
+// Столбцы таблицы
+const columns = [
+  {
+    name: 'competence_index',
+    required: true,
+    label: 'Индекс компетенции',
+    align: 'left',
+    field: (row: any) => row.competence_index,
+    sortable: true
+  },
+  {
+    name: 'competence',
+    required: true,
+    label: 'Содержание компетенции',
+    align: 'left',
+    field: (row: any) => row.competence,
+    sortable: true
+  },
+  {
+    name: 'type',
+    label: 'Тип',
+    align: 'center',
+    field: (row: any) => row.type,
+    sortable: true
+  }
+]
+
+const pagination = ref({
+  page: 1,
+  rowsPerPage: 0 
+})
+
+// Фильтрация
+const filteredCompetences = computed(() => {
+  let result = storeCompetences.value
+
+  if (competenceTypeFilter.value) {
+    result = result.filter(comp => comp.type === competenceTypeFilter.value)
+  }
+
+  if (searchFilter.value) {
+    const term = searchFilter.value.toLowerCase().trim()
+    result = result.filter(comp =>
+      comp.competence_index.toLowerCase().includes(term) ||
+      comp.competence.toLowerCase().includes(term)
+    )
+  }
+
+  return result
+})
+
+// Сообщение при отсутствии данных
+const noDataMessage = computed(() => {
+  if (storeCompetences.value.length === 0) {
+    return 'Нет данных о компетенциях'
+  }
+  if (filteredCompetences.value.length === 0) {
+    return 'Нет компетенций, соответствующих фильтрам'
+  }
+  return 'Нет данных'
+})
+
+// Цвета для типов
+const getTypeColor = (type) => {
+  const colors: Record<string, string> = {
+    'Универсальная': 'blue',
+    'Общепрофессиональная': 'green',
+    'Профессиональная': 'orange',
+    'Дополнительная': 'purple'
+  }
+  return colors[type] || 'grey'
+}
+
+// // Загрузка данных
+// async function loadCompetences() {
+//   if (!currentPlanId.value) return
+//   await store.fetchCompetencePassport(currentPlanId.value)
+// }
+
+// onBeforeMount(() => {
+//   if (currentPlanId.value) loadCompetences()
+// })
+</script>
+
 <template>
-  <div class="q-pa-md">
+  <div class="q-mb-lg">
     <div class="row items-center q-mb-md">
       <div class="col">
         <h2 class="text-h4 q-ma-none">Компетенции</h2>
         <div class="text-subtitle1 text-grey">
-          Справочник всех компетенций 
+          Справочник всех компетенций
         </div>
       </div>
       <div class="col-auto q-mr-md">
@@ -12,10 +120,12 @@
           v-model="competenceTypeFilter"
           :options="competenceTypeOptions"
           label="Фильтр по типам"
+          option-value="value"
+          emit-value
           dense
           outlined
           clearable
-          style="min-width: 200px;"
+          style="min-width: 220px;"
         />
       </div>
       <div class="col-auto">
@@ -36,17 +146,21 @@
     <q-table
       :rows="filteredCompetences"
       :columns="columns"
-      row-key="id"
+      row-key="competence_index"
       :loading="loading"
       :pagination="pagination"
-      binary-state-sort
       flat
       bordered
+      :no-data-label="noDataMessage"
     >
       <template v-slot:top>
-        <div class="text-h6">Всего компетенций: {{ filteredCompetences.length }}</div>
+        <div class="text-h6">
+          Всего компетенций: {{ filteredCompetences.length }}
+          <template v-if="filteredCompetences.length !== storeCompetences.length">
+            (отфильтровано из {{ storeCompetences.length }})
+          </template>
+        </div>
         <q-space />
-        
       </template>
 
       <template v-slot:body-cell-competence_index="props">
@@ -58,8 +172,10 @@
       </template>
 
       <template v-slot:body-cell-competence="props">
-        <q-td :props="props">
-          {{ props.value }}
+        <q-td :props="props" class="competence-content-cell">
+          <div class="competence-text">
+            {{ props.value }}
+          </div>
         </q-td>
       </template>
 
@@ -74,129 +190,23 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useCompetencePassportStore } from 'stores/competencePassportStore'
-
-const store = useCompetencePassportStore()
-const loading = ref(false)
-const competences = ref([])
-const competenceTypeFilter = ref(null)
-const searchFilter = ref('')
-const currentPlan = ref(null)
-
-const competenceTypeOptions = [
-  { label: 'УК - Универсальные компетенции', value: 'УК' },
-  { label: 'ОПК - Общепрофессиональные компетенции', value: 'ОПК' },
-  { label: 'ПК - Профессиональные компетенции', value: 'ПК' }
-]
-
-const columns = [
-  {
-    name: 'competence_index',
-    required: true,
-    label: 'Индекс компетенции',
-    align: 'left',
-    field: row => row.competence_index,
-    sortable: true
-  },
-  {
-    name: 'competence',
-    required: true,
-    label: 'Содержание компетенции',
-    align: 'left',
-    field: row => row.competence,
-    sortable: true
-  },
-  {
-    name: 'type',
-    label: 'Тип',
-    align: 'center',
-    field: row => getCompetenceType(row.competence_index),
-    sortable: true
-  }
-]
-
-const pagination = ref({
-  sortBy: 'competence_index',
-  descending: false,
-  page: 1,
-  rowsPerPage: 25
-})
-
-function getCompetenceType(competenceIndex) {
-  if (!competenceIndex) return 'Не указан'
-  
-  if (competenceIndex.includes('УК')) return 'УК'
-  if (competenceIndex.includes('ОПК')) return 'ОПК'
-  if (competenceIndex.includes('ПК')) return 'ПК'
-  
-  return 'Другой'
+<style scoped>
+.text-subtitle1 {
+  margin-bottom: 1rem;
 }
 
-function getTypeColor(type) {
-  const colors = {
-    'УК': 'blue',
-    'ОПК': 'green',
-    'ПК': 'orange',
-    'Другой': 'grey'
-  }
-  return colors[type] || 'grey'
+.competence-text {
+  word-wrap: break-word;
+  white-space: normal;
+  line-height: 1.4;
 }
 
-const filteredCompetences = computed(() => {
-  let filtered = competences.value
-  
-  // Фильтр по типу компетенции
-  if (competenceTypeFilter.value) {
-    filtered = filtered.filter(comp => 
-      getCompetenceType(comp.competence_index) === competenceTypeFilter.value.value
-    )
-  }
-  
-  // Поиск по тексту
-  if (searchFilter.value) {
-    const searchLower = searchFilter.value.toLowerCase()
-    filtered = filtered.filter(comp => 
-      comp.competence_index.toLowerCase().includes(searchLower) ||
-      comp.competence.toLowerCase().includes(searchLower)
-    )
-  }
-  
-  return filtered
-})
-
-async function loadCompetences() {
-  loading.value = true
-  try {
-    const planId = store.currentPlanId
-    
-    if (!planId) {
-      throw new Error('Plan ID is not available. Please select a plan first.')
-    }
-
-    
-    const response = await store.fetchAllCompetences(planId)
-    competences.value = response.competences || []
-    currentPlan.value = {
-      planname: response.plan_name,
-      abbrprofile: response.abbrprofile
-    }
-    
-  } catch (error) {
-    console.error('Error loading competences:', error)
-  } finally {
-    loading.value = false
-  }
+:deep(.q-table) {
+  table-layout: fixed;
 }
 
-watch(() => store.currentPlanId, (newPlanId) => {
-  if (newPlanId) {
-    loadCompetences()
-  }
-})
-
-onMounted(() => {
-  loadCompetences()
-})
-</script>
+:deep(.q-table th),
+:deep(.q-table td) {
+  vertical-align: top;
+}
+</style>

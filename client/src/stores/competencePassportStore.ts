@@ -1,386 +1,445 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from 'boot/axios'
-import _ from 'lodash'
+import { LocalStorage } from 'quasar'
+
+// === Типы данных ===
+interface PlanData {
+  id: number
+  mira_id: number
+  planname: string
+  file_id: number
+  studyform: string
+  studylevel: string
+  vuzname: string
+  faculty: string
+  kafcode: number
+  species: string
+  napr_e: string
+  napr_t: string
+  lastshifr: string
+  abbrprofile: string
+  startyear: number
+}
+
+interface AdmissionInfo {
+  [key: string]: any
+}
+
+interface CompetenceItem {
+  competence_index: string
+  competence: string
+  type: string
+}
+
+interface DisciplineItem {
+  discipline_id: number
+  discipline_index: string
+  discipline_name: string
+  type: string[]
+}
+
+interface MatrixItem {
+  type: 'group' | 'discipline'
+  level: number
+  discipline_id: number
+  discipline_index: string
+  discipline_name: string
+  competence_list: Array<{
+    competence_index: string
+    competence: string
+    type: string
+    indicator_list: Array<{ indicator_index: string; indicator: string }>
+  }>
+}
+
+interface SchemaItem {
+  competence_index: string
+  competence: string
+  discipline_list: Array<{
+    discipline_id: number
+    discipline_index: string
+    discipline_name: string
+    semester_data: Array<{ semester: number; form_control: string[] }>
+  }>
+}
+
+interface PassportItem {
+  competence_index: string
+  type: string
+  competence: string
+  competence_relations: string
+  competence_final_indicator: string
+  indicator_list: Array<{
+    indicator_index: string
+    indicator: string
+    discipline_id: number
+    discipline_index: string
+    discipline_name: string
+    know: string
+    able: string
+    own: string
+    criteria: string
+    methods: string
+  }>
+}
+
+interface MatrixValidation {
+  is_valid: boolean
+  errors: Array<{
+    message: string
+    discipline_id?: number
+    discipline_index?: string
+    discipline_name?: string
+    competence_index?: string
+    competence?: string
+  }>
+  checked_at: string
+  disciplines_without_competences_count?: number
+  competences_without_disciplines_count?: number
+}
+
+interface SchemaValidation {
+  is_valid: boolean
+  errors: Array<{
+    id: string
+    competence_index: string
+    competence_name: string
+    discipline_index: string
+    discipline_name: string
+    discipline_id: number
+    scheme_forms_count: number
+    indicators_count: number
+    semester: number
+    message: string
+  }>
+  checked_at: string
+  errors_count: number
+}
 
 export const useCompetencePassportStore = defineStore('competencePassport', () => {
-  const programList = ref([])
-  const groupsList = ref([])
-  const currentProgram = ref(null)
-  const currentGroupPrograms = ref([])
-  const currentPlanCompetences = ref([])
-  const loading = ref(false)
-  const selectedYear = ref(new Date().getFullYear())
-  const currentPlanDisciplines = ref([])
-  const competenceMatrix = ref([])
-  const matrixLoading = ref(false)
-  const disciplineCompetences = ref([])
-  const editingDiscipline = ref(null)
-  const saving = ref(false)
-  
-  // Фильтры
-  const textFilter = ref('')
-  const groupTextFilter = ref('')
-  const statusFilter = ref('')
-  const myFilter = ref(0)
-  const currentPlanId = ref(null)
+  const currentPlanId = ref<number | null>(LocalStorage.getItem('current_plan_id') || null)
+  const planData = ref<PlanData | null>(null)
+  const admissionInfo = ref<AdmissionInfo | null>(null)
+  const competences = ref<CompetenceItem[]>([])
+  const disciplines = ref<DisciplineItem[]>([])
+  const matrix = ref<MatrixItem[]>([])
+  const schema = ref<SchemaItem[]>([])
+  const passport = ref<PassportItem[]>([])
 
-  // Валидация матрицы
-  const matrixValidation = ref({
-    isValid: false,
-    disciplinesWithoutCompetences: [],
-    competencesWithoutDisciplines: [],
-    lastChecked: null,
-    validationInProgress: false
-  })
+  const matrixValidation = ref<MatrixValidation | null>(null)
+  const validating = ref(false)
+
+  const schemaValidation = ref<SchemaValidation | null>(null)
+  const validatingSchema = ref(false)
+
+  const loading = ref(false)
+  const saving = ref(false)
 
   // Геттеры
-  const filteredPrograms = computed(() => {
-    return _.orderBy(programList.value, ['abbrprofile', 'startyear'])
+  const currentPlanMiraId = computed(() => currentPlanId.value)
+
+  // Валидация матрицы
+  const isMatrixValid = computed(() => {
+    if (!currentPlanId.value) return false
+
+    if (matrixValidation.value?.is_valid) return true
+
+    return localStorage.getItem(`matrix_valid_${currentPlanId.value}`) === 'true'
   })
-  
-  const filteredGroupPrograms = computed(() => {
-    let txtFilter = textFilter.value.trim().toLowerCase();
-    return _(currentGroupPrograms.value)
-      .filter(x => {
-        return (myFilter.value == 0 || x.type.includes('person'))
-          && ((txtFilter == '' || x.discode.toLowerCase().includes(txtFilter))
-            || (txtFilter == '' || x.discpl.toLowerCase().includes(txtFilter))
-            || (txtFilter == '' || x.razrab_name.toLowerCase().includes(txtFilter)))
-          && (!statusFilter.value || x.status_verbose == statusFilter.value)
-      })
-      .value()
+
+  // Валидация схемы
+  const isSchemaValid = computed(() => {
+    if (!currentPlanId.value) return false
+    if (schemaValidation.value?.is_valid) return true
+    return localStorage.getItem(`schema_valid_${currentPlanId.value}`) === 'true'
   })
 
   // Действия
-  async function fetchGroupsList() {
+  async function fetchCompetencePassport(planId: number) {
     loading.value = true
     try {
-      const params = {
-        year: selectedYear.value,
-        text: textFilter.value,
-        groupText: groupTextFilter.value,
-        status: statusFilter.value,
-        my: myFilter.value
-      }
-      
-      const response = await api.get('/api/competence/group-list/', { params })
-      groupsList.value = response.data
-    } catch (error) {
-      console.error('Error fetching groups list:', error)
-      groupsList.value = []
-      throw error
-    } finally {
-      loading.value = false
-    }
-  }
+      const response = await api.get(`/api/competence-passport/${planId}/`)
+      const data = response.data
 
-  async function fetchGroupPrograms(planId) {
-    loading.value = true
-    try {
+      planData.value = data.plan
+      admissionInfo.value = data.admission_info
+      competences.value = data.competences
+      disciplines.value = data.disciplines
+      matrix.value = data.matrix
+      schema.value = data.schema
+      passport.value = data.passport
+
       currentPlanId.value = planId
-      const response = await api.get(`/api/competence/${planId}/group-program/`)
-      currentGroupPrograms.value = response.data
-    } catch (error) {
-      console.error('Error fetching group programs:', error)
-      currentGroupPrograms.value = []
-      throw error
+      LocalStorage.set('current_plan_id', planId)
     } finally {
       loading.value = false
     }
   }
 
-  function setCurrentProgram(program) {
-    currentProgram.value = program
-  }
-  
-  async function getProgramDetail(programId) {
+  // Валидация матрицы
+  async function validateMatrix() {
+    if (!currentPlanId.value) return
+
+    validating.value = true
     try {
-      const response = await api.get(`/api/competence/${programId}/`)
-      return response.data
-    } catch (error) {
-      console.error('Error fetching program detail:', error)
-      throw error
+      const response = await api.get(`/api/competence-passport/${currentPlanId.value}/validate-matrix/`)
+      const result: MatrixValidation = response.data
+
+      matrixValidation.value = result
+
+      localStorage.setItem(`matrix_valid_${currentPlanId.value}`, String(result.is_valid))
+
+      return result
+    } finally {
+      validating.value = false
     }
   }
 
-  async function fetchAllCompetences(planId) {
-    loading.value = true
-    try {
-      if (!planId) {
-        throw new Error('Plan ID is required')
-      }
-      
-      const response = await api.get('/api/competence/all-competences/', {
-        params: { plan_id: planId }
-      })
-      currentPlanCompetences.value = response.data.competences
-      return response.data
-    } catch (error) {
-      console.error('Error fetching plan competences:', error)
-      throw error
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function fetchAllDisciplines(planId) {
-    loading.value = true
-    try {
-      if (!planId) {
-        throw new Error('Plan ID is required')
-      }
-      
-      const response = await api.get('/api/competence/all-disciplines/', {
-        params: { plan_id: planId }
-      })
-      currentPlanDisciplines.value = response.data.disciplines
-      return response.data
-    } catch (error) {
-      console.error('Error fetching plan disciplines:', error)
-      throw error
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function fetchCompetenceMatrix(planId) {
-    matrixLoading.value = true
-    try {
-      if (!planId) {
-        throw new Error('Plan ID is required')
-      }
-      
-      const response = await api.get('/api/competence/competence-matrix/', {
-        params: { plan_id: planId }
-      })
-      competenceMatrix.value = response.data.matrix || []
-      return response.data
-    } catch (error) {
-      console.error('Error fetching competence matrix:', error)
-      throw error
-    } finally {
-      matrixLoading.value = false
-    }
-  }
-
-  async function fetchDisciplineCompetencesDetailed(planId, disciplineId) {
-    loading.value = true
-    try {
-      if (!planId || !disciplineId) {
-        throw new Error('Plan ID and Discipline ID are required')
-      }
-      
-      const response = await api.get('/api/competence/discipline-competences-detailed/', {
-        params: { 
-          plan_id: planId,
-          discipline_id: disciplineId
-        }
-      })
-      
-      disciplineCompetences.value = response.data.competences
-      editingDiscipline.value = {
-        id: response.data.discipline_id,
-        index: response.data.discipline_index,
-        name: response.data.discipline_name,
-        planId: response.data.plan_mira_id
-      }
-      
-      return response.data
-    } catch (error) {
-      console.error('Error fetching detailed discipline competences:', error)
-      throw error
-    } finally {
-      loading.value = false
-    }
-  }
-  
-  async function updateDisciplineCompetences(selectedCompetences) {
+  // Обновление связей "дисциплина - компетенции"
+  async function updateDisciplineCompetences(
+    planId: number,
+    disciplineId: number,
+    selectedCompetences: CompetenceItem[]
+  ) {
     saving.value = true
     try {
-      if (!editingDiscipline.value) {
-        throw new Error('No discipline selected for editing')
-      }
-      
-      const payload = {
-        plan_id: editingDiscipline.value.planId,
-        discipline_id: editingDiscipline.value.id,
-        selected_competences: selectedCompetences  
-      }
-      
-      const response = await api.post(
-        '/api/competence/update-discipline-competences/', 
-        payload
-      )
-      
-      matrixValidation.value.isValid = false
-      
-      await fetchCompetenceMatrix(editingDiscipline.value.planId)
-      
-      return response.data
-    } catch (error) {
-      console.error('Error updating discipline competences:', error)
-      throw error
+      const payload = { plan_id: planId, discipline_id: disciplineId, selected_competences: selectedCompetences }
+      await api.post('/api/competence-passport/update-discipline-competences/', payload)
+      await fetchCompetencePassport(planId)
+      await validateMatrix()
     } finally {
       saving.value = false
     }
   }
-  
-  function clearEditingDiscipline() {
-    editingDiscipline.value = null
-    disciplineCompetences.value = []
+
+  // Валидация схемы 
+  async function validateSchemeIndicators() {
+    if (!currentPlanId.value) return
+
+    validatingSchema.value = true
+    try {
+      const response = await api.get(`/api/competence-passport/${currentPlanId.value}/validate-scheme-indicators/`)
+      const result: SchemaValidation = response.data
+
+      schemaValidation.value = result
+      localStorage.setItem(`schema_valid_${currentPlanId.value}`, String(result.is_valid))
+
+      return result
+    } finally {
+      validatingSchema.value = false
+    }
   }
 
-  // ВВалидация матрицы
-  async function validateCompetenceMatrix(planId) {
-    matrixValidation.value.validationInProgress = true
-    
+  // Обновление схемы (формы аттестаций)
+  async function updateSemesterScheme(
+    planId: number,
+    disciplineId: number,
+    competenceIndex: string,
+    competence: string,
+    semester: number,
+    forms: Record<string, boolean>
+  ) {
+    saving.value = true
     try {
-      if (!planId) {
-        if (!currentPlanId.value) {
-          throw new Error('Plan ID is required for validation')
-        }
-        planId = currentPlanId.value
-      }
-      
-      // 1. Загружаем матрицу компетенций
-      if (!competenceMatrix.value.length) {
-        await fetchCompetenceMatrix(planId)
-      }
-      
-      // 2. Загружаем все компетенции плана
-      const competencesData = await fetchAllCompetences(planId)
-      const allCompetences = competencesData.competences || []
-      
-      // 3. Находим дисциплины без компетенций
-      const disciplines = competenceMatrix.value.filter(
-        item => item.type === 'discipline'
-      )
-      
-      const disciplinesWithoutCompetences = disciplines.filter(
-        disc => !disc.competence_indices || disc.competence_indices.trim() === ''
-      ).map(disc => ({
-        index: disc.index,
-        name: disc.name
-      }))
-      
-      // 4. Находим все компетенции, которые есть в матрице
-      const usedCompetences = new Set()
-      competenceMatrix.value.forEach(item => {
-        if (item.competence_indices) {
-          item.competence_indices.split(', ').forEach(comp => {
-            usedCompetences.add(comp.trim())
-          })
-        }
-      })
-      
-      // 5. Находим компетенции без дисциплин
-      const competencesWithoutDisciplines = allCompetences.filter(
-        comp => !usedCompetences.has(comp.competence_index)
-      ).map(comp => ({
-        competence_index: comp.competence_index,
-        competence: comp.competence
-      }))
-      
-      // 6. Проверяем валидность
-      const isValid = disciplinesWithoutCompetences.length === 0 && 
-                     competencesWithoutDisciplines.length === 0
-      
-      // 7. Сохраняем результаты валидации
-      matrixValidation.value = {
-        isValid,
-        disciplinesWithoutCompetences,
-        competencesWithoutDisciplines,
-        lastChecked: new Date(),
-        validationInProgress: false
-      }
-      
-      // 8. Сохраняем для других страниц
-      localStorage.setItem(`matrix_valid_${planId}`, isValid ? 'true' : 'false')
-      
-      if (isValid) {
-        localStorage.setItem(`matrix_validation_${planId}`, JSON.stringify({
-          isValid,
-          checkedAt: new Date().toISOString()
-        }))
-      }
-      
-      return matrixValidation.value
-      
-    } catch (error) {
-      console.error('Error validating competence matrix:', error)
-      matrixValidation.value.validationInProgress = false
-      throw error
+      const payload = { plan_id: planId, discipline_id: disciplineId, competence_index: competenceIndex, competence, semester, forms }
+      await api.post('/api/competence-passport/update-semester-scheme/', payload)
+      await fetchCompetencePassport(planId)
+      await validateSchemeIndicators()
+    } finally {
+      saving.value = false
     }
   }
-  
-  // Проверка валидности 
-  function checkMatrixValidityFromStorage(planId) {
-    if (!planId) planId = currentPlanId.value
-    if (!planId) return false
-    
-    const storedValue = localStorage.getItem(`matrix_valid_${planId}`)
-    return storedValue === 'true'
+
+  // Исправление числа индикаторов по схеме
+  async function fixSchemeIndicators(
+    disciplineId: number,
+    competenceIndex: string,
+    schemeFormsCount: number,
+    indicatorsCount: number
+  ) {
+    saving.value = true
+    try {
+      const payload = {
+        plan_id: currentPlanId.value,
+        discipline_id: disciplineId,
+        competence_index: competenceIndex,
+        scheme_forms_count: schemeFormsCount,
+        indicators_count: indicatorsCount
+      }
+      
+      const response = await api.post('/api/competence-passport/fix-scheme-indicators/', payload)
+      const result = response.data
+
+      // Обновляем данные после исправления
+      await fetchCompetencePassport(currentPlanId.value)
+      await validateSchemeIndicators()
+
+      return result
+    } finally {
+      saving.value = false
+    }
   }
-  
-  function resetMatrixValidation() {
-    matrixValidation.value = {
-      isValid: false,
-      disciplinesWithoutCompetences: [],
-      competencesWithoutDisciplines: [],
-      lastChecked: null,
-      validationInProgress: false
-    }
-    
-    if (currentPlanId.value) {
-      localStorage.removeItem(`matrix_valid_${currentPlanId.value}`)
-      localStorage.removeItem(`matrix_validation_${currentPlanId.value}`)
+
+  // Обновление связей компетенций
+  async function updateCompetenceRelations(payload: {
+    plan_id: number
+    competence_index: string
+    competence: string
+    relations: string
+  }) {
+    saving.value = true
+    try {
+      await api.post('/api/competence-passport/update-competence-relations/', payload)
+      await fetchCompetencePassport(currentPlanId.value!)
+    } finally {
+      saving.value = false
     }
   }
-  
-  function getValidationStatus() {
-    return {
-      ...matrixValidation.value,
-      fromStorage: currentPlanId.value ? 
-        checkMatrixValidityFromStorage(currentPlanId.value) : false
+
+  // Обновление итогового индикатора
+  async function updateCompetenceFinalIndicators(
+    planId: number,
+    competenceIndex: string,
+    finalIndicatorText: string
+  ) {
+    saving.value = true
+    try {
+      const payload = { plan_id: planId, competence_index: competenceIndex, final_indicator_text: finalIndicatorText }
+      await api.post('/api/competence-passport/update-competence-final-indicators/', payload)
+      await fetchCompetencePassport(currentPlanId.value!)
+    } finally {
+      saving.value = false
     }
+  }
+
+  // Обновление деталей индикатора (ЗУВ, критерии, методы)
+  async function updateIndicatorDetails(payload: {
+    indicator_id: number
+    know?: string
+    able?: string
+    own?: string
+    criteria?: string
+    methods?: string
+  }) {
+    saving.value = true
+    try {
+      await api.post('/api/competence-passport/update-indicator-details/', payload)
+      await fetchCompetencePassport(currentPlanId.value!)
+    } finally {
+      saving.value = false
+    }
+  }
+
+  // Создание нового индикатора
+  async function createIndicator(payload: {
+    //plan_id: number
+    discipline_id: number
+    competence_index: string
+    competence: string
+    indicator_index: string
+    indicator: string
+  }) {
+    saving.value = true
+    try {
+      const backendPayload = {
+        planlineid: payload.discipline_id,
+        competence_index: payload.competence_index,
+        competence: payload.competence,
+        indicator_index: payload.indicator_index,
+        indicator: payload.indicator
+      }
+        
+      await api.post('/api/competence-passport/create-indicator/', backendPayload)
+      await fetchCompetencePassport(currentPlanId.value!)
+    } finally {
+      saving.value = false
+    }
+  }
+
+  // Обновление существующего индикатора
+  async function updateIndicator(indicatorId: number, payload: Partial<{
+    discipline_id: number
+    indicator_index: string
+    indicator: string
+  }>) {
+    saving.value = true
+    try {
+      await api.put(`/api/competence-passport/${indicatorId}/update-indicator/`, payload)
+      await fetchCompetencePassport(currentPlanId.value!)
+    } finally {
+      saving.value = false
+    }
+  }
+
+  // Удаление индикатора 
+  async function deleteIndicator(indicatorId: number) {
+    saving.value = true
+    try {
+      await api.delete(`/api/competence-passport/${indicatorId}/delete-indicator/`)
+      await fetchCompetencePassport(currentPlanId.value!)
+    } finally {
+      saving.value = false
+    }
+  }
+
+  // Получение списка групп (для выбора плана) 
+  async function getGroupList(params: { year?: number; groupText?: string }) {
+    const response = await api.get('/api/competence-passport/get-group-list/', { params })
+    return response.data
+  }
+
+  // Очистка состояния 
+  function clear() {
+    planData.value = null
+    admissionInfo.value = null
+    competences.value = []
+    disciplines.value = []
+    matrix.value = []
+    schema.value = []
+    passport.value = []
+    matrixValidation.value = null
+    schemaValidation.value = null
+    currentPlanId.value = null
+    LocalStorage.remove('current_plan_id')
   }
 
   return {
-    programList,
-    groupsList,
-    currentProgram,
-    currentGroupPrograms,
-    loading,
-    selectedYear,
-    textFilter,
-    groupTextFilter,
-    statusFilter,
-    myFilter,
+    // Состояния
     currentPlanId,
-    filteredPrograms,
-    filteredGroupPrograms,
-    fetchGroupsList,
-    fetchGroupPrograms,
-    setCurrentProgram,
-    getProgramDetail,
-    fetchAllCompetences,
-    fetchAllDisciplines,
-    competenceMatrix,
-    matrixLoading,
-    fetchCompetenceMatrix,
-    disciplineCompetences,
-    editingDiscipline,
-    saving,
-    fetchDisciplineCompetencesDetailed,
-    updateDisciplineCompetences,
-    clearEditingDiscipline,
-    currentPlanDisciplines,
-
+    planData,
+    admissionInfo,
+    competences,
+    disciplines,
+    matrix,
+    schema,
+    passport,
     matrixValidation,
-    validateCompetenceMatrix,
-    checkMatrixValidityFromStorage,
-    resetMatrixValidation,
-    getValidationStatus
+    schemaValidation,
+    validating,
+    validatingSchema,
+    loading,
+    saving,
+
+    // Геттеры
+    currentPlanMiraId,
+    isMatrixValid,
+    isSchemaValid,
+
+    // Действия
+    fetchCompetencePassport,
+    validateMatrix,
+    validateSchemeIndicators,
+    fixSchemeIndicators,
+    updateDisciplineCompetences,
+    updateSemesterScheme,
+    updateCompetenceRelations,
+    updateCompetenceFinalIndicators,
+    updateIndicatorDetails,
+    createIndicator,
+    updateIndicator,
+    deleteIndicator,
+    getGroupList,
+    clear
   }
 })
