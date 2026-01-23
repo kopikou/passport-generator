@@ -1,34 +1,14 @@
-<template>
-  <div class="text-h6">{{ sectionTitle }}</div>
-  <div class="text-grey q-mb-sm">Для чего необходимо формирование компетенции</div>
-
-  <div class="q-gutter-y-md">
-    <q-input
-      v-model="relationsText"
-      filled
-      type="textarea"
-      label="Связь компетенции с иными компетенциями"
-      stack-label
-      rows="10"
-      bg-color="grey-4"
-      :readonly="disabled"
-      :loading="loading"
-      debounce="1000"
-      @update:model-value="saveData"
-    />
-  </div>
-
-</template>
-
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useQuasar } from 'quasar'
-import { useCompetencePassportStore } from 'stores/competencePassportStore'
+import { useCompetencePassportStore } from 'src/stores/competencePassportStore'
 import { storeToRefs } from 'pinia'
 
 const $q = useQuasar()
 const store = useCompetencePassportStore()
+
 const {
+  passport,
   saving,
   loading
 } = storeToRefs(store)
@@ -44,97 +24,86 @@ const props = defineProps({
   },
   planId: {
     type: Number,
-    default: ''
+    required: true
   }
 })
 
 const sectionTitle = '1.1. Связь компетенции с иными компетенциями'
 const relationsText = ref('')
-const disabled = ref(false)
 
-const loadRelations = async () => {
-  if (!props.planId || !props.competence?.competence_index) {
-    relationsText.value = ''
-    return
-  }
+const currentCompetence = computed(() => {
+  if (!props.competence?.competence_index) return null
+  
+  const comp = passport.value.find(
+    c => c.competence_index === props.competence.competence_index
+  )
+  
+  return comp || null
+})
 
-  loading.value = true
+async function saveData() {
+  if (!currentCompetence.value) return
+
   try {
-    const data = await store.fetchCompetenceRelations(
-      props.planId, 
-      props.competence.competence_index
-    )
-    
-    if (data.relations) {
-      relationsText.value = data.relations
-    } else {
-      relationsText.value = ''
-    }
-  } catch (error) {
-    console.error('Ошибка загрузки связей компетенции:', error)
-    relationsText.value = ''
-    $q.notify({
-      message: 'Ошибка загрузки связей компетенции',
-      color: 'negative',
-      position: 'bottom-right'
+    await store.updateCompetenceRelations({
+      plan_id: props.planId,
+      competence_index: currentCompetence.value.competence_index,
+      competence: currentCompetence.value.competence,
+      relations: relationsText.value || ''
     })
-  } finally {
-    loading.value = false
-  }
-}
-
-const saveData = async () => {
-  if (!props.planId || !props.competence?.competence_index || saving.value) {
-    return
-  }
-
-  saving.value = true
-  try {
-    await store.updateCompetenceRelations(
-      props.planId,
-      props.competence.competence_index,
-      relationsText.value || ''
-    )
     
     $q.notify({
       message: 'Связи компетенций успешно сохранены',
       color: 'positive',
-      position: 'bottom-right',
-      timeout: 2000,
-      html: true
+      position: 'top-right',
+      timeout: 2000
     })
-  } catch (error) {
-    console.error('Ошибка сохранения связей компетенции:', error)
+  } catch (error: any) {
     $q.notify({
       message: 'Ошибка сохранения связей компетенции',
       color: 'negative',
-      position: 'bottom-right',
-      timeout: 3000,
-      html: true
+      position: 'top-right',
+      timeout: 3000
     })
-  } finally {
-    saving.value = false
   }
 }
 
-watch(() => props.competence, (newCompetence) => {
-  if (newCompetence) {
-    loadRelations()
-  }
-}, { immediate: true })
-
-watch(() => props.planId, (newPlanId) => {
-  if (newPlanId && props.competence) {
-    loadRelations()
-  }
-})
-
-onMounted(() => {
-  if (props.planId && props.competence) {
-    loadRelations()
-  }
-})
+watch(
+  () => props.competence,
+  (newCompetence) => {
+    if (newCompetence?.competence_index) {
+      const comp = passport.value.find(c => c.competence_index === newCompetence.competence_index)
+      if (comp) {
+        relationsText.value = comp.competence_relations || ''
+      }
+    }
+  },
+  { immediate: true }
+)
 </script>
+
+<template>
+  <div class="competence-relations-section">
+    <div class="text-h6 q-mb-xs">{{ sectionTitle }}</div>
+    <div class="text-grey q-mb-sm">Для чего необходимо формирование компетенции</div>
+
+    <div class="q-gutter-y-md">
+      <q-input
+        v-model="relationsText"
+        filled
+        type="textarea"
+        label="Связь компетенции с иными компетенциями"
+        stack-label
+        rows="10"
+        bg-color="grey-4"
+        :loading="loading"
+        :disable="saving"
+        debounce="1000"
+        @update:model-value="saveData"
+      />
+    </div>
+  </div>
+</template>
 
 <style scoped lang="scss">
 

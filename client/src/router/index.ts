@@ -51,29 +51,29 @@ export default route(function (/* { store, ssrContext } */) {
     next()
   })
 
-  Router.beforeEach((to, from, next) => {
-    const store = useCompetencePassportStore()
+  // Router.beforeEach((to, from, next) => {
+  //   const store = useCompetencePassportStore()
     
-    if (to.meta.requiresValidMatrix) {
-      const planId = store.currentPlanId
-      const isMatrixValid = localStorage.getItem(`matrix_valid_${planId}`) === 'true'
+  //   if (to.meta.requiresValidMatrix) {
+  //     const planId = store.currentPlanId
+  //     const isMatrixValid = localStorage.getItem(`matrix_valid_${planId}`) === 'true'
       
-      if (!isMatrixValid) {
-        const $q = useQuasar()
-        $q.notify({
-          type: 'warning',
-          message: 'Для доступа к этому разделу необходимо проверить и исправить матрицу компетенций',
-          position: 'top-right',
-          timeout: 3000
-        })
+  //     if (!isMatrixValid) {
+  //       const $q = useQuasar()
+  //       $q.notify({
+  //         type: 'warning',
+  //         message: 'Для доступа к этому разделу необходимо проверить и исправить матрицу компетенций',
+  //         position: 'top-right',
+  //         timeout: 3000
+  //       })
         
-        next({ name: 'competenceMatrix' })
-        return
-      }
-    }
+  //       next({ name: 'competenceMatrix' })
+  //       return
+  //     }
+  //   }
     
-    next()
-  })
+  //   next()
+  // })
 
   return Router;
 });

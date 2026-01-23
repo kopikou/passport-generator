@@ -1,3 +1,113 @@
+<script setup lang="ts">
+import { ref, computed, onBeforeMount, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
+import { useCompetencePassportStore } from 'src/stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
+
+const route = useRoute()
+const router = useRouter()
+const $q = useQuasar()
+const store = useCompetencePassportStore()
+
+const {
+  currentPlanId,
+  competences: storeCompetences,
+  loading
+} = storeToRefs(store)
+
+const searchText = ref('')
+const selectedType = ref<string | null>(null)
+
+// Типы компетенций
+const competenceTypes = [
+  { label: 'Универсальные (УК)', value: 'Универсальная' },
+  { label: 'Общепрофессиональные (ОПК)', value: 'Общепрофессиональная' },
+  { label: 'Профессиональные (ПК)', value: 'Профессиональная' },
+  { label: 'Дополнительные (ДК)', value: 'Дополнительная' }
+]
+
+function getTypeBadgeColor(type){
+  const colors: Record<string, string> = {
+    'Универсальная': 'blue',
+    'Общепрофессиональная': 'green',
+    'Профессиональная': 'orange',
+    'Дополнительная': 'purple',
+    'Другая': 'grey'
+  }
+  return colors[type] || 'grey'
+}
+
+function getCompetenceClass(type) {
+  return `competence-${type.toLowerCase().replace(/ /g, '-')}`
+}
+
+// Проверка активности
+function isTitlePageActive() {
+  return route.query.section === 'title-page'
+}
+
+function isCompetenceActive(competenceIndex){
+  return route.query.competence === competenceIndex && 
+         route.query.section && 
+         route.query.section !== 'title-page'
+}
+
+// Фильтрация
+const filteredCompetences = computed(() => {
+  let competences = storeCompetences.value
+  
+  if (searchText.value) {
+    const term = searchText.value.toLowerCase().trim()
+    competences = competences.filter(comp =>
+      comp.competence_index.toLowerCase().includes(term) ||
+      comp.competence.toLowerCase().includes(term)
+    )
+  }
+  
+  if (selectedType.value) {
+    competences = competences.filter(comp =>
+      comp.type === selectedType.value
+    )
+  }
+  
+  return competences
+})
+
+// Навигация
+function navigateToTitlePage() {
+  router.push({
+    name: 'competencePassport',
+    params: { id: currentPlanId.value },
+    query: { section: 'title-page' }
+  })
+}
+
+function navigateToCompetence(competenceIndex) {
+  router.push({
+    name: 'competencePassport',
+    params: { id: currentPlanId.value },
+    query: { 
+      section: 'competence-relations',
+      competence: competenceIndex 
+    }
+  })
+}
+
+// Загрузка данных
+async function loadPassportData() {
+  await store.fetchCompetencePassport(currentPlanId.value)
+}
+
+onBeforeMount(() => {
+  //loadPassportData()
+})
+
+watch(() => route.params.id, () => {
+  //loadPassportData()
+})
+</script>
+
 <template>
   <div class="competence-menu" style="overflow-y: auto; flex: 1;">
     <div class="menu-header q-pa-sm bg-grey-3">
@@ -10,12 +120,11 @@
       <div class="q-gutter-y-sm">
         <q-input
           v-model="searchText"
-          placeholder="Поиск по индексу..."
+          placeholder="Поиск по индексу или содержанию..."
           dense
           outlined
           clearable
           class="bg-white"
-
         >
           <template v-slot:prepend>
             <q-icon name="search" />
@@ -32,7 +141,6 @@
           emit-value
           map-options
           class="bg-white"
-
         />
       </div>
     </div>
@@ -73,197 +181,25 @@
         clickable
         v-ripple
         class="competence-header"
-        :class="getCompetenceClass(comp.competence_index)"
-        @click="navigateToCompetence(comp)"
-        :active="isCompetenceActive(comp)"
+        :class="getCompetenceClass(comp.type)"
+        @click="navigateToCompetence(comp.competence_index)"
+        :active="isCompetenceActive(comp.competence_index)"
         active-class="bg-amber-2 text-black"
       >
         <q-item-section>
-          <q-item-label class="text-weight-medium">
+          <q-item-label class="text-weight-medium" >
             {{ comp.competence_index }}
           </q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-badge :color="getTypeBadgeColor(comp.competence_index)" rounded>
-            {{ getCompetenceType(comp.competence_index) }}
+          <q-badge :color="getTypeBadgeColor(comp.type)" rounded>
+            {{ comp.type }}
           </q-badge>
         </q-item-section>
       </q-item>
     </q-list>
-
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useCompetencePassportStore } from 'stores/competencePassportStore'
-import { storeToRefs } from 'pinia'
-import { useQuasar } from 'quasar'
-
-const router = useRouter()
-const $route = useRoute()
-const store = useCompetencePassportStore()
-const {
-  currentPlanId,
-  currentPlanCompetences,
-} = storeToRefs(store)
-
-const $q = useQuasar()
-
-const searchText = ref('')
-const selectedType = ref('')
-const loading = ref(false)
-const competencesData = ref([])
-
-// Типы компетенций для фильтра
-const competenceTypes = [
-  { label: 'Универсальные (УК)', value: 'Универсальная' },
-  { label: 'Общепрофессиональные (ОПК)', value: 'Общепрофессиональная' },
-  { label: 'Профессиональные (ПК)', value: 'Профессиональная' },
-  { label: 'Дополнительные (ДК)', value: 'Дополнительная' },
-  { label: 'Другие', value: 'Другая' }
-]
-
-// Определяем тип компетенции по индексу
-const getCompetenceType = (competenceIndex) => {
-  if (!competenceIndex) return 'Неизвестно'
-  
-  if (competenceIndex.includes('УК') || competenceIndex.startsWith('УК')) {
-    return 'Универсальная'
-  }
-  if (competenceIndex.includes('ОПК') || competenceIndex.startsWith('ОПК')) {
-    return 'Общепрофессиональная'
-  }
-  if (competenceIndex.includes('ПК') || competenceIndex.startsWith('ПК')) {
-    return 'Профессиональная'
-  }
-  if (competenceIndex.includes('ДК') || competenceIndex.startsWith('ДК')) {
-    return 'Дополнительная'
-  }
-  
-  return 'Другая'
-}
-
-const getTypeBadgeColor = (competenceIndex) => {
-  const type = getCompetenceType(competenceIndex)
-  const colors = {
-    'Универсальная': 'blue',
-    'Общепрофессиональная': 'green',
-    'Профессиональная': 'orange',
-    'Дополнительная': 'purple',
-    'Другая': 'grey'
-  }
-  return colors[type] || 'grey'
-}
-
-const getCompetenceClass = (competenceIndex) => {
-  const type = getCompetenceType(competenceIndex)
-  return `competence-${type.toLowerCase().replace(/ /g, '-')}`
-}
-
-const isTitlePageActive = () => {
-  return $route.query.section === 'title-page'
-}
-
-const isCompetenceActive = (competence) => {
-  return $route.query.competence === competence.competence_index && 
-         $route.query.section && 
-         $route.query.section !== 'title-page'
-}
-
-const filteredCompetences = computed(() => {
-  let competences = competencesData.value
-  
-  if (searchText.value) {
-    const searchLower = searchText.value.toLowerCase()
-    competences = competences.filter(comp => 
-      comp.competence_index.toLowerCase().includes(searchLower) ||
-      comp.competence.toLowerCase().includes(searchLower)
-    )
-  }
-  
-  if (selectedType.value) {
-    competences = competences.filter(comp => 
-      getCompetenceType(comp.competence_index) === selectedType.value
-    )
-  }
-  
-  return competences
-})
-
-const navigateToTitlePage = () => {
-  router.push({
-    name: 'competencePassport',
-    params: { 
-      planId: currentPlanId.value
-    },
-    query: { 
-      section: 'title-page'
-    }
-  })
-}
-
-const navigateToCompetence = (competence) => {
-  router.push({
-    name: 'competencePassport',
-    params: { 
-      planId: currentPlanId.value
-    },
-    query: { 
-      section: 'competence-relations',
-      competence: competence.competence_index 
-    }
-  })
-}
-
-const loadCompetences = async () => {
-  if (!currentPlanId.value) {
-    competencesData.value = []
-    return
-  }
-
-  loading.value = true
-  try {
-    const data = await store.fetchAllCompetences(currentPlanId.value)
-    if (data && data.competences) {
-      competencesData.value = data.competences
-    } else {
-      competencesData.value = []
-    }
-  } catch (error) {
-    console.error('Error loading competences:', error)
-    $q.notify({
-      type: 'negative',
-      message: 'Ошибка загрузки компетенций',
-      position: 'top-right'
-    })
-    competencesData.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(async () => {
-  if (currentPlanId.value) {
-    await loadCompetences()
-  }
-})
-
-watch(() => currentPlanId.value, async (newPlanId) => {
-  if (newPlanId) {
-    await loadCompetences()
-  } else {
-    competencesData.value = []
-  }
-})
-
-watch(() => currentPlanCompetences.value, (newCompetences) => {
-  if (newCompetences && newCompetences.length > 0) {
-    competencesData.value = newCompetences
-  }
-}, { deep: true })
-</script>
 
 <style scoped lang="scss">
 .competence-menu {
@@ -277,7 +213,6 @@ watch(() => currentPlanCompetences.value, (newCompetences) => {
   }
   
   .competence-list {
-
     .title-page-header {
       border-bottom: 1px solid rgba(0,0,0,0.05);
       min-height: 50px;

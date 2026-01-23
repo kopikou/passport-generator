@@ -40,8 +40,8 @@ import ProfActivityItem from "pages/activity/components/ProfActivityItem.vue";
 import RopMonitorView from "pages/rop/RopMonitorView.vue";
 import IndPlanListView from "pages/indPlan/IndPlanListView.vue";
 import IndPlanViewItem from "pages/indPlan/IndPlanViewItem.vue";
-import CompetencePassportListView from 'src/pages/competence_passport/CompetencePassportListView.vue';
-import LayoutWithMenus from 'src/pages/competence_passport/components/LayoutWithMenus.vue';
+import PlanListView from 'src/pages/competence_passport/PlanListView.vue';
+import DocsView from 'src/pages/competence_passport/components/DocsView.vue';
 import CompetenceReferenceView from 'src/pages/competence_passport/CompetenceReferenceView.vue';
 import DisciplinesReferenceView from 'src/pages/competence_passport/DisciplinesReferenceView.vue';
 import CompetenceMatrixView from 'src/pages/competence_passport/CompetenceMatrixView.vue';
@@ -379,74 +379,51 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
-    path: '/competence',
-    name: 'CompetencePassportMain',
+    path: '/competence-passport',
+    name: 'CompetencePassportMainPage',
     meta: {
       permissions: [Permissions.can_use_generator],
     },
     children: [
       {
         path: '',
-        name: 'CompetencePassportListView',
-        component: CompetencePassportListView,
+        name: 'planListView',
+        component: PlanListView,
       },
       {
-        path: 'reference',
-        component: LayoutWithMenus,
+        path: ':id',
+        name: 'reference',
+        component: DocsView,
+        props: true,
         children: [
           {
-            path: ':planId?',
-            name: 'competenceReference',
+            path: 'competences',
+            name: 'competencesReference',
             component: CompetenceReferenceView,
-            meta: {
-              title: 'Справочник компетенций'
-            }
           },
           {
-            path: 'disciplines/:planId?',
+            path: 'disciplines',
             name: 'disciplinesReference',
             component: DisciplinesReferenceView,
-            meta: {
-              title: 'Справочник дисциплин'
-            }
-          }
-        ]
-      },
-      {
-        path: 'matrix',
-        name: 'competenceMatrix',
-        component:CompetenceMatrixView,
-        meta: {
-          title: 'Матрица компетенций'
-        }
-      },
-      {
-        path: 'schema',
-        name: 'competenceSchema',
-        component:CompetenceSchemaView,
-        meta: {
-          title: 'Схема компетенций',
-          requiresValidMatrix: true
-        }
-      },
-      {
-        path: 'passport',
-        component: LayoutWithMenus,
-        children: [
+          },
           {
-            path: ':planId?',
+            path: 'matrix',
+            name: 'competenceMatrix',
+            component:CompetenceMatrixView,
+          },
+          {
+            path: 'schema',
+            name: 'competenceSchema',
+            component:CompetenceSchemaView,
+            // meta: {
+            //   requiresValidMatrix: true
+            // },
+          },
+          {
+            path: 'passport',
             name: 'competencePassport',
             component: CompetencePassportView,
-            meta: {
-              title: 'Паспорт компетенций',
-              requiresValidMatrix: true
-            },
-            props: (route) => ({
-              planId: route.params.planId,
-              competenceId: route.params.competenceId,
-              section: route.query.section
-            })
-          }
+          },
         ]
       },
     ]

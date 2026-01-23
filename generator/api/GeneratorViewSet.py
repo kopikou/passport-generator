@@ -26,7 +26,7 @@ from django.utils.encoding import escape_uri_path
 from rest_framework import status, serializers
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException
-from rest_framework.mixins import RetrieveModelMixin
+from rest_framework.mixins import RetrieveModelMixin, ListModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
@@ -57,7 +57,7 @@ import pandas as pd
 
 class GeneratorViewSet(
     RetrieveModelMixin,
-    GenericViewSet,
+    GenericViewSet
 ):
     queryset = PlanLinesLink.objects.all()
     serializer_class = PlanLinesLinkSerializer

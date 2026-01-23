@@ -79,9 +79,12 @@ onBeforeMount(async () => {
           <q-route-tab icon="mdi-upload-box" label="Файлы программ" to="/upload"
                        v-show="can_upload"
           />
-          <q-route-tab icon="mdi-file-document-edit" label="Паспорт компетенций" to="/competence"
+          <q-route-tab icon="mdi-file-document-edit" label="Паспорт компетенций" to="/competence-passport"
                        v-permissions-required="Permissions.can_use_generator"
           />
+          <!-- <q-route-tab icon="mdi-file-document-edit" label="Паспорт компетенций" to="/competence"
+                       v-permissions-required="Permissions.can_use_generator"
+          /> -->
           <q-route-tab icon="mdi-generator-portable" label="РПД / РПП" to="/generator"
                        v-permissions-required="Permissions.can_use_generator"
           />

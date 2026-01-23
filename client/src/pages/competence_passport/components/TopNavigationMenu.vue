@@ -1,3 +1,50 @@
+<script setup lang="ts">
+import { watch, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useCompetencePassportStore } from 'src/stores/competencePassportStore'
+import { storeToRefs } from 'pinia'
+
+const route = useRoute()
+const router = useRouter()
+const store = useCompetencePassportStore()
+const { currentPlanId,
+  isMatrixValid,
+ } = storeToRefs(store)
+
+// Определяем активную вкладку по текущему пути
+const currentTab = computed(() => {
+  if (route.path.includes('/matrix')) return 'matrix'
+  if (route.path.includes('/schema')) return 'schema'
+  if (route.path.includes('/passport')) return 'passport'
+  return 'reference'
+})
+
+// Защита маршрутов: перенаправление, если матрица не валидна
+watch(
+  () => route.path,
+  async (newPath) => {
+    const requiresValidMatrix = route.meta?.requiresValidMatrix as boolean
+    if (requiresValidMatrix && !isMatrixValid) {
+      await router.push({ name: 'competenceMatrix' })
+    }
+  },
+  { immediate: true }
+)
+
+// Генерация путей для вкладок
+const getTabPath = (tabName: string): string => {
+  if (!currentPlanId) return '#'
+  const id = currentPlanId
+  switch (tabName) {
+    case 'reference': return `/competence-passport/${id}/competences`
+    case 'matrix': return `/competence-passport/${id}/matrix`
+    case 'schema': return `/competence-passport/${id}/schema`
+    case 'passport': return `/competence-passport/${id}/passport`
+    default: return '#'
+  }
+}
+</script>
+
 <template>
   <div class="top-navigation-layout">
     <q-tabs
@@ -9,98 +56,36 @@
       <q-route-tab
         name="reference"
         label="Справочники"
-        to="/competence/reference"
+        :to="getTabPath('reference')"
         exact
       />
       <q-route-tab
         name="matrix"
         label="Матрица"
-        to="/competence/matrix"
+        :to="getTabPath('matrix')"
         exact
       />
       <q-route-tab
         name="schema"
         label="Схема"
-        :to="schemaRoute"
+        :to="getTabPath('schema')"
         :disable="!isMatrixValid"
         exact
       />
       <q-route-tab
         name="passport"
         label="Паспорт"
-        :to="passportRoute"
+        :to="getTabPath('passport')"
         :disable="!isMatrixValid"
         exact
       />
     </q-tabs>
 
-    <div class="content-area">
-      <slot name="content">
-        <slot></slot>
-      </slot>
+    <div class  ="content-area">
+      <slot name="content"/>
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useCompetencePassportStore } from 'stores/competencePassportStore'
-import { storeToRefs } from 'pinia'
-
-const route = useRoute()
-const router = useRouter()
-const store = useCompetencePassportStore()
-const {
-  matrixValidation,
-  currentPlanId
-} = storeToRefs(store)
-
-const currentTab = ref('reference')
-
-const schemaRoute = computed(() => {
-  return isMatrixValid.value ? '/competence/schema' : ''
-})
-
-const passportRoute = computed(() => {
-  return isMatrixValid.value ? '/competence/passport' : ''
-})
-
-const isMatrixValid = computed(() => {
-  if (!currentPlanId.value) return false
-  
-  if (matrixValidation.value.isValid) return true
-
-  return localStorage.getItem(`matrix_valid_${currentPlanId.value}`) === 'true'
-})
-
-watch(
-  () => matrixValidation.value.isValid,
-  (isValid) => {
-    if (isValid && currentPlanId.value) {
-      localStorage.setItem(`matrix_valid_${currentPlanId.value}`, 'true')
-    }
-  }
-)
-
-// Защита от перехода на заблокированные страницы
-watch(
-  () => route.path,
-  (newPath) => {
-    if (newPath.includes('/matrix')) currentTab.value = 'matrix'
-    else if (newPath.includes('/schema')) currentTab.value = 'schema'
-    else if (newPath.includes('/passport')) currentTab.value = 'passport'
-    else currentTab.value = 'reference'
-
-    if ((newPath.includes('/schema') || newPath.includes('/passport')) && !isMatrixValid.value) {
-      router.push({ name: 'competenceMatrix' })
-    }
-  },
-  { immediate: true }
-)
-
-defineExpose({ currentTab, isMatrixValid })
-</script>
 
 <style scoped lang="scss">
 .top-navigation-layout {
@@ -119,10 +104,9 @@ defineExpose({ currentTab, isMatrixValid })
 .q-tab--disabled {
   opacity: 0.5;
   cursor: not-allowed;
-
 }
 
-.q-tabs{
+.q-tabs {
   background: $grey-4;
   border-bottom: 2px solid silver;
   box-shadow: 0 0 8px silver;

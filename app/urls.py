@@ -31,7 +31,8 @@ router.register(r'rop-monitoring', RopMonitoringViewSet, basename="rop-monitorin
 router.register(r'rop-monitoring-score', RopMonitoringScoreViewSet, basename="rop-monitoring-score")
 router.register(r'indplan', IndPlanViewSet, basename="indplan")
 router.register(r'planwork', PlanWorkViewSet, basename="planwork")
-router.register(r'competence', CompetencePassportViewSet, basename='competence')
+router.register(r'competence-passport', CompetencePassportViewSet, basename='competence-passport')
+
 
 # router_old = routers.DefaultRouter()
 # router_old.register(r'asp', AspPlanViewSet, basename="asp")
