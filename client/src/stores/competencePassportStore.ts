@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { api } from 'boot/axios'
 import { LocalStorage } from 'quasar'
 
-// === Типы данных ===
+// Типы данных
 interface PlanData {
   id: number
   mira_id: number
@@ -136,7 +136,6 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   const loading = ref(false)
   const saving = ref(false)
 
-  // Геттеры
   const currentPlanMiraId = computed(() => currentPlanId.value)
 
   // Валидация матрицы
@@ -196,7 +195,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
-  // Обновление связей "дисциплина - компетенции"
+  // Обновление связей дисциплина - компетенции
   async function updateDisciplineCompetences(
     planId: number,
     disciplineId: number,
@@ -271,7 +270,6 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       const response = await api.post('/api/competence-passport/fix-scheme-indicators/', payload)
       const result = response.data
 
-      // Обновляем данные после исправления
       await fetchCompetencePassport(currentPlanId.value)
       await validateSchemeIndicators()
 
@@ -383,10 +381,76 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
-  // Получение списка групп (для выбора плана) 
+  // Получение списка групп для выбора плана
   async function getGroupList(params: { year?: number; groupText?: string }) {
     const response = await api.get('/api/competence-passport/get-group-list/', { params })
     return response.data
+  }
+
+  async function getMatrixReport(){
+    const response = await api.get(
+      `/api/competence-passport/${currentPlanId.value}/get-matrix-report/`,
+      { responseType: 'blob' }
+    )
+
+    let direction_code = admissionInfo.value
+    let year_post = admissionInfo.value
+    let filename = `${direction_code.cdirection__cod}_Матрица_компетенций_${year_post.yr}.docx`
+
+    
+    // Создаем ссылку для скачивания
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', filename)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  }
+
+  async function getSchemaReport(){
+    const response = await api.get(
+      `/api/competence-passport/${currentPlanId.value}/get-schema-report/`,
+      { responseType: 'blob' }
+    )
+
+    let direction_code = admissionInfo.value
+    let year_post = admissionInfo.value
+    let filename = `${direction_code.cdirection__cod}_Схема_формирования_компетенций_${year_post.yr}.docx`
+
+    
+    // Создаем ссылку для скачивания
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', filename)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  }
+
+  async function getPassportReport(){
+    const response = await api.get(
+      `/api/competence-passport/${currentPlanId.value}/get-passport-report/`,
+      { responseType: 'blob' }
+    )
+
+    let direction_code = admissionInfo.value
+    let year_post = admissionInfo.value
+    let filename = `${direction_code.cdirection__cod}_Паспорт_компетенций_${year_post.yr}.docx`
+
+    
+    // Создаем ссылку для скачивания
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', filename)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
   }
 
   // Очистка состояния 
@@ -421,7 +485,6 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     loading,
     saving,
 
-    // Геттеры
     currentPlanMiraId,
     isMatrixValid,
     isSchemaValid,
@@ -440,6 +503,9 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     updateIndicator,
     deleteIndicator,
     getGroupList,
+    getMatrixReport,
+    getSchemaReport,
+    getPassportReport,
     clear
   }
 })

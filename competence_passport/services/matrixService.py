@@ -123,12 +123,9 @@ class MatrixService:
     @staticmethod
     def validate_competence_matrix(plan_id):
         """
-        Валидация матрицы компетенций.
-        Проверяет:
-        - Есть ли дисциплины без компетенций
-        - Есть ли компетенции без дисциплин
+        Валидация матрицы компетенций
+        Проверяет есть ли дисциплины без компетенций, есть ли компетенции без дисциплин
         """      
-        # Получаем план
         plan = PlanData.objects.get(mira_id=plan_id)
         
         # Получаем все дисциплины
@@ -161,7 +158,6 @@ class MatrixService:
         all_competences = RuleService.get_all_competences(
             planlineid__plan=plan
         )
-        #all_competence_indices = {comp['competence_index'] for comp in all_competences}
         
         # Находим компетенции, которые есть в плане, но не используются в дисциплинах
         used_competence_indices = {ind['competence_index'] for ind in indicators}
@@ -191,8 +187,8 @@ class MatrixService:
     @staticmethod
     def update_discipline_competences(plan_id, discipline_id, selected_competences):
         """
-        Обновление компетенции у дисциплины.
-        Удаление ненужных, добавление новых, сохранение существующих.
+        Обновление компетенции у дисциплины
+        Удаление ненужных, добавление новых, сохранение существующих
         """
         # Получаем дисциплины
         plan = PlanData.objects.get(mira_id=plan_id)
@@ -230,7 +226,7 @@ class MatrixService:
                 competence_name = selected_competences_map[comp_index]
                 RuleService.add_competence_to_discipline(discipline, comp_index, competence_name)
 
-            # Обновляем кэш
+            # Обновляем запись у дисциплины
             RuleService.update_discipline_kompetences(discipline)
 
         return {

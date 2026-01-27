@@ -20,16 +20,16 @@ const currentTab = computed(() => {
 })
 
 // Защита маршрутов: перенаправление, если матрица не валидна
-watch(
-  () => route.path,
-  async (newPath) => {
-    const requiresValidMatrix = route.meta?.requiresValidMatrix as boolean
-    if (requiresValidMatrix && !isMatrixValid) {
-      await router.push({ name: 'competenceMatrix' })
-    }
-  },
-  { immediate: true }
-)
+// watch(
+//   () => route.path,
+//   async (newPath) => {
+//     const requiresValidMatrix = route.meta?.requiresValidMatrix as boolean
+//     if (requiresValidMatrix && !isMatrixValid) {
+//       await router.push({ name: 'competenceMatrix' })
+//     }
+//   },
+//   { immediate: true }
+// )
 
 // Генерация путей для вкладок
 const getTabPath = (tabName: string): string => {

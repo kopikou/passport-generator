@@ -22,12 +22,29 @@ const {
   currentPlanId,
   planData,
   admissionInfo,
-  competences,
   passport,
   loading
 } = storeToRefs(store)
 
 const currentCompetence = ref<any>(null)
+
+const exporting = ref(false)
+
+async function exportPassport() {
+  exporting.value = true
+  try {
+    store.getPassportReport()    
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Ошибка при генерации документа',
+      position: 'top-right'
+    })
+  } finally {
+    exporting.value = false
+  }
+}
+
 const activeTab = ref('competence-relations')
 const sectionComponents = {
   'title-page': TitlePageSection,
@@ -44,10 +61,6 @@ const selectedSection = computed(() => {
 
 const currentCompetenceIndex = computed(() => {
   return (route.query.competence as string) || ''
-})
-
-const pageTitle = computed(() => {
-  return route.meta?.title || 'Паспорт компетенций'
 })
 
 const currentSectionComponent = computed(() => {
@@ -120,15 +133,6 @@ const updateActiveTab = () => {
 }
 
 onBeforeMount(async () => {
-  // if (currentPlanId.value) {
-  //   //await loadPlanData()
-    
-  //   if (route.query.section === 'title-page') {
-
-  //   } else if (route.query.competence) {
-  //     await loadCompetenceData(route.query.competence as string)
-  //   }
-  // }
   if (route.query.competence) {
     await loadCompetenceData(route.query.competence as string)
   }
@@ -176,7 +180,22 @@ watch(
 <template>
   <div class="competence-passport-view">
     <div class="section-header q-mb-md">
-      <div class="text-h4 q-mb-xs">{{ pageTitle }}</div>
+      <div class="row justify-content-between">
+        <div class="col text-h4 q-mb-xs">Паспорт компетенций</div>
+          <div class="col-auto">
+          <q-btn
+            flat
+            dense
+            icon="file_download"
+            label="Выгрузить"
+            @click="exportPassport"
+            :loading="exporting"
+            class="q-mr-sm bg-primary text-white"
+          >
+            <q-tooltip>Скачать схему формирования компетенций в формате Word</q-tooltip>
+          </q-btn>
+          </div>
+      </div>
       <div v-if="currentCompetence" class="text-subtitle1 text-grey">
         {{ currentCompetence.competence_index }} - {{ currentCompetence.competence }}
       </div>

@@ -42,7 +42,6 @@ function getCompetenceClass(type) {
   return `competence-${type.toLowerCase().replace(/ /g, '-')}`
 }
 
-// Проверка активности
 function isTitlePageActive() {
   return route.query.section === 'title-page'
 }
@@ -103,9 +102,6 @@ onBeforeMount(() => {
   //loadPassportData()
 })
 
-watch(() => route.params.id, () => {
-  //loadPassportData()
-})
 </script>
 
 <template>

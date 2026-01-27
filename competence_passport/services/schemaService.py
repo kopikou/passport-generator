@@ -78,8 +78,8 @@ class SchemaService:
     @staticmethod
     def update_semester_scheme(plan_id, discipline_id, competence_index, competence, semester, forms):
         """
-        Обновление схемы аттестации для компетенции в дисциплине и семестре.
-        Если формы не выбраны — удаление записи.
+        Обновление схемы аттестации для компетенции в дисциплине и семестре
+        Если формы не выбраны — удаление записи
         """
         # Получаем дисциплины
         plan = PlanData.objects.get(mira_id=plan_id)
@@ -134,7 +134,7 @@ class SchemaService:
     @staticmethod
     def validate_scheme_indicators(plan_id):
         """
-        Проверка соответствия числа промежуточных аттестаций и индикаторов.
+        Проверка соответствия числа промежуточных аттестаций и индикаторов
         """
         plan = PlanData.objects.get(mira_id=plan_id)
         
@@ -277,7 +277,7 @@ class SchemaService:
                     ind.delete()
                     indicators_removed += 1
             
-            # Обновляем кэш дисциплины
+            # Обновляем запись дисциплины
             RuleService.update_discipline_kompetences(discipline)
             
             final_count = LinesIndicators.objects.filter(
