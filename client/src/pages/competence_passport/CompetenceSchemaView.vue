@@ -23,6 +23,23 @@ const showEditor = ref(false)
 const editingData = ref<any>(null)
 const searchFilter = ref('')
 
+const exporting = ref(false)
+
+async function exportSchema() {
+  exporting.value = true
+  try {
+    store.getSchemaReport()    
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Ошибка при генерации документа',
+      position: 'top-right'
+    })
+  } finally {
+    exporting.value = false
+  }
+}
+
 // Столбцы таблицы ошибок
 const validationColumns = [
   {
@@ -208,7 +225,11 @@ function navigateToFix(errorRow) {
       return
     }
   }
-  $q.notify({ type: 'warning', position: 'top-right', message: 'Дисциплина не найдена в текущей схеме' })
+  $q.notify({ 
+    type: 'warning', 
+    position: 'top-right', 
+    message: 'Дисциплина не найдена в текущей схеме' 
+  })
 }
 
 async function navigateToPassport(errorRow) {
@@ -240,50 +261,6 @@ watch(() => route.params.id, () => {
 
 <template>
   <div class="q-pa-md q-mb-lg">
-    <!-- Шапка -->
-    <div class="row items-center q-mb-md">
-      <div class="col">
-        <h2 class="text-h4 q-ma-none">Схема компетенций</h2>
-        <div class="text-subtitle1 text-grey">
-          Соответствие компетенций, дисциплины и семестров изучения
-        </div>
-        <div class="text-subtitle1 text-grey">
-          Окно редактора вызывается щелчком мыши в необходимой ячейке
-        </div>
-      </div>
-      
-      <div class="col-auto">
-        <div class="row items-center q-gutter-md">
-          <q-btn
-            flat
-            dense
-            color="primary"
-            icon="check_circle"
-            label="Проверить"
-            @click="runSchemaValidation()"
-            :loading="validatingSchema"
-            class="q-mr-sm"
-          >
-            <q-tooltip>Проверить соответствие форм аттестации и индикаторов компетенций</q-tooltip>
-          </q-btn>
-          
-          <q-input
-            v-model="searchFilter"
-            placeholder="Поиск по компетенциям, дисциплинам..."
-            dense
-            outlined
-            clearable
-            @clear="searchFilter = ''"
-            style="min-width: 250px;"
-          >
-            <template v-slot:append>
-              <q-icon name="search" />
-            </template>
-          </q-input>
-        </div>
-      </div>
-    </div>
-
     <!-- Блок валидации -->
     <div v-if="validationStatus" class="q-mb-md validation-container">
       <q-banner 
@@ -365,6 +342,65 @@ watch(() => route.params.id, () => {
           </div>
         </div>
       </q-slide-transition>
+    </div>
+
+    <!-- Шапка -->
+    <div class="row items-center q-mb-md">
+      <div class="col">
+        <h2 class="text-h4 q-ma-none">Схема компетенций</h2>
+        <div class="text-subtitle1 text-grey">
+          Соответствие компетенций, дисциплины и семестров изучения
+        </div>
+        <div class="text-subtitle1 text-grey">
+          Окно редактора вызывается щелчком мыши в необходимой ячейке
+        </div>
+      </div>
+      
+      <div class="col-auto">
+        <div class="row items-center q-gutter-md   q-mb-md">
+          <q-btn
+            flat
+            dense
+            color="primary"
+            icon="check_circle"
+            label="Проверить"
+            @click="runSchemaValidation()"
+            :loading="validatingSchema"
+            class="q-mr-sm"
+          >
+            <q-tooltip>Проверить соответствие форм аттестации и индикаторов компетенций</q-tooltip>
+          </q-btn>
+          
+          <q-input
+            v-model="searchFilter"
+            placeholder="Поиск по компетенциям, дисциплинам..."
+            dense
+            outlined
+            clearable
+            @clear="searchFilter = ''"
+            style="min-width: 250px;"
+          >
+            <template v-slot:append>
+              <q-icon name="search" />
+            </template>
+          </q-input>
+        </div>
+
+        <div class="row justify-end">
+          <q-btn
+            flat
+            dense
+            icon="file_download"
+            label="Выгрузить"
+            @click="exportSchema"
+            :loading="exporting"
+            class="q-mr-sm bg-primary text-white"
+          >
+            <q-tooltip>Скачать схему формирования компетенций в формате Word</q-tooltip>
+          </q-btn>
+
+        </div>
+      </div>
     </div>
 
     <!-- Таблица схемы -->

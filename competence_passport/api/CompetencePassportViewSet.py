@@ -19,6 +19,8 @@ from competence_passport.serializer import CompetencePassportDataSerializer, Ind
     FinalIndicatorUpdateSerializer, IndicatorDetailsSerializer, IndicatorSerializer, FixSchemaSerializer
 from rest_framework.permissions import IsAuthenticated
 
+from django.http import HttpResponse
+
 class CompetencePassportViewSet(    
     RetrieveModelMixin,
     GenericViewSet):
@@ -41,6 +43,7 @@ class CompetencePassportViewSet(
 
     @action(methods=['GET'], url_path="get-group-list", detail=False, permission_classes=[IsAuthenticated])
     def get_group_list(self, request, *args, **kwargs):
+        """Получение данных о группе"""
         group_txt_filter = self.request.query_params.get('groupText')
         year_filter = self.request.query_params.get('year')
 
@@ -55,6 +58,7 @@ class CompetencePassportViewSet(
     
     @action(methods=['POST'], detail=False, url_path='update-discipline-competences')
     def update_discipline_competences(self, request, *args, **kwargs):
+        """Обновление связей между дисуиплинами и компетенцями"""
         serializer = UpdateDisciplineCompetencesSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -78,6 +82,7 @@ class CompetencePassportViewSet(
     
     @action(methods=['GET'], detail=True, url_path='validate-matrix')
     def validate_matrix(self, request, *args, **kwargs):
+        """Валидация матрицы"""
         plan_id = self.kwargs['pk']
         result = MatrixService.validate_competence_matrix(plan_id=plan_id)
         
@@ -86,6 +91,7 @@ class CompetencePassportViewSet(
     
     @action(methods=['POST'], detail=False, url_path='update-semester-scheme')
     def update_semester_scheme(self, request, *args, **kwargs):
+        """Обновление схемы формирования"""
         serializer = SchemeUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -131,6 +137,7 @@ class CompetencePassportViewSet(
 
     @action(methods=['POST'], detail=False, url_path='update-competence-relations')
     def update_competence_relations(self, request, *args, **kwargs):
+        """Обновление связи компетенций в паспорте"""
         serializer = CompetenceRelationsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -140,6 +147,7 @@ class CompetencePassportViewSet(
 
     @action(methods=['POST'], detail=False, url_path='update-competence-final-indicators')
     def update_competence_final_indicators(self,request, *args, **kwargs):
+        """Обновление итогового индикатора"""
         serializer = FinalIndicatorUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -160,6 +168,7 @@ class CompetencePassportViewSet(
     
     @action(methods=['POST'], detail=False, url_path='update-indicator-details')
     def update_indicator_details(self, request, *args, **kwargs):
+        """Обновление деталей индикаторов"""
         input_serializer = IndicatorDetailsSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
 
@@ -214,3 +223,45 @@ class CompetencePassportViewSet(
         RuleService.update_discipline_kompetences(discipline)
 
         return Response({'success': True})
+    
+    @action(methods=['GET'], detail=True, url_path='get-matrix-report')
+    def get_matrix_report(self, request, *args, **kwargs):
+        """Экспорт матрицы компетенций в Word"""
+        plan_id = self.kwargs['pk']
+
+        doc_content = CompetencePassportDataService.get_matrix_report(plan_id)
+
+        response = HttpResponse(
+            doc_content,
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+        #response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    
+    @action(methods=['GET'], detail=True, url_path='get-schema-report')
+    def get_schema_report(self, request, *args, **kwargs):
+        """Экспорт схемы компетенций в Word"""
+        plan_id = self.kwargs['pk']
+
+        doc_content = CompetencePassportDataService.get_schema_report(plan_id)
+
+        response = HttpResponse(
+            doc_content,
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+
+        return response
+    
+    @action(methods=['GET'], detail=True, url_path='get-passport-report')
+    def get_passport_report(self, request, *args, **kwargs):
+        """Экспорт паспорта компетенций в Word"""
+        plan_id = self.kwargs['pk']
+
+        doc_content = CompetencePassportDataService.get_passport_report(plan_id)
+
+        response = HttpResponse(
+            doc_content,
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+
+        return response

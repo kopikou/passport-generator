@@ -92,7 +92,7 @@ watch([selectedYear, groupTextFilter], () => {
 
 onBeforeMount(async () => {
   await fetchGroups()
-  //groupTextFilter.value = ''
+
 })
 </script>
 

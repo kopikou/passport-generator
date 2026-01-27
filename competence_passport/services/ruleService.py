@@ -193,10 +193,7 @@ class RuleService:
         return types if types else ['Другой']
     
     def should_exclude_discipline(discipline_index):
-        """Проверяет, должна ли дисциплина быть исключена из проверки."""
-        if not discipline_index:
-            return False
-            
+        """Проверяет, должна ли дисциплина быть исключена из проверки"""
         exclude_groups = (RuleService.DISCIPLINE_GROUPS_TO_EXCLUDE | 
                         RuleService.DISCIPLINE_GROUPS_TO_EXCLUDE_WITH_CHILDREN)
         
@@ -249,8 +246,6 @@ class RuleService:
     @classmethod
     def add_competence_to_discipline(cls, discipline, competence_index, competence_name):
         """Добавляет одну компетенцию к дисциплине с генерацией индикатора"""
-        from rpd.models.rpd_models import LinesIndicators
-
         # Находим последний номер индикатора
         existing = LinesIndicators.objects.filter(
             planlineid=discipline,

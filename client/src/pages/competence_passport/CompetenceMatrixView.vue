@@ -16,16 +16,31 @@ const {
   disciplines,
   loading,
   validating,
-  matrixValidation
+  matrixValidation,
 } = storeToRefs(store)
 
-// Состояние
 const searchFilter = ref('')
 const expandedGroups = ref(new Set<string>())
 const showEditor = ref(false)
 const editingRow = ref<any>(null)
 const showValidationDetails = ref(false)
 const highlightedDiscipline = ref<string | null>(null)
+const exporting = ref(false)
+
+async function exportMatrix() {
+  exporting.value = true
+  try {
+    store.getMatrixReport()    
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Ошибка при генерации документа',
+      position: 'top-right'
+    })
+  } finally {
+    exporting.value = false
+  }
+}
 
 // Столбцы
 const columns = [
@@ -398,7 +413,7 @@ watch(() => route.params.id, () => {
       </div>
       
       <div class="col-auto">
-        <div class="row items-center q-gutter-sm">
+        <div class="row items-center q-gutter-sm  q-mb-md">
           <q-btn flat dense color="primary" icon="expand_more" @click="expandAll" label="Раскрыть все" class="q-mr-sm" />
           <q-btn flat dense color="primary" icon="expand_less" @click="collapseAll" label="Свернуть все" class="q-mr-sm" />
           <q-btn
@@ -425,6 +440,21 @@ watch(() => route.params.id, () => {
               <q-icon name="search" />
             </template>
           </q-input>
+        </div>
+
+        <div class="row justify-end">
+          <q-btn
+            flat
+            dense
+            icon="file_download"
+            label="Выгрузить"
+            @click="exportMatrix"
+            :loading="exporting"
+            class="q-mr-sm bg-primary text-white"
+          >
+            <q-tooltip>Скачать матрицу компетенций в формате Word</q-tooltip>
+          </q-btn>
+
         </div>
       </div>
     </div>
