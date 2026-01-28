@@ -147,11 +147,13 @@ class CompetencePassportDataService:
     def get_matrix_report(cls, plan_id):
         """Экспорт матрицы компетенций в Word"""
         data = cls.get_competence_passport_data(plan_id)
-
         admission_info = data['admission_info']
         
+        # Агрегируем данные по иерархии
+        matrix_hierarchy = cls.build_matrix_hierarchy(data['matrix'])
+        
         context = {
-            'matrix': data['matrix'],
+            'matrix': matrix_hierarchy,
             'direction_code': admission_info.get('cdirection__cod', ''),
             'direction': admission_info.get('cdirection__name', ''),
             'spec_name': admission_info.get('spec_name', ''),
@@ -163,7 +165,6 @@ class CompetencePassportDataService:
         
         template_path = f'{BASE_DIR}{Path("/templates/docxRPD/matrix.docx")}'
         doc = DocxTemplate(template_path)
-        
         doc.render(context)
 
         buffer = BytesIO()
@@ -171,6 +172,45 @@ class CompetencePassportDataService:
         buffer.seek(0)
         
         return buffer.getvalue()
+    
+    @staticmethod
+    def build_matrix_hierarchy(matrix_data):
+        """Иерархия дисциплин"""
+        # Разделяем на группы и дисциплины
+        groups = {}
+        disciplines = []
+        
+        for item in matrix_data:
+            if item['type'] == 'group':
+                groups[item['discipline_index']] = {
+                    'discipline_index': item['discipline_index'],
+                    'discipline_name': item['discipline_name'],
+                    'competence_list': item['competence_list'],
+                    'disciplines': [] 
+                }
+            else:
+                disciplines.append(item)
+        
+        # Назначаем дисциплины своим группам
+        for disc in disciplines:
+            # Находим родительскую группу 
+            disc_parts = disc['discipline_index'].split('.')
+            
+            # Ищем самую глубокую подходящую группу
+            for i in range(len(disc_parts) - 1, 0, -1):
+                parent_index = '.'.join(disc_parts[:i])
+                if parent_index in groups:
+                    groups[parent_index]['disciplines'].append(disc)
+                    break
+        
+        result = []
+        for group_index in sorted(groups.keys()):
+            group = groups[group_index]
+            # Сортируем дисциплины внутри группы
+            group['disciplines'].sort(key=lambda x: x['discipline_index'])
+            result.append(group)
+        
+        return result
     
     @classmethod
     def get_schema_report(cls, plan_id):
@@ -246,7 +286,7 @@ class CompetencePassportDataService:
             'zacho': '*(Зо)'
         }
         
-        return ''.join(form_mapping.get(fc, '') for fc in form_control_list)
+        return '\n'.join(form_mapping.get(fc, '') for fc in form_control_list)
     
     @classmethod
     def get_passport_report(cls, plan_id):

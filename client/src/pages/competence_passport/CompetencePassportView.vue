@@ -190,7 +190,8 @@ watch(
             label="Выгрузить"
             @click="exportPassport"
             :loading="exporting"
-            class="q-mr-sm bg-primary text-white"
+            class="q-mr-sm q-pr-sm bg-primary text-white"
+            
           >
             <q-tooltip>Скачать схему формирования компетенций в формате Word</q-tooltip>
           </q-btn>

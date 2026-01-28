@@ -450,7 +450,7 @@ watch(() => route.params.id, () => {
             label="Выгрузить"
             @click="exportMatrix"
             :loading="exporting"
-            class="q-mr-sm bg-primary text-white"
+            class="q-mr-sm q-pr-sm bg-primary text-white"
           >
             <q-tooltip>Скачать матрицу компетенций в формате Word</q-tooltip>
           </q-btn>
