@@ -83,12 +83,10 @@ function onTabChange(tabName) {
 }
 
 async function loadPlanData() {
-  if (!currentPlanId.value) {
-    return
-  }
-  
   try {
-    await store.fetchCompetencePassport(currentPlanId.value)
+    //await store.fetchCompetencePassport(currentPlanId.value)
+    //await store.fetchPlanAdmissionData(currentPlanId.value)
+    await store.fetchPassport(currentPlanId.value)
   } catch (error: any) {
     $q.notify({
       type: 'negative',
@@ -133,6 +131,8 @@ const updateActiveTab = () => {
 }
 
 onBeforeMount(async () => {
+  await loadPlanData()
+
   if (route.query.competence) {
     await loadCompetenceData(route.query.competence as string)
   }

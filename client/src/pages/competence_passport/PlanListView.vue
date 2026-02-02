@@ -78,10 +78,6 @@ function uploadPlan() {
 }
 
 function selectExistingPlan() {
-  if (!currentPlanId.value) {
-    $q.notify({ type: 'warning', message: 'Выберите группу' })
-    return
-  }
   router.push(`/competence-passport/${currentPlanId.value}/competences`)
 }
 

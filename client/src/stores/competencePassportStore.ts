@@ -155,22 +155,92 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   })
 
   // Действия
-  async function fetchCompetencePassport(planId: number) {
+  // async function fetchCompetencePassport(planId: number) {
+  //   loading.value = true
+  //   try {
+  //     const response = await api.get(`/api/competence-passport/${planId}/`)
+  //     const data = response.data
+
+  //     planData.value = data.plan
+  //     admissionInfo.value = data.admission_info
+  //     competences.value = data.competences
+  //     disciplines.value = data.disciplines
+  //     matrix.value = data.matrix
+  //     schema.value = data.schema
+  //     passport.value = data.passport
+
+  //     currentPlanId.value = planId
+  //     LocalStorage.set('current_plan_id', planId)
+  //   } finally {
+  //     loading.value = false
+  //   }
+  // }
+
+  async function fetchPlanAdmissionData(planId: number) {
     loading.value = true
     try {
-      const response = await api.get(`/api/competence-passport/${planId}/`)
+      const response = await api.get(`/api/competence-passport/${planId}/get-plan-admission/`)
       const data = response.data
 
       planData.value = data.plan
       admissionInfo.value = data.admission_info
-      competences.value = data.competences
-      disciplines.value = data.disciplines
-      matrix.value = data.matrix
-      schema.value = data.schema
-      passport.value = data.passport
 
       currentPlanId.value = planId
       LocalStorage.set('current_plan_id', planId)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function fetchReferences(planId: number) {
+    loading.value = true
+    try {
+      const response = await api.get(`/api/competence-passport/${planId}/get-reference-data/`)
+      const data = response.data
+
+      competences.value = data.competences
+      disciplines.value = data.disciplines
+
+
+      currentPlanId.value = planId
+      LocalStorage.set('current_plan_id', planId)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function fetchMatrix(planId: number) {
+    loading.value = true
+    try {
+      const response = await api.get(`/api/competence-passport/${planId}/get-matrix-data/`)
+      const data = response.data
+
+      matrix.value = data.matrix
+      
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function fetchSchema(planId: number) {
+    loading.value = true
+    try {
+      const response = await api.get(`/api/competence-passport/${planId}/get-schema-data/`)
+      const data = response.data
+
+      schema.value = data.schema
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function fetchPassport(planId: number) {
+    loading.value = true
+    try {
+      const response = await api.get(`/api/competence-passport/${planId}/get-passport-data/`)
+      const data = response.data
+
+      passport.value = data.passport
     } finally {
       loading.value = false
     }
@@ -205,7 +275,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     try {
       const payload = { plan_id: planId, discipline_id: disciplineId, selected_competences: selectedCompetences }
       await api.post('/api/competence-passport/update-discipline-competences/', payload)
-      await fetchCompetencePassport(planId)
+      //await fetchCompetencePassport(planId)
+      await fetchMatrix(planId)
       await validateMatrix()
     } finally {
       saving.value = false
@@ -243,7 +314,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     try {
       const payload = { plan_id: planId, discipline_id: disciplineId, competence_index: competenceIndex, competence, semester, forms }
       await api.post('/api/competence-passport/update-semester-scheme/', payload)
-      await fetchCompetencePassport(planId)
+      //await fetchCompetencePassport(planId)
+      await fetchSchema(planId)
       await validateSchemeIndicators()
     } finally {
       saving.value = false
@@ -270,7 +342,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       const response = await api.post('/api/competence-passport/fix-scheme-indicators/', payload)
       const result = response.data
 
-      await fetchCompetencePassport(currentPlanId.value)
+      //await fetchCompetencePassport(currentPlanId.value)
+      await fetchSchema(currentPlanId.value)//????????????????
       await validateSchemeIndicators()
 
       return result
@@ -289,7 +362,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     saving.value = true
     try {
       await api.post('/api/competence-passport/update-competence-relations/', payload)
-      await fetchCompetencePassport(currentPlanId.value!)
+      //await fetchCompetencePassport(currentPlanId.value!)
+      await fetchPassport(currentPlanId.value!)
     } finally {
       saving.value = false
     }
@@ -305,7 +379,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     try {
       const payload = { plan_id: planId, competence_index: competenceIndex, final_indicator_text: finalIndicatorText }
       await api.post('/api/competence-passport/update-competence-final-indicators/', payload)
-      await fetchCompetencePassport(currentPlanId.value!)
+      //await fetchCompetencePassport(currentPlanId.value!)
+      await fetchPassport(currentPlanId.value!)
     } finally {
       saving.value = false
     }
@@ -323,7 +398,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     saving.value = true
     try {
       await api.post('/api/competence-passport/update-indicator-details/', payload)
-      await fetchCompetencePassport(currentPlanId.value!)
+      //await fetchCompetencePassport(currentPlanId.value!)
+      await fetchPassport(currentPlanId.value!)
     } finally {
       saving.value = false
     }
@@ -349,7 +425,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       }
         
       await api.post('/api/competence-passport/create-indicator/', backendPayload)
-      await fetchCompetencePassport(currentPlanId.value!)
+      //await fetchCompetencePassport(currentPlanId.value!)
+      await fetchPassport(currentPlanId.value!)
     } finally {
       saving.value = false
     }
@@ -364,7 +441,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     saving.value = true
     try {
       await api.put(`/api/competence-passport/${indicatorId}/update-indicator/`, payload)
-      await fetchCompetencePassport(currentPlanId.value!)
+      //await fetchCompetencePassport(currentPlanId.value!)
+      await fetchPassport(currentPlanId.value!)
     } finally {
       saving.value = false
     }
@@ -375,7 +453,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     saving.value = true
     try {
       await api.delete(`/api/competence-passport/${indicatorId}/delete-indicator/`)
-      await fetchCompetencePassport(currentPlanId.value!)
+      //await fetchCompetencePassport(currentPlanId.value!)
+      await fetchPassport(currentPlanId.value!)
     } finally {
       saving.value = false
     }
@@ -490,7 +569,12 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     isSchemaValid,
 
     // Действия
-    fetchCompetencePassport,
+    //fetchCompetencePassport,
+    fetchPlanAdmissionData,
+    fetchReferences,
+    fetchMatrix,
+    fetchSchema,
+    fetchPassport,
     validateMatrix,
     validateSchemeIndicators,
     fixSchemeIndicators,

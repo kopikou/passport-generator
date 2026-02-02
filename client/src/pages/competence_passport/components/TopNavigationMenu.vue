@@ -48,7 +48,6 @@ const getTabPath = (tabName: string): string => {
 <template>
   <div class="top-navigation-layout">
     <q-tabs
-      v-model="currentTab"
       class="text-black"
       align="left"
       indicator-color="primary"

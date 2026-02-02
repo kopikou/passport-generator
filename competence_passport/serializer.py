@@ -144,12 +144,12 @@ class CompetencePassportSerializer(serializers.Serializer):
     indicator_list = CompetenceWithDisciplineIndicators(many=True, allow_empty=True)
 
 class CompetenceSerializer(serializers.Serializer):
-    """Serializer для каомпетенции"""
+    """Serializer для компетенции"""
     competence_index = serializers.CharField(allow_null=True, allow_blank=True)
     competence = serializers.CharField(allow_null=True, allow_blank=True)
     type = serializers.CharField(allow_blank=True, allow_null=True)
     
-class DiasciplineSerializer(serializers.Serializer):
+class DisciplineSerializer(serializers.Serializer):
     """Serializer для дисциплины"""
     discipline_id = serializers.IntegerField()
     discipline_index = serializers.CharField() 
@@ -162,9 +162,26 @@ class CompetencePassportDataSerializer(serializers.Serializer):
     plan = PlanSerializer()
     admission_info = serializers.DictField()
     competences = CompetenceSerializer(many=True)
-    disciplines = DiasciplineSerializer(many=True)
+    disciplines = DisciplineSerializer(many=True)
     matrix = CompetenceMatrixSerializer(many=True)
     schema = CompetenceSchemaSerializer(many=True)
+    passport = CompetencePassportSerializer(many=True)
+
+class PlanAdmissionInfoSerializer(serializers.Serializer):
+    plan = PlanSerializer()
+    admission_info = serializers.DictField()
+
+class ReferenceDataSerializer(serializers.Serializer):
+    competences = CompetenceSerializer(many=True)
+    disciplines = DisciplineSerializer(many=True)
+
+class MatrixDataSerializer(serializers.Serializer):
+    matrix = CompetenceMatrixSerializer(many=True)
+
+class SchemaDataSerializer(serializers.Serializer):
+    schema = CompetenceSchemaSerializer(many=True)
+
+class PassportDataSerializer(serializers.Serializer):
     passport = CompetencePassportSerializer(many=True)
 
 class UpdateDisciplineCompetencesSerializer(serializers.Serializer):

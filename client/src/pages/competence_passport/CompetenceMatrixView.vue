@@ -236,17 +236,14 @@ function scrollToDiscipline(disciplineIndex) {
 
 // Загрузка и валидация
 async function loadMatrixData() {
-  const planId = Number(route.params.id)
-  if (planId) {
-    await store.fetchCompetencePassport(planId)
-    await store.validateMatrix()
+  await store.fetchMatrix(currentPlanId.value)
+  //await store.validateMatrix()
 
-    matrix.value.forEach(item => {
-      if (item.type === 'group' && item.level === 1 && hasChildren(item.discipline_index)) {
-        expandedGroups.value.add(item.discipline_index)
-      }
-    })
-  }
+  matrix.value.forEach(item => {
+    if (item.type === 'group' && item.level === 1 && hasChildren(item.discipline_index)) {
+      expandedGroups.value.add(item.discipline_index)
+    }
+  })
 }
 
 async function runMatrixValidation() {

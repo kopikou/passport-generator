@@ -96,14 +96,14 @@ const getTypeColor = (type) => {
 }
 
 // // Загрузка данных
-// async function loadCompetences() {
-//   if (!currentPlanId.value) return
-//   await store.fetchCompetencePassport(currentPlanId.value)
-// }
+async function loadReferences() {
+  //await store.fetchCompetencePassport(currentPlanId.value)
+  await store.fetchReferences(currentPlanId.value)
+}
 
-// onBeforeMount(() => {
-//   if (currentPlanId.value) loadCompetences()
-// })
+onBeforeMount(() => {
+  if (currentPlanId.value) loadReferences()
+})
 </script>
 
 <template>

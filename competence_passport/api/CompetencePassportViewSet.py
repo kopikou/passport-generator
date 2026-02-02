@@ -16,14 +16,13 @@ from competence_passport.services.ruleService import RuleService
 from competence_passport.services.competencePassportDataService import CompetencePassportDataService
 from competence_passport.serializer import CompetencePassportDataSerializer, IndicatorsSerializer,\
     UpdateDisciplineCompetencesSerializer, SchemeUpdateSerializer, CompetenceRelationsSerializer,\
-    FinalIndicatorUpdateSerializer, IndicatorDetailsSerializer, IndicatorSerializer, FixSchemaSerializer
+    FinalIndicatorUpdateSerializer, IndicatorDetailsSerializer, IndicatorSerializer, FixSchemaSerializer, \
+    PlanAdmissionInfoSerializer, ReferenceDataSerializer, MatrixDataSerializer, SchemaDataSerializer, PassportDataSerializer
 from rest_framework.permissions import IsAuthenticated
 
 from django.http import HttpResponse
 
-class CompetencePassportViewSet(    
-    RetrieveModelMixin,
-    GenericViewSet):
+class CompetencePassportViewSet(GenericViewSet):
     """
     ViewSet для матрицы, схемы и паспорта компетенций
     """
@@ -31,15 +30,25 @@ class CompetencePassportViewSet(
     serializer_class = CompetencePassportDataSerializer
     permission_classes = [UserProfileHasPermission(Permissions.can_use_generator) and CanViewRPDProgram]
 
-    def retrieve(self, request, *args, **kwargs):
+    # def retrieve(self, request, *args, **kwargs):
+    #     plan_id = self.kwargs['pk']
+
+    #     result = CompetencePassportDataService.get_competence_passport_data(plan_id)
+            
+    #     serializer = self.get_serializer(data=result)
+    #     serializer.is_valid(raise_exception=True)
+    #     return Response(serializer.validated_data)
+
+    @action(methods=['GET'], detail=True, url_path="get-plan-admission", permission_classes=[IsAuthenticated])
+    def get_plan_admission_info(self, request, *args, **kwargs):
+        """Получение данных о плане"""
         plan_id = self.kwargs['pk']
 
-        result = CompetencePassportDataService.get_competence_passport_data(plan_id)
-            
-        serializer = self.get_serializer(data=result)
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.validated_data)
+        result = CompetencePassportDataService.get_plan_admission_data(plan_id)
 
+        serializer = PlanAdmissionInfoSerializer(data=result)
+        serializer.is_valid(raise_exception=True) 
+        return Response(serializer.validated_data)
 
     @action(methods=['GET'], url_path="get-group-list", detail=False, permission_classes=[IsAuthenticated])
     def get_group_list(self, request, *args, **kwargs):
@@ -55,6 +64,50 @@ class CompetencePassportViewSet(
         return Response(
             data=res,
         )
+    
+    @action(methods=['GET'], detail=True, url_path="get-reference-data", permission_classes=[IsAuthenticated])
+    def get_reference_data(self, request, *args, **kwargs):
+        """Получение данных справочников"""
+        plan_id = self.kwargs['pk']
+
+        result = CompetencePassportDataService.get_reference_data(plan_id)
+
+        serializer = ReferenceDataSerializer(data=result)
+        serializer.is_valid(raise_exception=True) 
+        return Response(serializer.validated_data)
+    
+    @action(methods=['GET'], detail=True, url_path="get-matrix-data", permission_classes=[IsAuthenticated])
+    def get_matrix_data(self, request, *args, **kwargs):
+        """Получение данных матрицы компетенций"""
+        plan_id = self.kwargs['pk']
+
+        result = CompetencePassportDataService.get_matrix_data(plan_id)
+
+        serializer = MatrixDataSerializer(data=result)
+        serializer.is_valid(raise_exception=True) 
+        return Response(serializer.validated_data)
+    
+    @action(methods=['GET'], detail=True, url_path="get-schema-data", permission_classes=[IsAuthenticated])
+    def get_schema_data(self, request, *args, **kwargs):
+        """Получение данных схемы компетенций"""
+        plan_id = self.kwargs['pk']
+
+        result = CompetencePassportDataService.get_schema_data(plan_id)
+
+        serializer = SchemaDataSerializer(data=result)
+        serializer.is_valid(raise_exception=True) 
+        return Response(serializer.validated_data)
+    
+    @action(methods=['GET'], detail=True, url_path="get-passport-data", permission_classes=[IsAuthenticated])
+    def get_passport_data(self, request, *args, **kwargs):
+        """Получение данных паспорта компетенций"""
+        plan_id = self.kwargs['pk']
+
+        result = CompetencePassportDataService.get_passport_data(plan_id)
+
+        serializer = PassportDataSerializer(data=result)
+        serializer.is_valid(raise_exception=True) 
+        return Response(serializer.validated_data)
     
     @action(methods=['POST'], detail=False, url_path='update-discipline-competences')
     def update_discipline_competences(self, request, *args, **kwargs):

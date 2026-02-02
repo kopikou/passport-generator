@@ -32,13 +32,14 @@ const currentSidebar = computed(() => {
 const showSidebar = computed(() => currentSidebar.value !== null)
 
 // Загрузка данных
-async function loadCompetences() {
-  if (!currentPlanId.value) return
-  await store.fetchCompetencePassport(currentPlanId.value)
+async function loadData() {
+  //await store.fetchCompetencePassport(currentPlanId.value)
+  await store.fetchPlanAdmissionData(currentPlanId.value)
+  //await store.fetchReferences(currentPlanId.value)
 }
 
 onBeforeMount(() => {
-  if (currentPlanId.value) loadCompetences()
+  if (currentPlanId.value) loadData()
 })
 </script>
 

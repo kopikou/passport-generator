@@ -17,9 +17,87 @@ from app.settings import BASE_DIR
 
 class CompetencePassportDataService:
     """Главный сервис для получения матрицы, схемы и паспорта компетенций"""
+    # @staticmethod
+    # def get_competence_passport_data(plan_id):
+    #     """Все данные матрицы, схемы и паспорта компетенций"""
+    #     plan = plan_id if isinstance(plan_id, PlanData) else PlanData.objects.get(mira_id=plan_id)
+    #     plan_serializer = PlanSerializer(plan)
+    #     plan_data = plan_serializer.data
+
+
+    #     plan_line_link = PlanLinesLink.objects.filter(planlines__plan=plan).first()
+    #     cadmission = plan_line_link.cadmission
+    #     admission_info = AISServices.get_admissionn_info(cadmission) if not settings.DISABLE_MIRA else {
+    #         "id": 25064,
+    #         "yr": 2025,
+    #         "abbr": "ИСТб",
+    #         "cuchplan_id": 10179,
+    #         "spec_name": "Информационные системы и технологии в административном управлении",
+    #         "direct_name": "Информационные системы и технологии",
+    #         "kvalif_name": "Бакалавр",
+    #         "ckaf_id": 1988626,
+    #         "cfac_id": 46,
+    #         "ckaf__name": "Информационных технологий и анализа данных",
+    #         "ckaf__ccatdep__nameshort": "Институт информационных технологий и анализа данных ",
+    #         "cfac__name": "Институт информационных технологий и анализа данных",
+    #         "cadmkind": 2,
+    #         "cadmkind__name": "бакалавры",
+    #         "cadmkind__name_prof": "профиль",
+    #         "cdirection": 812733,
+    #         "cdirection__name": "Информационные системы и технологии",
+    #         "cdirection__cod": "09.03.02",
+    #         "cspec": None,
+    #         "cspec__name": None,
+    #         "cspec__code": None,
+    #         "cfob": 1,
+    #         "cfob__name": "очная"
+    #     }
+
+    #     raw_disciplines = RuleService.get_all_disciplines(
+    #         plan_id=plan,
+    #         filter=True,
+    #         exclude_children=False
+    #     )
+    #     disciplines = []
+    #     for disc in raw_disciplines:
+    #         disciplines.append({
+    #             "discipline_id": disc['id'],
+    #             "discipline_index": disc['newdisid'],
+    #             "discipline_name": disc['dis'] or "",
+    #             "type": RuleService.get_discipline_types(disc['newdisid'])
+    #         })
+
+    #     discipline_ids = [d['id'] for d in raw_disciplines]
+    #     raw_competences = RuleService.get_all_competences(
+    #         planlineid__in=discipline_ids
+    #     )
+    #     competences = []
+    #     for comp in raw_competences:
+    #         competences.append({
+    #             "competence_index": comp['competence_index'],
+    #             "competence": comp['competence'],
+    #             "type": RuleService.get_competence_type(comp['competence_index'])
+    #         })
+
+    #     matrix = MatrixService.get_competence_matrix(plan_id)
+    #     schema = SchemaService.get_competence_schema(plan_id)
+    #     passport = PassportService.get_competence_passport(plan_id)
+
+        
+    #     data = {
+    #         'admission_info': admission_info,
+    #         'plan': plan_data,
+    #         'competences': competences,
+    #         'disciplines': disciplines,
+    #         'matrix': matrix,
+    #         'schema': schema,
+    #         'passport': passport 
+    #     }
+    #     return data
+    
     @staticmethod
-    def get_competence_passport_data(plan_id):
-        """Все данные матрицы, схемы и паспорта компетенций"""
+    def get_plan_admission_data(plan_id):
+        """Данные плана и группы"""
         plan = plan_id if isinstance(plan_id, PlanData) else PlanData.objects.get(mira_id=plan_id)
         plan_serializer = PlanSerializer(plan)
         plan_data = plan_serializer.data
@@ -52,46 +130,10 @@ class CompetencePassportDataService:
             "cfob": 1,
             "cfob__name": "очная"
         }
-
-        raw_disciplines = RuleService.get_all_disciplines(
-            plan_id=plan,
-            filter=True,
-            exclude_children=False
-        )
-        disciplines = []
-        for disc in raw_disciplines:
-            disciplines.append({
-                "discipline_id": disc['id'],
-                "discipline_index": disc['newdisid'],
-                "discipline_name": disc['dis'] or "",
-                "type": RuleService.get_discipline_types(disc['newdisid'])
-            })
-
-        discipline_ids = [d['id'] for d in raw_disciplines]
-        raw_competences = RuleService.get_all_competences(
-            planlineid__in=discipline_ids
-        )
-        competences = []
-        for comp in raw_competences:
-            competences.append({
-                "competence_index": comp['competence_index'],
-                "competence": comp['competence'],
-                "type": RuleService.get_competence_type(comp['competence_index'])
-            })
-
-        matrix = MatrixService.get_competence_matrix(plan_id)
-        schema = SchemaService.get_competence_schema(plan_id)
-        passport = PassportService.get_competence_passport(plan_id)
-
         
         data = {
             'admission_info': admission_info,
             'plan': plan_data,
-            'competences': competences,
-            'disciplines': disciplines,
-            'matrix': matrix,
-            'schema': schema,
-            'passport': passport 
         }
         return data
 
@@ -141,6 +183,73 @@ class CompetencePassportDataService:
             })
 
         data.sort(key=lambda x: x['abbr'].lower())
+        return data
+    
+    @staticmethod
+    def get_reference_data(plan_id):
+        """Данные справочников"""
+        plan = plan_id if isinstance(plan_id, PlanData) else PlanData.objects.get(mira_id=plan_id)
+    
+        raw_disciplines = RuleService.get_all_disciplines(
+            plan_id=plan,
+            filter=True,
+            exclude_children=False
+        )
+        disciplines = []
+        for disc in raw_disciplines:
+            disciplines.append({
+                "discipline_id": disc['id'],
+                "discipline_index": disc['newdisid'],
+                "discipline_name": disc['dis'] or "",
+                "type": RuleService.get_discipline_types(disc['newdisid'])
+            })
+
+        discipline_ids = [d['id'] for d in raw_disciplines]
+        raw_competences = RuleService.get_all_competences(
+            planlineid__in=discipline_ids
+        )
+        competences = []
+        for comp in raw_competences:
+            competences.append({
+                "competence_index": comp['competence_index'],
+                "competence": comp['competence'],
+                "type": RuleService.get_competence_type(comp['competence_index'])
+            })
+        
+        data = {
+            'competences': competences,
+            'disciplines': disciplines,
+        }
+        return data
+    
+    @staticmethod
+    def get_matrix_data(plan_id):
+        """Все данные матрицы компетенций"""
+        matrix = MatrixService.get_competence_matrix(plan_id)
+
+        data = {
+            'matrix': matrix,
+        }
+        return data
+    
+    @staticmethod
+    def get_schema_data(plan_id):
+        """Все данные схемы компетенций"""
+        schema = SchemaService.get_competence_schema(plan_id)
+        
+        data = {
+            'schema': schema,
+        }
+        return data
+
+    
+    @staticmethod
+    def get_passport_data(plan_id):
+        """Все данные паспорта компетенций"""
+        passport = PassportService.get_competence_passport(plan_id) 
+        data = {
+            'passport': passport 
+        }
         return data
 
     @classmethod

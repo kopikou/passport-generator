@@ -153,11 +153,7 @@ const filteredSchema = computed(() => {
 })
 
 async function loadSchemaData() {
-  const planId = Number(route.params.id)
-  if (planId) {
-    await store.fetchCompetencePassport(planId)
-    await store.validateSchemeIndicators()
-  }
+  await store.fetchSchema(currentPlanId.value)
 }
 
 async function runSchemaValidation() {

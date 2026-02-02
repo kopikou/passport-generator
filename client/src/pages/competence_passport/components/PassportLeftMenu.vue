@@ -95,7 +95,7 @@ function navigateToCompetence(competenceIndex) {
 
 // Загрузка данных
 async function loadPassportData() {
-  await store.fetchCompetencePassport(currentPlanId.value)
+  //await store.fetchCompetencePassport(currentPlanId.value)
 }
 
 onBeforeMount(() => {
