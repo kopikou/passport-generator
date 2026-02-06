@@ -315,7 +315,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       const payload = { plan_id: planId, discipline_id: disciplineId, competence_index: competenceIndex, competence, semester, forms }
       await api.post('/api/competence-passport/update-semester-scheme/', payload)
       //await fetchCompetencePassport(planId)
-      await fetchSchema(planId)
+      //await fetchSchema(planId)
       await validateSchemeIndicators()
     } finally {
       saving.value = false

@@ -5,6 +5,8 @@ export enum Permissions {
   can_edit_rpd = "can_edit_rpd",
   scientific_admin = "scientific_admin",
   can_monitor_rops = "can_monitor_rops",
+  can_use_competence_passport_generator = 'can_use_competence_passport_generator',
+  can_edit_competence_passport = 'can_edit_competence_passport',
 }
 
 export interface PlanLineItem {

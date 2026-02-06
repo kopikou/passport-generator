@@ -178,7 +178,7 @@ watch(
 </script>
 
 <template>
-  <div class="competence-passport-view">
+  <div class="competence-passport-view q-pa-sm">
     <div class="section-header q-mb-md">
       <div class="row justify-content-between">
         <div class="col text-h4 q-mb-xs">Паспорт компетенций</div>

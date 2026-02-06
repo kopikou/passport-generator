@@ -71,7 +71,7 @@ async function saveIndicator(indicator) {
 </script>
 
 <template>
-  <div class="q-mb-lg">
+  <div class="q-mb-lg q-pb-lg">
     <div class="text-h6">{{ sectionTitle }}</div>  
     <div class="text-grey q-mb-sm">Раскройте для заполнения</div>
 

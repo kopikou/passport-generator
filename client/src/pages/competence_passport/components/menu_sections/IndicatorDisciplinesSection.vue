@@ -287,7 +287,7 @@ async function moveIndicatorDown(indicator) {
 </script>
 
 <template>
-  <div class="q-mb-lg">
+  <div class="q-mb-lg q-pb-lg">
     <div class="text-h6 q-mb-md">{{ sectionTitle }}</div>
     <div class="text-grey q-mb-sm flex items-center justify-between">
       <span>Управление индикаторами достижения компетенций</span>

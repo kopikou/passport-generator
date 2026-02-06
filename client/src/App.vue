@@ -80,11 +80,8 @@ onBeforeMount(async () => {
                        v-show="can_upload"
           />
           <q-route-tab icon="mdi-file-document-edit" label="Паспорт компетенций" to="/competence-passport"
-                       v-permissions-required="Permissions.can_use_generator"
+                       v-permissions-required="Permissions.can_use_competence_passport_generator"
           />
-          <!-- <q-route-tab icon="mdi-file-document-edit" label="Паспорт компетенций" to="/competence"
-                       v-permissions-required="Permissions.can_use_generator"
-          /> -->
           <q-route-tab icon="mdi-generator-portable" label="РПД / РПП" to="/generator"
                        v-permissions-required="Permissions.can_use_generator"
           />

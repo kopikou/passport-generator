@@ -382,7 +382,7 @@ const routes: RouteRecordRaw[] = [
     path: '/competence-passport',
     name: 'CompetencePassportMainPage',
     meta: {
-      permissions: [Permissions.can_use_generator],
+      permissions: [Permissions.can_use_competence_passport_generator],
     },
     children: [
       {

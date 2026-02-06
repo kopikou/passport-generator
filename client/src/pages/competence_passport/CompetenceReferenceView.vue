@@ -107,7 +107,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <div class="q-mb-lg">
+  <div class="q-mb-lg q-pa-sm">
     <div class="row items-center q-mb-md">
       <div class="col">
         <h2 class="text-h4 q-ma-none">Компетенции</h2>

@@ -68,6 +68,7 @@ function saveFilters() {
 function selectGroup(planId: number) {
   currentPlanId.value = planId
   LocalStorage.set('current_plan_id', planId)
+  router.push(`/competence-passport/${currentPlanId.value}/competences`)
 }
 
 function uploadPlan() {
@@ -75,10 +76,6 @@ function uploadPlan() {
     type: 'info',
     message: 'Функция загрузки будет реализована позже'
   })
-}
-
-function selectExistingPlan() {
-  router.push(`/competence-passport/${currentPlanId.value}/competences`)
 }
 
 watch([selectedYear, groupTextFilter], () => {
@@ -119,9 +116,9 @@ onBeforeMount(async () => {
     </template>
 
     <template #content>
-      <div v-if="groupsList.length > 0" style="display: grid; grid-template-columns: 300px 1fr; height: 100%">
+      <div v-if="groupsList.length > 0" style="display: grid; grid-template-columns: 200px 1fr; height: 100%; min-height: 0;">
         <!-- Список групп -->
-        <q-list separator style="overflow-y: auto; height: 100%; box-shadow: 0 0 8px silver">
+        <q-list separator style="overflow-y: auto; height: 100%; min-height: 0; border-right: 2px solid silver; box-shadow: 0 0 8px silver">
           <q-item
             v-for="group in filteredGroups"
             :key="group.plan_id"
@@ -143,33 +140,10 @@ onBeforeMount(async () => {
           </q-item>
         </q-list>
 
-        <!-- Правая панель с выбором действия -->
-        <div v-if="currentPlanId" style="display: flex; flex-direction: column; padding: 20px;">
-          <div class="text-h5 q-mb-md">Выберите действие для группы</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <!-- Загрузка нового плана -->
-            <q-card class="cursor-pointer" @click="uploadPlan">
-              <q-card-section>
-                <div class="text-h6">Загрузить учебный план</div>
-                <div class="text-caption text-grey">Загрузите новый файл учебного плана в формате .plx</div>
-              </q-card-section>
-              <q-card-actions>
-                <q-btn color="primary" label="Загрузить" @click.stop="uploadPlan" />
-              </q-card-actions>
-            </q-card>
-
-            <!-- Выбор существующего плана -->
-            <q-card class="cursor-pointer" @click="selectExistingPlan">
-              <q-card-section>
-                <div class="text-h6">Выбрать прошлогодний учебный план</div>
-                <div class="text-caption text-grey">
-                  Данные автоматически подгрузятся из прошлогоднего учебного плана
-                </div>
-              </q-card-section>
-              <q-card-actions>
-                <q-btn color="primary" label="Выбрать" @click.stop="selectExistingPlan" />
-              </q-card-actions>
-            </q-card>
+        <!-- Правая панель-->
+        <div v-if="currentPlanId" style="flex: 1; display: flex; flex-direction: column;  min-height: 0; ">
+          <div class="content-area">
+            <slot name="contents"/>
           </div>
         </div>
 
@@ -188,5 +162,10 @@ onBeforeMount(async () => {
 <style scoped lang="scss">
 :deep(.my-active-item) {
   background: $blue-grey-2;
+}
+.content-area {
+
+  overflow: hidden;
+
 }
 </style>

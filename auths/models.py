@@ -15,6 +15,8 @@ class Permissions(TextChoices):
     can_upload_files = "can_upload_files", "Может загружать файлы Программы"
     scientific_admin = "scientific_admin", "Просмотр всех ПНД по программе аспирантуры"
     can_monitor_rops = "can_monitor_rops", "Может мониторить РОПов",
+    can_use_competence_passport_generator = "can_use_competence_passport_generator", "Может использовать генратор паспорта компетенций"
+    can_edit_competence_passport = "can_edit_competence_passport", "Может редактировать паспорт компетенций"
 
 
 # Create your models here.

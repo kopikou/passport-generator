@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PlanListView from '../PlanListView.vue'
 import { watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCompetencePassportStore } from 'src/stores/competencePassportStore'
@@ -46,44 +47,49 @@ const getTabPath = (tabName: string): string => {
 </script>
 
 <template>
-  <div class="top-navigation-layout">
-    <q-tabs
-      class="text-black"
-      align="left"
-      indicator-color="primary"
-    >
-      <q-route-tab
-        name="reference"
-        label="Справочники"
-        :to="getTabPath('reference')"
-        exact
-      />
-      <q-route-tab
-        name="matrix"
-        label="Матрица"
-        :to="getTabPath('matrix')"
-        exact
-      />
-      <q-route-tab
-        name="schema"
-        label="Схема"
-        :to="getTabPath('schema')"
-        :disable="!isMatrixValid"
-        exact
-      />
-      <q-route-tab
-        name="passport"
-        label="Паспорт"
-        :to="getTabPath('passport')"
-        :disable="!isMatrixValid"
-        exact
-      />
-    </q-tabs>
+  <PlanListView>
+    <template #contents>
+      <div class="top-navigation-layout q-pb-xl">
+        <q-tabs
+          class="text-black"
+          align="left"
+          indicator-color="primary"
+        >
+          <q-route-tab
+            name="reference"
+            label="Справочники"
+            :to="getTabPath('reference')"
+            exact
+          />
+          <q-route-tab
+            name="matrix"
+            label="Матрица"
+            :to="getTabPath('matrix')"
+            exact
+          />
+          <q-route-tab
+            name="schema"
+            label="Схема"
+            :to="getTabPath('schema')"
+            :disable="!isMatrixValid"
+            exact
+          />
+          <q-route-tab
+            name="passport"
+            label="Паспорт"
+            :to="getTabPath('passport')"
+            :disable="!isMatrixValid"
+            exact
+          />
+        </q-tabs>
 
-    <div class  ="content-area">
-      <slot name="content"/>
-    </div>
-  </div>
+        <div class="content-area q-pb-xl">
+          <slot name="content"/>
+        </div>
+      </div>
+
+    </template>
+  </PlanListView>
 </template>
 
 <style scoped lang="scss">

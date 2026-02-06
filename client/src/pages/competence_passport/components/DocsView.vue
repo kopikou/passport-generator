@@ -79,11 +79,11 @@ onBeforeMount(() => {
 .main-content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 10px;
 
   &.full-width {
-    padding-left: 40px;
-    padding-right: 40px;
+    padding-left: 20px;
+    padding-right: 20px;
   }
 }
 </style>

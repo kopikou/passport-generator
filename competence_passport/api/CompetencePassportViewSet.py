@@ -7,6 +7,7 @@ from rest_framework.mixins import RetrieveModelMixin
 from app.utils import UserProfileHasPermission
 from auths.models import Permissions
 from generator.permissions import CanViewRPDProgram
+from competence_passport.permissions import CanViewCompetencePassport, CanEditCompetencePassport
 from rpd.models.rpd_models import PlanData, LinesIndicators
 from generator.models import DisciplineIndicators
 from competence_passport.services.matrixService import MatrixService
@@ -28,7 +29,8 @@ class CompetencePassportViewSet(GenericViewSet):
     """
     queryset = PlanData.objects.none()
     serializer_class = CompetencePassportDataSerializer
-    permission_classes = [UserProfileHasPermission(Permissions.can_use_generator) and CanViewRPDProgram]
+    #permission_classes = [UserProfileHasPermission(Permissions.can_use_generator) and CanViewRPDProgram]
+    permission_classes = [UserProfileHasPermission(Permissions.can_use_competence_passport_generator) and CanViewCompetencePassport]
 
     # def retrieve(self, request, *args, **kwargs):
     #     plan_id = self.kwargs['pk']
@@ -109,7 +111,7 @@ class CompetencePassportViewSet(GenericViewSet):
         serializer.is_valid(raise_exception=True) 
         return Response(serializer.validated_data)
     
-    @action(methods=['POST'], detail=False, url_path='update-discipline-competences')
+    @action(methods=['POST'], detail=False, url_path='update-discipline-competences', permission_classes=[CanEditCompetencePassport])
     def update_discipline_competences(self, request, *args, **kwargs):
         """Обновление связей между дисуиплинами и компетенцями"""
         serializer = UpdateDisciplineCompetencesSerializer(data=request.data)
@@ -133,7 +135,7 @@ class CompetencePassportViewSet(GenericViewSet):
             }
         })
     
-    @action(methods=['GET'], detail=True, url_path='validate-matrix')
+    @action(methods=['GET'], detail=True, url_path='validate-matrix', permission_classes=[IsAuthenticated])
     def validate_matrix(self, request, *args, **kwargs):
         """Валидация матрицы"""
         plan_id = self.kwargs['pk']
@@ -142,7 +144,7 @@ class CompetencePassportViewSet(GenericViewSet):
         return Response(result)
 
     
-    @action(methods=['POST'], detail=False, url_path='update-semester-scheme')
+    @action(methods=['POST'], detail=False, url_path='update-semester-scheme', permission_classes=[CanEditCompetencePassport])
     def update_semester_scheme(self, request, *args, **kwargs):
         """Обновление схемы формирования"""
         serializer = SchemeUpdateSerializer(data=request.data)
@@ -164,7 +166,7 @@ class CompetencePassportViewSet(GenericViewSet):
             'has_forms': result['has_forms']
         })
     
-    @action(methods=['GET'], detail=True, url_path='validate-scheme-indicators')
+    @action(methods=['GET'], detail=True, url_path='validate-scheme-indicators', permission_classes=[IsAuthenticated])
     def validate_scheme_indicators(self, request, *args, **kwargs):
         """Проверка соответствия промежуточных аттестаций и индикаторов"""
         plan_id = self.kwargs['pk']
@@ -173,7 +175,7 @@ class CompetencePassportViewSet(GenericViewSet):
         return Response(result)
 
 
-    @action(methods=['POST'], detail=False, url_path='fix-scheme-indicators')
+    @action(methods=['POST'], detail=False, url_path='fix-scheme-indicators', permission_classes=[CanEditCompetencePassport])
     def fix_scheme_indicators(self, request, *args, **kwargs):
         """Автоматическое исправление индикаторов при несоответствии с формами аттестации"""
         serializer = FixSchemaSerializer(data=request.data)
@@ -188,7 +190,7 @@ class CompetencePassportViewSet(GenericViewSet):
         )
         return Response(result)
 
-    @action(methods=['POST'], detail=False, url_path='update-competence-relations')
+    @action(methods=['POST'], detail=False, url_path='update-competence-relations', permission_classes=[CanEditCompetencePassport])
     def update_competence_relations(self, request, *args, **kwargs):
         """Обновление связи компетенций в паспорте"""
         serializer = CompetenceRelationsSerializer(data=request.data)
@@ -198,7 +200,7 @@ class CompetencePassportViewSet(GenericViewSet):
         return Response(CompetenceRelationsSerializer(instance).data)
     
 
-    @action(methods=['POST'], detail=False, url_path='update-competence-final-indicators')
+    @action(methods=['POST'], detail=False, url_path='update-competence-final-indicators', permission_classes=[CanEditCompetencePassport])
     def update_competence_final_indicators(self,request, *args, **kwargs):
         """Обновление итогового индикатора"""
         serializer = FinalIndicatorUpdateSerializer(data=request.data)
@@ -219,7 +221,7 @@ class CompetencePassportViewSet(GenericViewSet):
             'final_indicator_text': indicator.indicator
         })
     
-    @action(methods=['POST'], detail=False, url_path='update-indicator-details')
+    @action(methods=['POST'], detail=False, url_path='update-indicator-details', permission_classes=[CanEditCompetencePassport])
     def update_indicator_details(self, request, *args, **kwargs):
         """Обновление деталей индикаторов"""
         input_serializer = IndicatorDetailsSerializer(data=request.data)
@@ -248,14 +250,14 @@ class CompetencePassportViewSet(GenericViewSet):
 
         return Response(IndicatorSerializer(output_data).data)
     
-    @action(methods=['POST'], detail=False, url_path='create-indicator')
+    @action(methods=['POST'], detail=False, url_path='create-indicator', permission_classes=[CanEditCompetencePassport])
     def create_indicator(self, request, *args, **kwargs):
         serializer = IndicatorsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         indicator = serializer.save()
         return Response(IndicatorsSerializer(indicator).data)
     
-    @action(methods=['PUT'], detail=True, url_path='update-indicator')
+    @action(methods=['PUT'], detail=True, url_path='update-indicator', permission_classes=[CanEditCompetencePassport])
     def update_indicator(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
         indicator = LinesIndicators.objects.get(id=pk)
@@ -264,7 +266,7 @@ class CompetencePassportViewSet(GenericViewSet):
         updated = serializer.save()
         return Response(IndicatorsSerializer(updated).data)
     
-    @action(methods=['DELETE'], detail=True, url_path='delete-indicator')
+    @action(methods=['DELETE'], detail=True, url_path='delete-indicator', permission_classes=[CanEditCompetencePassport])
     def delete_indicator(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
         indicator = LinesIndicators.objects.get(id=pk)
@@ -277,7 +279,7 @@ class CompetencePassportViewSet(GenericViewSet):
 
         return Response({'success': True})
     
-    @action(methods=['GET'], detail=True, url_path='get-matrix-report')
+    @action(methods=['GET'], detail=True, url_path='get-matrix-report', permission_classes=[IsAuthenticated])
     def get_matrix_report(self, request, *args, **kwargs):
         """Экспорт матрицы компетенций в Word"""
         plan_id = self.kwargs['pk']
@@ -291,7 +293,7 @@ class CompetencePassportViewSet(GenericViewSet):
         #response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
     
-    @action(methods=['GET'], detail=True, url_path='get-schema-report')
+    @action(methods=['GET'], detail=True, url_path='get-schema-report', permission_classes=[IsAuthenticated])
     def get_schema_report(self, request, *args, **kwargs):
         """Экспорт схемы компетенций в Word"""
         plan_id = self.kwargs['pk']
@@ -305,7 +307,7 @@ class CompetencePassportViewSet(GenericViewSet):
 
         return response
     
-    @action(methods=['GET'], detail=True, url_path='get-passport-report')
+    @action(methods=['GET'], detail=True, url_path='get-passport-report', permission_classes=[IsAuthenticated])
     def get_passport_report(self, request, *args, **kwargs):
         """Экспорт паспорта компетенций в Word"""
         plan_id = self.kwargs['pk']
