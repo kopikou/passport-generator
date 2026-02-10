@@ -132,6 +132,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
 
   const schemaValidation = ref<SchemaValidation | null>(null)
   const validatingSchema = ref(false)
+  const maxSemesters = ref(8)
 
   const loading = ref(false)
   const saving = ref(false)
@@ -229,6 +230,17 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       const data = response.data
 
       schema.value = data.schema
+      let maxSemester = 8
+      for (const comp of data.schema) {
+        for (const disc of comp.discipline_list) {
+          for (const sd of disc.semester_data) {
+            if (sd.semester > maxSemester) {
+              maxSemester = sd.semester
+            }
+          }
+        }
+      }
+      maxSemesters.value = maxSemester
     } finally {
       loading.value = false
     }
@@ -559,6 +571,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     passport,
     matrixValidation,
     schemaValidation,
+    maxSemesters,
     validating,
     validatingSchema,
     loading,

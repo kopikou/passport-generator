@@ -255,11 +255,13 @@ class CompetencePassportDataService:
     @classmethod
     def get_matrix_report(cls, plan_id):
         """Экспорт матрицы компетенций в Word"""
-        data = cls.get_competence_passport_data(plan_id)
-        admission_info = data['admission_info']
+        admission_data = cls.get_plan_admission_data(plan_id)
+        admission_info = admission_data['admission_info']
+
+        matrix_data = cls.get_matrix_data(plan_id)
         
         # Агрегируем данные по иерархии
-        matrix_hierarchy = cls.build_matrix_hierarchy(data['matrix'])
+        matrix_hierarchy = cls.build_matrix_hierarchy(matrix_data['matrix'])
         
         context = {
             'matrix': matrix_hierarchy,
@@ -324,14 +326,16 @@ class CompetencePassportDataService:
     @classmethod
     def get_schema_report(cls, plan_id):
         """Экспорт схемы компетенций в Word"""
-        data = cls.get_competence_passport_data(plan_id)
+        admission_data = cls.get_plan_admission_data(plan_id)
+        admission_info = admission_data['admission_info']
 
-        admission_info = data['admission_info']
-        
-        processed_schema = cls.process_schema_for_report(data['schema'])
+        schema_data = cls.get_schema_data(plan_id)
+        processed_schema = cls.process_schema_for_report(schema_data['schema'])
         
         context = {
-            'schema': processed_schema,
+            'schema': processed_schema['schema'],
+            'max_semester': processed_schema['max_semester'],
+            'semester_headers': processed_schema['semester_headers'],
             'direction_code': admission_info.get('cdirection__cod', ''),
             'direction': admission_info.get('cdirection__name', ''),
             'spec_name': admission_info.get('spec_name', ''),
@@ -341,7 +345,7 @@ class CompetencePassportDataService:
             'protocol_year': str(admission_info.get('yr', ''))
         }
         
-        template_path = f'{BASE_DIR}{Path("/templates/docxRPD/schema.docx")}'
+        template_path = f'{BASE_DIR}{Path("/templates/docxRPD/schema1.docx")}'
         doc = DocxTemplate(template_path)
         
         doc.render(context)
@@ -357,17 +361,27 @@ class CompetencePassportDataService:
         """
         Обработка схемы компетенций для использования в Word-отчётах.
         """
+        max_semester = 8 
+        for competence in schema_data:
+            for disc in competence.get('discipline_list', []):
+                for sd in disc.get('semester_data', []):
+                    semester_num = sd.get('semester', 0)
+                    if semester_num > max_semester:
+                        max_semester = semester_num
+        
+        semester_headers = list(range(1, max_semester + 1))
+
         processed_schema = []
         for competence in schema_data:
             processed_disciplines = []
             
             for disc in competence.get('discipline_list', []):
-                # Создаём словарь для 8 семестров
-                semester_data = {f'semester_{i}': '' for i in range(1, 9)}
+                # Создаём словарь для семестров
+                semester_data = {f'semester_{i}': '' for i in semester_headers}
 
                 for sd in disc.get('semester_data', []):
                     semester_num = sd.get('semester')
-                    if 1 <= semester_num <= 8:
+                    if 1 <= semester_num <= max_semester:
                         form_control = sd.get('form_control', [])
                         semester_data[f'semester_{semester_num}'] = cls.format_form_control(form_control)
                 
@@ -383,7 +397,11 @@ class CompetencePassportDataService:
                 'discipline_list': processed_disciplines
             })
         
-        return processed_schema
+        return {
+            'schema': processed_schema,
+            'max_semester': max_semester,
+            'semester_headers': semester_headers
+        }
     
     @staticmethod
     def format_form_control(form_control_list):
@@ -400,10 +418,16 @@ class CompetencePassportDataService:
     @classmethod
     def get_passport_report(cls, plan_id):
         """Экспорт паспорта компетенций в Word"""
-        data = cls.get_competence_passport_data(plan_id)
-        admission_info = data['admission_info']
-        
-        processed_schema = cls.process_schema_for_report(data['schema'])
+        admission_data = cls.get_plan_admission_data(plan_id)
+        admission_info = admission_data['admission_info']
+
+        schema_data = cls.get_schema_data(plan_id)
+        schema = cls.process_schema_for_report(schema_data['schema'])
+        processed_schema = schema['schema']
+        max_semester = schema['max_semester']
+        semester_headers = schema['semester_headers']
+
+        passport_data = cls.get_passport_data(plan_id)
 
         schema_map = {
             item['competence_index']: item['discipline_list']
@@ -411,7 +435,7 @@ class CompetencePassportDataService:
         }
 
         processed_passport = []
-        for item in data['passport']:
+        for item in passport_data['passport']:
             # Фрагмент схемы
             schema_fragment = schema_map.get(item['competence_index'], [])
             
@@ -438,7 +462,9 @@ class CompetencePassportDataService:
             'kvalif': admission_info.get('kvalif_name', ''),
             'fob': admission_info.get('cfob__name', ''),
             'year_post': str(admission_info.get('yr', '')),
-            'protocol_year': str(admission_info.get('yr', ''))
+            'protocol_year': str(admission_info.get('yr', '')),
+            'max_semester': max_semester,
+            'semester_headers': semester_headers
         }
         
         template_path = f'{BASE_DIR}{Path("/templates/docxRPD/passport.docx")}'
@@ -462,8 +488,7 @@ class CompetencePassportDataService:
         numeric_parts = set()
         for ind in indicator_list:
             numeric_parts.add(extract_numeric_part(ind['indicator_index']))
-        
-        # Сортируем
+
         def sort_key(x):
             nums = [int(n) for n in x.split('.') if n.isdigit()]
             return tuple(nums)

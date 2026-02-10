@@ -157,9 +157,7 @@ watch(
   { immediate: true, deep: true }
 )
 
-watch(
-  () => currentPlanId.value,
-  async (newPlanId) => {
+watch(currentPlanId.value, async (newPlanId) => {
     if (newPlanId) {
       //await loadPlanData()
       

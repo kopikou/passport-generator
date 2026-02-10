@@ -93,19 +93,16 @@ function navigateToCompetence(competenceIndex) {
   })
 }
 
-// Загрузка данных
-async function loadPassportData() {
-  //await store.fetchCompetencePassport(currentPlanId.value)
-}
-
-onBeforeMount(() => {
-  //loadPassportData()
+onBeforeMount(async () => {
+  if (storeCompetences.value.length === 0 && currentPlanId.value) {
+    await store.fetchReferences(currentPlanId.value)
+  }
 })
 
 </script>
 
 <template>
-  <div class="competence-menu" style="overflow-y: auto; flex: 1;">
+  <div class="competence-menu" >
     <div class="menu-header q-pa-sm bg-grey-3">
       <div class="text-weight-bold">Компетенции</div>
       <div class="text-caption text-grey q-mb-sm">
@@ -147,53 +144,55 @@ onBeforeMount(() => {
     </div>
 
     <!-- Список компетенций -->
-    <q-list class="competence-list q-mb-xl" dense>
-      <div v-if="filteredCompetences.length === 0" class="text-center q-py-lg text-grey">
-        <div v-if="searchText || selectedType">Компетенции не найдены</div>
-        <div v-else>Компетенции не загружены</div>
-      </div>
+    <div class="competence-scroll-area">
+      <q-list class="competence-list q-mb-xl" dense>
+        <div v-if="filteredCompetences.length === 0" class="text-center q-py-lg text-grey">
+          <div v-if="searchText || selectedType">Компетенции не найдены</div>
+          <div v-else>Компетенции не загружены</div>
+        </div>
 
-      <!-- Титульный лист -->
-      <q-item 
-        clickable
-        v-ripple
-        class="title-page-header"
-        @click="navigateToTitlePage"
-        :active="isTitlePageActive()"
-        active-class="bg-amber-2 text-black"
-        dense
-      >
-        <q-item-section>
-          <q-item-label class="text-weight-medium">
-            Титульный лист
-          </q-item-label>
-        </q-item-section>
-      </q-item>
+        <!-- Титульный лист -->
+        <q-item 
+          clickable
+          v-ripple
+          class="title-page-header"
+          @click="navigateToTitlePage"
+          :active="isTitlePageActive()"
+          active-class="bg-amber-2 text-black"
+          dense
+        >
+          <q-item-section>
+            <q-item-label class="text-weight-medium">
+              Титульный лист
+            </q-item-label>
+          </q-item-section>
+        </q-item>
 
-      <!-- Компетенции -->
-      <q-item
-        v-for="comp in filteredCompetences"
-        :key="comp.competence_index"
-        clickable
-        v-ripple
-        class="competence-header"
-        :class="getCompetenceClass(comp.type)"
-        @click="navigateToCompetence(comp.competence_index)"
-        :active="isCompetenceActive(comp.competence_index)"
-        active-class="bg-amber-2 text-black"
-      >
-        <q-item-section>
-          <q-item-label class="text-weight-medium" >
-            {{ comp.competence_index }}
-          </q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-badge :color="getTypeBadgeColor(comp.type)" rounded>
-            {{ comp.type }}
-          </q-badge>
-        </q-item-section>
-      </q-item>
-    </q-list>
+        <!-- Компетенции -->
+        <q-item
+          v-for="comp in filteredCompetences"
+          :key="comp.competence_index"
+          clickable
+          v-ripple
+          class="competence-header"
+          :class="getCompetenceClass(comp.type)"
+          @click="navigateToCompetence(comp.competence_index)"
+          :active="isCompetenceActive(comp.competence_index)"
+          active-class="bg-amber-2 text-black"
+        >
+          <q-item-section>
+            <q-item-label class="text-weight-medium" >
+              {{ comp.competence_index }}
+            </q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-badge :color="getTypeBadgeColor(comp.type)" rounded>
+              {{ comp.type }}
+            </q-badge>
+          </q-item-section>
+        </q-item>
+      </q-list>
+    </div>
   </div>
 </template>
 
@@ -207,19 +206,22 @@ onBeforeMount(() => {
     border-bottom: 1px solid #e0e0e0;
     flex-shrink: 0;
   }
-  
-  .competence-list {
-    .title-page-header {
-      border-bottom: 1px solid rgba(0,0,0,0.05);
-      min-height: 50px;
-    }
+  .competence-scroll-area {
+    flex: 1;
+    overflow-y: auto; 
+    .competence-list {
+      .title-page-header {
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        min-height: 50px;
+      }
 
-    .competence-header {
-      border-bottom: 1px solid rgba(0,0,0,0.05);
-      min-height: 50px;
-      
-      .q-item__label {
-        line-height: 1.3;
+      .competence-header {
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        min-height: 50px;
+        
+        .q-item__label {
+          line-height: 1.3;
+        }
       }
     }
   }

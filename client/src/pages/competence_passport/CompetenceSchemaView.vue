@@ -15,7 +15,8 @@ const {
   schema,
   loading,
   schemaValidation,
-  validatingSchema
+  validatingSchema,
+  maxSemesters,
 } = storeToRefs(store)
 
 const showValidationErrors = ref(false)
@@ -124,6 +125,20 @@ const lastCheckedFormatted = computed(() => {
   if (!schemaValidation.value?.checked_at) return 'еще не проверялась'
   return date.formatDate(schemaValidation.value.checked_at, 'DD.MM.YYYY HH:mm:ss')
 })
+
+const courseHeaders = computed(() => {
+  const maxCourse = Math.ceil(maxSemesters.value / 2)
+  return Array.from({ length: maxCourse }, (_, i) => i + 1)
+})
+
+const semesterHeaders = computed(() => {
+  return Array.from({ length: maxSemesters.value }, (_, i) => i + 1)
+})
+
+// Вспомогательная функция для получения данных семестра
+function getSemesterData(discipline: any, semester: number) {
+  return discipline.semester_data.find((s: any) => s.semester === semester)
+}
 
 // Фильтрация 
 const filteredSchema = computed(() => {
@@ -353,7 +368,7 @@ watch(() => route.params.id, () => {
       </div>
       
       <div class="col-auto">
-        <div class="row items-center q-gutter-md   q-mb-md">
+        <div class="row items-center q-gutter-md q-mb-md">
           <q-btn
             flat
             dense
@@ -380,9 +395,7 @@ watch(() => route.params.id, () => {
               <q-icon name="search" />
             </template>
           </q-input>
-        </div>
 
-        <div class="row justify-end">
           <q-btn
             flat
             dense
@@ -394,44 +407,59 @@ watch(() => route.params.id, () => {
           >
             <q-tooltip>Скачать схему формирования компетенций в формате Word</q-tooltip>
           </q-btn>
-
         </div>
       </div>
     </div>
 
     <!-- Таблица схемы -->
     <div class="competence-schema-table-container q-mb-lg">
-      <table class="q-table" :class="{ 'has-validation-errors': schemaValidation?.errors?.length > 0 }">
+      <table class="q-table" >
         <thead>
           <tr>
-            <th rowspan="2" class="bg-grey-2" style="width: 80px; min-width: 80px;">
+            <th rowspan="2" class="bg-grey-2">
               <div class="text-weight-bold">Код дисциплины</div>
             </th>
-            <th rowspan="2" class="bg-grey-2" style="width: 320px; min-width: 320px;">
+            <th rowspan="2" class="bg-grey-2">
               <div class="text-weight-bold">Наименование дисциплины</div>
             </th>
-            <th colspan="2" class="course-1-header" style="width: 140px; min-width: 140px;">
+            <!-- <th colspan="2" class="course-1-header">
               <div class="text-weight-bold">1 курс</div>
             </th>
-            <th colspan="2" class="course-2-header" style="width: 140px; min-width: 140px;">
+            <th colspan="2" class="course-2-header">
               <div class="text-weight-bold">2 курс</div>
             </th>
-            <th colspan="2" class="course-3-header" style="width: 140px; min-width: 140px;">
+            <th colspan="2" class="course-3-header">
               <div class="text-weight-bold">3 курс</div>
             </th>
-            <th colspan="2" class="course-4-header" style="width: 140px; min-width: 140px;">
+            <th colspan="2" class="course-4-header">
               <div class="text-weight-bold">4 курс</div>
+            </th> -->
+
+            <th 
+              v-for="course in courseHeaders" 
+              :key="course"
+              :colspan="2"
+              :class="`course-${course}-header`"
+            >
+              <div class="text-weight-bold">{{ course }} курс</div>
             </th>
           </tr>
           <tr>
-            <th class="semester-header semester-1">1 сем</th>
+            <!-- <th class="semester-header semester-1">1 сем</th>
             <th class="semester-header semester-2">2 сем</th>
             <th class="semester-header semester-3">3 сем</th>
             <th class="semester-header semester-4">4 сем</th>
             <th class="semester-header semester-5">5 сем</th>
             <th class="semester-header semester-6">6 сем</th>
             <th class="semester-header semester-7">7 сем</th>
-            <th class="semester-header semester-8">8 сем</th>
+            <th class="semester-header semester-8">8 сем</th> -->
+            <th 
+              v-for="semester in semesterHeaders" 
+              :key="semester"
+              :class="`semester-header semester-${semester}`"
+            >
+              {{ semester }} сем
+            </th>
           </tr>
         </thead>
         
@@ -439,7 +467,7 @@ watch(() => route.params.id, () => {
           <template v-for="competence in filteredSchema" :key="competence.competence_index">
             <!-- Строка компетенции -->
             <tr class="competence-row">
-              <td :colspan="10">
+              <td :colspan="2 + semesterHeaders.length">
                 <div class="text-center q-pa-sm">
                   <div class="text-weight-bold text-primary text-h6">
                     {{ competence.competence_index }}
@@ -457,9 +485,9 @@ watch(() => route.params.id, () => {
               :key="`${competence.competence_index}-${discipline.discipline_id}`"
               class="discipline-row"
               :class="{ 
-              'bg-grey-1': (competence.discipline_list.indexOf(discipline) % 2 === 0),
-              'row-with-error': hasValidationError(discipline.discipline_id, competence.competence_index)
-            }"
+                'bg-grey-1': (competence.discipline_list.indexOf(discipline) % 2 === 0),
+                'row-with-error': hasValidationError(discipline.discipline_id, competence.competence_index)
+              }"
             >
               <td class="text-center" style="font-weight: 500;">
                 {{ discipline.discipline_index }}
@@ -468,16 +496,16 @@ watch(() => route.params.id, () => {
                 {{ discipline.discipline_name }}
               </td>
               <td 
-                v-for="semester in [1,2,3,4,5,6,7,8]" 
+                v-for="semester in semesterHeaders" 
                 :key="semester" 
                 :class="getSemesterCellClass(discipline.discipline_id, competence.competence_index, semester)"
                 @click="openEditDialog(discipline, competence.competence_index, competence.competence, semester)"
                 style="cursor: pointer; position: relative;"
               >
                 <div class="text-center">
-                  <div v-if="discipline.semester_data.some(s => s.semester === semester)">
+                  <div v-if="getSemesterData(discipline, semester)">
                     <div class="semester-forms text-weight-medium" style="font-size: 0.9rem;">
-                      {{ getFormDisplay(discipline.semester_data.find(s => s.semester === semester)?.form_control || []) }}
+                      {{ getFormDisplay(getSemesterData(discipline, semester)?.form_control || []) }}
                     </div>
                     <q-icon 
                       v-if="hasSemesterError(discipline.discipline_id, competence.competence_index, semester)"
@@ -487,14 +515,13 @@ watch(() => route.params.id, () => {
                       class="absolute-top-right q-ma-xs"
                     />
                   </div>
-
                 </div>
               </td>
             </tr>
           </template>
           
           <tr v-if="filteredSchema.length === 0 && !loading">
-            <td :colspan="10" class="text-center q-py-xl">
+            <td :colspan="2 + semesterHeaders.length" class="text-center q-py-xl">
               <div class="full-width row flex-center q-gutter-sm">
                 <q-icon name="info" size="2em" color="grey" />
                 <span>Нет данных для отображения. Проверьте матрицу компетенций.</span>
@@ -503,7 +530,7 @@ watch(() => route.params.id, () => {
           </tr>
           
           <tr v-if="loading">
-            <td :colspan="10" class="text-center q-py-xl">
+            <td :colspan="2 + semesterHeaders.length" class="text-center q-py-xl">
               <div class="full-width row flex-center q-gutter-sm">
                 <q-spinner color="primary" size="2em" />
                 <span>Загрузка данных схемы...</span>
@@ -547,15 +574,7 @@ watch(() => route.params.id, () => {
 .competence-schema-table-container {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
-}
-
-.row-with-error {
-  background-color: rgba(244, 67, 54, 0.071) !important;
-  border-left: 4px solid #f44336 !important;
-  
-  &:hover {
-    background-color: rgba(244, 67, 54, 0.088) !important;
-  }
+  overflow: visible;
 }
 
 .q-table {
@@ -569,57 +588,50 @@ watch(() => route.params.id, () => {
     vertical-align: middle;
     font-size: 0.85rem;
   }
-  
-  th {
-    // Заголовки курсов
-    &.course-1-header {
-      background-color: #e8f5e9 !important;
-      border-left: 2px solid #4caf50 !important;
-    }
-    
-    &.course-2-header {
-      background-color: #e3f2fd !important;
-      border-left: 2px solid #2196f3 !important;
-    }
-    
-    &.course-3-header {
-      background-color: #fff3e0 !important;
-      border-left: 2px solid #ff9800 !important;
-    }
-    
-    &.course-4-header {
-      background-color: #fce4ec !important;
-      border-left: 2px solid #e91e63 !important;
-    }
-    
-    // Заголовки семестров
-    &.semester-header {
-      font-weight: 500;
-      font-size: 0.8rem;
-      color: #666;
-    }
-    
-    &.semester-1,
-    &.semester-2 {
-      background-color: rgba(232, 245, 233, 0.3) !important;
-    }
-    
-    &.semester-3,
-    &.semester-4 {
-      background-color: rgba(227, 242, 253, 0.3) !important;
-    }
-    
-    &.semester-5,
-    &.semester-6 {
-      background-color: rgba(255, 243, 224, 0.3) !important;
-    }
-    
-    &.semester-7,
-    &.semester-8 {
-      background-color: rgba(252, 228, 236, 0.3) !important;
-    }
+
+  thead th {
+    position: sticky;
+    z-index: 10;
+    background: white;
+    outline: 1px solid #e0e0e0;
   }
-  
+
+  thead tr:first-child th {
+    top: 64px;
+  }
+  thead tr:nth-child(2) th {
+    top: calc(64px + 48px); 
+  }
+
+  thead th.bg-grey-2 {
+    background-color: #f5f5f5 !important;
+  }
+
+  thead th.course-1-header { background-color: #e8f5e9 !important; }
+  thead th.course-2-header { background-color: #e3f2fd !important; }
+  thead th.course-3-header { background-color: #fff3e0 !important; }
+  thead th.course-4-header { background-color: #fce4ec !important; }
+  thead th.course-5-header { background-color: #f3e5f5 !important; }
+  thead th.course-6-header { background-color: #e8eaf6 !important; }
+
+  thead th.semester-1,
+  thead th.semester-2 { background-color: #e8f5e9 !important; }
+
+  thead th.semester-3,
+  thead th.semester-4 { background-color: #e3f2fd !important; }
+
+  thead th.semester-5,
+  thead th.semester-6 { background-color: #fff3e0 !important; }
+
+  thead th.semester-7,
+  thead th.semester-8 { background-color: #fce4ec !important; }
+
+  thead th.semester-9,
+  thead th.semester-10 { background-color: #f3e5f5 !important; }
+
+  thead th.semester-11,
+  thead th.semester-12 { background-color: #e8eaf6 !important; }
+
   td {
     border-bottom: 1px solid rgba(0,0,0,0.05);
     
@@ -644,6 +656,15 @@ watch(() => route.params.id, () => {
     }
   }
 
+  .row-with-error {
+    background-color: rgba(244, 67, 54, 0.071) !important;
+    border-left: 4px solid #f44336 !important;
+    
+    &:hover {
+      background-color: rgba(244, 67, 54, 0.088) !important;
+    }
+  }
+
   .error-highlight {
     background-color: rgba(244, 67, 54, 0.15) !important;
     border: 1px solid rgba(244, 67, 54, 0.3) !important;
@@ -661,57 +682,4 @@ watch(() => route.params.id, () => {
   right: 4px;
 }
 
-.has-validation-errors {
-  .row-with-error {
-    animation: error-pulse 2s infinite;
-  }
-  
-  .error-highlight {
-    animation: cell-pulse 2s infinite;
-  }
-}
-
-@keyframes error-pulse {
-  0%, 100% { 
-    background-color: rgba(244, 67, 54, 0.08); 
-  }
-  50% { 
-    background-color: rgba(244, 67, 54, 0.15); 
-  }
-}
-
-@keyframes cell-pulse {
-  0%, 100% { 
-    background-color: rgba(244, 67, 54, 0.15); 
-  }
-  50% { 
-    background-color: rgba(244, 67, 54, 0.25); 
-  }
-}
-
-@media (max-width: 1200px) {
-  .competence-schema-table-container {
-    overflow-x: auto;
-  }
-}
-
-@media (max-width: 768px) {
-  .competence-schema-table-container {
-    border-radius: 4px;
-  }
-  
-  .q-table {
-    th, td {
-      padding: 4px 6px;
-    }
-    
-    td.text-wrap {
-      max-width: 250px;
-    }
-    
-    .semester-forms {
-      font-size: 0.8rem;
-    }
-  }
-}
 </style>

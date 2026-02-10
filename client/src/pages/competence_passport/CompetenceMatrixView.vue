@@ -431,15 +431,13 @@ watch(() => route.params.id, () => {
             dense
             outlined
             clearable
-            style="min-width: 300px;"
+            style="min-width: 200px;"
           >
             <template v-slot:append>
               <q-icon name="search" />
             </template>
           </q-input>
-        </div>
 
-        <div class="row justify-end">
           <q-btn
             flat
             dense
@@ -451,7 +449,6 @@ watch(() => route.params.id, () => {
           >
             <q-tooltip>Скачать матрицу компетенций в формате Word</q-tooltip>
           </q-btn>
-
         </div>
       </div>
     </div>
@@ -467,7 +464,6 @@ watch(() => route.params.id, () => {
       flat
       bordered
       style="height: auto;"
-      :class="{ 'has-validation-errors': validationStatus?.type === 'error' }"
     >
       <template v-slot:top>
         <div class="text-h6">
@@ -613,7 +609,6 @@ watch(() => route.params.id, () => {
 }
 
 .highlighted-row {
-  animation: highlight-pulse 2s ease-in-out;
   background-color: rgba(255, 193, 7, 0.15) !important;
   border: 2px solid #ffc107 !important;
   position: relative;
@@ -622,12 +617,6 @@ watch(() => route.params.id, () => {
 
 .blink-animation {
   animation: blink 1s 3;
-}
-
-@keyframes highlight-pulse {
-  0% { background-color: rgba(255, 193, 7, 0.1); }
-  50% { background-color: rgba(255, 193, 7, 0.3); }
-  100% { background-color: rgba(255, 193, 7, 0.15); }
 }
 
 @keyframes blink {
@@ -692,18 +681,4 @@ watch(() => route.params.id, () => {
   }
 }
 
-.has-validation-errors {
-  :deep(.row-without-competences) {
-    animation: error-pulse 2s infinite;
-  }
-}
-
-@keyframes error-pulse {
-  0%, 100% { 
-    background-color: rgba(244, 67, 54, 0.08); 
-  }
-  50% { 
-    background-color: rgba(244, 67, 54, 0.15); 
-  }
-}
 </style>

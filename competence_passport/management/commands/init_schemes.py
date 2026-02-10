@@ -32,7 +32,7 @@ class Command(BaseCommand):
                         has_forms = sem.ekz or sem.zach or (sem.zacho and sem.zacho > 0) or sem.kp or sem.kr
                         
                         if has_forms:
-                            # Создаем запись в Scheme
+                            # Создаем запись 
                             Scheme.objects.create(
                                 planlineid=discipline,
                                 competence_index=comp['competence_index'],
