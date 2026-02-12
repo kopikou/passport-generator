@@ -67,7 +67,7 @@ const getTabPath = (tabName: string): string => {
             :to="getTabPath('matrix')"
             exact
           />
-          <q-route-tab
+          <!-- <q-route-tab
             name="schema"
             label="Схема"
             :to="getTabPath('schema')"
@@ -79,6 +79,21 @@ const getTabPath = (tabName: string): string => {
             label="Паспорт"
             :to="getTabPath('passport')"
             :disable="!isMatrixValid"
+            exact
+          /> -->
+
+          <q-route-tab
+            name="schema"
+            label="Схема"
+            :to="getTabPath('schema')"
+
+            exact
+          />
+          <q-route-tab
+            name="passport"
+            label="Паспорт"
+            :to="getTabPath('passport')"
+
             exact
           />
         </q-tabs>
