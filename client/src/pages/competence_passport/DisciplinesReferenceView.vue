@@ -10,7 +10,6 @@ const {
   loading
 } = storeToRefs(store)
 
-// Фильтры
 const searchFilter = ref('')
 const selectedTypes = ref<string[]>([])
 
@@ -30,13 +29,11 @@ const typeColors: Record<string, string> = {
   'Другой': 'grey'
 }
 
-// Опции для фильтра
 const disciplineTypeOptions = Object.keys(typeColors).map(type => ({
   label: type,
   value: type
 }))
 
-// Столбцы таблицы
 const columns = [
   {
     name: 'discipline_index',
@@ -96,7 +93,6 @@ const hasSelectedTypes = computed(() => {
   return (selectedTypes.value || []).length > 0
 })
 
-// Цвет для типа
 const getTypeColor = (type) => {
   return typeColors[type] || 'grey'
 }

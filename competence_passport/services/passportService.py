@@ -125,7 +125,7 @@ class PassportService:
     @staticmethod
     def update_competence_final_indicator(plan_id, competence_index, final_indicator_text):
         """
-        Обновление или создание итогового индикатора компетенции.
+        Обновление или создание итогового индикатора компетенции
         """
         plan = PlanData.objects.get(id=plan_id)
 

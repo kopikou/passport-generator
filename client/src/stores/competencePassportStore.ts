@@ -155,7 +155,6 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     return localStorage.getItem(`schema_valid_${currentPlanId.value}`) === 'true'
   })
 
-  // Действия
   // async function fetchCompetencePassport(planId: number) {
   //   loading.value = true
   //   try {
@@ -355,7 +354,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       const result = response.data
 
       //await fetchCompetencePassport(currentPlanId.value)
-      await fetchSchema(currentPlanId.value)//????????????????
+      await fetchSchema(currentPlanId.value)
       await validateSchemeIndicators()
 
       return result
@@ -487,7 +486,6 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     let direction_code = admissionInfo.value
     let year_post = admissionInfo.value
     let filename = `${direction_code.cdirection__cod}_Матрица_компетенций_${year_post.yr}.docx`
-
     
     // Создаем ссылку для скачивания
     const url = window.URL.createObjectURL(new Blob([response.data]))
@@ -510,8 +508,6 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     let year_post = admissionInfo.value
     let filename = `${direction_code.cdirection__cod}_Схема_формирования_компетенций_${year_post.yr}.docx`
 
-    
-    // Создаем ссылку для скачивания
     const url = window.URL.createObjectURL(new Blob([response.data]))
     const link = document.createElement('a')
     link.href = url
@@ -532,8 +528,6 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     let year_post = admissionInfo.value
     let filename = `${direction_code.cdirection__cod}_Паспорт_компетенций_${year_post.yr}.docx`
 
-    
-    // Создаем ссылку для скачивания
     const url = window.URL.createObjectURL(new Blob([response.data]))
     const link = document.createElement('a')
     link.href = url
@@ -560,7 +554,6 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   }
 
   return {
-    // Состояния
     currentPlanId,
     planData,
     admissionInfo,
@@ -581,7 +574,8 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     isMatrixValid,
     isSchemaValid,
 
-    // Действия
+
+
     //fetchCompetencePassport,
     fetchPlanAdmissionData,
     fetchReferences,

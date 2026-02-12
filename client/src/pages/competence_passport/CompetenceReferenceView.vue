@@ -10,11 +10,9 @@ const {
   loading
 } = storeToRefs(store)
 
-// Фильтры
 const competenceTypeFilter = ref<string | null>(null)
 const searchFilter = ref('')
 
-// Опции фильтрации
 const competenceTypeOptions = [
   { label: 'Универсальные компетенции', value: 'Универсальная' },
   { label: 'Общепрофессиональные компетенции', value: 'Общепрофессиональная' },
@@ -22,7 +20,6 @@ const competenceTypeOptions = [
   { label: 'Дополнительные компетенции', value: 'Дополнительная' }
 ]
 
-// Столбцы таблицы
 const columns = [
   {
     name: 'competence_index',
@@ -73,7 +70,6 @@ const filteredCompetences = computed(() => {
   return result
 })
 
-// Сообщение при отсутствии данных
 const noDataMessage = computed(() => {
   if (storeCompetences.value.length === 0) {
     return 'Нет данных о компетенциях'
@@ -95,9 +91,7 @@ const getTypeColor = (type) => {
   return colors[type] || 'grey'
 }
 
-// // Загрузка данных
 async function loadReferences() {
-  //await store.fetchCompetencePassport(currentPlanId.value)
   await store.fetchReferences(currentPlanId.value)
 }
 

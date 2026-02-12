@@ -117,7 +117,6 @@ const filteredCompetences = computed(() => {
   return filtered
 })
 
-// Столбцы 
 const columns = [
   {
     name: 'selected',
@@ -158,9 +157,7 @@ function getTypeColor(type) {
   return colors[type] || 'grey'
 }
 
-// Загрузка данных
 async function loadCompetenceData() {
-  // Находим дисциплину в матрице
   const matrixDiscipline = matrix.value.find(
     item => item.type === 'discipline' && item.discipline_id === props.disciplineId
   )

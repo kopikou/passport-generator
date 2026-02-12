@@ -19,7 +19,6 @@ const {
 const searchText = ref('')
 const selectedType = ref<string | null>(null)
 
-// Типы компетенций
 const competenceTypes = [
   { label: 'Универсальные (УК)', value: 'Универсальная' },
   { label: 'Общепрофессиональные (ОПК)', value: 'Общепрофессиональная' },
@@ -181,7 +180,7 @@ onBeforeMount(async () => {
           active-class="bg-amber-2 text-black"
         >
           <q-item-section>
-            <q-item-label class="text-weight-medium" >
+            <q-item-label class="text-weight-medium">
               {{ comp.competence_index }}
             </q-item-label>
           </q-item-section>

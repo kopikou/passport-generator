@@ -84,7 +84,6 @@ function onTabChange(tabName) {
 
 async function loadPlanData() {
   try {
-    //await store.fetchCompetencePassport(currentPlanId.value)
     //await store.fetchPlanAdmissionData(currentPlanId.value)
     await store.fetchPassport(currentPlanId.value)
   } catch (error: any) {
@@ -108,11 +107,11 @@ async function loadCompetenceData(competenceIndex) {
       currentCompetence.value = competence
     } else {
       currentCompetence.value = null
-      $q.notify({
-        type: 'warning',
-        message: `Компетенция ${competenceIndex} не найдена в паспорте`,
-        position: 'top-right'
-      })
+      // $q.notify({
+      //   type: 'warning',
+      //   message: `Компетенция ${competenceIndex} не найдена в паспорте`,
+      //   position: 'top-right'
+      // })
     }
   } catch (error: any) {
     $q.notify({
@@ -191,7 +190,7 @@ watch(currentPlanId.value, async (newPlanId) => {
             class="q-mr-sm q-pr-sm bg-primary text-white"
             
           >
-            <q-tooltip>Скачать схему формирования компетенций в формате Word</q-tooltip>
+            <q-tooltip>Скачать паспорт компетенций в формате Word</q-tooltip>
           </q-btn>
           </div>
       </div>

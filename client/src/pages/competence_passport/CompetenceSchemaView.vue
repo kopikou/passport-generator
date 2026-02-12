@@ -135,7 +135,6 @@ const semesterHeaders = computed(() => {
   return Array.from({ length: maxSemesters.value }, (_, i) => i + 1)
 })
 
-// Вспомогательная функция для получения данных семестра
 function getSemesterData(discipline: any, semester: number) {
   return discipline.semester_data.find((s: any) => s.semester === semester)
 }

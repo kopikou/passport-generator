@@ -30,13 +30,18 @@ const {
 } = storeToRefs(store)
 
 const sectionTitle = '2.1 Соотнесение индикаторов достижения компетенций с дисциплинами (модулями), практиками'
-const showAddDialog = ref(false)
-const showEditDialog = ref(false)
-const editingIndicator = ref<any>(null)
-const newIndicator = ref({
-  discipline_id: null,
-  indicator_index: '',
-  indicator_content: ''
+
+const dialogMode = ref<'create' | 'edit' | null>(null)
+const dialogIndicator = ref<any>(null)
+
+const showDialog = computed({
+  get: () => dialogMode.value !== null,
+  set: (value) => {
+    if (!value) {
+      dialogMode.value = null
+      dialogIndicator.value = null
+    }
+  }
 })
 
 const currentIndicators = computed(() => {
@@ -57,106 +62,156 @@ const availableDisciplines = computed(() => {
   })).filter(d => d.index)
 })
 
-function getRowColor(index){
-  return index % 2 === 0 ? 'bg-grey-4' : 'bg-white'
-}
+const columns = [
+  {
+    name: 'number',
+    label: '№',
+    field: 'number',
+    align: 'center',
+    style: 'width: 50px'
+  },
+  {
+    name: 'code',
+    label: 'Код индикатора',
+    field: 'indicator_index',
+    align: 'center',
+    style: 'width: 150px'
+  },
+  {
+    name: 'content',
+    label: 'Содержание индикатора',
+    field: 'indicator',
+    align: 'left',
+    style: 'min-width: 300px'
+  },
+  {
+    name: 'disciplines',
+    label: 'Дисциплины',
+    field: 'discipline',
+    align: 'left',
+    style: 'width: 250px'
+  },
+  {
+    name: 'actions',
+    label: 'Управление',
+    field: 'actions',
+    align: 'center',
+    style: 'width: 150px'
+  }
+]
 
-function startEdit(indicator) {
-  editingIndicator.value = {
+const tableRows = computed(() => {
+  return currentIndicators.value.map((indicator, index) => ({
     ...indicator,
-    original_indicator_index: indicator.indicator_index,
-    original_indicator: indicator.indicator,
-    original_discipline_id: indicator.discipline_id
-  }
-  showEditDialog.value = true
-}
+    number: index + 1,
+    discipline: indicator.discipline_index && indicator.discipline_name 
+      ? `${indicator.discipline_index} ${indicator.discipline_name}`
+      : 'Не привязано'
+  }))
+})
 
-async function saveEdit() {
-  if (!editingIndicator.value) return
+const dialogContent = computed({
+  get() {
+    return dialogIndicator.value?.indicator_content || dialogIndicator.value?.indicator || ''
+  },
+  set(value) {
+    if (dialogIndicator.value) {
+      if (dialogMode.value === 'create') {
+        dialogIndicator.value.indicator_content = value
+      } else {
+        dialogIndicator.value.indicator = value
+      }
+    }
+  }
+})
+
+function openDialog(mode: 'create' | 'edit', indicator: any = null) {
+  dialogMode.value = mode
   
-  try {
-    const updateData: any = {
-      indicator_id: editingIndicator.value.indicator_id
-    }
-    
-    // Обновление индекса
-    if (editingIndicator.value.indicator_index !== editingIndicator.value.original_indicator_index) {
-      updateData.indicator_index = editingIndicator.value.indicator_index.trim()
-    }
-    
-    // Обновление содержания
-    if (editingIndicator.value.indicator !== editingIndicator.value.original_indicator) {
-      updateData.indicator = editingIndicator.value.indicator.trim()
-    }
-    
-    // Обновление дисциплины
-    if (editingIndicator.value.discipline_id !== editingIndicator.value.original_discipline_id) {
-      updateData.discipline_id = editingIndicator.value.discipline_id
-    }
-    
-    if (Object.keys(updateData).length > 1) {
-      await store.updateIndicator(
-        editingIndicator.value.indicator_id,
-        updateData
-      )
-      
-      $q.notify({
-        message: 'Индикатор успешно обновлен',
-        color: 'positive',
-        position: 'top-right',
-        timeout: 2000
-      })
-    }
-    
-    showEditDialog.value = false
-    editingIndicator.value = null
-    
-  } catch (error: any) {
-    $q.notify({
-      message: 'Ошибка при сохранении индикатора',
-      color: 'negative',
-      position: 'top-right'
-    })
-  }
-}
-
-async function createNewIndicator() {
-  if (!newIndicator.value.discipline_id || 
-      !newIndicator.value.indicator_index || 
-      !newIndicator.value.indicator_content) {
-    $q.notify({
-      message: 'Заполните все обязательные поля',
-      color: 'warning',
-      position: 'top-right'
-    })
-    return
-  }
-
-  try {
-    await store.createIndicator({
-      //plan_id: props.planId,
-      discipline_id: newIndicator.value.discipline_id,
-      competence_index: props.competence.competence_index,
-      competence: props.competence.competence,
-      indicator_index: newIndicator.value.indicator_index,
-      indicator: newIndicator.value.indicator_content
-    })
-    
-    $q.notify({
-      message: 'Индикатор успешно создан',
-      color: 'positive',
-      position: 'top-right'
-    })
-    
-    showAddDialog.value = false
-    newIndicator.value = {
+  if (mode === 'create') {
+    dialogIndicator.value = {
       discipline_id: null,
-      indicator_index: '',
+      indicator_index: props.competence?.competence_index ? `${props.competence.competence_index}.` : '',
       indicator_content: ''
     }
+  } else {
+    dialogIndicator.value = {
+      ...indicator,
+      original_indicator_index: indicator.indicator_index,
+      original_indicator: indicator.indicator,
+      original_discipline_id: indicator.discipline_id
+    }
+  }
+}
+
+async function saveDialog() {
+  try {
+    if (dialogMode.value === 'create') {
+      if (!dialogIndicator.value.discipline_id || 
+          !dialogIndicator.value.indicator_index || 
+          !dialogIndicator.value.indicator_content) {
+        $q.notify({
+          message: 'Заполните все обязательные поля',
+          color: 'warning',
+          position: 'top-right'
+        })
+        return
+      }
+
+      await store.createIndicator({
+        discipline_id: dialogIndicator.value.discipline_id,
+        competence_index: props.competence.competence_index,
+        competence: props.competence.competence,
+        indicator_index: dialogIndicator.value.indicator_index,
+        indicator: dialogIndicator.value.indicator_content
+      })
+      
+      $q.notify({
+        message: 'Индикатор успешно создан',
+        color: 'positive',
+        position: 'top-right'
+      })
+      
+    } else {
+      const updateData: any = {
+        indicator_id: dialogIndicator.value.indicator_id
+      }
+      
+      if (dialogIndicator.value.indicator_index !== dialogIndicator.value.original_indicator_index) {
+        updateData.indicator_index = dialogIndicator.value.indicator_index.trim()
+      }
+      
+      if (dialogIndicator.value.indicator !== dialogIndicator.value.original_indicator) {
+        updateData.indicator = dialogIndicator.value.indicator.trim()
+      }
+      
+      if (dialogIndicator.value.discipline_id !== dialogIndicator.value.original_discipline_id) {
+        updateData.discipline_id = dialogIndicator.value.discipline_id
+      }
+      
+      if (Object.keys(updateData).length > 1) {
+        await store.updateIndicator(
+          dialogIndicator.value.indicator_id,
+          updateData
+        )
+        
+        $q.notify({
+          message: 'Индикатор успешно обновлен',
+          color: 'positive',
+          position: 'top-right',
+          timeout: 2000
+        })
+      }
+    }
+
+    dialogMode.value = null
+    dialogIndicator.value = null
+    
   } catch (error: any) {
     $q.notify({
-      message: 'Ошибка при создании индикатора',
+      message: dialogMode.value === 'create' 
+        ? 'Ошибка при создании индикатора' 
+        : 'Ошибка при сохранении индикатора',
       color: 'negative',
       position: 'top-right'
     })
@@ -164,26 +219,11 @@ async function createNewIndicator() {
 }
 
 function addIndicator() {
-  newIndicator.value = {
-    discipline_id: null,
-    indicator_index: props.competence?.competence_index ? `${props.competence.competence_index}.` : '',
-    indicator_content: ''
-  }
-  showAddDialog.value = true
+  openDialog('create')
 }
 
-function cancelAddDialog() {
-  showAddDialog.value = false
-  newIndicator.value = {
-    discipline_id: null,
-    indicator_index: '',
-    indicator_content: ''
-  }
-}
-
-function cancelEditDialog() {
-  showEditDialog.value = false
-  editingIndicator.value = null
+function startEdit(indicator) {
+  openDialog('edit', indicator)
 }
 
 async function deleteIndicator(indicatorId) {
@@ -284,6 +324,7 @@ async function moveIndicatorDown(indicator) {
     })
   }
 }
+
 </script>
 
 <template>
@@ -306,100 +347,94 @@ async function moveIndicatorDown(indicator) {
     </div>
 
     <div v-else>
-      <div v-if="currentIndicators.length > 0" class="indicators-container">
-        <div class="indicators-container__header text-center text-subtitle1 items-center bg-grey-2">
-          <div class="cell-num">№</div>
-          <div class="cell-code">Код индикатора</div>
-          <div class="cell-content">Содержание индикатора</div>
-          <div class="cell-disciplines">Дисциплины</div>
-          <div class="cell-actions">Управление</div>
-        </div>
-
-        <div class="indicators-container__body">
-          <div 
-            v-for="(indicator, index) in currentIndicators" 
-            :key="indicator.id"
-            class="indicators-container__body__cell text-subtitle1"
-            :class="getRowColor(index)"
-          >
-            <div class="viewing-row">
-              <div class="cell-num text-center">{{ index + 1 }}</div>
-              <div class="cell-code text-center">
-                {{ indicator.indicator_index }}
-              </div>
-              <div class="cell-content text-justify">
-                {{ indicator.indicator || 'Нет содержания' }}
-              </div>
-              <div class="cell-disciplines">
-                <div v-if="indicator.discipline_index && indicator.discipline_name">
-                  {{ indicator.discipline_index }} {{ indicator.discipline_name }}
-                </div>
-                <div v-else class="text-grey">
-                  Не привязано
-                </div>
-              </div>
-              <div class="cell-actions text-center">
-                <q-btn
-                  icon="mdi-pencil-outline"
-                  color="green"
-                  flat
-                  dense
-                  @click="startEdit(indicator)"
-                  :disabled="saving"
-                  title="Редактировать строку"
-                />
-                <q-btn
-                  icon="mdi-delete"
-                  color="red"
-                  flat
-                  dense
-                  @click="deleteIndicator(indicator.indicator_id)"
-                  :disabled="saving"
-                  title="Удалить"
-                />
-                <q-btn
-                  v-if="index > 0"
-                  icon="mdi-arrow-up-thin"
-                  color="black"
-                  flat
-                  dense
-                  @click="moveIndicatorUp(indicator)"
-                  :disabled="saving"
-                  title="Переместить вверх"
-                />
-                <q-btn
-                  v-if="index < currentIndicators.length - 1"
-                  icon="mdi-arrow-down-thin"
-                  color="black"
-                  flat
-                  dense
-                  @click="moveIndicatorDown(indicator)"
-                  :disabled="saving"
-                  title="Переместить вниз"
-                />
-              </div>
+      <q-table
+        v-if="currentIndicators.length > 0"
+        :rows="tableRows"
+        :columns="columns"
+        row-key="indicator_id"
+        :loading="loading"
+        :pagination="{ rowsPerPage: 0 }"
+        flat
+        bordered
+        separator="cell"
+        wrap-cells
+        class="indicators-table"
+      >
+        <template v-slot:body-cell-disciplines="props">
+          <q-td :props="props">
+            <div :class="{ 'text-grey': !props.row.discipline_index }">
+              {{ props.row.discipline }}
             </div>
-          </div>
-        </div>
-      </div>
+          </q-td>
+        </template>
+
+        <template v-slot:body-cell-actions="props">
+          <q-td :props="props" class="actions-cell">
+            <div class="row q-gutter-xs justify-center">
+              <q-btn
+                icon="mdi-pencil-outline"
+                color="green"
+                flat
+                dense
+                size="sm"
+                @click="startEdit(props.row)"
+                :disabled="saving"
+                title="Редактировать"
+              />
+              <q-btn
+                icon="mdi-delete"
+                color="red"
+                flat
+                dense
+                size="sm"
+                @click="deleteIndicator(props.row.indicator_id)"
+                :disabled="saving"
+                title="Удалить"
+              />
+              <q-btn
+                v-if="props.row.number > 1"
+                icon="mdi-arrow-up-thin"
+                color="black"
+                flat
+                dense
+                size="sm"
+                @click="moveIndicatorUp(props.row)"
+                :disabled="saving"
+                title="Переместить вверх"
+              />
+              <q-btn
+                v-if="props.row.number < currentIndicators.length"
+                icon="mdi-arrow-down-thin"
+                color="black"
+                flat
+                dense
+                size="sm"
+                @click="moveIndicatorDown(props.row)"
+                :disabled="saving"
+                title="Переместить вниз"
+              />
+            </div>
+          </q-td>
+        </template>
+      </q-table>
 
       <div v-if="currentIndicators.length === 0 && !loading" class="text-body1 text-grey text-center q-py-xl">
         <div>Для данной компетенции нет индикаторов</div>
       </div>
 
-      <!-- Диалог добавления нового индикатора -->
-      <q-dialog v-model="showAddDialog" persistent>
+      <q-dialog v-model="showDialog" persistent>
         <q-card style="min-width: 500px">
           <q-card-section>
-            <div class="text-h6">Добавить новый индикатор</div>
+            <div class="text-h6">
+              {{ dialogMode === 'create' ? 'Добавить новый индикатор' : 'Редактировать индикатор' }}
+            </div>
           </q-card-section>
 
           <q-card-section class="q-pt-none">
-            <q-form @submit.prevent="createNewIndicator">
+            <q-form @submit.prevent="saveDialog">
               <div class="q-gutter-md">
-                <!-- Выбор дисциплины -->
                 <q-select
-                  v-model="newIndicator.discipline_id"
+                  v-model="dialogIndicator.discipline_id"
                   :options="availableDisciplines"
                   option-label="name"
                   option-value="id"
@@ -420,17 +455,15 @@ async function moveIndicatorDown(indicator) {
                   </template>
                 </q-select>
 
-                <!-- Код индикатора -->
                 <q-input
-                  v-model="newIndicator.indicator_index"
+                  v-model="dialogIndicator.indicator_index"
                   label="Код индикатора"
                   filled
                   :rules="[val => !!val || 'Введите код индикатора']"
                 />
 
-                <!-- Содержание индикатора -->
                 <q-input
-                  v-model="newIndicator.indicator_content"
+                  v-model="dialogContent"
                   label="Содержание индикатора"
                   type="textarea"
                   filled
@@ -442,69 +475,8 @@ async function moveIndicatorDown(indicator) {
           </q-card-section>
 
           <q-card-actions align="right">
-            <q-btn flat label="Отмена" color="negative" @click="cancelAddDialog" />
-            <q-btn flat label="Сохранить" color="primary" @click="createNewIndicator" :loading="saving" />
-          </q-card-actions>
-        </q-card>
-      </q-dialog>
-
-      <!-- Диалог редактирования индикатора -->
-      <q-dialog v-model="showEditDialog" persistent>
-        <q-card style="min-width: 500px">
-          <q-card-section>
-            <div class="text-h6">Редактировать индикатор</div>
-          </q-card-section>
-
-          <q-card-section class="q-pt-none">
-            <q-form @submit.prevent="saveEdit">
-              <div class="q-gutter-md">
-                <!-- Код индикатора -->
-                <q-input
-                  v-model="editingIndicator.indicator_index"
-                  label="Код индикатора"
-                  filled
-                  :rules="[val => !!val || 'Введите код индикатора']"
-                />
-
-                <!-- Содержание индикатора -->
-                <q-input
-                  v-model="editingIndicator.indicator"
-                  label="Содержание индикатора"
-                  type="textarea"
-                  filled
-                  :rules="[val => !!val || 'Введите содержание индикатора']"
-                  autogrow
-                />
-
-                <!-- Выбор дисциплины -->
-                <q-select
-                  v-model="editingIndicator.discipline_id"
-                  :options="availableDisciplines"
-                  option-label="name"
-                  option-value="id"
-                  map-options
-                  emit-value
-                  label="Дисциплина"
-                  filled
-                  clearable
-                  :rules="[val => !!val || 'Выберите дисциплину']"
-                >
-                  <template v-slot:option="scope">
-                    <q-item v-bind="scope.itemProps">
-                      <q-item-section>
-                        <q-item-label>{{ scope.opt.name }}</q-item-label>
-                        <q-item-label caption>{{ scope.opt.index }}</q-item-label>
-                      </q-item-section>
-                    </q-item>
-                  </template>
-                </q-select>
-              </div>
-            </q-form>
-          </q-card-section>
-
-          <q-card-actions align="right">
-            <q-btn flat label="Отмена" color="negative" @click="cancelEditDialog" />
-            <q-btn flat label="Сохранить" color="primary" @click="saveEdit" :loading="saving" />
+            <q-btn flat label="Отмена" color="negative" @click="() => { dialogMode = null; dialogIndicator = null }" />
+            <q-btn flat label="Сохранить" color="primary" @click="saveDialog" :loading="saving" />
           </q-card-actions>
         </q-card>
       </q-dialog>
@@ -513,59 +485,16 @@ async function moveIndicatorDown(indicator) {
 </template>
 
 <style scoped lang="scss">
-.indicators-container {
-  $border: solid 1px silver;
-
-  &__header {
-    display: grid;
-    grid-template-columns: 50px 150px 1fr 250px 150px;
-    grid-gap: 10px;
-    font-weight: bold;
-    border: $border;
-    border-bottom: none;
-    padding: 12px 8px;
-    align-items: center;
-
-    .cell-num,
-    .cell-code,
-    .cell-content,
-    .cell-disciplines,
-    .cell-actions {
-      text-align: center;
-    }
+.indicators-table {
+  .q-table__middle {
+    min-height: auto;
   }
-
-  &__body {
-    .indicators-container__body__cell {
-      border: $border;
-      border-bottom: none;
-
-      &:last-child {
-        border-bottom: $border;
-      }
-
-      .viewing-row {
-        display: grid;
-        grid-template-columns: 50px 150px 1fr 250px 150px;
-        grid-gap: 10px;
-        padding: 12px 8px;
-        min-height: 60px;
-        align-items: center;
-
-        .cell-content {
-          word-break: break-word;
-        }
-
-        .cell-actions {
-          display: flex;
-          justify-content: center;
-          gap: 5px;
-          
-          .q-btn {
-            margin: 0 2px;
-          }
-        }
-      }
+  
+  .actions-cell {
+    padding: 8px !important;
+    
+    .q-btn {
+      margin: 0 2px;
     }
   }
 }

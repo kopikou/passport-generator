@@ -32,7 +32,7 @@ const currentTab = computed(() => {
 //   { immediate: true }
 // )
 
-// Генерация путей для вкладок
+
 const getTabPath = (tabName: string): string => {
   if (!currentPlanId) return '#'
   const id = currentPlanId

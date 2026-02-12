@@ -42,7 +42,6 @@ async function exportMatrix() {
   }
 }
 
-// Столбцы
 const columns = [
   {
     name: 'discipline_index',
@@ -203,7 +202,6 @@ const visibleMatrix = computed(() => {
   return filteredMatrix.value.filter(item => isItemVisible(item))
 })
 
-// Методы
 function getCompetenceBadgeColor(type) {
   const colors: Record<string, string> = {
     'Универсальная': 'blue',
@@ -546,7 +544,6 @@ watch(() => route.params.id, () => {
               >
                 {{ comp.competence_index }}
               </q-badge>
-              <!-- <br v-if="(idx + 1) % 5 === 0" /> -->
             </div>
             <div v-else class="text-grey text-italic">
               <q-icon name="warning" color="negative" class="q-mr-xs" />

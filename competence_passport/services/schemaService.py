@@ -99,7 +99,6 @@ class SchemaService:
             if forms.get(field, False) and not getattr(semester_obj, field, False):
                 raise ValueError(f"Форма аттестации недоступна в этом семестре")
 
-        # Решаем: сохранять или удалять
         has_any_form = any(forms.get(f, False) for f in form_fields)
 
         with transaction.atomic():

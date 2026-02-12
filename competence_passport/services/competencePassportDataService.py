@@ -359,7 +359,7 @@ class CompetencePassportDataService:
     @classmethod
     def process_schema_for_report(cls, schema_data):
         """
-        Обработка схемы компетенций для использования в Word-отчётах.
+        Обработка схемы компетенций для использования в Word-отчётах
         """
         max_semester = 8 
         for competence in schema_data:

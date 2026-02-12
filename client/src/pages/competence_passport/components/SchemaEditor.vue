@@ -50,7 +50,6 @@ const hasChanges = computed(() => {
   return JSON.stringify(forms.value) !== JSON.stringify(originalForms.value)
 })
 
-// Управление отображением диалога
 watch(() => props.modelValue, (val) => {
   showDialog.value = val
 })
