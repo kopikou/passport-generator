@@ -341,14 +341,10 @@ watch(() => route.params.id, () => {
               </q-table>
             </q-card-section>
           </q-card>
-          
-          <div class="row items-center justify-between q-mt-md">
-            <div class="col">
-              <div class="text-caption">
-                <q-icon name="info" class="q-mr-xs" />
-                Проверка выполнена: {{ lastCheckedFormatted }}
-              </div>
-            </div>
+
+          <div class="text-caption">
+            <q-icon name="info" class="q-mr-xs" />
+            Проверка выполнена: {{ lastCheckedFormatted }}
           </div>
         </div>
       </q-slide-transition>

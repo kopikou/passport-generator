@@ -245,34 +245,27 @@ async function loadMatrixData() {
 }
 
 async function runMatrixValidation() {
-  try {
-    await store.validateMatrix()
+  await store.validateMatrix()
+  //   await store.validateMatrix()
     
-    if (matrixValidation.value?.is_valid) {
-      $q.notify({
-        type: 'positive',
-        message: 'Матрица компетенций проверена успешно!',
-        position: 'top-right',
-        timeout: 3000
-      })
-    } else {
-      $q.notify({
-        type: 'warning',
-        message: 'Найдены проблемы в матрице компетенций',
-        position: 'top-right',
-        timeout: 5000,
-        actions: [{ label: 'Показать детали', color: 'white', handler: () => {
-          showValidationDetails.value = true
-        }}]
-      })
-    }
-  } catch (error) {
-    $q.notify({ 
-      type: 'negative', 
-      message: 'Ошибка при проверке матрицы',
-      position: 'top-right' 
-    })
-  }
+  //   if (matrixValidation.value?.is_valid) {
+  //     $q.notify({
+  //       type: 'positive',
+  //       message: 'Матрица компетенций проверена успешно!',
+  //       position: 'top-right',
+  //       timeout: 3000
+  //     })
+  //   } else {
+  //     $q.notify({
+  //       type: 'warning',
+  //       message: 'Найдены проблемы в матрице компетенций',
+  //       position: 'top-right',
+  //       timeout: 5000,
+  //       actions: [{ label: 'Показать детали', color: 'white', handler: () => {
+  //         showValidationDetails.value = true
+  //       }}]
+  //     })
+  //   }
 }
 
 // Редактирование
