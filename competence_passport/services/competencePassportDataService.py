@@ -204,9 +204,10 @@ class CompetencePassportDataService:
                 "type": RuleService.get_discipline_types(disc['newdisid'])
             })
 
-        discipline_ids = [d['id'] for d in raw_disciplines]
+        #discipline_ids = [d['id'] for d in raw_disciplines]
         raw_competences = RuleService.get_all_competences(
-            planlineid__in=discipline_ids
+            #planlineid__in=discipline_ids
+            plan_id=plan
         )
         competences = []
         for comp in raw_competences:

@@ -18,8 +18,8 @@ from rpd.models import PlanData, LinesData, Disciplines, SemesterData, LinesIndi
     PlanDocuments, BaseDocuments, DocumentsTypes, RPDFile
 from rpd.serializer import PlanDataSerializer, DisciplinesSerializer, LinesDataSerializer, SemesterDataSerializer, \
     LinesIndicatorsSerializer, PlanDocumentsSerializer
-from competence_passport.models import Scheme, CompetenceRelations
-from competence_passport.serializer import SchemeSerializer, CompetenceRelationsSerializer
+from competence_passport.models import Scheme, Competence
+from competence_passport.serializer import SchemeSerializer, CompetenceFullSerializer
 from app.utils import cache_function, RPGEN
 
 
@@ -298,11 +298,14 @@ class PLXParser:
         plan_files = self.get_documents_plan(lines_data, planData['id'], allowed_names)
         self.data['documents'] = plan_files
 
+        # relations_data = self.get_competence_relations_data(planData['id'])
+        # self.insert_competence_relations_data(relations_data)
+        competence_data = self.get_competence_data(planData['id'])
+        self.insert_competence_data(competence_data)
+
         scheme_data = self.get_scheme_data(planData['id'])
         self.insert_scheme_data(scheme_data)
-        
-        relations_data = self.get_competence_relations_data(planData['id'])
-        self.insert_competence_relations_data(relations_data)
+
 
 
 
@@ -707,10 +710,13 @@ class PLXParser:
         
         for discipline in disciplines:
             # Уникальные компетенции дисциплины
-            competences = LinesIndicators.objects.filter(
-                planlineid=discipline,
-                competence_index__isnull=False
-            ).values('competence_index', 'competence').distinct()
+            competences = Competence.objects.filter(
+                plan_id=plan_id,
+                competence_index__in=LinesIndicators.objects.filter(
+                    planlineid=discipline,
+                    competence_index__isnull=False
+                ).values_list('competence_index', flat=True)
+            )
             
             # Семестры дисциплины
             semesters = SemesterData.objects.filter(planlineid=discipline)
@@ -728,8 +734,7 @@ class PLXParser:
                     if has_forms:
                         scheme_data.append({
                             'planlineid_id': discipline.id,
-                            'competence_index': comp['competence_index'],
-                            'competence': comp['competence'],
+                            'competence_id': comp.id,
                             'semester': sem.num,
                             'ekz': bool(sem.ekz),
                             'zach': bool(sem.zach),
@@ -743,11 +748,14 @@ class PLXParser:
 
     def insert_scheme_data(self, data):
         discipline_ids = [item['planlineid_id'] for item in data]
+        competence_ids = [item['competence_id'] for item in data]
 
+        # Получаем существующие записи
         existing_schemes = {
-            (s.planlineid_id, s.competence_index, s.semester): s
+            (s.planlineid_id, s.competence_id, s.semester): s
             for s in Scheme.objects.filter(
-                planlineid_id__in=discipline_ids
+                planlineid_id__in=discipline_ids,
+                competence_id__in=competence_ids
             )
         }
         
@@ -759,8 +767,7 @@ class PLXParser:
             
             serializer_data = {
                 'planlineid_id': item['planlineid_id'],
-                'competence_index': item['competence_index'],
-                'competence': item['competence'],
+                'competence_id': item['competence_id'],
                 'semester': item['semester'],
                 'ekz': item['ekz'],
                 'zach': item['zach'],
@@ -779,41 +786,112 @@ class PLXParser:
         keys_to_delete = set(existing_schemes.keys()) - seen_keys
         if keys_to_delete:
             disc_ids = [k[0] for k in keys_to_delete]
-            comp_indices = [k[1] for k in keys_to_delete]
+            comp_ids = [k[1] for k in keys_to_delete]
             semesters = [k[2] for k in keys_to_delete]
             
             Scheme.objects.filter(
                 planlineid_id__in=disc_ids,
-                competence_index__in=comp_indices,
+                competence_id__in=comp_ids,
                 semester__in=semesters
             ).delete()
         
         return data
 
 
-    def get_competence_relations_data(self, plan_id):
-        competences = LinesIndicators.objects.filter(
+    # def get_competence_relations_data(self, plan_id):
+    #     competences = LinesIndicators.objects.filter(
+    #         planlineid__plan_id=plan_id,
+    #         competence_index__isnull=False
+    #     ).values('competence_index', 'competence').distinct()
+        
+    #     relations_data = []
+    #     for comp in competences:
+    #         relations_data.append({
+    #             'plan_id': plan_id,
+    #             'competence_index': comp['competence_index'],
+    #             'competence': comp['competence']
+    #         })
+        
+    #     return relations_data
+    
+    def get_competence_data(self, plan_id):
+        # Получаем все уникальные компетенции из LinesIndicators
+        unique_competences = LinesIndicators.objects.filter(
             planlineid__plan_id=plan_id,
             competence_index__isnull=False
         ).values('competence_index', 'competence').distinct()
         
-        relations_data = []
-        for comp in competences:
-            relations_data.append({
+        # Получаем все индикаторы для поиска итоговых
+        all_indicators = LinesIndicators.objects.filter(
+            planlineid__plan_id=plan_id,
+            competence_index__in=[c['competence_index'] for c in unique_competences]
+        )
+        
+        # Находим итоговые индикаторы
+        final_indicators = {}
+        for ind in all_indicators:
+            if ind.indicator_index and 'Итоговый индикатор' in ind.indicator_index:
+                if ind.competence_index not in final_indicators:
+                    final_indicators[ind.competence_index] = ind.indicator or ""
+
+        competence_data = []
+        for comp in unique_competences:
+            competence_data.append({
                 'plan_id': plan_id,
                 'competence_index': comp['competence_index'],
-                'competence': comp['competence']
+                'competence': comp['competence'],
+                'relations': '',  # будет обновляться вручную, сохраняем пустым при синхронизации
+                'final_indicator': final_indicators.get(comp['competence_index'], '')
             })
         
-        return relations_data
+        return competence_data
 
-
-    def insert_competence_relations_data(self, data):
-        plan_id = data[0]['plan_id']
+    # def insert_competence_relations_data(self, data):
+    #     plan_id = data[0]['plan_id']
         
-        existing_relations = {
-            r.competence_index: r
-            for r in CompetenceRelations.objects.filter(plan_id=plan_id)
+    #     existing_relations = {
+    #         r.competence_index: r
+    #         for r in CompetenceRelations.objects.filter(plan_id=plan_id)
+    #     }
+        
+    #     seen_indices = set()
+        
+    #     for item in data:
+    #         idx = item['competence_index']
+    #         seen_indices.add(idx)
+            
+    #         serializer_data = {
+    #             'plan_id': plan_id,
+    #             'competence_index': idx,
+    #             'competence': item['competence']
+    #         }
+            
+    #         if idx in existing_relations:
+    #             serializer_data['id'] = existing_relations[idx].id
+    #             serializer_data['relations'] = existing_relations[idx].relations
+    #         else:
+    #             # Для новых записей relations = пустая строка
+    #             serializer_data['relations'] = ""
+            
+    #         serializer = CompetenceRelationsSerializer(data=serializer_data)
+    #         serializer.is_valid(raise_exception=True)
+    #         serializer.save()
+        
+    #     indices_to_delete = set(existing_relations.keys()) - seen_indices
+    #     if indices_to_delete:
+    #         CompetenceRelations.objects.filter(
+    #             plan_id=plan_id,
+    #             competence_index__in=indices_to_delete
+    #         ).delete()
+        
+    #     return data
+
+    def insert_competence_data(self, data):
+        plan_id = data[0]['plan_id']
+
+        existing_competences = {
+            c.competence_index: c
+            for c in Competence.objects.filter(plan_id=plan_id)
         }
         
         seen_indices = set()
@@ -821,27 +899,28 @@ class PLXParser:
         for item in data:
             idx = item['competence_index']
             seen_indices.add(idx)
-            
+
             serializer_data = {
                 'plan_id': plan_id,
                 'competence_index': idx,
-                'competence': item['competence']
+                'competence': item['competence'],
+                'final_indicator': item['final_indicator']
             }
-            
-            if idx in existing_relations:
-                serializer_data['id'] = existing_relations[idx].id
-                serializer_data['relations'] = existing_relations[idx].relations
+
+            if idx in existing_competences:
+                serializer_data['id'] = existing_competences[idx].id
+                serializer_data['relations'] = existing_competences[idx].relations
             else:
                 # Для новых записей relations = пустая строка
                 serializer_data['relations'] = ""
-            
-            serializer = CompetenceRelationsSerializer(data=serializer_data)
+
+            serializer = CompetenceFullSerializer(data=serializer_data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-        
-        indices_to_delete = set(existing_relations.keys()) - seen_indices
+
+        indices_to_delete = set(existing_competences.keys()) - seen_indices
         if indices_to_delete:
-            CompetenceRelations.objects.filter(
+            Competence.objects.filter(
                 plan_id=plan_id,
                 competence_index__in=indices_to_delete
             ).delete()

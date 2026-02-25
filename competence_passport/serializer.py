@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from competence_passport.models import Scheme, CompetenceRelations
+from competence_passport.models import Scheme, Competence
 from rpd.serializer import PlanDataSerializer, LinesIndicatorsSerializer
 from rpd.models import LinesIndicators, PlanData
 
@@ -60,8 +60,7 @@ class CompetenceMatrixSerializer(serializers.Serializer):
 class SchemeSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     planlineid_id = serializers.IntegerField()
-    competence_index = serializers.CharField(allow_null=True, allow_blank=True)
-    competence = serializers.CharField(allow_null=True, allow_blank=True)
+    competence_id = serializers.IntegerField()
     semester = serializers.IntegerField()
     ekz = serializers.BooleanField(allow_null=True)
     zach = serializers.BooleanField(allow_null=True)
@@ -73,8 +72,7 @@ class SchemeSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'planlineid_id',
-            'competence_index',
-            'competence',
+            'competence_id',
             'semester',
             'ekz',
             'zach',
@@ -106,18 +104,23 @@ class CompetenceRelationsSerializer(serializers.ModelSerializer):
     relations = serializers.CharField(allow_blank=True, allow_null=True, required=False, default="")
 
     class Meta:
-        model = CompetenceRelations
+        model = Competence
         fields = ['id', 'plan_id', 'competence_index', 'competence', 'relations']
 
     def create(self, validated_data):
         validated_data.pop('id', None)
 
-        obj, created = CompetenceRelations.objects.update_or_create(
+        obj, created = Competence.objects.update_or_create(
             plan_id=validated_data['plan_id'],
             competence_index=validated_data['competence_index'],
             defaults=validated_data
         )
         return obj
+
+class CompetenceFullSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Competence
+        fields = ['id', 'plan_id', 'competence_index', 'competence', 'relations', 'final_indicator']
 
 class CompetenceWithDisciplineIndicators(serializers.Serializer):
     """Serializer для индикаторов дисциплин"""

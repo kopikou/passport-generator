@@ -217,8 +217,8 @@ class CompetencePassportViewSet(GenericViewSet):
         
         return Response({
             'success': True,
-            'indicator_index': indicator.indicator_index,
-            'final_indicator_text': indicator.indicator
+            #'indicator_index': indicator.indicator_index,
+            'final_indicator_text': indicator
         })
     
     @action(methods=['POST'], detail=False, url_path='update-indicator-details', permission_classes=[CanEditCompetencePassport])

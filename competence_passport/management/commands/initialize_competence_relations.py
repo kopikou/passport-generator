@@ -1,10 +1,11 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from rpd.models.rpd_models import PlanData, LinesIndicators
-from competence_passport.models import CompetenceRelations
+from competence_passport.models import Competence
+from collections import defaultdict
 
 class Command(BaseCommand):
-    help = 'Инициализация записей CompetenceRelations для всех компетенций всех учебных планов'
+    help = 'Инициализация записей Competence для всех компетенций всех учебных планов'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -43,7 +44,7 @@ class Command(BaseCommand):
         
         with transaction.atomic():
             if clean:
-                deleted_count = CompetenceRelations.objects.filter(plan__in=plans).delete()[0]
+                deleted_count = Competence.objects.filter(plan__in=plans).delete()[0]
                 self.stdout.write(f'Удалено {deleted_count} существующих записей')
             
             for plan in plans:
@@ -57,6 +58,18 @@ class Command(BaseCommand):
                 ).values('competence_index', 'competence').distinct()
                 
                 self.stdout.write(f'  Найдено уникальных компетенций: {len(competences)}')
+
+                # Индикаторы для поиска итогового индикатора
+                all_indicators = LinesIndicators.objects.filter(
+                    planlineid__plan=plan,
+                    competence_index__in=[c['competence_index'] for c in competences]
+                )
+
+                # Итоговые индикаторы
+                final_indicators = defaultdict(list)
+                for ind in all_indicators:
+                    if 'Итоговый индикатор' in (ind.indicator_index or ''):
+                        final_indicators[ind.competence_index].append(ind)
                 
                 plan_created = 0
                 plan_updated = 0
@@ -65,10 +78,22 @@ class Command(BaseCommand):
                     competence_index = comp['competence_index']
                     competence_name = comp['competence'] or ''
 
-                    existing_relation = CompetenceRelations.objects.filter(
+                    existing_relation = Competence.objects.filter(
                         plan=plan,
                         competence_index=competence_index
                     ).first()
+
+                    # Поиск итогового индикатора
+                    final_indicator = ""
+                    final_ind = final_indicators.get(competence_index, [])
+                    if final_ind:
+                        final_indicator = final_ind[0].indicator or ""
+                    else:
+                        # Любой первый индикатор компетенции
+                        fallback_ind = all_indicators.filter(competence_index=competence_index).first()
+                        if fallback_ind:
+                            final_indicator = fallback_ind.indicator or ""
+
                     
                     if existing_relation:
                         if skip_existing:
@@ -86,11 +111,12 @@ class Command(BaseCommand):
                             if plan_updated % 100 == 0:
                                 self.stdout.write(f'    Обновлено {plan_updated} записей...')
                     else:
-                        CompetenceRelations.objects.create(
+                        Competence.objects.create(
                             plan=plan,
                             competence_index=competence_index,
                             competence=competence_name,
-                            relations='' 
+                            relations='',
+                            final_indicator=final_indicator,
                         )
                         plan_created += 1
                         total_created += 1
@@ -109,21 +135,21 @@ class Command(BaseCommand):
         
         self.stdout.write(f'Обработано учебных планов: {total_plans}')
         self.stdout.write(f'Создано новых записей: {total_created}')
-        self.stdout.write(f'Всего записей в базе: {CompetenceRelations.objects.count()}')
+        self.stdout.write(f'Всего записей в базе: {Competence.objects.count()}')
         
         plans_without_relations = []
         for plan in PlanData.objects.all():
-            if not CompetenceRelations.objects.filter(plan=plan).exists():
+            if not Competence.objects.filter(plan=plan).exists():
                 plans_without_relations.append(plan)
         
         if plans_without_relations:
-            self.stdout.write(self.style.WARNING(f'\nПланы без записей CompetenceRelations: {len(plans_without_relations)}'))
+            self.stdout.write(self.style.WARNING(f'\nПланы без записей Competence: {len(plans_without_relations)}'))
             for plan in plans_without_relations[:10]: 
                 self.stdout.write(f'  - {plan.planname} (ID: {plan.id})')
         
         # Проверяем дубликаты (должно быть по одной записи на компетенцию в плане)
         from django.db.models import Count
-        duplicates = CompetenceRelations.objects.values(
+        duplicates = Competence.objects.values(
             'plan', 'competence_index'
         ).annotate(
             count=Count('id')
@@ -132,7 +158,7 @@ class Command(BaseCommand):
         if duplicates.exists():
             self.stdout.write(self.style.ERROR(f'\nНайдено дубликатов: {duplicates.count()}'))
             for dup in duplicates[:5]:
-                relations = CompetenceRelations.objects.filter(
+                relations = Competence.objects.filter(
                     plan_id=dup['plan'],
                     competence_index=dup['competence_index']
                 )

@@ -1,5 +1,6 @@
 import re
 from rpd.models.rpd_models import PlanData, LinesData, LinesIndicators
+from competence_passport.models import Competence
 
 class RuleService:
     """Главный сервис для общих методов"""
@@ -105,7 +106,7 @@ class RuleService:
     @classmethod
     def get_all_competences(cls, **filters):
         """Получение всех уникальных компетенций для учебного плана"""
-        queryset = LinesIndicators.objects.all()
+        queryset = Competence.objects.all()#LinesIndicators.objects.all()
 
         if filters:
             queryset = queryset.filter(**filters)
@@ -113,7 +114,7 @@ class RuleService:
         competences = queryset.values(
             'competence_index',
             'competence'
-        ).distinct('competence_index')
+        )#.distinct('competence_index')
         
         return cls.sort_competences(list(competences))
     

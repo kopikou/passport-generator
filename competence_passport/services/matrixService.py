@@ -156,7 +156,8 @@ class MatrixService:
         
         # Находим все уникальные компетенции в плане
         all_competences = RuleService.get_all_competences(
-            planlineid__plan=plan
+            #planlineid__plan=plan
+            plan_id=plan
         )
         
         # Находим компетенции, которые есть в плане, но не используются в дисциплинах

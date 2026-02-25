@@ -1,7 +1,7 @@
 import re
 from django.db import transaction
 from rpd.models.rpd_models import PlanData, LinesData, LinesIndicators
-from competence_passport.models import CompetenceRelations
+from competence_passport.models import Competence
 from generator.models import DisciplineIndicators
 from collections import defaultdict
 from competence_passport.services.ruleService import RuleService
@@ -23,36 +23,37 @@ class PassportService:
         filtered_discipline_ids = {d['id'] for d in filtered_disciplines}
 
         # Получаем связи компетенций
-        competence_relations = CompetenceRelations.objects.filter(plan_id=plan)
-        relations_map = {
-            relation.competence_index: relation.relations
-            for relation in competence_relations
-        }
+        # competence_relations = CompetenceRelations.objects.filter(plan_id=plan)
+        # relations_map = {
+        #     relation.competence_index: relation.relations
+        #     for relation in competence_relations
+        # }
 
-        competences = [
-            {'competence_index': relation.competence_index, 'competence': relation.competence or ""}
-            for relation in competence_relations
-        ]
+        # competences = [
+        #     {'competence_index': relation.competence_index, 'competence': relation.competence or ""}
+        #     for relation in competence_relations
+        # ]
+        competences = Competence.objects.filter(plan_id=plan)
 
         competences = RuleService.sort_competences(competences)
 
         # Индикаторы для поиска итогового индикатора
-        all_indicators = LinesIndicators.objects.filter(
-            planlineid__plan=plan,
-            competence_index__in=[c['competence_index'] for c in competences]
-        )
+        # all_indicators = LinesIndicators.objects.filter(
+        #     planlineid__plan=plan,
+        #     competence_index__in=[c['competence_index'] for c in competences]
+        # )
 
-        # Итоговые индикаторы
-        final_indicators = defaultdict(list)
-        for ind in all_indicators:
-            if 'Итоговый индикатор' in (ind.indicator_index or ''):
-                final_indicators[ind.competence_index].append(ind)
+        # # Итоговые индикаторы
+        # final_indicators = defaultdict(list)
+        # for ind in all_indicators:
+        #     if 'Итоговый индикатор' in (ind.indicator_index or ''):
+        #         final_indicators[ind.competence_index].append(ind)
 
         # Отфильтрованные индикаторы
         indicators = LinesIndicators.objects.filter(
             planlineid__plan=plan,
             planlineid__in=filtered_discipline_ids,
-            competence_index__in=[c['competence_index'] for c in competences]
+            competence_index__in=[c.competence_index for c in competences]
         ).select_related('planlineid')
 
         indicators_for_list = defaultdict(list)
@@ -71,21 +72,22 @@ class PassportService:
 
         passport_data = []
         for comp in competences:
-            comp_idx = comp['competence_index']
-            comp_text = comp['competence']
+            comp_idx = comp.competence_index
+            comp_text = comp.competence
             comp_type = RuleService.get_competence_type(comp_idx)
-            comp_relations = relations_map.get(comp_idx, "")
+            comp_relations = comp.relations#relations_map.get(comp_idx, "")
 
             # Поиск итогового индикатора
-            final_indicator = ""
-            final_ind = final_indicators.get(comp_idx, [])
-            if final_ind:
-                final_indicator = final_ind[0].indicator or ""
-            else:
-                # Любой первый индикатор компетенции
-                fallback_ind = all_indicators.filter(competence_index=comp_idx).first()
-                if fallback_ind:
-                    final_indicator = fallback_ind.indicator or ""
+            # final_indicator = ""
+            # final_ind = final_indicators.get(comp_idx, [])
+            # if final_ind:
+            #     final_indicator = final_ind[0].indicator or ""
+            # else:
+            #     # Любой первый индикатор компетенции
+            #     fallback_ind = all_indicators.filter(competence_index=comp_idx).first()
+            #     if fallback_ind:
+            #         final_indicator = fallback_ind.indicator or ""
+            final_indicator = comp.final_indicator
 
             indicator_list = []
             for ind in indicators_for_list.get(comp_idx, []):
@@ -136,13 +138,22 @@ class PassportService:
                 competence_index=competence_index,
                 indicator_index__icontains='Итоговый индикатор'
             ).order_by('indicator_index')
+            
+            competence = Competence.objects.filter(
+                plan_id=plan,
+                competence_index=competence_index,
+            ).first()
 
-            if final_indicators.exists():
+            if final_indicators.exists() or competence.exists():
                 indicator = final_indicators.first()
                 indicator.indicator = final_indicator_text
                 indicator.save()
+
+                competence.final_indicator = final_indicator_text
+                competence.save()
                 return {
-                    'indicator': indicator,
+                    #'indicator': indicator,
+                    'indicator': competence.final_indicator
                 }
 
             # Создание нового итогового индикатора
@@ -163,7 +174,12 @@ class PassportService:
                 indicator=final_indicator_text
             )
 
-            return {'indicator': indicator}
+            competence.final_indicator = final_indicator_text
+            competence.save()
+            return {
+                #'indicator': indicator,
+                'indicator': competence.final_indicator
+            }
         
     @staticmethod
     def update_indicator_details(indicator_id, know, able, own, criteria, methods):

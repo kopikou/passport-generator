@@ -1,7 +1,7 @@
 import re
 from django.db import transaction
 from rpd.models.rpd_models import PlanData, LinesData, LinesIndicators, SemesterData
-from competence_passport.models import Scheme
+from competence_passport.models import Scheme, Competence
 from datetime import datetime
 from collections import defaultdict
 from competence_passport.services.ruleService import RuleService
@@ -22,7 +22,7 @@ class SchemaService:
         competence_map = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
         for line in schema:
-            comp_idx = line.competence_index
+            comp_idx = line.competence_id.competence_index
             disc_id = line.planlineid_id
             semester = line.semester
             competence_map[comp_idx][disc_id][semester].append(line)
@@ -32,7 +32,7 @@ class SchemaService:
         for comp_idx, disc_map in competence_map.items():
             # Получаем содержание компетенции 
             shema = next(iter(next(iter(disc_map.values())).values()))[0]
-            competence = shema.competence or ""
+            competence = shema.competence_id.competence or ""
 
             discipline_list = []
 
@@ -101,15 +101,18 @@ class SchemaService:
 
         has_any_form = any(forms.get(f, False) for f in form_fields)
 
+        competence_id = Competence.objects.get(
+            competence_index=competence_index,
+            plan_id=plan.id
+        )
         with transaction.atomic():
             if has_any_form:
                 # Создаём или обновляем
                 scheme, created = Scheme.objects.update_or_create(
                     planlineid=discipline,
-                    competence_index=competence_index,
+                    competence_id=competence_id,
                     semester=semester,
                     defaults={
-                        'competence': competence,
                         **{f: forms.get(f, False) for f in form_fields}
                     }
                 )
@@ -118,7 +121,7 @@ class SchemaService:
                 # Удаляем, если нет форм
                 Scheme.objects.filter(
                     planlineid=discipline,
-                    competence_index=competence_index,
+                    competence_id=competence_id,
                     semester=semester
                 ).delete()
                 scheme_id = None
@@ -141,7 +144,7 @@ class SchemaService:
         schemes = Scheme.objects.filter(
             planlineid__plan=plan
         ).select_related('planlineid').order_by(
-            'competence_index', 'planlineid__newdisid', 'semester'
+            'competence_id__competence_index', 'planlineid__newdisid', 'semester'
         )
         
         indicators = RuleService.get_lines_indicators(
@@ -158,7 +161,7 @@ class SchemaService:
 
         schemes_dict = defaultdict(list)
         for scheme in schemes:
-            schemes_dict[(scheme.competence_index, scheme.planlineid.id)].append(scheme)
+            schemes_dict[(scheme.competence_id.competence_index, scheme.planlineid.id)].append(scheme)
         
         validation_errors = []
         
@@ -167,13 +170,13 @@ class SchemaService:
             if RuleService.should_exclude_discipline(scheme.planlineid.newdisid):
                 continue
             
-            key = (scheme.competence_index, scheme.planlineid.id)
+            key = (scheme.competence_id.competence_index, scheme.planlineid.id)
             forms_count = len(schemes_dict[key])
             indicators_count = len(indicators_dict[key])
             
             if forms_count != indicators_count:
-                error_id = f"{scheme.competence_index}_{scheme.planlineid.id}_{scheme.semester}"
-                competence_name = scheme.competence or RuleService.get_competence_by_index(plan, scheme.competence_index)
+                error_id = f"{scheme.competence_id.competence_index}_{scheme.planlineid.id}_{scheme.semester}"
+                competence_name = scheme.competence_id.competence
                 
                 if forms_count > 0 and indicators_count == 0:
                     message = 'Указаны формы аттестации, но отсутствуют индикаторы'
@@ -184,7 +187,7 @@ class SchemaService:
                 
                 validation_errors.append({
                     'id': error_id,
-                    'competence_index': scheme.competence_index,
+                    'competence_index': scheme.competence_id.competence_index,
                     'competence_name': competence_name,
                     'discipline_index': scheme.planlineid.newdisid or '',
                     'discipline_name': scheme.planlineid.dis,
