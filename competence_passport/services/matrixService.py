@@ -1,7 +1,9 @@
 from django.db import transaction
 from rpd.models.rpd_models import PlanData, LinesData, LinesIndicators
+from competence_passport.models import Scheme
 from datetime import datetime
 from competence_passport.services.ruleService import RuleService
+from collections import defaultdict
 
 class MatrixService:
     @staticmethod
@@ -124,7 +126,9 @@ class MatrixService:
     def validate_competence_matrix(plan_id):
         """
         Валидация матрицы компетенций
-        Проверяет есть ли дисциплины без компетенций, есть ли компетенции без дисциплин
+        Проверяет есть ли дисциплины без компетенций, есть ли компетенции без дисциплин;
+        Формируются ли проф компетенции преддипломной практикой;
+        Формирует ли хотя бы одна практика общепрофессиональную компетенцию
         """      
         plan = PlanData.objects.get(mira_id=plan_id)
         
@@ -141,7 +145,7 @@ class MatrixService:
             planlineid__in=discipline_ids
         ).values('competence_index', 'planlineid_id').distinct()
         
-        # Находим дисциплины без компетенций
+        # 1. Дисциплины без компетенций
         disciplines_with_competences = set(ind['planlineid_id'] for ind in indicators)
         disciplines_without_competences = []
         
@@ -153,36 +157,118 @@ class MatrixService:
                     'discipline_index': disc['newdisid'],
                     'discipline_name': disc['dis']
                 })
-        
-        # Находим все уникальные компетенции в плане
-        all_competences = RuleService.get_all_competences(
-            #planlineid__plan=plan
-            plan_id=plan
-        )
-        
-        # Находим компетенции, которые есть в плане, но не используются в дисциплинах
-        used_competence_indices = {ind['competence_index'] for ind in indicators}
+
+        # 2. Компетенции без дисциплин
+        all_competences = RuleService.get_all_competences(plan_id=plan)
+        used_competence_indexes = {ind['competence_index'] for ind in indicators}
         competences_without_disciplines = []
         
         for comp in all_competences:
-            if comp['competence_index'] not in used_competence_indices:
+            if comp['competence_index'] not in used_competence_indexes:
                 competences_without_disciplines.append({
                     'message': f'Компетенция "{comp["competence"]}" ({comp["competence_index"]}) не привязана ни к одной дисциплине',
                     'competence_index': comp['competence_index'],
                     'competence': comp['competence']
                 })
+
+        practice_discipline_ids = []
+        for disc in raw_disciplines:
+            if 'практика' in disc['dis'].lower():
+                practice_discipline_ids.append(disc['id'])
+
+        prediplom_practice_ids = []
+        for disc in raw_disciplines:
+            if 'преддиплом' in disc['dis'].lower():
+                prediplom_practice_ids.append(disc['id'])       
         
+        # 3. Все профессиональные компетенции должны формироваться преддипломной практикой
+        professional_competences_without_practice = []
+        if prediplom_practice_ids:
+            practice_competences = set()
+            practice_indicators = LinesIndicators.objects.filter(
+                planlineid__in=prediplom_practice_ids
+            ).values('competence_index').distinct()
+            practice_competences = {ind['competence_index'] for ind in practice_indicators}
+            
+            # Проверяем профессиональные компетенции
+            for comp in all_competences:
+                if (comp['competence_index'] not in practice_competences and RuleService.get_competence_type(comp['competence_index']) == 'Профессиональная'):
+                    professional_competences_without_practice.append({
+                        'message': f'Профессиональная компетенция {comp["competence_index"]} не формируется преддипломной практикой',
+                        'competence_index': comp['competence_index'],
+                        'competence': comp['competence']
+                    })
+        else:
+            # Если преддипломная практика не найдена, все профессиональные компетенции считаются проблемными
+            for comp in all_competences:
+                if RuleService.get_competence_type(comp['competence_index']) == 'Профессиональная':
+                    professional_competences_without_practice.append({
+                        'message': f'Профессиональная компетенция {comp["competence_index"]} не формируется преддипломной практикой (практика не найдена)',
+                        'competence_index': comp['competence_index'],
+                        'competence': comp['competence']
+                    })
+
+        # 4. Хотя бы одна практика должна формировать общепрофессиональную компетенцию
+        opk_formed_by_practice = False
+        practice_indicators = LinesIndicators.objects.filter(
+            planlineid__in=practice_discipline_ids
+        )
+        
+        for indicator in practice_indicators:
+            comp_type = RuleService.get_competence_type(indicator.competence_index)
+            if comp_type == 'Общепрофессиональная':
+                opk_formed_by_practice = True
+                break
+        
+        practice_without_opk_error = []
+        if not opk_formed_by_practice:
+            practice_without_opk_error.append({
+                'message': 'Хотя бы одна практика должна формировать общепрофессиональную компетенцию',
+                'competence_index': None,
+                'competence': None
+            })
+
+        # 5. Компетенция не может формироваться только практикой 
+        competences_only_in_practice = []
+        competence_to_disciplines = defaultdict(set)
+        for ind in indicators:
+            competence_to_disciplines[ind['competence_index']].add(ind['planlineid_id'])
+
+        for comp_index, discipline_ids in competence_to_disciplines.items():
+            # Если все дисциплины — это практики
+            if discipline_ids and discipline_ids.issubset(practice_discipline_ids):
+                comp_obj = next((c for c in all_competences if c['competence_index'] == comp_index), None)
+                competences_only_in_practice.append({
+                    'message': f'Компетенция {comp_index} формируется только практиками, без других дисциплин',
+                    'competence_index': comp_index,
+                    'competence': comp_obj['competence']
+                })
+        
+
         # Определяем валидность
-        is_valid = len(disciplines_without_competences) == 0 and len(competences_without_disciplines) == 0
+        is_valid = (
+            len(disciplines_without_competences) == 0 and 
+            len(competences_without_disciplines) == 0 and
+            len(professional_competences_without_practice) == 0 and
+            len(practice_without_opk_error) == 0 and
+            len(competences_only_in_practice) == 0)
         
-        errors = disciplines_without_competences + competences_without_disciplines
+        errors = (
+            disciplines_without_competences + 
+            competences_without_disciplines +
+            professional_competences_without_practice +
+            practice_without_opk_error +
+            competences_only_in_practice)
         
         return {
             'is_valid': is_valid,
             'errors': errors,
             'checked_at': datetime.now().isoformat(),
             'disciplines_without_competences_count': len(disciplines_without_competences),
-            'competences_without_disciplines_count': len(competences_without_disciplines)
+            'competences_without_disciplines_count': len(competences_without_disciplines),
+            'professional_competences_without_practice_count': len(professional_competences_without_practice),
+            'practice_without_opk_count': len(practice_without_opk_error),
+            'competences_only_in_practice_count': len(competences_only_in_practice)
         }
     
     @staticmethod
@@ -217,6 +303,11 @@ class MatrixService:
         with transaction.atomic():
             # Удаляем ненужные
             if to_delete:
+                Scheme.objects.filter(
+                    planlineid=discipline,
+                    competence_id__competence_index__in=to_delete
+                ).delete()
+
                 LinesIndicators.objects.filter(
                     planlineid=discipline,
                     competence_index__in=to_delete

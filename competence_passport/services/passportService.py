@@ -6,8 +6,6 @@ from generator.models import DisciplineIndicators
 from collections import defaultdict
 from competence_passport.services.ruleService import RuleService
 
-from collections import defaultdict
-
 class PassportService:
     @staticmethod
     def get_competence_passport(plan_id):

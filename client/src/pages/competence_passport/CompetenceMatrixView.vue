@@ -87,19 +87,33 @@ const validationStatus = computed(() => {
     return {
       type: 'success',
       title: 'Матрица компетенций проверена успешно!',
-      message: 'Все дисциплины имеют компетенции и все компетенции привязаны к дисциплинам.',
+      message: 'Все требования выполнены.',
       details: true
     }
   }
 
   if (matrixValidation.value?.errors?.length > 0) {
     const discErrors = matrixValidation.value.errors.filter(e => e.discipline_id)
-    const compErrors = matrixValidation.value.errors.filter(e => e.competence_index)
+    const compErrors = matrixValidation.value.errors.filter(e => e.competence_index && 
+    !e.message.includes('преддиплом') && !e.message.includes('общепроф') && 
+    !e.message.includes('только практиками'))
+    const practiceErrors = matrixValidation.value.errors.filter(e => e.message.includes('преддиплом'))
+    const opkPracticeError = matrixValidation.value.errors.filter(e => e.message.includes('общепроф')) 
+    const onlyPracticeErrors = matrixValidation.value.errors.filter(e => e.message.includes('только практиками'))
+    
+    let message = ''
+    if (discErrors.length > 0) message += `${discErrors.length} дисциплин без компетенций, `
+    if (compErrors.length > 0) message += `${compErrors.length} компетенций без дисциплин, `
+    if (practiceErrors.length > 0) message += `${practiceErrors.length} проф. компетенций без преддипломной практики,`
+    if (opkPracticeError.length > 0) message += `отсутствует ОПК в практиках,`
+    if (onlyPracticeErrors.length > 0) message += `${onlyPracticeErrors.length} компетенций только в практиках`
+    
+    message = message.replace(/, $/, '') 
     
     return {
       type: 'error',
       title: 'Найдены проблемы в матрице компетенций',
-      message: `Необходимо исправить ${discErrors.length} дисциплин без компетенций и ${compErrors.length} компетенций без дисциплин`,
+      message: `Необходимо исправить: ${message}`,
       details: true
     }
   }
@@ -361,24 +375,78 @@ watch(() => route.params.id, () => {
             </div>
           </div>
           
-          <div v-if="matrixValidation?.errors?.filter(e => e.competence_index).length" class="q-mb-md">
+          <div v-if="matrixValidation?.errors?.filter(e => e.competence_index && !e.message.includes('преддиплом') && !e.message.includes('общепроф') && !e.message.includes('только практиками')).length" class="q-mb-md">
             <div class="text-subtitle1 text-weight-medium q-mb-sm">
-              <q-icon name="warning" color="warning" class="q-mr-xs" />
+              <q-icon name="error_outline" color="negative" class="q-mr-xs" />
               Компетенции без дисциплин:
             </div>
             <div class="q-gutter-sm">
               <q-chip 
                 v-for="error in matrixValidation.errors.filter(e => e.competence_index)"
                 :key="error.competence_index"
-                color="warning" 
-                text-color="dark"
-                icon="assignment"
+                color="negative" 
+                text-color="white"
+                icon="school"
               >
                 {{ error.competence_index }}
                 <q-tooltip>{{ error.competence }}</q-tooltip>
               </q-chip>
             </div>
           </div>
+
+          <div v-if="matrixValidation?.errors?.filter(e => e.message.includes('преддиплом')).length" class="q-mb-md">
+            <div class="text-subtitle1 text-weight-medium q-mb-sm">
+              <q-icon name="error_outline" color="negative" class="q-mr-xs" />
+              Профессиональные компетенции без преддипломной практики:
+            </div>
+            <div class="q-gutter-sm">
+              <q-chip 
+                v-for="error in matrixValidation.errors.filter(e => e.message.includes('преддиплом'))"
+                :key="error.competence_index"
+                color="negative" 
+                text-color="white"
+                icon="school"
+              >
+                {{ error.competence_index }}
+                <q-tooltip>{{ error.competence }}</q-tooltip>
+              </q-chip>
+            </div>
+          </div>
+
+          <div v-if="matrixValidation?.errors?.filter(e => e.message.includes('общепроф')).length" class="q-mb-md">
+            <div class="text-subtitle1 text-weight-medium q-mb-sm">
+              <q-icon name="error_outline" color="negative" class="q-mr-xs" />
+              Отсутствует формирование ОПК в практиках:
+            </div>
+            <div class="q-gutter-sm">
+              <q-chip 
+                color="negative" 
+                text-color="white"
+                icon="school"
+              >
+                Хотя бы одна практика должна формировать общепрофессиональную компетенцию
+              </q-chip>
+            </div>
+          </div>
+
+          <div v-if="matrixValidation?.errors?.filter(e => e.message.includes('только практиками')).length" class="q-mb-md">
+          <div class="text-subtitle1 text-weight-medium q-mb-sm">
+            <q-icon name="error_outline" color="negative" class="q-mr-xs" />
+            Компетенции только в практиках:
+          </div>
+          <div class="q-gutter-sm">
+            <q-chip 
+              v-for="error in matrixValidation.errors.filter(e => e.message.includes('только практиками'))"
+              :key="error.competence_index"
+              color="negative" 
+              text-color="white"
+              icon="school"
+            >
+              {{ error.competence_index }}
+              <q-tooltip>{{ error.competence }}</q-tooltip>
+            </q-chip>
+          </div>
+        </div>
           
           <div class="text-caption">
             <q-icon name="info" class="q-mr-xs" />

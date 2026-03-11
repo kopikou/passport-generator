@@ -1,6 +1,6 @@
 import re
-from rpd.models.rpd_models import PlanData, LinesData, LinesIndicators
-from competence_passport.models import Competence
+from rpd.models.rpd_models import PlanData, LinesData, LinesIndicators, SemesterData
+from competence_passport.models import Competence, Scheme
 
 class RuleService:
     """Главный сервис для общих методов"""
@@ -246,7 +246,7 @@ class RuleService:
 
     @classmethod
     def add_competence_to_discipline(cls, discipline, competence_index, competence_name):
-        """Добавляет одну компетенцию к дисциплине с генерацией индикатора"""
+        """Добавляет одну компетенцию к дисциплине с генерацией индикатора и схемы"""
         # Находим последний номер индикатора
         existing = LinesIndicators.objects.filter(
             planlineid=discipline,
@@ -271,5 +271,31 @@ class RuleService:
             indicator_index=new_index,
             indicator=""  # пустой, редактируется позже
         )
+
+        competence_obj = Competence.objects.get(
+            plan_id=discipline.plan_id,
+            competence_index=competence_index
+        )
+        semesters = SemesterData.objects.filter(planlineid=discipline)
+        
+        # Создаём записи в Scheme для каждого семестра с формами аттестации
+        for sem in semesters:
+            has_forms = any([
+                sem.ekz, sem.zach, 
+                (sem.zacho and sem.zacho > 0), 
+                sem.kp, sem.kr
+            ])
+            
+            if has_forms:
+                Scheme.objects.create(
+                    planlineid=discipline,
+                    competence_id=competence_obj,
+                    semester=sem.num,
+                    ekz=bool(sem.ekz),
+                    zach=bool(sem.zach),
+                    zacho=bool(sem.zacho and sem.zacho > 0),
+                    kp=bool(sem.kp),
+                    kr=bool(sem.kr)
+                )
 
 
