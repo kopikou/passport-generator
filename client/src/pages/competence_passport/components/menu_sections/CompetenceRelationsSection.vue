@@ -29,7 +29,7 @@ const props = defineProps({
 })
 
 const sectionTitle = '1.1. Связь компетенции с иными компетенциями'
-const relationsText = ref('')
+//const relationsText = ref('')
 
 const currentCompetence = computed(() => {
   if (!props.competence?.competence_index) return null
@@ -49,7 +49,7 @@ async function saveData() {
       plan_id: props.planId,
       competence_index: currentCompetence.value.competence_index,
       competence: currentCompetence.value.competence,
-      relations: relationsText.value || ''
+      relations: currentCompetence.value.competence_relations//relationsText.value || ''
     })
     
     $q.notify({
@@ -68,18 +68,6 @@ async function saveData() {
   }
 }
 
-watch(
-  () => props.competence,
-  (newCompetence) => {
-    if (newCompetence?.competence_index) {
-      const comp = passport.value.find(c => c.competence_index === newCompetence.competence_index)
-      if (comp) {
-        relationsText.value = comp.competence_relations || ''
-      }
-    }
-  },
-  { immediate: true }
-)
 </script>
 
 <template>
@@ -89,7 +77,7 @@ watch(
 
     <div class="q-gutter-y-md">
       <q-input
-        v-model="relationsText"
+        v-model="currentCompetence.competence_relations"
         filled
         type="textarea"
         label="Связь компетенции с иными компетенциями"

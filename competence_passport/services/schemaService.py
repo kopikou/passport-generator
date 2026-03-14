@@ -143,7 +143,7 @@ class SchemaService:
         # Получаем схемы и индикаторы
         schemes = Scheme.objects.filter(
             planlineid__plan=plan
-        ).select_related('planlineid').order_by(
+        ).select_related('planlineid', 'competence_id').order_by(
             'competence_id__competence_index', 'planlineid__newdisid', 'semester'
         )
         
@@ -153,8 +153,13 @@ class SchemaService:
         ).select_related('planlineid').exclude(
             indicator_index__icontains='Итоговый индикатор'
         )
-        
-        # Группируем данные
+
+        # Получаем все семестры для случая "нет форм"
+        semester_data_map = defaultdict(list)
+        semester_objs = SemesterData.objects.filter(planlineid__plan=plan)
+        for sem in semester_objs:
+            semester_data_map[sem.planlineid.id].append(sem)
+
         indicators_dict = defaultdict(list)
         for ind in indicators:
             indicators_dict[(ind.competence_index, ind.planlineid.id)].append(ind)
@@ -165,19 +170,29 @@ class SchemaService:
         
         validation_errors = []
         
-        for scheme in schemes:
-            # Проверяем, должна ли дисциплина быть исключена
-            if RuleService.should_exclude_discipline(scheme.planlineid.newdisid):
-                continue
+        all_keys = set(schemes_dict.keys()) | set(indicators_dict.keys())
+        
+        for key in all_keys:
+            competence_index, discipline_id = key
             
-            key = (scheme.competence_id.competence_index, scheme.planlineid.id)
+            discipline_obj = None
+            discipline_index = None
+
+            if indicators_dict[key]:
+                discipline_obj = indicators_dict[key][0].planlineid
+                discipline_index = discipline_obj.newdisid
+            elif schemes_dict[key]:
+                discipline_obj = schemes_dict[key][0].planlineid
+                discipline_index = discipline_obj.newdisid
+            
+            # Пропускаем дисциплины для исключения
+            if discipline_index and RuleService.should_exclude_discipline(discipline_index):
+                continue
+                
             forms_count = len(schemes_dict[key])
             indicators_count = len(indicators_dict[key])
             
             if forms_count != indicators_count:
-                error_id = f"{scheme.competence_id.competence_index}_{scheme.planlineid.id}_{scheme.semester}"
-                competence_name = scheme.competence_id.competence
-                
                 if forms_count > 0 and indicators_count == 0:
                     message = 'Указаны формы аттестации, но отсутствуют индикаторы'
                 elif forms_count == 0 and indicators_count > 0:
@@ -185,18 +200,41 @@ class SchemaService:
                 else:
                     message = f'Не совпадает число форм аттестации ({forms_count}) и индикаторов ({indicators_count})'
                 
-                validation_errors.append({
-                    'id': error_id,
-                    'competence_index': scheme.competence_id.competence_index,
-                    'competence_name': competence_name,
-                    'discipline_index': scheme.planlineid.newdisid or '',
-                    'discipline_name': scheme.planlineid.dis,
-                    'discipline_id': scheme.planlineid.id,
-                    'scheme_forms_count': forms_count,
-                    'indicators_count': indicators_count,
-                    'semester': scheme.semester,
-                    'message': message,
-                })
+                competence_name = None
+                discipline_name = None
+                
+                if schemes_dict[key]:
+                    example_scheme = schemes_dict[key][0]
+                    competence_name = example_scheme.competence_id.competence
+                    discipline_name = example_scheme.planlineid.dis
+                elif indicators_dict[key]:
+                    example_indicator = indicators_dict[key][0]
+                    competence_name = example_indicator.competence
+                    discipline_name = example_indicator.planlineid.dis
+
+                semesters_to_check = []
+                # Несоответсвие 
+                if forms_count > 0:
+                    # Если есть формы аттестаций, то используем их семестры
+                    semesters_to_check = [s.semester for s in schemes_dict[key]]
+                else:
+                    # Если нет форм аттестаций, используем все семестры дисциплины
+                    semesters_to_check = [sem.num for sem in semester_data_map.get(discipline_id, [])] or [1] 
+
+                for semester in semesters_to_check:
+                    error_id = f"{competence_index}_{discipline_id}_{semester}"
+                    validation_errors.append({
+                        'id': error_id,
+                        'competence_index': competence_index,
+                        'competence_name': competence_name,
+                        'discipline_index': discipline_index or '',
+                        'discipline_name': discipline_name or '',
+                        'discipline_id': discipline_id,
+                        'scheme_forms_count': forms_count,
+                        'indicators_count': indicators_count,
+                        'semester': semester,
+                        'message': message,
+                    })
         
         # Сортировка
         errors_by_competence = defaultdict(list)

@@ -17,6 +17,7 @@ const {
   schemaValidation,
   validatingSchema,
   maxSemesters,
+  disciplines,
 } = storeToRefs(store)
 
 const showValidationErrors = ref(false)
@@ -176,7 +177,7 @@ async function runSchemaValidation() {
 }
 
 function openEditDialog(discipline, competenceIndex, competenceName, semester) {
-  const semesterData = discipline.semester_data.find((s: any) => s.semester === semester)
+  const semesterData = discipline.semester_data?.find((s: any) => s.semester === semester) || {}
 
   const forms = {
     ekz: semesterData?.form_control?.includes('ekz') || false,
@@ -229,9 +230,21 @@ function hasValidationError(disciplineId: number, competenceIndex: string) {
 function navigateToFix(errorRow) {
   const competence = schema.value.find(c => c.competence_index === errorRow.competence_index)
   if (competence) {
-    const discipline = competence.discipline_list.find(d => d.discipline_id === errorRow.discipline_id)
+    //const discipline = competence.discipline_list.find(d => d.discipline_id === errorRow.discipline_id)
+    const discipline = disciplines.value.find(d => d.discipline_id === errorRow.discipline_id)
     if (discipline) {
-      openEditDialog(discipline, errorRow.competence_index, errorRow.competence_name, errorRow.semester)
+      //openEditDialog(discipline, errorRow.competence_index, errorRow.competence_name, errorRow.semester)
+      openEditDialog(
+        {
+          discipline_id: discipline.discipline_id,
+          discipline_index: discipline.discipline_index,
+          discipline_name: discipline.discipline_name,
+          semester_data: [] // пусто, т.к. форм может не быть
+        },
+        errorRow.competence_index,
+        errorRow.competence_name,
+        errorRow.semester
+      )
       return
     }
   }

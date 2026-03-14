@@ -374,7 +374,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     try {
       await api.post('/api/competence-passport/update-competence-relations/', payload)
       //await fetchCompetencePassport(currentPlanId.value!)
-      await fetchPassport(currentPlanId.value!)
+      //await fetchPassport(currentPlanId.value!)
     } finally {
       saving.value = false
     }
@@ -391,7 +391,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       const payload = { plan_id: planId, competence_index: competenceIndex, final_indicator_text: finalIndicatorText }
       await api.post('/api/competence-passport/update-competence-final-indicators/', payload)
       //await fetchCompetencePassport(currentPlanId.value!)
-      await fetchPassport(currentPlanId.value!)
+      //await fetchPassport(currentPlanId.value!)
     } finally {
       saving.value = false
     }

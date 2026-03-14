@@ -104,11 +104,11 @@ const validationStatus = computed(() => {
     let message = ''
     if (discErrors.length > 0) message += `${discErrors.length} дисциплин без компетенций, `
     if (compErrors.length > 0) message += `${compErrors.length} компетенций без дисциплин, `
-    if (practiceErrors.length > 0) message += `${practiceErrors.length} проф. компетенций без преддипломной практики,`
-    if (opkPracticeError.length > 0) message += `отсутствует ОПК в практиках,`
-    if (onlyPracticeErrors.length > 0) message += `${onlyPracticeErrors.length} компетенций только в практиках`
+    if (practiceErrors.length > 0) message += `${practiceErrors.length} проф. компетенций без преддипломной практики, `
+    if (opkPracticeError.length > 0) message += `отсутствует ОПК в практиках, `
+    if (onlyPracticeErrors.length > 0) message += `${onlyPracticeErrors.length} компетенций только в практиках `
     
-    message = message.replace(/, $/, '') 
+    message = message.replace(/,\s*$/, '')
     
     return {
       type: 'error',

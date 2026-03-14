@@ -29,7 +29,7 @@ const props = defineProps({
 })
 
 const sectionTitle = '2. Индикаторы достижения компетенции'
-const finalIndicatorText = ref('')
+//const finalIndicatorText = ref('')
 
 const currentCompetence = computed(() => {
   if (!props.competence?.competence_index) return null
@@ -48,7 +48,7 @@ async function saveData() {
     await store.updateCompetenceFinalIndicators(
       props.planId,
       currentCompetence.value.competence_index,
-      finalIndicatorText.value || ''
+      currentCompetence.value.competence_final_indicator//finalIndicatorText.value || ''
     )
     
     $q.notify({
@@ -67,19 +67,6 @@ async function saveData() {
   }
 }
 
-watch(
-  () => props.competence,
-  (newCompetence) => {
-    if (newCompetence?.competence_index) {
-      const comp = passport.value.find(c => c.competence_index === newCompetence.competence_index)
-      if (comp) {
-        finalIndicatorText.value = comp.competence_final_indicator || ''
-
-      }
-    }
-  },
-  { immediate: true }
-)
 </script>
 
 <template>
@@ -91,7 +78,7 @@ watch(
 
     <div class="q-gutter-y-md">
       <q-input
-        v-model="finalIndicatorText"
+        v-model="currentCompetence.competence_final_indicator"
         filled
         label="Итоговый индикатор достижения компетенции"
         type="textarea"
