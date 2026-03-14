@@ -230,10 +230,19 @@ function hasValidationError(disciplineId: number, competenceIndex: string) {
 function navigateToFix(errorRow) {
   const competence = schema.value.find(c => c.competence_index === errorRow.competence_index)
   if (competence) {
-    //const discipline = competence.discipline_list.find(d => d.discipline_id === errorRow.discipline_id)
+    const disciplineInSchema = competence.discipline_list.find(d => d.discipline_id === errorRow.discipline_id)
     const discipline = disciplines.value.find(d => d.discipline_id === errorRow.discipline_id)
-    if (discipline) {
-      //openEditDialog(discipline, errorRow.competence_index, errorRow.competence_name, errorRow.semester)
+
+    if (disciplineInSchema) {
+      // Если формы аттестаций есть, то используем реальные данные
+      openEditDialog(
+        disciplineInSchema,
+        errorRow.competence_index,
+        errorRow.competence_name,
+        errorRow.semester
+      );
+      return
+    } else if (discipline) { // Если форм аттестаций нет, то пусто
       openEditDialog(
         {
           discipline_id: discipline.discipline_id,
