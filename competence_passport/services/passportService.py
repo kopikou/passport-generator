@@ -20,32 +20,8 @@ class PassportService:
         )
         filtered_discipline_ids = {d['id'] for d in filtered_disciplines}
 
-        # Получаем связи компетенций
-        # competence_relations = CompetenceRelations.objects.filter(plan_id=plan)
-        # relations_map = {
-        #     relation.competence_index: relation.relations
-        #     for relation in competence_relations
-        # }
-
-        # competences = [
-        #     {'competence_index': relation.competence_index, 'competence': relation.competence or ""}
-        #     for relation in competence_relations
-        # ]
         competences = Competence.objects.filter(plan_id=plan)
-
         competences = RuleService.sort_competences(competences)
-
-        # Индикаторы для поиска итогового индикатора
-        # all_indicators = LinesIndicators.objects.filter(
-        #     planlineid__plan=plan,
-        #     competence_index__in=[c['competence_index'] for c in competences]
-        # )
-
-        # # Итоговые индикаторы
-        # final_indicators = defaultdict(list)
-        # for ind in all_indicators:
-        #     if 'Итоговый индикатор' in (ind.indicator_index or ''):
-        #         final_indicators[ind.competence_index].append(ind)
 
         # Отфильтрованные индикаторы
         indicators = LinesIndicators.objects.filter(
@@ -76,15 +52,6 @@ class PassportService:
             comp_relations = comp.relations#relations_map.get(comp_idx, "")
 
             # Поиск итогового индикатора
-            # final_indicator = ""
-            # final_ind = final_indicators.get(comp_idx, [])
-            # if final_ind:
-            #     final_indicator = final_ind[0].indicator or ""
-            # else:
-            #     # Любой первый индикатор компетенции
-            #     fallback_ind = all_indicators.filter(competence_index=comp_idx).first()
-            #     if fallback_ind:
-            #         final_indicator = fallback_ind.indicator or ""
             final_indicator = comp.final_indicator
 
             indicator_list = []
