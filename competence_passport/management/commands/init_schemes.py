@@ -1,8 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from rpd.models.rpd_models import LinesData, LinesIndicators, SemesterData
-from competence_passport.models import Scheme
-from django.db.models import Q
+from competence_passport.models import Scheme, Competence
 
 class Command(BaseCommand):
     help = 'Инициализация схем форм аттестации из существующих данных семестров'
@@ -27,6 +26,11 @@ class Command(BaseCommand):
                 semesters = SemesterData.objects.filter(planlineid=discipline)
                 
                 for comp in competences:
+                    competence_obj = Competence.objects.get(
+                        plan_id=discipline.plan_id,
+                        competence_index=comp['competence_index']
+                    )
+                    
                     for sem in semesters:
                         # Проверяем, есть ли формы аттестации в этом семестре
                         has_forms = sem.ekz or sem.zach or (sem.zacho and sem.zacho > 0) or sem.kp or sem.kr
@@ -35,8 +39,8 @@ class Command(BaseCommand):
                             # Создаем запись 
                             Scheme.objects.create(
                                 planlineid=discipline,
-                                competence_index=comp['competence_index'],
-                                competence=comp['competence'],
+                                #competence_index=comp['competence_index'],
+                                competence_id=competence_obj,
                                 semester=sem.num,
                                 ekz=bool(sem.ekz),
                                 zach=bool(sem.zach),
@@ -45,8 +49,5 @@ class Command(BaseCommand):
                                 kr=bool(sem.kr)
                             )
                             count += 1
-                            
-                            if count % 100 == 0:
-                                self.stdout.write(f'Created {count} schemes...')
         
-        self.stdout.write(self.style.SUCCESS(f'Successfully created {count} scheme records'))
+        self.stdout.write(self.style.SUCCESS(f'Создано {count} схем'))
