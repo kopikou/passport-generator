@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from 'boot/axios'
-import { LocalStorage } from 'quasar'
+import { LocalStorage, date } from 'quasar'
 
 // Типы данных
 interface PlanData {
@@ -153,6 +153,81 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     if (!currentPlanId.value) return false
     if (schemaValidation.value?.is_valid) return true
     return localStorage.getItem(`schema_valid_${currentPlanId.value}`) === 'true'
+  })
+
+  // Валидация схемы - статус для отображения
+  const schemaValidationStatus = computed(() => {
+    if (validatingSchema.value) {
+      return {
+        type: 'info',
+        title: 'Проверка ...',
+        message: 'Идет проверка соответствия форм аттестации и индикаторов компетенций',
+        details: false
+      }
+    }
+
+    if (schemaValidation.value?.is_valid) {
+      return {
+        type: 'success',
+        title: 'Ошибок не обнаружено!',
+        message: 'Все формы аттестации соответствуют индикаторам компетенций.',
+        details: true
+      }
+    }
+
+    if (schemaValidation.value?.errors?.length > 0) {
+      return {
+        type: 'error',
+        title: 'Найдены несоответствия',
+        message: `Число форм аттестации не совпадает с числом индикаторов в ${schemaValidation.value.errors.length} случаях`,
+        details: true
+      }
+    }
+
+    return null
+  })
+
+  // Столбцы таблицы ошибок схемы
+  const schemaValidationColumns = computed(() => [
+    {
+      name: 'competence_index',
+      label: 'Код компетенции',
+      field: 'competence_index',
+      align: 'left',
+      sortable: true
+    },
+    {
+      name: 'discipline',
+      label: 'Дисциплина',
+      field: (row: any) => `${row.discipline_index} - ${row.discipline_name}`,
+      align: 'left',
+      sortable: true
+    },
+    {
+      name: 'semester',
+      label: 'Семестр',
+      field: 'semester',
+      align: 'center',
+      sortable: true
+    },
+    {
+      name: 'message',
+      label: 'Ошибка',
+      field: 'message',
+      align: 'left',
+      sortable: true
+    },
+    {
+      name: 'actions',
+      label: 'Действия',
+      align: 'center'
+    }
+  ])
+
+  // Форматированная дата проверки
+  const lastSchemaCheckedFormatted = computed(() => {
+    if (!schemaValidation.value?.checked_at) return 'еще не проверялась'
+    return date.formatDate(schemaValidation.value.checked_at, 'DD.MM.YYYY HH:mm:ss')
   })
 
   // async function fetchCompetencePassport(planId: number) {
@@ -441,6 +516,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     } finally {
       saving.value = false
     }
+    await validateSchemeIndicators()
   }
 
   // Обновление существующего индикатора
@@ -466,6 +542,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       await api.delete(`/api/competence-passport/${indicatorId}/delete-indicator/`)
       //await fetchCompetencePassport(currentPlanId.value!)
       await fetchPassport(currentPlanId.value!)
+      await validateSchemeIndicators()
     } finally {
       saving.value = false
     }
@@ -553,6 +630,73 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     LocalStorage.remove('current_plan_id')
   }
 
+  function hasEmptyFieldsInRelations(comp: PassportItem){
+    return !comp.competence_relations?.trim()
+  }
+
+  function hasEmptyFieldsInFinalIndicator(comp: PassportItem){
+    return !comp.competence_final_indicator?.trim()
+  }
+
+  function hasEmptyFieldsInIndicators(comp: PassportItem) {
+    return !comp.indicator_list?.length || 
+          comp.indicator_list.some((ind) => !ind.indicator?.trim())
+  }
+
+  function hasEmptyFieldsInIndicatorResult(comp: PassportItem){
+    return !comp.indicator_list?.length || 
+          comp.indicator_list.some((ind) => 
+            !ind.know?.trim() || !ind.able?.trim() || !ind.own?.trim()
+          )
+  }
+
+  function hasEmptyFieldsInAssessment(comp: PassportItem): boolean {
+    return !comp.indicator_list?.length || 
+          comp.indicator_list.some((ind) => 
+            !ind.criteria?.trim() || !ind.methods?.trim()
+          )
+  }
+
+  const competenceValidationStatus = computed(() => {
+    const status: Record<string, Record<string, boolean>> = {}
+    
+    for (const comp of passport.value) {
+      status[comp.competence_index] = {
+        'competence-relations': hasEmptyFieldsInRelations(comp),
+        'competence-indicators': hasEmptyFieldsInIndicators(comp),
+        'final-indicator': hasEmptyFieldsInFinalIndicator(comp),
+        'indicator-results': hasEmptyFieldsInIndicatorResult(comp),
+        'assessment-criteria': hasEmptyFieldsInAssessment(comp)
+      }
+    }
+    
+    return status
+  })
+
+  // Ошибки в конкретной компетенции
+  function hasValidationErrors(competenceIndex: string): boolean {
+    const compStatus = competenceValidationStatus.value[competenceIndex]
+    if (!compStatus) return false
+    
+    return Object.values(compStatus).some(hasError => hasError)
+  }
+
+  // Статус текущей компетенции
+  const currentCompetenceValidation = computed(() => {
+    return (competence: PassportItem | null) => {
+      if (!competence) return {}
+      
+      return {
+        'competence-relations': hasEmptyFieldsInRelations(competence),
+        'competence-indicators': hasEmptyFieldsInIndicators(competence),
+        'final-indicator': hasEmptyFieldsInFinalIndicator(competence),
+        'indicator-results': hasEmptyFieldsInIndicatorResult(competence),
+        'assessment-criteria': hasEmptyFieldsInAssessment(competence)
+      }
+    }
+  })
+  
+
   return {
     currentPlanId,
     planData,
@@ -573,8 +717,13 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     currentPlanMiraId,
     isMatrixValid,
     isSchemaValid,
+    schemaValidationStatus,
+    schemaValidationColumns,
+    lastSchemaCheckedFormatted,
 
-
+    competenceValidationStatus,
+    hasValidationErrors,
+    currentCompetenceValidation,
 
     //fetchCompetencePassport,
     fetchPlanAdmissionData,

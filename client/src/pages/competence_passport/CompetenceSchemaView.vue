@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onBeforeMount, watch } from 'vue'
+import { ref, computed, onBeforeMount, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuasar, date } from 'quasar'
 import { useCompetencePassportStore } from 'src/stores/competencePassportStore'
@@ -18,12 +18,16 @@ const {
   validatingSchema,
   maxSemesters,
   disciplines,
+  schemaValidationStatus,
+  schemaValidationColumns,
+  lastSchemaCheckedFormatted,
 } = storeToRefs(store)
 
 const showValidationErrors = ref(false)
 const showEditor = ref(false)
 const editingData = ref<any>(null)
 const searchFilter = ref('')
+const highlightedCell = ref<string | null>(null)
 
 const exporting = ref(false)
 
@@ -42,43 +46,6 @@ async function exportSchema() {
   }
 }
 
-// Столбцы таблицы ошибок
-const validationColumns = [
-  {
-    name: 'competence_index',
-    label: 'Код компетенции',
-    field: 'competence_index',
-    align: 'left',
-    sortable: true
-  },
-  {
-    name: 'discipline',
-    label: 'Дисциплина',
-    field: (row: any) => `${row.discipline_index} - ${row.discipline_name}`,
-    align: 'left',
-    sortable: true
-  },
-  {
-    name: 'semester',
-    label: 'Семестр',
-    field: 'semester',
-    align: 'center',
-    sortable: true
-  },
-  {
-    name: 'message',
-    label: 'Ошибка',
-    field: 'message',
-    align: 'left',
-    sortable: true
-  },
-  {
-    name: 'actions',
-    label: 'Действия',
-    align: 'center'
-  }
-]
-
 const formDisplayMap: Record<string, string> = {
   'ekz': 'Э',
   'zach': 'З',  
@@ -90,42 +57,6 @@ const formDisplayMap: Record<string, string> = {
 function getFormDisplay(formControl: string[]){
   return formControl.map(form => formDisplayMap[form] || form).join(', ')
 }
-
-const validationStatus = computed(() => {
-  if (validatingSchema.value) {
-    return {
-      type: 'info',
-      title: 'Проверка схемы...',
-      message: 'Идет проверка соответствия форм аттестации и индикаторов компетенций',
-      details: false
-    }
-  }
-
-  if (schemaValidation.value?.is_valid) {
-    return {
-      type: 'success',
-      title: 'Схема компетенций проверена успешно!',
-      message: 'Все формы аттестации соответствуют индикаторам компетенций.',
-      details: true
-    }
-  }
-
-  if (schemaValidation.value?.errors?.length > 0) {
-    return {
-      type: 'error',
-      title: 'Найдены несоответствия в схеме компетенций',
-      message: `Число форм аттестации не совпадает с числом индикаторов в ${schemaValidation.value.errors.length} случаях`,
-      details: true
-    }
-  }
-
-  return null
-})
-
-const lastCheckedFormatted = computed(() => {
-  if (!schemaValidation.value?.checked_at) return 'еще не проверялась'
-  return date.formatDate(schemaValidation.value.checked_at, 'DD.MM.YYYY HH:mm:ss')
-})
 
 const courseHeaders = computed(() => {
   const maxCourse = Math.ceil(maxSemesters.value / 2)
@@ -294,30 +225,30 @@ watch(() => route.params.id, () => {
 <template>
   <div class="q-pa-md q-mb-lg">
     <!-- Блок валидации -->
-    <div v-if="validationStatus" class="q-mb-md validation-container">
+    <div v-if="schemaValidationStatus" class="q-mb-md validation-container">
       <q-banner 
-        :class="validationStatus.type === 'error' ? 'bg-negative text-white' : 'bg-positive text-white'"
+        :class="schemaValidationStatus.type === 'error' ? 'bg-negative text-white' : 'bg-positive text-white'"
         rounded
       >
         <template v-slot:avatar>
-          <q-icon :name="validationStatus.type === 'error' ? 'warning' : 'check_circle'" size="24px" />
+          <q-icon :name="schemaValidationStatus.type === 'error' ? 'warning' : 'check_circle'" size="24px" />
         </template>
         
-        <div class="text-body1 q-mb-xs">{{ validationStatus.title }}</div>
-        <div class="text-body2">{{ validationStatus.message }}</div>
+        <div class="text-body1 q-mb-xs">{{ schemaValidationStatus.title }}</div>
+        <div class="text-body2">{{ schemaValidationStatus.message }}</div>
         
-        <template v-if="validationStatus.details" v-slot:action>
+        <template v-if="schemaValidationStatus.details" v-slot:action>
           <q-btn 
             flat 
-            :color="validationStatus.type === 'error' ? 'white' : 'dark'" 
+            :color="schemaValidationStatus.type === 'error' ? 'white' : 'dark'" 
             :label="showValidationErrors ? 'Скрыть детали' : 'Показать детали'" 
             @click="showValidationErrors = !showValidationErrors"
             class="q-mr-sm"
           />
           <q-btn 
-            v-if="validationStatus.type === 'error'"
+            v-if="schemaValidationStatus.type === 'error'"
             flat 
-            :color="validationStatus.type === 'error' ? 'white' : 'dark'" 
+            :color="schemaValidationStatus.type === 'error' ? 'white' : 'dark'" 
             label="Обновить проверку" 
             @click="runSchemaValidation()"
             :loading="validatingSchema"
@@ -332,7 +263,7 @@ watch(() => route.params.id, () => {
             <q-card-section class="q-pa-none">
               <q-table
                 :rows="schemaValidation.errors"
-                :columns="validationColumns"
+                :columns="schemaValidationColumns"
                 row-key="id"
                 dense
                 flat
@@ -366,7 +297,7 @@ watch(() => route.params.id, () => {
 
           <div class="text-caption">
             <q-icon name="info" class="q-mr-xs" />
-            Проверка выполнена: {{ lastCheckedFormatted }}
+            Проверка выполнена: {{ lastSchemaCheckedFormatted }}
           </div>
         </div>
       </q-slide-transition>
@@ -500,6 +431,8 @@ watch(() => route.params.id, () => {
             <tr 
               v-for="discipline in competence.discipline_list" 
               :key="`${competence.competence_index}-${discipline.discipline_id}`"
+              :data-discipline-id="discipline.discipline_id"
+              :data-competence-index="competence.competence_index"
               class="discipline-row"
               :class="{ 
                 'bg-grey-1': (competence.discipline_list.indexOf(discipline) % 2 === 0),

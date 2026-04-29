@@ -13,7 +13,8 @@ const store = useCompetencePassportStore()
 const {
   currentPlanId,
   competences: storeCompetences,
-  loading
+  loading,
+  competenceValidationStatus,
 } = storeToRefs(store)
 
 const searchText = ref('')
@@ -179,7 +180,18 @@ onBeforeMount(async () => {
           :active="isCompetenceActive(comp.competence_index)"
           active-class="bg-amber-2 text-black"
         >
-          <q-item-section>
+          <q-item-section class="competence-index-container">
+            <q-icon
+              v-if="store.hasValidationErrors(comp.competence_index)"
+              name="error"
+              color="red"
+              size="12px"
+              class="validation-icon"
+            >
+              <q-tooltip>
+                Есть незаполненные поля в паспорте компетенции
+              </q-tooltip>
+            </q-icon>
             <q-item-label class="text-weight-medium">
               {{ comp.competence_index }}
             </q-item-label>
@@ -234,5 +246,17 @@ onBeforeMount(async () => {
 
 :deep(.q-scrollarea__content) {
   width: 100%;
+}
+
+.competence-index-container {
+  position: relative;
+  min-height: 24px;
+  
+  .validation-icon {
+    position: absolute;
+    top: 2px;
+    left: -8px;
+    z-index: 1;
+  }
 }
 </style>

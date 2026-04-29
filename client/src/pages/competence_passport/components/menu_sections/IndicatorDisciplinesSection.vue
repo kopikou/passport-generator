@@ -258,6 +258,7 @@ async function deleteIndicator(indicatorId) {
       })
     }
   })
+  
 }
 
 // Перемещение индикаторов с обменом индексов

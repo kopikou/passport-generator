@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PlanListView from '../PlanListView.vue'
-import { watch, computed } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCompetencePassportStore } from 'src/stores/competencePassportStore'
 import { storeToRefs } from 'pinia'
@@ -19,6 +19,7 @@ const currentTab = computed(() => {
   if (route.path.includes('/passport')) return 'passport'
   return 'reference'
 })
+
 
 // Защита маршрутов: перенаправление, если матрица не валидна
 // watch(
@@ -98,7 +99,7 @@ const getTabPath = (tabName: string): string => {
           />
         </q-tabs>
 
-        <div class="content-area q-pb-xl">
+        <div ref="contentArea"  class="content-area q-pb-xl">
           <slot name="content"/>
         </div>
       </div>
