@@ -21,13 +21,13 @@ const {
   schemaValidationStatus,
   schemaValidationColumns,
   lastSchemaCheckedFormatted,
+  disciplineSemesters,
 } = storeToRefs(store)
 
 const showValidationErrors = ref(false)
 const showEditor = ref(false)
 const editingData = ref<any>(null)
 const searchFilter = ref('')
-const highlightedCell = ref<string | null>(null)
 
 const exporting = ref(false)
 
@@ -173,7 +173,7 @@ function navigateToFix(errorRow) {
         errorRow.semester
       );
       return
-    } else if (discipline) { // Если форм аттестаций нет, то пусто
+    } else if (discipline) { 
       openEditDialog(
         {
           discipline_id: discipline.discipline_id,
@@ -210,6 +210,18 @@ async function navigateToPassport(errorRow) {
   } catch (error) {
     $q.notify({ type: 'warning', position: 'top-right', message: 'Не удалось автоматически скорректировать индикаторы' })
   }
+}
+
+function isDisciplineActiveInSemester(disciplineId: number, semester: number): boolean {
+  const semesters = disciplineSemesters.value[disciplineId]
+  return semesters ? semesters.includes(semester) : false
+}
+
+function handleCellClick(discipline: any, competence: any, semester: number) {
+  if (!isDisciplineActiveInSemester(discipline.discipline_id, semester)) {
+    return; // Ячейка неактивна - дисциплина не изучается в этом семестре
+  }
+  openEditDialog(discipline, competence.competence_index, competence.competence, semester);
 }
 
 onBeforeMount(() => {
@@ -448,8 +460,11 @@ watch(() => route.params.id, () => {
               <td 
                 v-for="semester in semesterHeaders" 
                 :key="semester" 
-                :class="getSemesterCellClass(discipline.discipline_id, competence.competence_index, semester)"
-                @click="openEditDialog(discipline, competence.competence_index, competence.competence, semester)"
+                :class="[
+                  getSemesterCellClass(discipline.discipline_id, competence.competence_index, semester),
+                  { 'inactive-cell': !isDisciplineActiveInSemester(discipline.discipline_id, semester) } 
+                ]"
+                @click="handleCellClick(discipline, competence, semester)"
                 style="cursor: pointer; position: relative;"
               >
                 <div class="text-center">
@@ -585,6 +600,16 @@ watch(() => route.params.id, () => {
   td {
     border-bottom: 1px solid rgba(0,0,0,0.05);
     
+    &.inactive-cell {
+      background-color: #f5f5f5 !important; 
+      cursor: default !important; 
+
+      color: #bdbdbd; 
+      
+      &:hover {
+        background-color: #eeeeee !important; 
+      }
+    }
     .semester-forms {
       font-size: 0.9rem;
       font-weight: 500;

@@ -8,7 +8,7 @@ from app.utils import UserProfileHasPermission
 from auths.models import Permissions
 from generator.permissions import CanViewRPDProgram
 from competence_passport.permissions import CanViewCompetencePassport, CanEditCompetencePassport
-from rpd.models.rpd_models import PlanData, LinesIndicators
+from rpd.models.rpd_models import PlanData, LinesIndicators, SemesterData
 from generator.models import DisciplineIndicators
 from competence_passport.services.matrixService import MatrixService
 from competence_passport.services.schemaService import SchemaService
@@ -22,6 +22,7 @@ from competence_passport.serializer import CompetencePassportDataSerializer, Ind
 from rest_framework.permissions import IsAuthenticated
 
 from django.http import HttpResponse
+from collections import defaultdict
 
 class CompetencePassportViewSet(GenericViewSet):
     """
@@ -166,6 +167,24 @@ class CompetencePassportViewSet(GenericViewSet):
             'has_forms': result['has_forms']
         })
     
+    @action(methods=['GET'], detail=True, url_path="get-semester-data", permission_classes=[IsAuthenticated])
+    def get_semester_data(self, request, *args, **kwargs):
+        """Получение данных о семестрах для всех дисциплин плана"""
+        plan_id = self.kwargs['pk']
+        
+        semester_data = SemesterData.objects.filter(
+            planlineid__plan__mira_id=plan_id
+        ).values(
+            'planlineid_id',
+            'num'
+        )
+
+        result = defaultdict(list)
+        for item in semester_data:
+            result[item['planlineid_id']].append(item['num'])
+        
+        return Response(dict(result))
+
     @action(methods=['GET'], detail=True, url_path='validate-scheme-indicators', permission_classes=[IsAuthenticated])
     def validate_scheme_indicators(self, request, *args, **kwargs):
         """Проверка соответствия промежуточных аттестаций и индикаторов"""
@@ -320,3 +339,4 @@ class CompetencePassportViewSet(GenericViewSet):
         )
 
         return response
+    

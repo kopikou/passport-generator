@@ -138,6 +138,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   const saving = ref(false)
 
   const currentPlanMiraId = computed(() => currentPlanId.value)
+  const disciplineSemesters = ref<Record<number, number[]>>({})
 
   // Валидация матрицы
   const isMatrixValid = computed(() => {
@@ -297,7 +298,13 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     }
   }
 
+  async function fetchDisciplineSemesters(planId: number) {
+    const response = await api.get(`/api/competence-passport/${planId}/get-semester-data/`)
+    disciplineSemesters.value = response.data
+  }
+
   async function fetchSchema(planId: number) {
+    await fetchDisciplineSemesters(planId)
     loading.value = true
     try {
       const response = await api.get(`/api/competence-passport/${planId}/get-schema-data/`)
@@ -730,6 +737,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     fetchReferences,
     fetchMatrix,
     fetchSchema,
+    disciplineSemesters,
     fetchPassport,
     validateMatrix,
     validateSchemeIndicators,
