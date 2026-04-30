@@ -277,7 +277,7 @@ watch(currentPlanId.value, async (newPlanId) => {
               >
                 <template v-slot:body-cell-actions="props">
                   <q-td :props="props">
-                    <div class="column items-center q-gutter-y-xs">
+                    <div class="items-center q-gutter-y-xs">
                       <q-btn
                         size="sm"
                         color="primary"
@@ -463,13 +463,16 @@ watch(currentPlanId.value, async (newPlanId) => {
     border: 1px solid rgba(0,0,0,0.1);
     border-top: none;
     overflow-x: auto;
+    overflow-y: auto;
     width: 100%;
     max-width: 100%;  
+    max-height: 350px;
     
     :deep(.q-table) {
       width: 100%;
-      table-layout: fixed;
+      //table-layout: fixed;
       overflow-y: auto;
+
       th {
         vertical-align: middle !important;
         white-space: nowrap !important;   
@@ -502,6 +505,11 @@ watch(currentPlanId.value, async (newPlanId) => {
           width: 300px;
           min-width: 200px;
           max-width: 400px;
+        }
+        &:nth-child(5) {
+          width: 250px;
+          min-width: 200px;
+          max-width: 300px;
         }
       }
     }

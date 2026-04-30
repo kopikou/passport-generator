@@ -71,7 +71,7 @@ async function saveData() {
 </script>
 
 <template>
-  <div class="competence-relations-section">
+  <div class="competence-relations-section q-mb-lg q-pb-lg">
     <div class="text-h6 q-mb-xs">{{ sectionTitle }}</div>
     <div class="text-grey q-mb-sm">Для чего необходимо формирование компетенции</div>
 

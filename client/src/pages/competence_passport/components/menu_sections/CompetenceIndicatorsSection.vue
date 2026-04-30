@@ -70,7 +70,7 @@ async function saveData() {
 </script>
 
 <template>
-  <div class="competence-indicators-section">
+  <div class="competence-indicators-section q-mb-lg q-pb-lg">
     <div class="text-h6 q-mb-xs">{{ sectionTitle }}</div>
     <div class="text-grey q-mb-sm">
       Итоговый индикатор достижения компетенции. Данные автоматически получены из учебного плана
