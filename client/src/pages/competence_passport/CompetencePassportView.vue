@@ -38,6 +38,10 @@ const exporting = ref(false)
 
 const showValidationErrors = ref(false)
 
+const canExportPassport = computed(() => {
+  return schemaValidation.value?.is_valid === true
+})
+
 function navigateToFix(errorRow) {
   // Перенаправляем на страницу схемы 
   router.push({
@@ -230,6 +234,26 @@ watch(currentPlanId.value, async (newPlanId) => {
 
 <template>
   <div class="competence-passport-view q-pa-sm">
+    <div class="q-mb-md">
+      <div class="row justify-content-between">
+        <div class="col text-h4 q-mb-xs">Паспорт компетенций</div>
+          <div class="col-auto">
+          <q-btn
+            flat
+            dense
+            icon="file_download"
+            label="Выгрузить"
+            @click="exportPassport"
+            :loading="exporting"
+            :disable="!canExportPassport"
+            class="q-mr-sm q-pr-sm bg-primary text-white"
+          >
+            <q-tooltip>Скачать паспорт компетенций в формате Word</q-tooltip>
+          </q-btn>
+          </div>
+      </div>
+    </div>
+    
     <!-- Блок валидации -->
     <div v-if="schemaValidationStatus" class="q-mb-md validation-container">
       <q-banner 
@@ -310,23 +334,6 @@ watch(currentPlanId.value, async (newPlanId) => {
     </div>
 
     <div class="section-header q-mb-md">
-      <div class="row justify-content-between">
-        <div class="col text-h4 q-mb-xs">Паспорт компетенций</div>
-          <div class="col-auto">
-          <q-btn
-            flat
-            dense
-            icon="file_download"
-            label="Выгрузить"
-            @click="exportPassport"
-            :loading="exporting"
-            class="q-mr-sm q-pr-sm bg-primary text-white"
-            
-          >
-            <q-tooltip>Скачать паспорт компетенций в формате Word</q-tooltip>
-          </q-btn>
-          </div>
-      </div>
       <div v-if="currentCompetence" class="text-subtitle1 text-grey">
         {{ currentCompetence.competence_index }} - {{ currentCompetence.competence }}
       </div>

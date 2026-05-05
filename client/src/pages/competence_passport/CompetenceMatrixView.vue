@@ -27,6 +27,10 @@ const showValidationDetails = ref(false)
 const highlightedDiscipline = ref<string | null>(null)
 const exporting = ref(false)
 
+const canExportMatrix = computed(() => {
+  return matrixValidation.value?.is_valid === true
+})
+
 async function exportMatrix() {
   exporting.value = true
   try {
@@ -134,7 +138,7 @@ const errorGroups = computed(() => {
         text: `${error.discipline_index} - ${error.discipline_name}`,
         tooltip: null,
         clickable: true,
-        onClick: () => scrollToDiscipline(error.discipline_index)
+        onClick: () => openEditDialogForError(error)
       })
     },
     {
@@ -289,20 +293,6 @@ function isDisciplineWithoutCompetences(disciplineIndex) {
   ) || false
 }
 
-function scrollToDiscipline(disciplineIndex) {
-  highlightedDiscipline.value = disciplineIndex
-  showValidationDetails.value = false
-  
-  setTimeout(() => {
-    const row = document.querySelector(`tr[data-index="${CSS.escape(disciplineIndex)}"]`)
-    if (row) {
-      row.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      row.classList.add('blink-animation')
-      setTimeout(() => row.classList.remove('blink-animation'), 2000)
-    }
-  }, 100)
-}
-
 // Загрузка и валидация
 async function loadMatrixData() {
   await store.fetchMatrix(currentPlanId.value)
@@ -317,26 +307,7 @@ async function loadMatrixData() {
 
 async function runMatrixValidation() {
   await store.validateMatrix()
-  //   await store.validateMatrix()
-    
-  //   if (matrixValidation.value?.is_valid) {
-  //     $q.notify({
-  //       type: 'positive',
-  //       message: 'Матрица компетенций проверена успешно!',
-  //       position: 'top-right',
-  //       timeout: 3000
-  //     })
-  //   } else {
-  //     $q.notify({
-  //       type: 'warning',
-  //       message: 'Найдены проблемы в матрице компетенций',
-  //       position: 'top-right',
-  //       timeout: 5000,
-  //       actions: [{ label: 'Показать детали', color: 'white', handler: () => {
-  //         showValidationDetails.value = true
-  //       }}]
-  //     })
-  //   }
+
 }
 
 // Редактирование
@@ -344,6 +315,18 @@ async function onRowClick(row) {
   if (row.type !== 'discipline') return
   
   const discipline = disciplines.value.find(d => d.discipline_id === row.discipline_id)
+  if (!discipline) return
+  
+  editingRow.value = {
+    id: discipline.discipline_id,
+    index: discipline.discipline_index,
+    name: discipline.discipline_name
+  }
+  showEditor.value = true
+}
+
+function openEditDialogForError(errorRow) {
+  const discipline = disciplines.value.find(d => d.discipline_id === errorRow.discipline_id)
   if (!discipline) return
   
   editingRow.value = {
@@ -377,6 +360,16 @@ watch(() => route.params.id, () => {
 
 <template>
   <div class="q-pa-md q-mb-lg">
+    <!-- Шапка -->
+    <div class="row items-center q-mb-md">
+      <div class="col">
+        <h2 class="text-h4 q-ma-none">Матрица компетенций</h2>
+        <div class="text-subtitle1 text-grey">
+          Соответствие дисциплины и формируемых компетенций
+        </div>
+      </div>
+    </div>
+
     <!-- Блок валидации -->
     <div v-if="validationStatus" class="q-mb-md validation-container">
       <q-banner 
@@ -456,13 +449,8 @@ watch(() => route.params.id, () => {
       </q-slide-transition>
     </div>
 
-    <!-- Шапка -->
     <div class="row items-center q-mb-md">
       <div class="col">
-        <h2 class="text-h4 q-ma-none">Матрица компетенций</h2>
-        <div class="text-subtitle1 text-grey">
-          Соответствие дисциплины и формируемых компетенций
-        </div>
         <div class="text-subtitle1 text-grey">
           Окно редактора вызывается щелчком мыши в необходимой строке
         </div>
@@ -504,6 +492,7 @@ watch(() => route.params.id, () => {
             label="Выгрузить"
             @click="exportMatrix"
             :loading="exporting"
+            :disable="!canExportMatrix"
             class="q-mr-sm q-pr-sm bg-primary text-white"
           >
             <q-tooltip>Скачать матрицу компетенций в формате Word</q-tooltip>

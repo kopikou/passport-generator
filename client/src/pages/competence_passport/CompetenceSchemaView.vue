@@ -31,6 +31,10 @@ const searchFilter = ref('')
 
 const exporting = ref(false)
 
+const canExportScheme = computed(() => {
+  return schemaValidation.value?.is_valid === true
+})
+
 async function exportSchema() {
   exporting.value = true
   try {
@@ -236,6 +240,16 @@ watch(() => route.params.id, () => {
 
 <template>
   <div class="q-pa-md q-mb-lg">
+    <!-- Шапка -->
+    <div class="row items-center q-mb-md">
+      <div class="col">
+        <h2 class="text-h4 q-ma-none">Схема компетенций</h2>
+        <div class="text-subtitle1 text-grey">
+          Соответствие компетенций, дисциплины и семестров изучения
+        </div>
+      </div>
+    </div>
+
     <!-- Блок валидации -->
     <div v-if="schemaValidationStatus" class="q-mb-md validation-container">
       <q-banner 
@@ -315,14 +329,9 @@ watch(() => route.params.id, () => {
       </q-slide-transition>
     </div>
 
-    <!-- Шапка -->
-    <div class="row items-center q-mb-md">
+    <div class="row items-center">
       <div class="col">
-        <h2 class="text-h4 q-ma-none">Схема компетенций</h2>
-        <div class="text-subtitle1 text-grey">
-          Соответствие компетенций, дисциплины и семестров изучения
-        </div>
-        <div class="text-subtitle1 text-grey">
+        <div class="row items-center q-mb-md text-subtitle1 text-grey">
           Окно редактора вызывается щелчком мыши в необходимой ячейке
         </div>
       </div>
@@ -363,6 +372,7 @@ watch(() => route.params.id, () => {
             label="Выгрузить"
             @click="exportSchema"
             :loading="exporting"
+            :disable="!canExportScheme"
             class="q-mr-sm q-pr-sm bg-primary text-white"
           >
             <q-tooltip>Скачать схему формирования компетенций в формате Word</q-tooltip>

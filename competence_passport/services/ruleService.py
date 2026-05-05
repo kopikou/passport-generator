@@ -247,57 +247,63 @@ class RuleService:
 
     @classmethod
     def add_competence_to_discipline(cls, discipline, competence_index, competence_name):
-        """Добавляет одну компетенцию к дисциплине с генерацией индикатора и схемы"""
-        # Находим последний номер индикатора
-        existing = LinesIndicators.objects.filter(
-            planlineid=discipline,
-            competence_index=competence_index
-        ).exclude(indicator_index__icontains='Итоговый индикатор')
-
-        last_number = 0
-        for ind in existing:
-            if ind.indicator_index:
-                match = re.search(rf'{re.escape(competence_index)}\.(\d+)', ind.indicator_index)
-                if match:
-                    num = int(match.group(1))
-                    last_number = max(last_number, num)
-
-        new_index = f"{competence_index}.{last_number + 1}"
-
-        # Создаём индикатор
-        LinesIndicators.objects.create(
-            planlineid=discipline,
-            competence_index=competence_index,
-            competence=competence_name,
-            indicator_index=new_index,
-            indicator=""  # пустой, редактируется позже
-        )
-
+        """Добавляет одну компетенцию к дисциплине с генерацией индикаторов и схемы"""
         competence_obj = Competence.objects.get(
             plan_id=discipline.plan_id,
             competence_index=competence_index
         )
-        semesters = SemesterData.objects.filter(planlineid=discipline)
         
-        # Создаём записи в Scheme для каждого семестра с формами аттестации
-        for sem in semesters:
-            has_forms = any([
-                sem.ekz, sem.zach, 
-                (sem.zacho and sem.zacho > 0), 
-                sem.kp, sem.kr
-            ])
+        # Получаем все семестры дисциплины с формами аттестации
+        semesters_with_forms = []
+        for sem in SemesterData.objects.filter(planlineid=discipline):
+            forms = {
+                'ekz': bool(sem.ekz),
+                'zach': bool(sem.zach),
+                'zacho': bool(sem.zacho and sem.zacho > 0),
+                'kp': bool(sem.kp),
+                'kr': bool(sem.kr)
+            }
             
-            if has_forms:
-                Scheme.objects.create(
-                    planlineid=discipline,
-                    competence_id=competence_obj,
-                    semester=sem.num,
-                    ekz=bool(sem.ekz),
-                    zach=bool(sem.zach),
-                    zacho=bool(sem.zacho and sem.zacho > 0),
-                    kp=bool(sem.kp),
-                    kr=bool(sem.kr)
-                )
+            if any(forms.values()):
+                semesters_with_forms.append({
+                    'semester': sem.num,
+                    'forms': forms
+                })
+        
+        # Создаём записи в Scheme
+        scheme_records = []
+        for item in semesters_with_forms:
+            scheme = Scheme.objects.create(
+                planlineid=discipline,
+                competence_id=competence_obj,
+                semester=item['semester'],
+                **item['forms']
+            )
+            scheme_records.append(scheme)
+        
+        # Создаём индикаторы (по одному на каждую запись в схеме)
+        existing_indicators = LinesIndicators.objects.filter(
+            planlineid=discipline,
+            competence_index=competence_index
+        ).exclude(indicator_index__icontains='Итоговый индикатор')
+        
+        max_num = 0
+        for ind in existing_indicators:
+            if ind.indicator_index:
+                match = re.search(rf'{re.escape(competence_index)}\.(\d+)', ind.indicator_index)
+                if match:
+                    max_num = max(max_num, int(match.group(1)))
+        
+        # Создаём индикаторы
+        for i in range(len(scheme_records)):
+            new_index = f"{competence_index}.{max_num + i + 1}"
+            LinesIndicators.objects.create(
+                planlineid=discipline,
+                competence_index=competence_index,
+                competence=competence_name,
+                indicator_index=new_index,
+                indicator=""  # пустой, редактируется позже
+            )
 
     # Правила валидации для матрицы компетенций
     @staticmethod
