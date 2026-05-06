@@ -38,8 +38,23 @@ const exporting = ref(false)
 
 const showValidationErrors = ref(false)
 
+const hasEmptyFieldsInPassport = computed(() => {
+  for (const comp of passport.value) {
+    const validationStatus = store.currentCompetenceValidation(comp)
+    
+    if (Object.values(validationStatus).some(hasError => hasError)) {
+      return true
+    }
+  }
+  
+  return false
+})
+
 const canExportPassport = computed(() => {
-  return schemaValidation.value?.is_valid === true
+  const schemaValid = schemaValidation.value?.is_valid === true
+  const noEmptyFields = !hasEmptyFieldsInPassport.value
+  
+  return schemaValid && noEmptyFields
 })
 
 function navigateToFix(errorRow) {
