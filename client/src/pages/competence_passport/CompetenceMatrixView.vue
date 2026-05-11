@@ -31,11 +31,22 @@ const canExportMatrix = computed(() => {
   return matrixValidation.value?.is_valid === true
 })
 
-async function exportMatrix() {
+async function exportMatrix(format) {
   exporting.value = true
   try {
-    store.getMatrixReport()    
+    if (format === 'pdf') {
+      await store.getMatrixReportPdf()
+    } else {
+      await store.getMatrixReportDocx()
+    }
+    
+    $q.notify({
+      type: 'positive',
+      message: `Файл успешно сгенерирован (${format})`,
+      position: 'top-right'
+    })
   } catch (error) {
+    console.error(error)
     $q.notify({
       type: 'negative',
       message: 'Ошибка при генерации документа',
@@ -485,18 +496,29 @@ watch(() => route.params.id, () => {
             </template>
           </q-input>
 
-          <q-btn
+          <q-btn-dropdown
             flat
             dense
             icon="file_download"
             label="Выгрузить"
-            @click="exportMatrix"
             :loading="exporting"
             :disable="!canExportMatrix"
             class="q-mr-sm q-pr-sm bg-primary text-white"
           >
-            <q-tooltip>Скачать матрицу компетенций в формате Word</q-tooltip>
-          </q-btn>
+            <q-list>
+              <q-item clickable v-close-popup @click="exportMatrix('docx')">
+                <q-item-section>
+                  <q-item-label>Скачать .docx</q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item clickable v-close-popup @click="exportMatrix('pdf')">
+                <q-item-section>
+                  <q-item-label>Скачать .pdf</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+            <q-tooltip>Скачать матрицу компетенций</q-tooltip>
+          </q-btn-dropdown>
         </div>
       </div>
     </div>

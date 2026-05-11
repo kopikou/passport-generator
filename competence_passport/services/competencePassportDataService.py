@@ -13,6 +13,10 @@ from docxtpl import DocxTemplate
 from io import BytesIO
 from pathlib import Path
 from app.settings import BASE_DIR
+import os
+import platform
+import subprocess
+import tempfile
 
 
 class CompetencePassportDataService:
@@ -254,7 +258,7 @@ class CompetencePassportDataService:
         return data
 
     @classmethod
-    def get_matrix_report(cls, plan_id):
+    def get_matrix_report(cls, plan_id, format_type='docx'):
         """Экспорт матрицы компетенций в Word"""
         admission_data = cls.get_plan_admission_data(plan_id)
         admission_info = admission_data['admission_info']
@@ -281,9 +285,13 @@ class CompetencePassportDataService:
 
         buffer = BytesIO()
         doc.save(buffer)
-        buffer.seek(0)
+        docx_bytes = buffer.getvalue()
+
+        if format_type == 'pdf':
+            pdf_bytes = cls.convert_docx_to_pdf(docx_bytes)
+            return pdf_bytes
         
-        return buffer.getvalue()
+        return docx_bytes
     
     @staticmethod
     def build_matrix_hierarchy(matrix_data):
@@ -325,7 +333,7 @@ class CompetencePassportDataService:
         return result
     
     @classmethod
-    def get_schema_report(cls, plan_id):
+    def get_schema_report(cls, plan_id, format_type='docx'):
         """Экспорт схемы компетенций в Word"""
         admission_data = cls.get_plan_admission_data(plan_id)
         admission_info = admission_data['admission_info']
@@ -353,9 +361,13 @@ class CompetencePassportDataService:
 
         buffer = BytesIO()
         doc.save(buffer)
-        buffer.seek(0)
+        docx_bytes = buffer.getvalue()
+
+        if format_type == 'pdf':
+            pdf_bytes = cls.convert_docx_to_pdf(docx_bytes)
+            return pdf_bytes
         
-        return buffer.getvalue()
+        return docx_bytes
     
     @classmethod
     def process_schema_for_report(cls, schema_data):
@@ -417,7 +429,7 @@ class CompetencePassportDataService:
         return '\n'.join(form_mapping.get(fc, '') for fc in form_control_list)
     
     @classmethod
-    def get_passport_report(cls, plan_id):
+    def get_passport_report(cls, plan_id, format_type='docx'):
         """Экспорт паспорта компетенций в Word"""
         admission_data = cls.get_plan_admission_data(plan_id)
         admission_info = admission_data['admission_info']
@@ -474,9 +486,13 @@ class CompetencePassportDataService:
 
         buffer = BytesIO()
         doc.save(buffer)
-        buffer.seek(0)
+        docx_bytes = buffer.getvalue()
+
+        if format_type == 'pdf':
+            pdf_bytes = cls.convert_docx_to_pdf(docx_bytes)
+            return pdf_bytes
         
-        return buffer.getvalue()
+        return docx_bytes
 
     @staticmethod
     def prepare_indicator_distribution(indicator_list):
@@ -526,3 +542,43 @@ class CompetencePassportDataService:
             'disciplines': disciplines,
             'indicator_headers': sorted_headers
         }
+    
+    @staticmethod
+    def convert_docx_to_pdf(docx_content: bytes) -> bytes:
+        """
+        Конвертация docx в pdf 
+        """
+        import pythoncom 
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            temp_docx_path = os.path.join(tmp_dir, "temp_report.docx")
+            
+            with open(temp_docx_path, 'wb') as f:
+                f.write(docx_content)
+            
+            pdf_path = None
+            
+            if platform.system() == 'Linux':
+                subprocess.run([
+                    'libreoffice', '--headless', '--invisible', '--convert-to', 'pdf',
+                    temp_docx_path, '--outdir', tmp_dir
+                ], check=True, timeout=30)
+                
+                pdf_filename = os.path.splitext(os.path.basename(temp_docx_path))[0] + '.pdf'
+                pdf_path = os.path.join(tmp_dir, pdf_filename)
+
+            elif platform.system() == 'Windows':
+                pythoncom.CoInitialize()
+                from win32com.client import Dispatch
+                word = Dispatch('Word.Application')
+                word.Visible = False
+                doc = word.Documents.Open(temp_docx_path)
+                
+                pdf_path = os.path.join(tmp_dir, "temp_report.pdf")
+                doc.SaveAs(pdf_path, FileFormat=17)
+                doc.Close()
+                word.Quit()
+
+                pythoncom.CoUninitialize()
+
+            with open(pdf_path, 'rb') as f:
+                return f.read()

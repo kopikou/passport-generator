@@ -303,7 +303,7 @@ class CompetencePassportViewSet(GenericViewSet):
         """Экспорт матрицы компетенций в Word"""
         plan_id = self.kwargs['pk']
 
-        doc_content = CompetencePassportDataService.get_matrix_report(plan_id)
+        doc_content = CompetencePassportDataService.get_matrix_report(plan_id, format_type='docx')
 
         response = HttpResponse(
             doc_content,
@@ -312,12 +312,25 @@ class CompetencePassportViewSet(GenericViewSet):
         #response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
     
+    @action(methods=['GET'], detail=True, url_path='get-matrix-report-pdf', permission_classes=[IsAuthenticated])
+    def get_matrix_report_pdf(self, request, *args, **kwargs):
+        """Экспорт матрицы компетенций в PDF"""
+        plan_id = self.kwargs['pk']
+        
+        pdf_content = CompetencePassportDataService.get_matrix_report(plan_id, format_type='pdf')
+
+        response = HttpResponse(
+            pdf_content, 
+            content_type='application/pdf'
+        )
+        return response
+    
     @action(methods=['GET'], detail=True, url_path='get-schema-report', permission_classes=[IsAuthenticated])
     def get_schema_report(self, request, *args, **kwargs):
         """Экспорт схемы компетенций в Word"""
         plan_id = self.kwargs['pk']
 
-        doc_content = CompetencePassportDataService.get_schema_report(plan_id)
+        doc_content = CompetencePassportDataService.get_schema_report(plan_id, format_type='docx')
 
         response = HttpResponse(
             doc_content,
@@ -326,17 +339,43 @@ class CompetencePassportViewSet(GenericViewSet):
 
         return response
     
+    @action(methods=['GET'], detail=True, url_path='get-schema-report-pdf', permission_classes=[IsAuthenticated])
+    def get_schema_report_pdf(self, request, *args, **kwargs):
+        """Экспорт схемы компетенций в PDF"""
+        plan_id = self.kwargs['pk']
+        
+        pdf_content = CompetencePassportDataService.get_schema_report(plan_id, format_type='pdf')
+
+        response = HttpResponse(
+            pdf_content, 
+            content_type='application/pdf'
+        )
+        return response
+    
     @action(methods=['GET'], detail=True, url_path='get-passport-report', permission_classes=[IsAuthenticated])
     def get_passport_report(self, request, *args, **kwargs):
         """Экспорт паспорта компетенций в Word"""
         plan_id = self.kwargs['pk']
 
-        doc_content = CompetencePassportDataService.get_passport_report(plan_id)
+        doc_content = CompetencePassportDataService.get_passport_report(plan_id, format_type='docx')
 
         response = HttpResponse(
             doc_content,
             content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         )
 
+        return response
+    
+    @action(methods=['GET'], detail=True, url_path='get-passport-report-pdf', permission_classes=[IsAuthenticated])
+    def get_passport_report_pdf(self, request, *args, **kwargs):
+        """Экспорт паспорта компетенций в PDF"""
+        plan_id = self.kwargs['pk']
+        
+        pdf_content = CompetencePassportDataService.get_passport_report(plan_id, format_type='pdf')
+
+        response = HttpResponse(
+            pdf_content, 
+            content_type='application/pdf'
+        )
         return response
     

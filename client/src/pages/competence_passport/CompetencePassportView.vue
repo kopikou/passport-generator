@@ -98,11 +98,22 @@ async function navigateToPassportFix(errorRow) {
   })
 }
 
-async function exportPassport() {
+async function exportPassport(format) {
   exporting.value = true
   try {
-    store.getPassportReport()    
+    if (format === 'pdf') {
+      await store.getPassportReportPdf()
+    } else {
+      await store.getPassportReportDocx()
+    }
+    
+    $q.notify({
+      type: 'positive',
+      message: `Файл успешно сгенерирован (${format})`,
+      position: 'top-right'
+    })
   } catch (error) {
+    console.error(error)
     $q.notify({
       type: 'negative',
       message: 'Ошибка при генерации документа',
@@ -253,18 +264,29 @@ watch(currentPlanId.value, async (newPlanId) => {
       <div class="row justify-content-between">
         <div class="col text-h4 q-mb-xs">Паспорт компетенций</div>
           <div class="col-auto">
-          <q-btn
+          <q-btn-dropdown
             flat
             dense
             icon="file_download"
             label="Выгрузить"
-            @click="exportPassport"
             :loading="exporting"
             :disable="!canExportPassport"
             class="q-mr-sm q-pr-sm bg-primary text-white"
           >
-            <q-tooltip>Скачать паспорт компетенций в формате Word</q-tooltip>
-          </q-btn>
+            <q-list>
+              <q-item clickable v-close-popup @click="exportPassport('docx')">
+                <q-item-section>
+                  <q-item-label>Скачать .docx</q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item clickable v-close-popup @click="exportPassport('pdf')">
+                <q-item-section>
+                  <q-item-label>Скачать .pdf</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+            <q-tooltip>Скачать паспорт компетенций</q-tooltip>
+          </q-btn-dropdown>
           </div>
       </div>
     </div>

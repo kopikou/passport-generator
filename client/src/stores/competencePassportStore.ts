@@ -561,7 +561,18 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     return response.data
   }
 
-  async function getMatrixReport(){
+  function downloadBlob(data: Blob, filename: string) {
+    const url = window.URL.createObjectURL(new Blob([data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', filename)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  }
+
+  async function getMatrixReportDocx(){
     const response = await api.get(
       `/api/competence-passport/${currentPlanId.value}/get-matrix-report/`,
       { responseType: 'blob' }
@@ -571,18 +582,22 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     let year_post = admissionInfo.value
     let filename = `${direction_code.cdirection__cod}_Матрица_компетенций_${year_post.yr}.docx`
     
-    // Создаем ссылку для скачивания
-    const url = window.URL.createObjectURL(new Blob([response.data]))
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', filename)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
+    downloadBlob(response.data, filename)
   }
 
-  async function getSchemaReport(){
+  async function getMatrixReportPdf() {
+    const response = await api.get(
+      `/api/competence-passport/${currentPlanId.value}/get-matrix-report-pdf/`, 
+      { responseType: 'blob' }
+    )
+
+    let direction_code = admissionInfo.value
+    let year_post = admissionInfo.value
+    let filename = `${direction_code.cdirection__cod}_Матрица_компетенций_${year_post.yr}.pdf`
+    downloadBlob(response.data, filename)
+  }
+
+  async function getSchemaReportDocx(){
     const response = await api.get(
       `/api/competence-passport/${currentPlanId.value}/get-schema-report/`,
       { responseType: 'blob' }
@@ -592,17 +607,22 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     let year_post = admissionInfo.value
     let filename = `${direction_code.cdirection__cod}_Схема_формирования_компетенций_${year_post.yr}.docx`
 
-    const url = window.URL.createObjectURL(new Blob([response.data]))
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', filename)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
+    downloadBlob(response.data, filename)
   }
 
-  async function getPassportReport(){
+  async function getSchemaReportPdf() {
+    const response = await api.get(
+      `/api/competence-passport/${currentPlanId.value}/get-schema-report-pdf/`, 
+      { responseType: 'blob' }
+    )
+
+    let direction_code = admissionInfo.value
+    let year_post = admissionInfo.value
+    let filename = `${direction_code.cdirection__cod}_Схема_формирования_компетенций_${year_post.yr}.pdf`
+    downloadBlob(response.data, filename)
+  }
+
+  async function getPassportReportDocx(){
     const response = await api.get(
       `/api/competence-passport/${currentPlanId.value}/get-passport-report/`,
       { responseType: 'blob' }
@@ -612,14 +632,19 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     let year_post = admissionInfo.value
     let filename = `${direction_code.cdirection__cod}_Паспорт_компетенций_${year_post.yr}.docx`
 
-    const url = window.URL.createObjectURL(new Blob([response.data]))
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', filename)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
+    downloadBlob(response.data, filename)
+  }
+
+  async function getPassportReportPdf() {
+    const response = await api.get(
+      `/api/competence-passport/${currentPlanId.value}/get-passport-report-pdf/`, 
+      { responseType: 'blob' }
+    )
+
+    let direction_code = admissionInfo.value
+    let year_post = admissionInfo.value
+    let filename = `${direction_code.cdirection__cod}_Паспорт_компетенций_${year_post.yr}.pdf`
+    downloadBlob(response.data, filename)
   }
 
   // Очистка состояния 
@@ -751,9 +776,13 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
     updateIndicator,
     deleteIndicator,
     getGroupList,
-    getMatrixReport,
-    getSchemaReport,
-    getPassportReport,
+    downloadBlob,
+    getMatrixReportDocx,
+    getMatrixReportPdf,
+    getSchemaReportDocx,
+    getSchemaReportPdf,
+    getPassportReportDocx,
+    getPassportReportPdf,
     clear
   }
 })
