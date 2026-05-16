@@ -50,7 +50,6 @@ async function exportSchema(format) {
       position: 'top-right'
     })
   } catch (error) {
-    console.error(error)
     $q.notify({
       type: 'negative',
       message: 'Ошибка при генерации документа',
@@ -297,7 +296,7 @@ watch(() => route.params.id, () => {
       <q-slide-transition>
         <div v-if="showValidationErrors && schemaValidation?.errors?.length" class="validation-details q-pa-md bg-grey-2 q-mt-sm">
           <q-card class="q-mb-md">
-            <q-card-section class="q-pa-none">
+            <q-card-section class="q-pa-none scroll-x-wrapper">
               <q-table
                 :rows="schemaValidation.errors"
                 :columns="schemaValidationColumns"
@@ -305,16 +304,17 @@ watch(() => route.params.id, () => {
                 dense
                 flat
                 bordered
+                class="validation-table" 
               >
                 <template v-slot:body-cell-actions="props">
                   <q-td :props="props">
-                    <div class="column items-center q-gutter-y-xs">
+                    <div class="column items-center q-gutter-xs">
                       <q-btn
                         size="sm"
                         color="primary"
                         label="Исправить в схеме"
                         @click="navigateToFix(props.row)"
-                        title="Изменить формы аттестации"
+                        title="Откроется окно редактора для изменения форм аттестаций"
                         :loading="validatingSchema"
                       />
                       <q-btn
@@ -322,7 +322,7 @@ watch(() => route.params.id, () => {
                         color="primary"
                         label="Исправить в паспорте"
                         @click="navigateToPassport(props.row)"
-                        title="Изменить число индикаторов"
+                        title="Автоматически подстроит число индикаторов под схему"
                         :loading="store.saving"
                       />
                     </div>
@@ -340,15 +340,15 @@ watch(() => route.params.id, () => {
       </q-slide-transition>
     </div>
 
-    <div class="row items-center">
-      <div class="col">
+    <div class="row items-center q-mb-md">
+      <div class="col-12 col-md">
         <div class="row items-center q-mb-md text-subtitle1 text-grey">
           Окно редактора вызывается щелчком мыши в необходимой ячейке
         </div>
       </div>
       
-      <div class="col-auto">
-        <div class="row items-center q-gutter-md q-mb-md">
+      <div class="col-12 col-md-auto">
+        <div class="row flex-wrap items-center q-gutter-sm q-mb-md">
           <q-btn
             flat
             dense
@@ -559,6 +559,25 @@ watch(() => route.params.id, () => {
     &.bg-positive {
       border-left-color: darken(#4CAF50, 10%);
     }
+  }
+}
+.scroll-x-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.validation-table {
+  width: 100%;
+  min-width: 600px; 
+  
+  :deep(td) {
+    white-space: normal; 
+  }
+
+  :deep(th[data-name="actions"]),
+  :deep(td[data-name="actions"]) {
+    width: 220px;
+    min-width: 220px;
   }
 }
 

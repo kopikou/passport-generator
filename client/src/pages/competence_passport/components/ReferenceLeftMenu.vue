@@ -5,6 +5,7 @@ const route = useRoute()
 </script>
 
 <template>
+<div class="scroll-x">
   <div class="menu-header q-pa-sm bg-grey-3">
     <div class="text-weight-bold">Справочники</div>
     <div class="text-caption text-grey">
@@ -41,6 +42,7 @@ const route = useRoute()
       </q-item-section>
     </q-item>
   </q-list>
+</div>
 </template>
 
 <style scoped lang="scss">
@@ -50,6 +52,7 @@ const route = useRoute()
 }
 
 .reference-menu {
+  
   .q-item-label--header {
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   }

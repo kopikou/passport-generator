@@ -97,29 +97,18 @@ const getTypeColor = (type) => {
   return typeColors[type] || 'grey'
 }
 
-// // Загрузка данных
-// async function loadDisciplines() {
-//   const planId = Number(route.params.id)
-//   if (planId) {
-//     await store.fetchCompetencePassport(planId)
-//   }
-// }
-
-// onBeforeMount(() => {
-//   loadDisciplines()
-// })
 </script>
 
 <template>
   <div class="q-mb-lg q-pa-sm">
-    <div class="row items-center q-mb-md">
-      <div class="col">
+    <div class="row items-center q-col-gutter-md q-mb-md">
+      <div class="col-12 col-md">
         <h2 class="text-h4 q-ma-none">Дисциплины</h2>
         <div class="text-subtitle1 text-grey">
           Справочник всех дисциплин
         </div>
       </div>
-      <div class="col-auto q-mr-md">
+      <div class="col-12 col-sm-auto q-mr-md">
         <q-select
           v-model="selectedTypes"
           :options="disciplineTypeOptions"
@@ -128,12 +117,12 @@ const getTypeColor = (type) => {
           outlined
           clearable
           multiple
-          style="min-width: 250px;"
+          style="min-width: 220px;"
           emit-value
           map-options
         />
       </div>
-      <div class="col-auto">
+      <div class="col-12 col-sm-auto">
         <q-input
           v-model="searchFilter"
           placeholder="Поиск по дисциплинам..."
@@ -207,10 +196,6 @@ const getTypeColor = (type) => {
 </template>
 
 <style scoped>
-.text-subtitle1 {
-  margin-bottom: 1rem;
-}
-
 .q-table {
   margin-top: 1rem;
 }
@@ -228,5 +213,6 @@ const getTypeColor = (type) => {
 :deep(.q-table th),
 :deep(.q-table td) {
   vertical-align: top;
+  white-space: normal;
 }
 </style>

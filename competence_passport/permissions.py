@@ -6,22 +6,6 @@ class CanViewCompetencePassport(IsAuthenticated):
     """Разрешение на просмотр паспорта компетенций — только для РОП"""
     message = 'У вас нет прав для просмотра паспорта компетенций'
 
-    # def has_permission(self, request, view):
-    #     if not super().has_permission(request, view):
-    #         return False
-            
-    #     if request.user.is_superuser:
-    #         return True
-            
-    #     pk = view.kwargs['pk']
-    #     if settings.DISABLE_MIRA:
-    #         return pk == '4107'
-    #     info = AISServices.get_plan_users_info(pk)
-    #     mira_id = request.user.userprofile.mira_id
-        
-    #     # Только РОП может просматривать
-    #     return mira_id == info['rop']
-
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
             return False
@@ -43,21 +27,6 @@ class CanEditCompetencePassport(IsAuthenticated):
     """Разрешение на редактирование паспорта компетенций — только для РОП"""
     message = 'У вас нет прав для редактирования паспорта компетенций'
 
-    # def has_permission(self, request, view):
-    #     if not super().has_permission(request, view):
-    #         return False
-            
-    #     if request.user.is_superuser:
-    #         return True
-            
-    #     pk = view.kwargs['pk']
-    #     if settings.DISABLE_MIRA:
-    #         return pk == '4107'
-    #     info = AISServices.get_plan_users_info(pk)
-    #     mira_id = request.user.userprofile.mira_id
-        
-    #     # Только РОП может редактировать
-    #     return mira_id == info['rop']
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
             return False

@@ -102,14 +102,14 @@ onBeforeMount(() => {
 
 <template>
   <div class="q-mb-lg q-pa-sm">
-    <div class="row items-center q-mb-md">
-      <div class="col">
+    <div class="row items-center q-col-gutter-md q-mb-md">
+      <div class="col-12 col-md">
         <h2 class="text-h4 q-ma-none">Компетенции</h2>
         <div class="text-subtitle1 text-grey">
           Справочник всех компетенций
         </div>
       </div>
-      <div class="col-auto q-mr-md">
+      <div class="col-12 col-sm-auto q-mr-md">
         <q-select
           v-model="competenceTypeFilter"
           :options="competenceTypeOptions"
@@ -122,7 +122,7 @@ onBeforeMount(() => {
           style="min-width: 220px;"
         />
       </div>
-      <div class="col-auto">
+      <div class="col-12 col-sm-auto">
         <q-input
           v-model="searchFilter"
           placeholder="Поиск по компетенциям..."
@@ -185,10 +185,6 @@ onBeforeMount(() => {
 </template>
 
 <style scoped>
-.text-subtitle1 {
-  margin-bottom: 1rem;
-}
-
 .competence-text {
   word-wrap: break-word;
   white-space: normal;
@@ -202,5 +198,6 @@ onBeforeMount(() => {
 :deep(.q-table th),
 :deep(.q-table td) {
   vertical-align: top;
+  white-space: normal;
 }
 </style>

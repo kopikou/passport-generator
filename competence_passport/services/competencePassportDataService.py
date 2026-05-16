@@ -144,9 +144,13 @@ class CompetencePassportDataService:
     @staticmethod
     def get_group_list(user_mira_id, year=datetime.datetime.now().year, group_txt_filter=''):
         data = AISServices.get_groups_by_person(id = user_mira_id, year = year, group_txt_filter = group_txt_filter)
+        
 
         abbr_to_info = {}
         for item in data:
+            if not item['rop_type']:
+                continue
+
             abbr = item['abbr']
             if abbr not in abbr_to_info:
                 abbr_to_info[abbr] = {

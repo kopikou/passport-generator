@@ -87,6 +87,8 @@ class PassportService:
                 "indicator_list": indicator_list
             })
 
+        passport_data = RuleService.sort_competences(passport_data)
+
         return passport_data
     
     @staticmethod

@@ -115,7 +115,7 @@ async function saveForms() {
     $q.notify({
       type: 'negative',
       position: 'top-right',
-      message: 'Ошибка при сохранении',
+      message: 'Ошибка при сохранении: Форма аттестации недоступна в этом семестре',
       timeout: 5000
     })
   }

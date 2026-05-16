@@ -46,7 +46,6 @@ async function exportMatrix(format) {
       position: 'top-right'
     })
   } catch (error) {
-    console.error(error)
     $q.notify({
       type: 'negative',
       message: 'Ошибка при генерации документа',
@@ -323,8 +322,6 @@ async function runMatrixValidation() {
 
 // Редактирование
 async function onRowClick(row) {
-  if (row.type !== 'discipline') return
-  
   const discipline = disciplines.value.find(d => d.discipline_id === row.discipline_id)
   if (!discipline) return
   
@@ -334,6 +331,14 @@ async function onRowClick(row) {
     name: discipline.discipline_name
   }
   showEditor.value = true
+}
+
+function handleRowClick(row) {
+  if (row.type === 'group') {
+    toggleGroup(row.discipline_index)
+  } else if (row.type === 'discipline') {
+    onRowClick(row)
+  }
 }
 
 function openEditDialogForError(errorRow) {
@@ -460,17 +465,17 @@ watch(() => route.params.id, () => {
       </q-slide-transition>
     </div>
 
-    <div class="row items-center q-mb-md">
-      <div class="col">
+    <div class="row items-center  q-mb-md">
+      <div class="col-12 col-md">
         <div class="text-subtitle1 text-grey">
           Окно редактора вызывается щелчком мыши в необходимой строке
         </div>
       </div>
       
-      <div class="col-auto">
-        <div class="row items-center q-gutter-sm  q-mb-md">
-          <q-btn flat dense color="primary" icon="expand_more" @click="expandAll" label="Раскрыть все" class="q-mr-sm" />
-          <q-btn flat dense color="primary" icon="expand_less" @click="collapseAll" label="Свернуть все" class="q-mr-sm" />
+      <div class="col-12 col-md-auto">
+        <div class="row flex-wrap items-center q-gutter-sm justify-md-end">
+          <q-btn flat dense color="primary" icon="expand_more" @click="expandAll" label="Раскрыть все"/>
+          <q-btn flat dense color="primary" icon="expand_less" @click="collapseAll" label="Свернуть все"/>
           <q-btn
             flat
             dense
@@ -479,7 +484,6 @@ watch(() => route.params.id, () => {
             label="Проверить"
             @click="runMatrixValidation"
             :loading="validating"
-            class="q-mr-sm"
           >
             <q-tooltip>Проверить связи между дисциплинами и компетенциями</q-tooltip>
           </q-btn>
@@ -553,7 +557,8 @@ watch(() => route.params.id, () => {
             { 'row-without-competences': props.row.type === 'discipline' && isDisciplineWithoutCompetences(props.row.discipline_index) },
             { 'highlighted-row': props.row.discipline_index === highlightedDiscipline }
           ]"
-          @click="onRowClick(props.row)"
+
+          @click="handleRowClick(props.row)"
           :data-index="props.row.discipline_index"
         >
           <q-td key="discipline_index" :props="props">
@@ -573,7 +578,7 @@ watch(() => route.params.id, () => {
                 size="sm"
                 icon="keyboard_arrow_down"
                 :class="{ 'rotate-180': isExpanded(props.row.discipline_index) }"
-                @click.stop="toggleGroup(props.row.discipline_index)"
+           
                 class="q-mr-xs transition-transform"
                 style="min-width: 24px; min-height: 24px;"
               />

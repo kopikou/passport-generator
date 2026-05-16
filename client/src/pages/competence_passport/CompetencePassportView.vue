@@ -113,7 +113,6 @@ async function exportPassport(format) {
       position: 'top-right'
     })
   } catch (error) {
-    console.error(error)
     $q.notify({
       type: 'negative',
       message: 'Ошибка при генерации документа',
@@ -244,9 +243,7 @@ watch(currentPlanId.value, async (newPlanId) => {
     if (newPlanId) {
       //await loadPlanData()
       
-      if (route.query.section === 'title-page') {
-
-      } else if (route.query.competence) {
+      if (route.query.competence) {
         await loadCompetenceData(route.query.competence as string)
       }
     } else {
@@ -327,7 +324,7 @@ watch(currentPlanId.value, async (newPlanId) => {
       <q-slide-transition>
         <div v-if="showValidationErrors && schemaValidation?.errors?.length" class="validation-details q-pa-md bg-grey-2 q-mt-sm">
           <q-card class="q-mb-md">
-            <q-card-section class="q-pa-none">
+            <q-card-section class="q-pa-none scroll-x-wrapper">
               <q-table
                 :rows="schemaValidation.errors"
                 :columns="schemaValidationColumns"
@@ -335,16 +332,17 @@ watch(currentPlanId.value, async (newPlanId) => {
                 dense
                 flat
                 bordered
+                class="validation-table"
               >
                 <template v-slot:body-cell-actions="props">
                   <q-td :props="props">
-                    <div class="items-center q-gutter-y-xs">
+                    <div class="items-center q-gutter-xs">
                       <q-btn
                         size="sm"
                         color="primary"
                         label="Исправить в схеме"
                         @click="navigateToFix(props.row)"
-                        title="Изменить формы аттестации"
+                        title="Перенаправление на страницу схемы для редактирования форм аттестаций"
                         :loading="validatingSchema"
                       />
                       <q-btn
@@ -352,7 +350,7 @@ watch(currentPlanId.value, async (newPlanId) => {
                         color="primary"
                         label="Исправить в паспорте"
                         @click="navigateToPassportFix(props.row)"
-                        title="Изменить число индикаторов"
+                        title="Автоматически подстроит число индикаторов"
                         :loading="store.saving"
                       />
                     </div>
@@ -387,7 +385,7 @@ watch(currentPlanId.value, async (newPlanId) => {
     
     <div v-else class="passport-content">
       <!-- Вкладки для разделов компетенции -->
-      <div v-if="selectedSection && selectedSection !== 'title-page'" class="competence-tabs q-mb-lg">
+      <div v-if="selectedSection && selectedSection !== 'title-page'" class="competence-tabs q-mb-lg custom-tabs-container">
         <q-tabs
           v-model="activeTab"
           align="left"
@@ -396,7 +394,7 @@ watch(currentPlanId.value, async (newPlanId) => {
           @update:model-value="onTabChange"
         >
           <q-tab
-            class="text-teal"
+            class="text-teal tab-item"
             name="competence-relations"
             label="1.1. Связь с компетенциями"
           >
@@ -409,7 +407,7 @@ watch(currentPlanId.value, async (newPlanId) => {
             />
           </q-tab>
           <q-tab
-            class="text-teal"
+            class="text-teal tab-item"
             name="competence-indicators"
             label="2. Индикаторы достижения"
           >
@@ -422,7 +420,7 @@ watch(currentPlanId.value, async (newPlanId) => {
             />
           </q-tab>
           <q-tab
-            class="text-teal"
+            class="text-teal tab-item"
             name="indicator-disciplines"
             label="2.1. Индикаторы и дисциплины"
           >
@@ -435,7 +433,7 @@ watch(currentPlanId.value, async (newPlanId) => {
             />
           </q-tab>
           <q-tab
-            class="text-teal"
+            class="text-teal tab-item"
             name="indicator-results"
             label="2.2. Результаты обучения"
           >
@@ -448,7 +446,7 @@ watch(currentPlanId.value, async (newPlanId) => {
             />
           </q-tab>
           <q-tab
-            class="text-teal"
+            class="text-teal tab-item"
             name="assessment-criteria"
             label="3. Критерии оценивания"
           >
@@ -469,7 +467,7 @@ watch(currentPlanId.value, async (newPlanId) => {
         <div class="text-caption q-mt-sm">Загрузка данных...</div>
       </div>
       
-      <div v-else class="section-content">
+      <div v-else >
         <component
           v-if="currentSectionComponent"
           :is="currentSectionComponent"
@@ -481,7 +479,6 @@ watch(currentPlanId.value, async (newPlanId) => {
         <div v-else class="text-center q-pa-xl text-grey">
           <q-icon name="error_outline" size="xl" class="q-mb-md" />
           <div class="text-h6">Раздел не найден</div>
-          <div class="text-body2 q-mt-sm">Пожалуйста, выберите другой раздел</div>
         </div>
       </div>
     </div>
@@ -502,61 +499,25 @@ watch(currentPlanId.value, async (newPlanId) => {
     }
   }
 
-  .validation-details {
-    border-radius: 0 0 8px 8px;
-    border: 1px solid rgba(0,0,0,0.1);
-    border-top: none;
-    overflow-x: auto;
-    overflow-y: auto;
-    width: 100%;
-    max-width: 100%;  
-    max-height: 350px;
-    
-    :deep(.q-table) {
-      width: 100%;
-      //table-layout: fixed;
-      overflow-y: auto;
+  
+}
+.scroll-x-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
 
-      th {
-        vertical-align: middle !important;
-        white-space: nowrap !important;   
-        overflow: hidden;
-      }
-      
-      td, th {
-        word-break: break-word;  
-        white-space: normal;  
+.validation-table {
+  width: 100%;
+  min-width: 600px; 
+  
+  :deep(td) {
+    white-space: normal; 
+  }
 
-        &:nth-child(1) {
-          width: 130px;
-          min-width: 100px;
-          max-width: 150px;
-        }
-
-        &:nth-child(2) {
-          width: 250px;
-          min-width: 200px;
-          max-width: 350px;
-        }
-        
-        &:nth-child(3) {
-          width: 70px;
-          min-width: 70px;
-          max-width: 70px;
-        }
-
-        &:nth-child(4) {
-          width: 300px;
-          min-width: 200px;
-          max-width: 400px;
-        }
-        &:nth-child(5) {
-          width: 250px;
-          min-width: 200px;
-          max-width: 300px;
-        }
-      }
-    }
+  :deep(th[data-name="actions"]),
+  :deep(td[data-name="actions"]) {
+    width: 220px;
+    min-width: 220px;
   }
 }
 
@@ -599,11 +560,21 @@ watch(currentPlanId.value, async (newPlanId) => {
   .passport-content {
     min-height: 300px;
   }
-  
-  .section-content {
-    max-width: 1200px;
-    margin: 0 auto;
+
+}
+
+.custom-tabs-container {
+  width: 100%;
+
+  :deep(.q-tabs) {
+    min-width: 0; 
   }
+}
+
+.tab-item {
+  white-space: normal; 
+  text-align: center;
+  padding: 8px 12px; 
 }
 
 .validation-icon {

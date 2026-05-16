@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onBeforeMount } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useQuasar, LocalStorage } from 'quasar'
 import _ from 'lodash'
 import LayoutHCF from 'components/LayoutHCF.vue'
@@ -12,7 +12,7 @@ const store = useCompetencePassportStore()
 const { currentPlanId} = storeToRefs(store)
 
 const router = useRouter()
-
+const route = useRoute()
 const $q = useQuasar()
 
 const groupsList = ref<any[]>([])
@@ -71,19 +71,17 @@ function selectGroup(planId: number) {
   router.push(`/competence-passport/${currentPlanId.value}/competences`)
 }
 
-function uploadPlan() {
-  $q.notify({
-    type: 'info',
-    message: 'Функция загрузки будет реализована позже'
-  })
-}
-
 watch([selectedYear, groupTextFilter], () => {
   saveFilters()
   debouncedFetch()
 })
 
 onBeforeMount(async () => {
+  if (route.path === '/competence-passport' ) {
+      currentPlanId.value = null
+      LocalStorage.remove('current_plan_id')
+  }
+
   await fetchGroups()
 
 })
@@ -128,14 +126,19 @@ onBeforeMount(async () => {
             active-class="bg-amber-2"
             style="display: grid; gap: 8px;"
           >
-            <div style="display: grid; grid-template-columns: 1fr auto">
-              <div style="display: flex; justify-content: left; font-size: 1.25rem;">
+            <div style="display: flex; justify-content: left; align-items: center;">
+              <div style="font-size: 1.25rem;">
                 {{ `${group.abbr}-${group.yr.toString().slice(-2)}` }}
               </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr auto">
-              <a :href="group.plx_file" v-if="group.plx_file">*.plx</a>
+            <div style="display: grid; grid-template-columns: 1fr auto; align-items: end;">
+              <div></div> 
+              <div v-if="group.plx_file">
+                <q-badge color="primary" rounded>
+                  <a :href="group.plx_file"  style="color: white;">*.plx</a>
+                </q-badge>
+              </div>
             </div>
           </q-item>
         </q-list>

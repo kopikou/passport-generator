@@ -5,6 +5,7 @@ from competence_passport.models import Scheme, Competence
 from datetime import datetime
 from collections import defaultdict
 from competence_passport.services.ruleService import RuleService
+from rest_framework.exceptions import ValidationError
 
 class SchemaService:
     @staticmethod
@@ -91,13 +92,13 @@ class SchemaService:
             num=semester
         ).first()
         if not semester_obj:
-            raise ValueError("Указанный семестр не существует для данной дисциплины")
+            raise ValidationError("Указанный семестр не существует для данной дисциплины")
 
         # Проверяем доступности форм по учебному плану
         form_fields = ['ekz', 'zach', 'zacho', 'kp', 'kr']
         for field in form_fields:
             if forms.get(field, False) and not getattr(semester_obj, field, False):
-                raise ValueError(f"Форма аттестации недоступна в этом семестре")
+                raise ValidationError(f"Форма аттестации недоступна в этом семестре")
 
         has_any_form = any(forms.get(f, False) for f in form_fields)
 

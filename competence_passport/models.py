@@ -24,5 +24,4 @@ class Scheme(TimestampsModel):
     zacho = models.BooleanField(null=True)
     kp = models.BooleanField(null=True)
     kr = models.BooleanField(null=True)
-    
-    #indicator = models.OneToOneField(LinesIndicators, on_delete=models.SET_NULL, null=True, blank=True,)
+

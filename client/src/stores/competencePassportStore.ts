@@ -286,6 +286,7 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
   }
 
   async function fetchMatrix(planId: number) {
+    await fetchReferences(planId)
     loading.value = true
     try {
       const response = await api.get(`/api/competence-passport/${planId}/get-matrix-data/`)
