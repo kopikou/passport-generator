@@ -5,6 +5,7 @@ import { useQuasar, date } from 'quasar'
 import { useCompetencePassportStore } from 'src/stores/competencePassportStore'
 import { storeToRefs } from 'pinia'
 import SchemaEditor from './components/SchemaEditor.vue'
+import FixIndicatorsConfirmDialog from './components/FixIndicatorsConfirmDialog.vue' 
 
 const route = useRoute()
 const $q = useQuasar()
@@ -22,6 +23,7 @@ const {
   schemaValidationColumns,
   lastSchemaCheckedFormatted,
   disciplineSemesters,
+  passport,
 } = storeToRefs(store)
 
 const showValidationErrors = ref(false)
@@ -114,6 +116,7 @@ const filteredSchema = computed(() => {
 
 async function loadSchemaData() {
   await store.fetchSchema(currentPlanId.value)
+  await store.fetchPassport(currentPlanId.value)
 }
 
 async function runSchemaValidation() {
@@ -210,20 +213,56 @@ function navigateToFix(errorRow) {
 }
 
 async function navigateToPassport(errorRow) {
-  try {
-    const result = await store.fixSchemeIndicators(
-      errorRow.discipline_id,
-      errorRow.competence_index,
-      errorRow.scheme_forms_count,
-      errorRow.indicators_count
-    )
-    
-    if (result.success) {
-      $q.notify({ type: 'positive', position: 'top-right', message: result.message, timeout: 5000 })
+  let currentComp = passport.value.find(c => c.competence_index === errorRow.competence_index)
+  
+  $q.dialog({
+    component: FixIndicatorsConfirmDialog,
+    componentProps: {
+      errorRow: errorRow,
+      currentIndicators: currentComp.indicator_list,
+      competenceIndex: errorRow.competence_index
     }
-  } catch (error) {
-    $q.notify({ type: 'warning', position: 'top-right', message: 'Не удалось автоматически скорректировать индикаторы' })
-  }
+  }).onOk(async () => {
+    try {
+      const result = await store.fixSchemeIndicators(
+        errorRow.discipline_id,
+        errorRow.competence_index,
+        errorRow.scheme_forms_count,
+        errorRow.indicators_count
+      )
+      
+      if (result.success) {
+        $q.notify({ 
+          type: 'positive', 
+          position: 'top-right', 
+          message: result.message, 
+          timeout: 5000 
+        })
+
+      }
+    } catch (error: any) {
+      $q.notify({ 
+        type: 'warning', 
+        position: 'top-right', 
+        message: 'Не удалось автоматически скорректировать индикаторы' 
+      })
+    }
+  })
+
+  // try {
+  //   const result = await store.fixSchemeIndicators(
+  //     errorRow.discipline_id,
+  //     errorRow.competence_index,
+  //     errorRow.scheme_forms_count,
+  //     errorRow.indicators_count
+  //   )
+    
+  //   if (result.success) {
+  //     $q.notify({ type: 'positive', position: 'top-right', message: result.message, timeout: 5000 })
+  //   }
+  // } catch (error) {
+  //   $q.notify({ type: 'warning', position: 'top-right', message: 'Не удалось автоматически скорректировать индикаторы' })
+  // }
 }
 
 function isDisciplineActiveInSemester(disciplineId: number, semester: number): boolean {

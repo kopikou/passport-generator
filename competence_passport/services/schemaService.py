@@ -107,26 +107,36 @@ class SchemaService:
             plan_id=plan.id
         )
         with transaction.atomic():
-            if has_any_form:
-                # Создаём или обновляем
-                scheme, created = Scheme.objects.update_or_create(
-                    planlineid=discipline,
-                    competence_id=competence_id,
-                    semester=semester,
-                    defaults={
-                        **{f: forms.get(f, False) for f in form_fields}
-                    }
-                )
-                scheme_id = scheme.id
-            else:
-                # Удаляем, если нет форм
-                Scheme.objects.filter(
-                    planlineid=discipline,
-                    competence_id=competence_id,
-                    semester=semester
-                ).delete()
-                scheme_id = None
-                created = False
+            # if has_any_form:
+            #     # Создаём или обновляем
+            #     scheme, created = Scheme.objects.update_or_create(
+            #         planlineid=discipline,
+            #         competence_id=competence_id,
+            #         semester=semester,
+            #         defaults={
+            #             **{f: forms.get(f, False) for f in form_fields}
+            #         }
+            #     )
+            #     scheme_id = scheme.id
+            # else:
+            #     # Удаляем, если нет форм
+            #     Scheme.objects.filter(
+            #         planlineid=discipline,
+            #         competence_id=competence_id,
+            #         semester=semester
+            #     ).delete()
+            #     scheme_id = None
+            #     created = False
+            defaults_data = {f: forms.get(f, False) for f in form_fields}
+
+            scheme, created = Scheme.objects.update_or_create(
+                planlineid=discipline,
+                competence_id=competence_id,
+                semester=semester,
+                defaults=defaults_data
+            )
+            
+            scheme_id = scheme.id
 
         return {
             'scheme_id': scheme_id,
@@ -140,6 +150,13 @@ class SchemaService:
         Проверка соответствия числа промежуточных аттестаций и индикаторов
         """
         plan = PlanData.objects.get(mira_id=plan_id)
+        
+        def count_active_forms(scheme_obj):
+            count = 0
+            if scheme_obj.ekz: count += 1
+            if scheme_obj.zach: count += 1
+            if scheme_obj.zacho: count += 1
+            return count
         
         # Получаем схемы и индикаторы
         schemes = Scheme.objects.filter(
@@ -190,7 +207,10 @@ class SchemaService:
             if discipline_index and RuleService.should_exclude_discipline(discipline_index):
                 continue
                 
-            forms_count = len(schemes_dict[key])
+            #forms_count = len(schemes_dict[key])
+            total_active_forms = sum(count_active_forms(s) for s in schemes_dict[key])
+            
+            forms_count = total_active_forms
             indicators_count = len(indicators_dict[key])
             
             if forms_count != indicators_count:
@@ -217,10 +237,15 @@ class SchemaService:
                 # Несоответсвие 
                 if forms_count > 0:
                     # Если есть формы аттестаций, то используем их семестры
-                    semesters_to_check = [s.semester for s in schemes_dict[key]]
+                    semesters_to_check = [s.semester for s in schemes_dict[key] if count_active_forms(s) > 0]
                 else:
                     # Если нет форм аттестаций, используем все семестры дисциплины
-                    semesters_to_check = [sem.num for sem in semester_data_map.get(discipline_id, [])] or [1] 
+                    #semesters_to_check = [sem.num for sem in semester_data_map.get(discipline_id, [])] or [1] 
+                    if schemes_dict[key]:
+                        semesters_to_check = [s.semester for s in schemes_dict[key]]
+                    else:
+                        # Если записей в Scheme нет, но есть индикаторы, то шибка "нет форм"
+                        semesters_to_check = [sem.num for sem in semester_data_map.get(discipline_id, [])] or [1] 
 
                 for semester in semesters_to_check:
                     error_id = f"{competence_index}_{discipline_id}_{semester}"

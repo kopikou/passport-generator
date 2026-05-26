@@ -4,6 +4,7 @@ import { useCompetencePassportStore } from 'src/stores/competencePassportStore'
 import { storeToRefs } from 'pinia'
 import { useQuasar } from 'quasar'
 import _ from 'lodash'
+import MatrixCompetenceConfirmDialog from './MatrixCompetenceConfirmDialog.vue' 
 
 const props = defineProps({
   planId: {
@@ -194,48 +195,64 @@ function resetFilters() {
 
 // Сохранение
 async function saveChanges() {
-  if (!hasChanges.value) {
-    $q.notify({
-      type: 'info',
-      message: 'Нет изменений для сохранения',
-      timeout: 2000
-    })
-    return
-  }
+  const originalSelectedIndices = new Set(
+    originalCompetences.value.filter(c => c.selected).map(c => c.competence_index)
+  )
+  
+  const currentSelectedIndices = new Set(
+    allCompetences.value.filter(c => c.selected).map(c => c.competence_index)
+  )
 
-  try {
-    const selectedCompetences = allCompetences.value
-      .filter(comp => comp.selected)
-      .map(comp => ({
-        competence_index: comp.competence_index,
-        competence: comp.competence,
-        type: comp.type
-      }))
-    
-    await store.updateDisciplineCompetences(
-      props.planId,
-      props.disciplineId,
-      selectedCompetences
-    )
-    
-    $q.notify({
-      type: 'positive',
-      message: `Успешно сохранено ${selectedCompetences.length} компетенций`,
-      position: 'top-right',
-      timeout: 3000
-    })
-    
-    originalCompetences.value = _.cloneDeep(allCompetences.value)
-    emit('saved')
-    showDialog.value = false
-    
-  } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Ошибка при сохранении компетенций',
-      position: 'top-right'
-    })
-  }
+  const added = Array.from(currentSelectedIndices)
+    .filter(idx => !originalSelectedIndices.has(idx))
+    .sort()
+
+  const removed = Array.from(originalSelectedIndices)
+    .filter(idx => !currentSelectedIndices.has(idx))
+    .sort()
+
+  $q.dialog({
+    component: MatrixCompetenceConfirmDialog,
+    componentProps: {
+      addedCompetences: added,
+      removedCompetences: removed
+    }
+  }).onOk(async () => {
+    // Если пользователь подтвердил, выполняем сохранение
+    try {
+      const selectedCompetences = allCompetences.value
+        .filter(comp => comp.selected)
+        .map(comp => ({
+          competence_index: comp.competence_index,
+          competence: comp.competence,
+          type: comp.type
+        }))
+      
+      await store.updateDisciplineCompetences(
+        props.planId,
+        props.disciplineId,
+        selectedCompetences
+      )
+      
+      $q.notify({
+        type: 'positive',
+        message: `Успешно сохранено ${selectedCompetences.length} компетенций`,
+        position: 'top-right',
+        timeout: 3000
+      })
+      
+      originalCompetences.value = _.cloneDeep(allCompetences.value)
+      emit('saved')
+      showDialog.value = false
+      
+    } catch (error) {
+      $q.notify({
+        type: 'negative',
+        message: 'Ошибка при сохранении компетенций',
+        position: 'top-right'
+      })
+    }
+  })
 }
 
 watch(() => props.show, (newVal) => {

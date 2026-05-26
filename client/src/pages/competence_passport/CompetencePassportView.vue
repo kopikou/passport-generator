@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useCompetencePassportStore } from 'src/stores/competencePassportStore'
 import { storeToRefs } from 'pinia'
 import { useQuasar, date } from 'quasar'
+import FixIndicatorsConfirmDialog from './components/FixIndicatorsConfirmDialog.vue'
 
 // Компоненты разделов
 const TitlePageSection = defineAsyncComponent(() => import('./components/menu_sections/TitlePageSection.vue'))
@@ -70,31 +71,54 @@ function navigateToFix(errorRow) {
   })
 }
 
-async function navigateToPassportFix(errorRow) {
-  try {
-    const result = await store.fixSchemeIndicators(
-      errorRow.discipline_id,
-      errorRow.competence_index,
-      errorRow.scheme_forms_count,
-      errorRow.indicators_count
-    )
-    
-    if (result.success) {
-      $q.notify({ type: 'positive', position: 'top-right', message: result.message, timeout: 5000 })
+async function navigateToPassportFix(errorRow: any) {
+  const currentComp = passport.value.find(c => c.competence_index === errorRow.competence_index)
+
+  $q.dialog({
+    component: FixIndicatorsConfirmDialog,
+    componentProps: {
+      errorRow: errorRow,
+      currentIndicators: currentComp.indicator_list,
+      competenceIndex: errorRow.competence_index
     }
-  } catch (error) {
-    $q.notify({ type: 'warning', position: 'top-right', message: 'Не удалось автоматически скорректировать индикаторы' })
-  }
-  await store.validateSchemeIndicators()
-  await loadPlanData()
-  // Перенаправляем на паспорт с нужной компетенцией и разделом 2.1
-  router.push({
-    name: 'competencePassport',
-    params: { id: currentPlanId.value },
-    query: {
-      section: 'indicator-disciplines',
-      competence: errorRow.competence_index
+  }).onOk(async () => {
+    try {
+      const result = await store.fixSchemeIndicators(
+        errorRow.discipline_id,
+        errorRow.competence_index,
+        errorRow.scheme_forms_count,
+        errorRow.indicators_count
+      )
+      
+      if (result.success) {
+        $q.notify({ 
+          type: 'positive', 
+          position: 'top-right', 
+          message: result.message, 
+          timeout: 5000 
+        })
+      }
+    } catch (error: any) {
+      $q.notify({ 
+        type: 'warning', 
+        position: 'top-right', 
+        message: 'Ошибка: ' + (error.response?.data?.detail || error.message) 
+      })
+    } finally {
+      // Обновляем данные и переходим к редактированию
+      await store.validateSchemeIndicators()
+      await loadPlanData()
+      
+      router.push({
+        name: 'competencePassport',
+        params: { id: currentPlanId.value },
+        query: {
+          section: 'indicator-disciplines',
+          competence: errorRow.competence_index
+        }
+      })
     }
+  }).onCancel(() => {
   })
 }
 
@@ -237,21 +261,6 @@ watch(
     updateActiveTab()
   },
   { immediate: true, deep: true }
-)
-
-watch(currentPlanId.value, async (newPlanId) => {
-    if (newPlanId) {
-      //await loadPlanData()
-      
-      if (route.query.competence) {
-        await loadCompetenceData(route.query.competence as string)
-      }
-    } else {
-      currentCompetence.value = null
-    }
-    await nextTick()
-    updateActiveTab()
-  }
 )
 </script>
 
