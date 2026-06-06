@@ -235,6 +235,11 @@ const currentCompetenceValidationStatus = computed(() => {
   return currentCompetenceValidation.value(currentCompetence.value)
 })
 
+async function runSchemaValidation() {
+  await store.validateSchemeIndicators()
+
+}
+
 onBeforeMount(async () => {
   await loadPlanData()
   await store.validateSchemeIndicators()

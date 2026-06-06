@@ -538,9 +538,11 @@ export const useCompetencePassportStore = defineStore('competencePassport', () =
       await api.put(`/api/competence-passport/${indicatorId}/update-indicator/`, payload)
       //await fetchCompetencePassport(currentPlanId.value!)
       await fetchPassport(currentPlanId.value!)
+      
     } finally {
       saving.value = false
     }
+    await validateSchemeIndicators()
   }
 
   // Удаление индикатора 

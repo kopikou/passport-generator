@@ -47,12 +47,10 @@ onBeforeMount(() => {
   <TopNavigationMenu>
     <template #content>
       <div class="layout-content">
-        <!-- Боковое меню -->
         <aside v-if="showSidebar" class="sidebar">
           <component :is="currentSidebar" />
         </aside>
 
-        <!-- Основной контент -->
         <main class="main-content" :class="{ 'full-width': !showSidebar }">
           <router-view />
         </main>
